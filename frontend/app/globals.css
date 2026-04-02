@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg:      #060c1a;
+  --surface: #080f1e;
+  --card:    #0b1325;
+  --border:  #1a2840;
+  --green:   #2de8a0;
+  --accent:  #2bc4e8;
+  --gold:    #f0c840;
+  --warning: #e09030;
+  --danger:  #e06060;
+  --muted:   #4a6080;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  background: var(--bg);
+  color: #e8eef8;
+  font-family: 'IBM Plex Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Progress bar transition */
+.progress-bar {
+  transition: width 0.6s ease;
+}
+
+/* Confidence badge fade */
+.confidence-badge {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Card hover glow on analyse page */
+.card-glow-green:hover  { box-shadow: 0 0 20px #2de8a033; }
+.card-glow-accent:hover { box-shadow: 0 0 20px #2bc4e833; }
+.card-glow-gold:hover   { box-shadow: 0 0 20px #f0c84033; }
