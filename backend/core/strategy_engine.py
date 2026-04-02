@@ -317,25 +317,21 @@ return {1, count + 1}
             return get_fallback(ctx.business_type)
 
     async def _call_claude(self, ctx: BusinessContext, metrics: dict) -> dict:
-        import asyncio
-
-        client = anthropic.Anthropic(api_key=self._anthropic_key)
+        # Use the async client directly — no thread pool needed.
+        client = anthropic.AsyncAnthropic(api_key=self._anthropic_key)
 
         system = SYSTEM_PROMPT.format(
             metrics_json=json.dumps(metrics, indent=2),
             context_json=json.dumps(ctx.model_dump(exclude={"raw_question"}), indent=2),
         )
 
-        def _sync_call() -> str:
-            response = client.messages.create(
-                model=CLAUDE_MODEL,
-                max_tokens=1200,
-                system=system,
-                messages=[{"role": "user", "content": ctx.raw_question}],
-            )
-            return response.content[0].text
-
-        raw_text = await asyncio.to_thread(_sync_call)
+        response = await client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=1200,
+            system=system,
+            messages=[{"role": "user", "content": ctx.raw_question}],
+        )
+        raw_text = response.content[0].text
 
         # Strip markdown fences if Claude wraps output
         text = raw_text.strip()

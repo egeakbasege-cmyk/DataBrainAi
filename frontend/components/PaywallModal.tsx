@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { useSession } from 'next-auth/react'
@@ -8,10 +8,16 @@ import { createCheckout } from '../lib/api'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
 
-const BUNDLES: Array<{ credits: 1 | 3 | 10; price: string; label: string; highlight?: boolean }> = [
-  { credits: 1,  price: '$3',  label: 'Best for trying' },
-  { credits: 3,  price: '$9',  label: 'Most popular',   highlight: true },
-  { credits: 10, price: '$25', label: 'Best value' },
+const BUNDLES: Array<{
+  credits: 1 | 3 | 10
+  price:   number
+  label:   string
+  note:    string
+  popular?: boolean
+}> = [
+  { credits: 1,  price: 3,  label: '$3',  note: '1 analysis',    },
+  { credits: 3,  price: 9,  label: '$9',  note: '3 analyses',  popular: true },
+  { credits: 10, price: 25, label: '$25', note: '10 analyses — best value' },
 ]
 
 interface Props {
@@ -21,117 +27,180 @@ interface Props {
 
 export function PaywallModal({ onClose, onSuccess }: Props) {
   const { data: session } = useSession()
-  const [selected, setSelected]     = useState<1 | 3 | 10>(3)
-  const [clientSecret, setSecret]   = useState<string | null>(null)
-  const [loadingCS, setLoadingCS]   = useState(false)
-  const [error, setError]           = useState('')
+  const [selected,   setSelected]   = useState<1 | 3 | 10>(3)
+  const [secret,     setSecret]     = useState<string | null>(null)
+  const [loading,    setLoading]    = useState(false)
+  const [error,      setError]      = useState('')
 
-  const handleSelectBundle = async (credits: 1 | 3 | 10) => {
+  // Auto-load payment form for default bundle on mount
+  useEffect(() => {
+    loadSecret(3)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const loadSecret = async (credits: 1 | 3 | 10) => {
     setSelected(credits)
     setSecret(null)
     setError('')
-    setLoadingCS(true)
+    setLoading(true)
     try {
       const token = (session as any)?.accessToken || ''
       const data  = await createCheckout(credits, token)
       setSecret(data.client_secret)
     } catch (e: any) {
-      setError(e.message || 'Failed to load payment form.')
+      setError(e.message || 'Failed to load payment form. Please try again.')
     } finally {
-      setLoadingCS(false)
+      setLoading(false)
     }
   }
 
+  const bundle = BUNDLES.find((b) => b.credits === selected)!
+
+  // Close on backdrop click
+  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose()
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
-      <div className="bg-card border border-border rounded-card w-full max-w-md p-6 relative animate-fade-up">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-muted hover:text-white text-lg leading-none"
-        >
-          ×
-        </button>
-
-        <h2 className="font-heading text-2xl text-white mb-1">Buy Credits</h2>
-        <p className="text-sm text-muted font-mono mb-6">$3 per analysis · no subscription</p>
-
-        {/* Bundle selector */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {BUNDLES.map((b) => (
-            <button
-              key={b.credits}
-              onClick={() => handleSelectBundle(b.credits)}
-              className="relative rounded-card p-4 border text-center transition-all"
-              style={{
-                borderColor: selected === b.credits ? '#2bc4e8' : '#1a2840',
-                background:  selected === b.credits ? '#2bc4e810' : '#0b1325',
-              }}
-            >
-              {b.highlight && (
-                <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs font-mono bg-accent text-bg px-2 py-0.5 rounded-pill">
-                  Popular
-                </span>
-              )}
-              <div className="text-white font-mono font-bold text-lg">{b.price}</div>
-              <div className="text-muted text-xs mt-0.5">{b.credits} analysis{b.credits > 1 ? 'es' : ''}</div>
-              <div className="text-muted text-xs mt-1">{b.label}</div>
-            </button>
-          ))}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
+      onClick={handleBackdrop}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Buy credits"
+    >
+      <div
+        className="w-full max-w-md rounded-card animate-fade-up"
+        style={{
+          background: 'var(--card)',
+          border:     '1px solid rgba(255,255,255,0.08)',
+          boxShadow:  '0 24px 64px rgba(0,0,0,0.6)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between px-6 pt-6 pb-5 border-b border-border">
+          <div>
+            <h2 className="font-heading text-ink" style={{ fontSize: '1.6rem', lineHeight: 1.1 }}>
+              Buy credits
+            </h2>
+            <p className="font-mono text-2xs text-muted mt-1">
+              $3 per analysis · no subscription · never expires
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="font-mono text-dim hover:text-ink transition-colors text-lg leading-none mt-0.5"
+            aria-label="Close"
+          >
+            ×
+          </button>
         </div>
 
-        {/* Payment form */}
-        {loadingCS && (
-          <div className="h-24 flex items-center justify-center text-muted font-mono text-sm animate-pulse">
-            Loading payment form…
+        <div className="p-6 space-y-5">
+          {/* Bundle selector */}
+          <div className="grid grid-cols-3 gap-2">
+            {BUNDLES.map((b) => {
+              const active = selected === b.credits
+              return (
+                <button
+                  key={b.credits}
+                  onClick={() => loadSecret(b.credits)}
+                  disabled={loading}
+                  className="relative rounded-card p-3.5 text-center transition-all disabled:opacity-60"
+                  style={{
+                    background:  active ? 'rgba(24,184,224,0.08)' : 'var(--surface)',
+                    border:      `1px solid ${active ? 'rgba(24,184,224,0.5)' : 'var(--border)'}`,
+                  }}
+                  aria-pressed={active}
+                >
+                  {b.popular && (
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 font-mono text-2xs px-2 py-0.5 rounded-pill"
+                      style={{ background: 'var(--accent)', color: 'var(--bg)', fontSize: '0.58rem' }}>
+                      Popular
+                    </span>
+                  )}
+                  <div className="font-heading text-ink" style={{ fontSize: '1.4rem' }}>
+                    {b.label}
+                  </div>
+                  <div className="font-mono text-2xs text-muted mt-1 leading-tight">
+                    {b.note}
+                  </div>
+                </button>
+              )
+            })}
           </div>
-        )}
 
-        {error && (
-          <p className="text-danger text-xs font-mono mb-4 bg-danger/10 border border-danger/30 px-3 py-2 rounded-chip">
-            {error}
-          </p>
-        )}
+          {/* Selected bundle summary */}
+          <div className="flex items-center justify-between px-4 py-3 rounded-card"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <span className="font-mono text-2xs text-muted uppercase tracking-widest">
+              {bundle.note}
+            </span>
+            <span className="font-mono text-sm text-ink font-medium">
+              {bundle.label}
+            </span>
+          </div>
 
-        {clientSecret && !loadingCS && (
-          <Elements
-            stripe={stripePromise}
-            options={{
-              clientSecret,
-              appearance: {
-                theme: 'night',
-                variables: { colorBackground: '#060c1a', colorText: '#e8eef8', fontFamily: 'IBM Plex Mono, monospace' },
-              },
-            }}
-          >
-            <CheckoutForm
-              selected={selected}
-              clientSecret={clientSecret}
-              onSuccess={() => { onSuccess(selected); onClose() }}
-            />
-          </Elements>
-        )}
+          {/* Payment form */}
+          {loading && (
+            <div className="rounded-card p-5 space-y-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div className="skeleton h-10 rounded-card" />
+              <div className="skeleton h-10 rounded-card" />
+            </div>
+          )}
 
-        {!clientSecret && !loadingCS && !error && (
-          <button
-            onClick={() => handleSelectBundle(selected)}
-            className="w-full bg-accent text-bg font-medium py-3 rounded-pill text-sm hover:shadow-accent transition-all"
-          >
-            Continue to payment →
-          </button>
-        )}
+          {error && !loading && (
+            <div className="font-mono text-xs px-4 py-3 rounded-card"
+              style={{
+                background: 'rgba(201,79,79,0.08)',
+                border:     '1px solid rgba(201,79,79,0.25)',
+                color:      'var(--danger)',
+              }}
+              role="alert">
+              {error}
+              <button onClick={() => loadSecret(selected)} className="ml-2 underline opacity-70 hover:opacity-100">
+                Retry
+              </button>
+            </div>
+          )}
+
+          {secret && !loading && (
+            <Elements
+              stripe={stripePromise}
+              options={{
+                clientSecret: secret,
+                appearance: {
+                  theme: 'night',
+                  variables: {
+                    colorBackground:    '#0d1020',
+                    colorText:          '#dce4f5',
+                    colorTextSecondary: '#526478',
+                    fontFamily:         '"IBM Plex Mono", monospace',
+                    borderRadius:       '6px',
+                  },
+                },
+              }}
+            >
+              <CheckoutForm
+                bundle={bundle}
+                onSuccess={() => { onSuccess(selected); onClose() }}
+              />
+            </Elements>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
 function CheckoutForm({
-  selected,
-  clientSecret,
+  bundle,
   onSuccess,
 }: {
-  selected:     number
-  clientSecret: string
-  onSuccess:    () => void
+  bundle:    { credits: number; price: number; label: string; note: string }
+  onSuccess: () => void
 }) {
   const stripe   = useStripe()
   const elements = useElements()
@@ -142,14 +211,16 @@ function CheckoutForm({
     if (!stripe || !elements) return
     setLoading(true)
     setError('')
+
     const { error: stripeErr } = await stripe.confirmPayment({
       elements,
-      confirmParams: { return_url: window.location.origin + '/analyse' },
+      confirmParams: { return_url: `${window.location.origin}/analyse` },
       redirect: 'if_required',
     })
     setLoading(false)
+
     if (stripeErr) {
-      setError(stripeErr.message || 'Payment failed.')
+      setError(stripeErr.message || 'Payment failed. Please try again.')
     } else {
       onSuccess()
     }
@@ -158,18 +229,27 @@ function CheckoutForm({
   return (
     <div className="space-y-4">
       <PaymentElement options={{ layout: 'tabs' }} />
+
       {error && (
-        <p className="text-danger text-xs font-mono bg-danger/10 border border-danger/30 px-3 py-2 rounded-chip">
+        <div className="font-mono text-xs px-4 py-3 rounded-card"
+          style={{ background: 'rgba(201,79,79,0.08)', border: '1px solid rgba(201,79,79,0.25)', color: 'var(--danger)' }}
+          role="alert">
           {error}
-        </p>
+        </div>
       )}
+
       <button
         onClick={handlePay}
-        disabled={loading || !stripe}
-        className="w-full bg-green text-bg font-medium py-3 rounded-pill text-sm hover:shadow-green transition-all disabled:opacity-60"
+        disabled={loading || !stripe || !elements}
+        className="w-full font-mono text-sm font-medium py-3.5 rounded-pill transition-all disabled:opacity-50 glow-green"
+        style={{ background: 'var(--green)', color: 'var(--bg)' }}
       >
-        {loading ? 'Processing…' : `Pay $${[3,9,25][[1,3,10].indexOf(selected)]} →`}
+        {loading ? 'Processing…' : `Pay ${bundle.label} — ${bundle.note} →`}
       </button>
+
+      <p className="text-center font-mono text-2xs text-muted">
+        Powered by Stripe · Secured with 256-bit encryption
+      </p>
     </div>
   )
 }

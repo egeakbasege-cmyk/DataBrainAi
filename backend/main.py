@@ -139,15 +139,19 @@ app.include_router(history_router, prefix="/api")
 
 @app.get("/api/health")
 async def health():
-    import asyncpg
+    from sqlalchemy import text as sa_text
 
-    db_ok = "ok"
+    db_ok    = "ok"
     redis_ok = "ok"
 
     try:
-        async for session in get_db():
-            from sqlalchemy import text
-            await session.execute(text("SELECT 1"))
+        # Use get_db as an async context manager (anext pattern)
+        gen = get_db()
+        session = await gen.__anext__()
+        try:
+            await session.execute(sa_text("SELECT 1"))
+        finally:
+            await gen.aclose()
     except Exception as e:
         db_ok = f"error: {e}"
 
@@ -159,8 +163,8 @@ async def health():
 
     overall = "ok" if db_ok == "ok" and redis_ok == "ok" else "degraded"
     return {
-        "status": overall,
-        "db_ping": db_ok,
-        "redis_ping": redis_ok,
-        "version": "1.0.0",
+        "status":      overall,
+        "db_ping":     db_ok,
+        "redis_ping":  redis_ok,
+        "version":     "1.0.0",
     }

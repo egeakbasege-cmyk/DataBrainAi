@@ -5,6 +5,7 @@ POST /api/analyse/stream   — SSE streaming analysis
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 import uuid
@@ -94,9 +95,9 @@ async def _save_analysis(
             "intent": result.intent,
             "conf": result.confidence,
             "bctx": "{}",
-            "metrics": __import__("json").dumps(result.metrics),
-            "res": __import__("json").dumps(result.strategy),
-            "steps": __import__("json").dumps(result.pipeline_steps),
+            "metrics": json.dumps(result.metrics),
+            "res":     json.dumps(result.strategy),
+            "steps":   json.dumps(result.pipeline_steps),
             "dur": duration_ms,
             "cache": cache_hit,
         },
