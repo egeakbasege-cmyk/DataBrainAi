@@ -36,31 +36,46 @@ export function MetricsPanel({ metrics }: Props) {
 
   if (entries.length === 0) return null
 
+  const category = metrics.benchmark_category?.replace(/_/g, ' ')
+
   return (
-    <div className="bg-bg border border-border rounded-card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-mono text-muted uppercase tracking-widest">
-          Computed Metrics
-        </h3>
-        <span className="text-xs text-muted font-mono">
-          {metrics.benchmark_category?.replace('_', ' ')}
+    <div className="rounded-card overflow-hidden"
+      style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <span className="font-mono text-2xs text-muted uppercase tracking-widest">
+          Benchmark metrics
         </span>
+        {category && (
+          <span className="font-mono text-2xs capitalize"
+            style={{ color: '#18b8e0' }}>
+            {category}
+          </span>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {entries.map(([key, value]) => (
-          <div key={key} className="bg-card border border-border rounded-chip px-3 py-2.5">
-            <div className="text-xs text-muted font-mono mb-0.5 truncate">{formatKey(key)}</div>
-            <div className="text-white font-mono font-medium text-sm">
+      {/* Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 divide-x divide-y divide-border">
+        {entries.map(([key, value], i) => (
+          <div key={key} className="px-5 py-4 space-y-1">
+            <div className="font-mono text-2xs text-muted truncate">
+              {formatKey(key)}
+            </div>
+            <div className="font-heading text-ink tabular-nums"
+              style={{ fontSize: '1.35rem', letterSpacing: '-0.01em' }}>
               {formatValue(key, value)}
             </div>
           </div>
         ))}
       </div>
 
-      <p className="text-xs text-muted font-mono mt-3">
-        Computed from industry benchmarks · not estimated by AI
-      </p>
+      {/* Footer */}
+      <div className="px-5 py-3 border-t border-border">
+        <p className="font-mono text-2xs text-muted">
+          Computed from industry benchmarks · not estimated by AI
+        </p>
+      </div>
     </div>
   )
 }

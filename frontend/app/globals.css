@@ -1,47 +1,268 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design tokens ─────────────────────────────────────── */
 :root {
-  --bg:      #060c1a;
-  --surface: #080f1e;
-  --card:    #0b1325;
-  --border:  #1a2840;
-  --green:   #2de8a0;
-  --accent:  #2bc4e8;
-  --gold:    #f0c840;
-  --warning: #e09030;
-  --danger:  #e06060;
-  --muted:   #4a6080;
+  --bg:      #07080e;
+  --surface: #0b0d16;
+  --card:    #0d1020;
+  --border:  #1b2333;
+  --ink:     #dce4f5;
+  --dim:     #526478;
+  --green:   #1ed48a;
+  --accent:  #18b8e0;
+  --gold:    #e8bb28;
+  --warning: #d4821e;
+  --danger:  #c94f4f;
+  --muted:   #4d6178;
+  --stroke:  rgba(255,255,255,0.06);
 }
 
-* { box-sizing: border-box; }
+/* ── Base reset ────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+}
 
 html, body {
-  background: var(--bg);
-  color: #e8eef8;
-  font-family: 'IBM Plex Sans', sans-serif;
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Progress bar transition */
+/* Noise grain overlay — ultra subtle */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  opacity: 0.028;
+  mix-blend-mode: overlay;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 6px; background: var(--bg); }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--muted); }
+
+/* ── Selection ─────────────────────────────────────────── */
+::selection {
+  background: rgba(30, 212, 138, 0.18);
+  color: #fff;
+}
+
+/* ── Focus states (accessibility) ─────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── Typography base ───────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.08;
+}
+
+p { line-height: 1.7; }
+
+code, kbd, samp, pre {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+/* ── Horizontal rule ───────────────────────────────────── */
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+
+/* ── Links ─────────────────────────────────────────────── */
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+/* ── Input base ────────────────────────────────────────── */
+input, textarea, select {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  caret-color: var(--green);
+}
+input:focus, textarea:focus {
+  outline: none;
+  border-color: rgba(30, 212, 138, 0.5);
+  box-shadow: 0 0 0 3px rgba(30, 212, 138, 0.08);
+}
+input::placeholder, textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+/* ── Utility classes ───────────────────────────────────── */
+
+/* Thin editorial rule — animatable */
+.rule {
+  display: block;
+  height: 1px;
+  background: var(--border);
+  width: 100%;
+}
+.rule-accent { background: var(--green); }
+
+/* Vertical divider */
+.vr {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  background: var(--border);
+  vertical-align: middle;
+}
+
+/* Capsule label */
+.capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  opacity-modifier: 0.3;
+}
+
+/* Editorial number — large muted index */
+.editorial-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(6rem, 14vw, 11rem);
+  font-weight: 400;
+  color: rgba(255,255,255,0.04);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Gradient text */
+.text-gradient-green {
+  background: linear-gradient(135deg, #1ed48a 0%, #18b8e0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-gold {
+  background: linear-gradient(135deg, #e8bb28 0%, #f0d060 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Left-border accent blocks */
+.accent-block {
+  border-left: 2px solid;
+  padding-left: 1.25rem;
+}
+
+/* Progress bar */
 .progress-bar {
-  transition: width 0.6s ease;
+  transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Confidence badge fade */
-.confidence-badge {
-  animation: fadeIn 0.2s ease;
+/* Card hover */
+.card-hover {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+.card-hover:hover {
+  border-color: rgba(255,255,255,0.12);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
 }
 
+/* Confidence badge */
+.confidence-badge { animation: fadeIn 0.25s ease; }
+
+/* Glows on hover */
+.glow-green:hover  { box-shadow: 0 0 24px rgba(30, 212, 138, 0.2); }
+.glow-accent:hover { box-shadow: 0 0 24px rgba(24, 184, 224, 0.2); }
+.glow-gold:hover   { box-shadow: 0 0 24px rgba(232, 187, 40, 0.2); }
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--card) 0%,
+    rgba(255,255,255,0.04) 50%,
+    var(--card) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Keyframes ─────────────────────────────────────────── */
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/* Card hover glow on analyse page */
-.card-glow-green:hover  { box-shadow: 0 0 20px #2de8a033; }
-.card-glow-accent:hover { box-shadow: 0 0 20px #2bc4e833; }
-.card-glow-gold:hover   { box-shadow: 0 0 20px #f0c84033; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drawLine {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
+}
+
+/* ── Print ─────────────────────────────────────────────── */
+@media print {
+  body::after { display: none; }
+  .no-print   { display: none !important; }
+}
+
+/* ── Reduced motion ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

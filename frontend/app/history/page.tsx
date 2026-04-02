@@ -23,7 +23,7 @@ interface FullAnalysis {
   intent: string
   confidence: number
   metrics: Record<string, any>
-  result: Record<string, any>
+  result: any
   pipeline_steps: any[]
   duration_ms: number
   cache_hit: boolean

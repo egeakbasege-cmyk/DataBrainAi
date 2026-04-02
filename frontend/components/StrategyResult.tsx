@@ -26,58 +26,105 @@ interface Props {
   pipelineSteps: any[]
 }
 
+const STEP_COLORS = ['#1ed48a', '#18b8e0', '#e8bb28'] as const
+
 export function StrategyResultView({ result, metrics, confidence, pipelineSteps }: Props) {
   const [auditOpen, setAuditOpen] = useState(false)
 
   return (
-    <div className="space-y-4 animate-fade-up">
-      {/* ── Headline card ── */}
-      <div
-        className="relative rounded-card p-6 border border-border overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0b1325 0%, #060c1a 100%)' }}
-      >
-        {/* Upside badge */}
-        <div className="absolute top-4 right-4">
-          <span className="inline-flex items-center px-3 py-1 rounded-pill text-xs font-mono font-semibold"
-            style={{ background: '#f0c84020', color: '#f0c840', border: '1px solid #f0c84040' }}>
-            {result.upside || metrics.upside_label}
-          </span>
-        </div>
+    <div className="space-y-6 animate-fade-up">
 
-        <h2 className="font-heading text-2xl text-white leading-snug pr-28 mb-4">
-          {result.headline}
-        </h2>
+      {/* ── Headline ─────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-card"
+        style={{
+          background: 'linear-gradient(145deg, #0d1020 0%, #07080e 100%)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          boxShadow: '0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+        }}>
 
-        <div className="absolute bottom-4 right-4">
-          <ConfidenceBadge score={confidence} />
+        {/* Subtle gradient accent */}
+        <div className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: 'linear-gradient(90deg, transparent, #1ed48a40, transparent)' }} />
+
+        <div className="p-7 md:p-9">
+          {/* Meta row */}
+          <div className="flex items-center justify-between mb-5">
+            <span className="font-mono text-2xs text-muted uppercase tracking-widest-2">
+              Strategy output
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-2xs font-semibold px-3 py-1 rounded-pill"
+                style={{ background: 'rgba(232,187,40,0.08)', color: '#e8bb28', border: '1px solid rgba(232,187,40,0.2)' }}>
+                {result.upside || metrics.upside_label}
+              </span>
+              <ConfidenceBadge score={confidence} />
+            </div>
+          </div>
+
+          {/* Headline */}
+          <h2 className="font-heading text-ink leading-snug"
+            style={{ fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', letterSpacing: '-0.01em' }}>
+            {result.headline}
+          </h2>
         </div>
       </div>
 
-      {/* ── Key insight ── */}
-      <div className="bg-card rounded-card border-l-4 px-5 py-4" style={{ borderColor: '#2bc4e8' }}>
-        <p className="text-xs font-mono text-accent uppercase tracking-widest mb-2">Key Insight</p>
-        <p className="text-gray-300 text-sm leading-relaxed font-sans">{result.signal}</p>
+      {/* ── Signal / Key insight ──────────────────────── */}
+      <div className="accent-block py-4" style={{ borderColor: '#18b8e0' }}>
+        <p className="font-mono text-2xs text-accent uppercase tracking-widest mb-2">Key Signal</p>
+        <p className="text-dim text-sm leading-relaxed font-sans" style={{ fontWeight: 300 }}>
+          {result.signal}
+        </p>
       </div>
 
-      {/* ── Metrics panel ── */}
+      {/* ── Metrics ──────────────────────────────────── */}
       <MetricsPanel metrics={metrics} />
 
-      {/* ── 3-part strategy ── */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-mono text-muted uppercase tracking-widest">Your 3-Step Strategy</h3>
+      {/* ── 3-Step strategy ──────────────────────────── */}
+      <div className="space-y-2">
+        <p className="font-mono text-2xs text-muted uppercase tracking-widest-2 mb-4">
+          Your 3-step strategy
+        </p>
         {(result.actions || []).map((action, i) => (
-          <div key={i} className="bg-card border border-border rounded-card p-5 hover:border-opacity-80 transition-all">
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-mono font-bold"
-                style={{ background: '#2bc4e820', color: '#2bc4e8' }}>
-                {i + 1}
+          <div key={i}
+            className="group relative rounded-card p-5 card-hover"
+            style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+
+            {/* Top accent line on hover */}
+            <div className="absolute top-0 left-0 right-0 h-px rounded-t-card transition-opacity duration-300"
+              style={{
+                background: `linear-gradient(90deg, transparent, ${STEP_COLORS[i]}60, transparent)`,
+                opacity: 0,
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = '1')}
+            />
+
+            <div className="flex gap-5">
+              {/* Index */}
+              <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: `${STEP_COLORS[i]}12`, border: `1px solid ${STEP_COLORS[i]}30` }}>
+                <span className="font-mono text-2xs font-bold"
+                  style={{ color: STEP_COLORS[i] }}>
+                  {i + 1}
+                </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-white font-medium text-sm mb-1">{action.title}</h4>
-                <p className="text-muted text-sm leading-relaxed font-sans mb-2">{action.what}</p>
-                <span className="text-xs font-mono px-2 py-0.5 rounded-chip"
-                  style={{ background: '#2bc4e810', color: '#2bc4e880' }}>
-                  metric: {action.metric_impact}
+
+              {/* Content */}
+              <div className="flex-1 min-w-0 space-y-2">
+                <h4 className="font-heading text-ink leading-snug"
+                  style={{ fontSize: '1.1rem' }}>
+                  {action.title}
+                </h4>
+                <p className="text-dim text-sm leading-relaxed font-sans" style={{ fontWeight: 300 }}>
+                  {action.what}
+                </p>
+                <span className="inline-block font-mono text-2xs px-2 py-0.5 rounded-chip"
+                  style={{
+                    background: `${STEP_COLORS[i]}0a`,
+                    color:      `${STEP_COLORS[i]}80`,
+                    border:     `1px solid ${STEP_COLORS[i]}20`,
+                  }}>
+                  ↗ {action.metric_impact}
                 </span>
               </div>
             </div>
@@ -85,55 +132,75 @@ export function StrategyResultView({ result, metrics, confidence, pipelineSteps 
         ))}
       </div>
 
-      {/* ── Do this week ── */}
-      <div className="bg-card rounded-card border-l-4 px-5 py-4" style={{ borderColor: '#2de8a0' }}>
-        <p className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: '#2de8a0' }}>
-          Do This Week
-        </p>
-        <p className="text-gray-300 text-sm leading-relaxed font-sans">{result.thisWeek}</p>
+      {/* ── Do this week + Risk ───────────────────────── */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="accent-block py-4 rounded-r-card"
+          style={{ borderColor: '#1ed48a', background: 'rgba(30,212,138,0.03)' }}>
+          <p className="font-mono text-2xs uppercase tracking-widest mb-2"
+            style={{ color: '#1ed48a' }}>
+            Do this week
+          </p>
+          <p className="text-dim text-sm leading-relaxed font-sans" style={{ fontWeight: 300 }}>
+            {result.thisWeek}
+          </p>
+        </div>
+
+        <div className="accent-block py-4 rounded-r-card"
+          style={{ borderColor: '#d4821e', background: 'rgba(212,130,30,0.03)' }}>
+          <p className="font-mono text-2xs uppercase tracking-widest mb-2"
+            style={{ color: '#d4821e' }}>
+            Watch out for
+          </p>
+          <p className="text-dim text-sm leading-relaxed font-sans" style={{ fontWeight: 300 }}>
+            {result.risk}
+          </p>
+        </div>
       </div>
 
-      {/* ── Risk ── */}
-      <div className="bg-card rounded-card border-l-4 px-5 py-4" style={{ borderColor: '#e09030' }}>
-        <p className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: '#e09030' }}>
-          Watch Out For
-        </p>
-        <p className="text-gray-300 text-sm leading-relaxed font-sans">{result.risk}</p>
-      </div>
-
-      {/* ── Pipeline audit trail ── */}
+      {/* ── Pipeline audit trail ──────────────────────── */}
       {pipelineSteps && pipelineSteps.length > 0 && (
-        <div className="bg-card border border-border rounded-card overflow-hidden">
+        <div className="rounded-card overflow-hidden"
+          style={{ border: '1px solid var(--border)' }}>
           <button
             onClick={() => setAuditOpen(!auditOpen)}
-            className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-surface/50 transition-colors"
+            className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
+            style={{ background: 'transparent' }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+            aria-expanded={auditOpen}
           >
-            <span className="text-xs font-mono text-muted uppercase tracking-widest">
-              How this analysis was built
+            <span className="font-mono text-2xs text-muted uppercase tracking-widest">
+              Pipeline audit trail
             </span>
-            <span className="text-muted text-xs">{auditOpen ? '▲' : '▼'}</span>
+            <span className="font-mono text-2xs text-muted">
+              {auditOpen ? '▲' : '▼'}
+            </span>
           </button>
 
           {auditOpen && (
-            <div className="px-5 pb-5 space-y-2 border-t border-border animate-fade-up">
+            <div className="px-5 pb-5 space-y-3 border-t border-border animate-fade-in">
               {pipelineSteps.map((step, i) => (
-                <div key={i} className="flex items-start gap-3 text-xs font-mono">
-                  <span className="text-muted w-4 flex-shrink-0">{i + 1}.</span>
-                  <div className="flex-1 min-w-0">
+                <div key={i} className="flex items-start gap-4 py-1">
+                  <span className="font-mono text-2xs text-muted w-4 flex-shrink-0 pt-0.5">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div className="flex-1 min-w-0 grid grid-cols-3 gap-4 text-2xs font-mono">
                     <span className="text-accent">{step.step}</span>
                     {step.status && (
-                      <span className="ml-2 text-muted">→ {step.status}</span>
+                      <span className="text-muted">→ {step.status}</span>
                     )}
-                    {step.confidence !== undefined && (
-                      <span className="ml-2" style={{ color: '#f0c840' }}>
-                        confidence: {(step.confidence * 100).toFixed(0)}%
-                      </span>
-                    )}
-                    {step.violations_caught !== undefined && (
-                      <span className="ml-2" style={{ color: step.violations_caught > 0 ? '#2de8a0' : '#4a6080' }}>
-                        {step.violations_caught} violations caught
-                      </span>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {step.confidence !== undefined && (
+                        <span style={{ color: '#e8bb28' }}>
+                          {(step.confidence * 100).toFixed(0)}%
+                        </span>
+                      )}
+                      {step.violations_caught !== undefined && (
+                        <span style={{ color: step.violations_caught > 0 ? '#1ed48a' : '#4d6178' }}>
+                          {step.violations_caught} caught
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

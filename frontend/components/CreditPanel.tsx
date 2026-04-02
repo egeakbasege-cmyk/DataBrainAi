@@ -9,28 +9,43 @@ interface Props {
 export function CreditPanel({ credits, freeUsed, onBuy }: Props) {
   if (!freeUsed) {
     return (
-      <div className="flex items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 bg-green/10 border border-green/30 text-green text-xs px-3 py-1.5 rounded-pill font-mono">
-          ✦ Free analysis available
+      <div className="flex items-center gap-2">
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#1ed48a', display: 'inline-block' }} />
+        <span className="font-mono text-2xs text-green uppercase tracking-widest">
+          Free analysis available
         </span>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-muted font-mono">
-        {credits !== null ? (
-          credits > 0 ? (
-            <span className="text-accent">{credits} credit{credits !== 1 ? 's' : ''} remaining</span>
-          ) : (
-            <span className="text-warning">0 credits</span>
-          )
-        ) : null}
-      </span>
+    <div className="flex items-center gap-4">
+      {credits !== null && (
+        <span className="font-mono text-2xs uppercase tracking-widest"
+          style={{ color: credits > 0 ? '#18b8e0' : '#d4821e' }}>
+          {credits > 0
+            ? `${credits} credit${credits !== 1 ? 's' : ''}`
+            : 'No credits'}
+        </span>
+      )}
       <button
         onClick={onBuy}
-        className="text-xs bg-accent/10 border border-accent/30 text-accent px-3 py-1.5 rounded-pill font-mono hover:bg-accent/20 transition-all"
+        className="font-mono text-2xs uppercase tracking-widest px-3 py-1.5 rounded-pill border transition-all"
+        style={{
+          color:       '#18b8e0',
+          borderColor: 'rgba(24,184,224,0.3)',
+          background:  'rgba(24,184,224,0.05)',
+        }}
+        onMouseEnter={(e) => {
+          const el = e.currentTarget
+          el.style.background    = 'rgba(24,184,224,0.12)'
+          el.style.borderColor   = 'rgba(24,184,224,0.6)'
+        }}
+        onMouseLeave={(e) => {
+          const el = e.currentTarget
+          el.style.background    = 'rgba(24,184,224,0.05)'
+          el.style.borderColor   = 'rgba(24,184,224,0.3)'
+        }}
       >
         Buy credits →
       </button>

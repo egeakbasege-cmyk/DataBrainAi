@@ -1,22 +1,40 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from '../components/AuthProvider'
 
 export const metadata: Metadata = {
-  title: 'Starcoins Strategy AI — Business Strategy in 60 seconds',
-  description:
-    'Describe your business, ask your hardest question. Get a targeted strategy backed by industry benchmarks — not guesswork.',
-  openGraph: {
-    title: 'Starcoins Strategy AI',
-    description: 'AI business strategy backed by real benchmarks, not hallucinations.',
-    type: 'website',
+  title: {
+    default:  'Starcoins — Business Strategy in 60 seconds',
+    template: '%s · Starcoins',
   },
+  description:
+    'Describe your business, ask your hardest question. Get a targeted strategy backed by real industry benchmarks — not guesswork.',
+  keywords: ['business strategy', 'AI strategy', 'benchmarks', 'startup', 'growth'],
+  authors: [{ name: 'Starcoins Strategy AI' }],
+  openGraph: {
+    title:       'Starcoins Strategy AI',
+    description: 'AI business strategy backed by real benchmarks, not hallucinations.',
+    type:        'website',
+    locale:      'en_US',
+  },
+  twitter: {
+    card:        'summary_large_image',
+    title:       'Starcoins Strategy AI',
+    description: 'Business strategy in 60 seconds. Real numbers, no guesswork.',
+  },
+  robots: { index: true, follow: true },
+}
+
+export const viewport: Viewport = {
+  width:        'device-width',
+  initialScale: 1,
+  themeColor:   '#07080e',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-bg text-white font-sans">
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen bg-bg text-ink font-sans antialiased">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
