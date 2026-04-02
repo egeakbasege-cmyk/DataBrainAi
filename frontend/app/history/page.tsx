@@ -96,6 +96,15 @@ export default function HistoryPage() {
     }
   }
 
+  // Escape HTML special chars to prevent XSS in the downloaded report
+  const esc = (s: unknown): string =>
+    String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+
   const handleDownload = (id: string) => {
     const data = fullData[id]
     if (!data) return
@@ -119,23 +128,23 @@ export default function HistoryPage() {
   </style>
 </head>
 <body>
-  <p class="upside">${result.upside || ''}</p>
-  <h1>${result.headline || 'Strategy Report'}</h1>
+  <p class="upside">${esc(result.upside)}</p>
+  <h1>${esc(result.headline) || 'Strategy Report'}</h1>
   <h2>Key Signal</h2>
-  <p>${result.signal || ''}</p>
+  <p>${esc(result.signal)}</p>
   <h2>Your 3-Step Strategy</h2>
   ${(result.actions || []).map((a: any, i: number) => `
   <div class="action">
-    <h3>${i + 1}. ${a.title}</h3>
-    <p>${a.what}</p>
-    <p><small>↗ ${a.metric_impact}</small></p>
+    <h3>${i + 1}. ${esc(a.title)}</h3>
+    <p>${esc(a.what)}</p>
+    <p><small>&#8599; ${esc(a.metric_impact)}</small></p>
   </div>`).join('')}
   <h2>Do This Week</h2>
-  <p>${result.thisWeek || ''}</p>
+  <p>${esc(result.thisWeek)}</p>
   <h2>Watch Out For</h2>
-  <p>${result.risk || ''}</p>
-  <div class="meta">Generated ${new Date(data.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} · Confidence ${Math.round(data.confidence * 100)}%</div>
-  <footer>Starcoins Strategy AI · Powered by Claude</footer>
+  <p>${esc(result.risk)}</p>
+  <div class="meta">Generated ${esc(new Date(data.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }))} &middot; Confidence ${Math.round(data.confidence * 100)}%</div>
+  <footer>Starcoins Strategy AI &middot; Powered by Claude</footer>
 </body>
 </html>`
     const blob = new Blob([html], { type: 'text/html' })

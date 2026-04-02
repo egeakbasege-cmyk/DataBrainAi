@@ -161,19 +161,53 @@ async def analyse_stream(
 ):
     if not body.input.strip():
         raise HTTPException(status_code=400, detail="Input cannot be empty.")
+    if len(body.input) > 2000:
+        raise HTTPException(status_code=400, detail="Input exceeds 2000 character limit.")
 
     await _deduct_credit_or_free(user_id, db)
 
+    t0 = time.monotonic()
+
     async def event_generator():
+        final_result = None
+        cache_hit    = False
+
         async for chunk in engine.stream_pipeline(body.input, user_id, db, redis):
             yield chunk
+            # Parse each SSE chunk to capture the complete event so we can persist it
+            if chunk.startswith("data: "):
+                try:
+                    event = json.loads(chunk[6:])
+                    if event.get("type") == "complete":
+                        from core.strategy_engine import StrategyResult
+                        final_result = StrategyResult(
+                            strategy=event["result"],
+                            metrics=event.get("metrics", {}),
+                            confidence=event.get("confidence", 0.0),
+                            intent=event.get("intent", "general"),
+                            pipeline_steps=event.get("pipeline_steps", []),
+                            cache_hit=event.get("cache_hit", False),
+                        )
+                        cache_hit = event.get("cache_hit", False)
+                except Exception:
+                    pass
+
+        # Persist after streaming is complete (only for non-cache-hits to avoid duplicate writes)
+        if final_result and not cache_hit:
+            try:
+                duration_ms = round((time.monotonic() - t0) * 1000)
+                await _save_analysis(
+                    user_id, body.input, final_result, duration_ms, False, db
+                )
+            except Exception:
+                logger.exception("Failed to save streamed analysis", extra={"user_id": user_id})
 
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
+            "Cache-Control":    "no-cache",
             "X-Accel-Buffering": "no",
-            "Connection": "keep-alive",
+            "Connection":       "keep-alive",
         },
     )

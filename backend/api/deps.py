@@ -56,7 +56,9 @@ def get_strategy_engine() -> StrategyEngine:
 
 # ── JWT auth ──────────────────────────────────────────────────────────
 
-JWT_SECRET = os.environ.get("NEXTAUTH_SECRET", "changeme")
+JWT_SECRET = os.environ.get("NEXTAUTH_SECRET", "")
+if not JWT_SECRET:
+    raise RuntimeError("NEXTAUTH_SECRET environment variable is required.")
 ALGORITHM = "HS256"
 
 

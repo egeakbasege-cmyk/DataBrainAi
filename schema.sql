@@ -38,7 +38,7 @@ CREATE INDEX IF NOT EXISTS analyses_user_id_created
 -- Payment transactions
 CREATE TABLE IF NOT EXISTS transactions (
   id                    uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id               uuid        REFERENCES users(id),
+  user_id               uuid        REFERENCES users(id) ON DELETE SET NULL,
   bundle                integer     NOT NULL CHECK (bundle IN (1, 3, 10)),
   amount_usd            numeric(8,2),
   stripe_payment_intent text        UNIQUE,
@@ -47,13 +47,21 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_at            timestamptz DEFAULT now()
 );
 
+CREATE INDEX IF NOT EXISTS transactions_user_id_idx ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS transactions_created_at_idx ON transactions(created_at DESC);
+
 -- Rate limiting log
 CREATE TABLE IF NOT EXISTS rate_limits (
-  user_id    uuid  REFERENCES users(id),
+  user_id    uuid  REFERENCES users(id) ON DELETE CASCADE,
   window_key text,
   count      integer DEFAULT 1,
   PRIMARY KEY (user_id, window_key)
 );
+
+CREATE INDEX IF NOT EXISTS rate_limits_user_id_idx ON rate_limits(user_id);
+
+-- Analyses: composite index covering user + time (already exists) + intent filtering
+CREATE INDEX IF NOT EXISTS analyses_intent_idx ON analyses(intent);
 
 -- Webhook idempotency
 CREATE TABLE IF NOT EXISTS processed_events (

@@ -21,7 +21,12 @@ from .deps import get_current_user, get_db
 router = APIRouter()
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-JWT_SECRET = os.environ.get("NEXTAUTH_SECRET", "changeme")
+_raw_secret = os.environ.get("NEXTAUTH_SECRET", "")
+if not _raw_secret:
+    import sys
+    print("FATAL: NEXTAUTH_SECRET is not set. Refusing to start.", file=sys.stderr)
+    sys.exit(1)
+JWT_SECRET = _raw_secret
 ALGORITHM  = "HS256"
 TTL_HOURS  = 24
 

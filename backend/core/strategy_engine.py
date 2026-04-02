@@ -187,13 +187,14 @@ class StrategyEngine:
                 result.cache_hit = True
                 yield _sse(
                     {
-                        "type": "complete",
-                        "result": result.strategy,
-                        "metrics": result.metrics,
-                        "confidence": result.confidence,
+                        "type":           "complete",
+                        "result":         result.strategy,
+                        "metrics":        result.metrics,
+                        "confidence":     result.confidence,
+                        "intent":         result.intent,
                         "pipeline_steps": result.pipeline_steps,
-                        "cache_hit": True,
-                        "progress": 100,
+                        "cache_hit":      True,
+                        "progress":       100,
                     }
                 )
                 return
@@ -253,13 +254,14 @@ class StrategyEngine:
 
             yield _sse(
                 {
-                    "type": "complete",
-                    "result": result.strategy,
-                    "metrics": result.metrics,
-                    "confidence": result.confidence,
+                    "type":           "complete",
+                    "result":         result.strategy,
+                    "metrics":        result.metrics,
+                    "confidence":     result.confidence,
+                    "intent":         result.intent,
                     "pipeline_steps": result.pipeline_steps,
-                    "cache_hit": False,
-                    "progress": 100,
+                    "cache_hit":      False,
+                    "progress":       100,
                 }
             )
 
