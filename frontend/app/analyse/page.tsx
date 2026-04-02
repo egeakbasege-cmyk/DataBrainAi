@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useStrategyStream } from '@/lib/useStrategyStream'
-import { ProgressBar } from '@/components/ProgressBar'
-import { StrategyResultView } from '@/components/StrategyResult'
-import { PaywallModal } from '@/components/PaywallModal'
-import { CreditPanel } from '@/components/CreditPanel'
+import { useStrategyStream } from '../lib/useStrategyStream'
+import { ProgressBar } from '../components/ProgressBar'
+import { StrategyResultView } from '../components/StrategyResult'
+import { PaywallModal } from '../components/PaywallModal'
+import { CreditPanel } from '../components/CreditPanel'
 
 const QUICK_PICKS = [
   'How do I get more customers?',

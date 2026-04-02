@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { AuthProvider } from '@/components/AuthProvider'
+import { AuthProvider } from '../components/AuthProvider'
 
 export const metadata: Metadata = {
   title: 'Starcoins Strategy AI — Business Strategy in 60 seconds',

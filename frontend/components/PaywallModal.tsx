@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { useSession } from 'next-auth/react'
-import { createCheckout } from '@/lib/api'
+import { createCheckout } from '../lib/api'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
 
