@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { getAnalyses, getAnalysis } from '../lib/api'
-import { StrategyResultView } from '../components/StrategyResult'
-import { ConfidenceBadge } from '../components/ConfidenceBadge'
+import { getAnalyses, getAnalysis } from '../../lib/api'
+import { StrategyResultView } from '../../components/StrategyResult'
+import { ConfidenceBadge } from '../../components/ConfidenceBadge'
 
 interface AnalysisSummary {
   id: string
