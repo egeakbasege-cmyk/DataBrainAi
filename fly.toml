@@ -1,6 +1,17 @@
 app = "starcoins-api"
 primary_region = "lhr"
 
+# ── Required secrets (set via: fly secrets set KEY=value) ─────────────
+# fly secrets set DATABASE_URL="postgresql+asyncpg://user:pass@host/db"
+# fly secrets set REDIS_URL="redis://..."
+# fly secrets set ANTHROPIC_API_KEY="sk-ant-..."
+# fly secrets set NEXTAUTH_SECRET="$(openssl rand -hex 32)"
+# fly secrets set STRIPE_SECRET_KEY="sk_live_..."
+# fly secrets set STRIPE_WEBHOOK_SECRET="whsec_..."
+# Optional:
+# fly secrets set SENTRY_DSN="https://..."
+# fly secrets set ALLOWED_ORIGIN="https://starcoins.ai"
+
 [build]
   dockerfile = "backend/Dockerfile"
 
@@ -31,3 +42,7 @@ primary_region = "lhr"
 [processes]
   app    = "uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2"
   worker = "celery -A tasks.celery_tasks worker --concurrency=4 --loglevel=info"
+
+[[vm.processes]]
+  name   = "worker"
+  memory = "512mb"

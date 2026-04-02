@@ -1,20 +1,29 @@
 version: '3.9'
 
+# ── Local development stack ───────────────────────────────────────────
+# Copy .env.example → .env and fill in real values before running.
+# Minimum required: ANTHROPIC_API_KEY
+# Run: docker compose up --build
+
 services:
+
+  # ── FastAPI backend ─────────────────────────────────────────────────
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql+asyncpg://starcoins:starcoins@db:5432/starcoins
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-starcoins}:${POSTGRES_PASSWORD:-starcoins}@db:5432/${POSTGRES_DB:-starcoins}
       - REDIS_URL=redis://redis:6379/0
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-secret-32-chars-minimum-here}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY in your .env file}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-secret-change-in-production-32c}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-sk_test_placeholder}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
-      - APP_ENV=development
+      - APP_ENV=${APP_ENV:-development}
+      - SENTRY_DSN=${SENTRY_DSN:-}
     depends_on:
       db:
         condition: service_healthy
@@ -23,63 +32,86 @@ services:
     volumes:
       - ./backend:/app
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
+  # ── Celery worker ────────────────────────────────────────────────────
   worker:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql+asyncpg://starcoins:starcoins@db:5432/starcoins
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-starcoins}:${POSTGRES_PASSWORD:-starcoins}@db:5432/${POSTGRES_DB:-starcoins}
       - REDIS_URL=redis://redis:6379/0
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY in your .env file}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-secret-change-in-production-32c}
     depends_on:
       - redis
       - db
     volumes:
       - ./backend:/app
-    command: celery -A tasks.celery_tasks worker --concurrency=4 --loglevel=info
+    command: celery -A tasks.celery_tasks worker --concurrency=2 --loglevel=info
 
+  # ── PostgreSQL ───────────────────────────────────────────────────────
   db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_USER:     starcoins
-      POSTGRES_PASSWORD: starcoins
-      POSTGRES_DB:       starcoins
+      POSTGRES_USER:     ${POSTGRES_USER:-starcoins}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-starcoins}
+      POSTGRES_DB:       ${POSTGRES_DB:-starcoins}
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U starcoins"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-starcoins}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # ── Redis ────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - "6379:6379"
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
 
+  # ── Next.js frontend ─────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    restart: unless-stopped
     environment:
-      - NEXTAUTH_URL=http://localhost:3000
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-secret-32-chars-minimum-here}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-secret-change-in-production-32c}
       - BACKEND_URL=http://api:8000
       - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-pk_test_placeholder}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
 volumes:
   pg_data:
+  redis_data:
