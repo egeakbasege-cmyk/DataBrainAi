@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator
 
-import anthropic
+import google.generativeai as genai
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,7 +22,7 @@ from .output_validator import OutputValidator
 
 logger = logging.getLogger(__name__)
 
-CLAUDE_MODEL = "claude-sonnet-4-20250514"
+GEMINI_MODEL = "gemini-1.5-flash"
 
 
 @dataclass
@@ -77,8 +77,9 @@ BUSINESS CONTEXT:
 
 
 class StrategyEngine:
-    def __init__(self, anthropic_api_key: str):
-        self._anthropic_key = anthropic_api_key
+    def __init__(self, gemini_api_key: str):
+        genai.configure(api_key=gemini_api_key)
+        self._model = genai.GenerativeModel(GEMINI_MODEL)
 
     # ── Public API ────────────────────────────────────────────────────
 
@@ -308,42 +309,43 @@ return {1, count + 1}
         steps: list,
     ) -> dict:
         try:
-            result = await self._call_claude(ctx, metrics)
-            steps.append({"step": "llm_generation", "model": CLAUDE_MODEL, "status": "success"})
+            result = await self._call_gemini(ctx, metrics)
+            steps.append({"step": "llm_generation", "model": GEMINI_MODEL, "status": "success"})
             return result
         except Exception as e:
-            logger.warning("Claude API failed, using fallback", extra={"error": str(e)})
+            logger.warning("Gemini API failed, using fallback", extra={"error": str(e)})
             steps.append(
                 {"step": "llm_generation", "model": "fallback", "status": "fallback", "error": str(e)}
             )
             return get_fallback(ctx.business_type)
 
-    async def _call_claude(self, ctx: BusinessContext, metrics: dict) -> dict:
-        # Use the async client directly — no thread pool needed.
-        client = anthropic.AsyncAnthropic(api_key=self._anthropic_key)
+    async def _call_gemini(self, ctx: BusinessContext, metrics: dict) -> dict:
+        import asyncio
 
-        system = SYSTEM_PROMPT.format(
+        prompt = SYSTEM_PROMPT.format(
             metrics_json=json.dumps(metrics, indent=2),
             context_json=json.dumps(ctx.model_dump(exclude={"raw_question"}), indent=2),
-        )
+        ) + f"\n\nUSER QUESTION:\n{ctx.raw_question}"
 
-        response = await client.messages.create(
-            model=CLAUDE_MODEL,
-            max_tokens=1200,
-            system=system,
-            messages=[{"role": "user", "content": ctx.raw_question}],
+        # Gemini SDK is sync — run in thread pool to avoid blocking event loop
+        response = await asyncio.to_thread(
+            self._model.generate_content,
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                max_output_tokens=1200,
+                temperature=0.4,
+            ),
         )
-        raw_text = response.content[0].text
+        raw_text = response.text.strip()
 
-        # Strip markdown fences if Claude wraps output
-        text = raw_text.strip()
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+        # Strip markdown fences if model wraps output
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
 
         try:
-            return json.loads(text)
+            return json.loads(raw_text)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Claude returned invalid JSON: {e}") from e
+            raise ValueError(f"Gemini returned invalid JSON: {e}") from e
 
     def _score_confidence(self, ctx: BusinessContext, violations: list) -> float:
         score = ctx.confidence_score

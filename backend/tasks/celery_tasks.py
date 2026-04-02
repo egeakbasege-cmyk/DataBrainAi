@@ -46,7 +46,7 @@ def run_deep_analysis(self, user_id: str, input_text: str, analysis_id: str):
     try:
         from core.strategy_engine import StrategyEngine
 
-        engine = StrategyEngine(os.environ["ANTHROPIC_API_KEY"])
+        engine = StrategyEngine(os.environ["GEMINI_API_KEY"])
 
         # We need an async event loop
         loop = asyncio.new_event_loop()

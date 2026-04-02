@@ -50,7 +50,7 @@ _engine_instance: StrategyEngine | None = None
 def get_strategy_engine() -> StrategyEngine:
     global _engine_instance
     if _engine_instance is None:
-        _engine_instance = StrategyEngine(os.environ["ANTHROPIC_API_KEY"])
+        _engine_instance = StrategyEngine(os.environ["GEMINI_API_KEY"])
     return _engine_instance
 
 

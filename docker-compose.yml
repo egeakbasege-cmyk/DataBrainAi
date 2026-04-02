@@ -2,7 +2,7 @@ version: '3.9'
 
 # ── Local development stack ───────────────────────────────────────────
 # Copy .env.example → .env and fill in real values before running.
-# Minimum required: ANTHROPIC_API_KEY
+# Minimum required: GEMINI_API_KEY
 # Run: docker compose up --build
 
 services:
@@ -18,7 +18,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-starcoins}:${POSTGRES_PASSWORD:-starcoins}@db:5432/${POSTGRES_DB:-starcoins}
       - REDIS_URL=redis://redis:6379/0
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY in your .env file}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:?Set GEMINI_API_KEY in your .env file}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-secret-change-in-production-32c}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-sk_test_placeholder}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
@@ -48,7 +48,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-starcoins}:${POSTGRES_PASSWORD:-starcoins}@db:5432/${POSTGRES_DB:-starcoins}
       - REDIS_URL=redis://redis:6379/0
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY in your .env file}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:?Set GEMINI_API_KEY in your .env file}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-secret-change-in-production-32c}
     depends_on:
       - redis

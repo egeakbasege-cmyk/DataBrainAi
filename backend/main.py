@@ -32,7 +32,7 @@ from api.deps    import get_db, get_redis
 _REQUIRED_ENV = [
     "DATABASE_URL",
     "REDIS_URL",
-    "ANTHROPIC_API_KEY",
+    "GEMINI_API_KEY",
     "NEXTAUTH_SECRET",
 ]
 
