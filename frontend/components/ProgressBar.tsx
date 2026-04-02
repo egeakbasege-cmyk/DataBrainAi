@@ -26,23 +26,10 @@ export function ProgressBar({ progress, currentStep, status }: Props) {
 
   useEffect(() => {
     if (status === 'idle') { setDisplay(0); return }
-
-    const start = display
-    const end   = progress
-    const dur   = 600
-    const t0    = performance.now()
-
-    const animate = (now: number) => {
-      const p = Math.min((now - t0) / dur, 1)
-      // ease out cubic
-      const eased = 1 - Math.pow(1 - p, 3)
-      setDisplay(start + (end - start) * eased)
-      if (p < 1) raf.current = requestAnimationFrame(animate)
-    }
-
-    raf.current = requestAnimationFrame(animate)
+    // Let CSS cubic-bezier handle smoothing; just update target value.
+    setDisplay(progress)
     return () => { if (raf.current) cancelAnimationFrame(raf.current) }
-  }, [progress, status]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [progress, status])
 
   const barColor =
     status === 'complete' ? '#2de8a0' :
@@ -54,8 +41,12 @@ export function ProgressBar({ progress, currentStep, status }: Props) {
       {/* Bar */}
       <div className="h-1.5 bg-border rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full transition-none"
-          style={{ width: `${display}%`, background: barColor }}
+          className="h-full rounded-full"
+          style={{
+            width: `${display}%`,
+            background: barColor,
+            transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
         />
       </div>
 

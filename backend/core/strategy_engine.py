@@ -271,14 +271,32 @@ class StrategyEngine:
 
     # ── Private helpers ───────────────────────────────────────────────
 
+    # Lua sliding-window rate limiter — atomic, race-condition-free.
+    # Uses a sorted set (score = timestamp) to track requests in the last hour.
+    _RATE_LIMIT_LUA = """
+local key    = KEYS[1]
+local limit  = tonumber(ARGV[1])
+local window = tonumber(ARGV[2])
+local now    = tonumber(ARGV[3])
+redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+local count = redis.call('ZCARD', key)
+if count >= limit then
+    return {0, count}
+end
+redis.call('ZADD', key, now, now .. ':' .. math.random(1e9))
+redis.call('EXPIRE', key, window)
+return {1, count + 1}
+"""
+
     async def _check_rate_limit(self, user_id: str, redis: Redis) -> None:
         import time as _time
 
-        bucket = f"rate_limit:{user_id}:{int(_time.time()) // 3600}"
-        count = await redis.incr(bucket)
-        if count == 1:
-            await redis.expire(bucket, 3600)
-        if count > 10:
+        now    = int(_time.time())
+        key    = f"rate_limit:sliding:{user_id}"
+        result = await redis.eval(
+            self._RATE_LIMIT_LUA, 1, key, 10, 3600, now
+        )
+        if not result[0]:
             raise RateLimitError("Rate limit exceeded: 10 analyses per hour.")
 
     async def _call_claude_with_fallback(
