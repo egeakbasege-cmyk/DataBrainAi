@@ -6,9 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 function SignInForm() {
-  const router = useRouter()
-  const params = useSearchParams()
-  const callbackUrl = params.get('callbackUrl') || '/analyse'
+  const router       = useRouter()
+  const params       = useSearchParams()
+  const callbackUrl  = params.get('callbackUrl') || '/analyse'
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
@@ -21,103 +21,100 @@ function SignInForm() {
     setLoading(true)
     const res = await signIn('credentials', { email, password, redirect: false, callbackUrl })
     setLoading(false)
-    if (res?.error) setError('Invalid email or password.')
+    if (res?.error) setError('Incorrect email or password. Please try again.')
     else router.push(callbackUrl)
   }
 
   return (
-    <main className="min-h-screen bg-bg flex items-center justify-center px-6">
+    <main className="min-h-screen flex items-center justify-center px-6 py-12"
+      style={{ background: '#F5F5F7' }}>
 
-      {/* Ambient editorial number */}
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none select-none"
-        aria-hidden="true">
-        <span className="editorial-number" style={{ opacity: 0.025 }}>∅</span>
-      </div>
+      <div className="w-full max-w-sm animate-fade-up">
 
-      <div className="relative z-10 w-full max-w-sm animate-fade-up">
-
-        {/* Back link + heading */}
-        <div className="mb-10">
+        {/* Logo */}
+        <div className="mb-10 text-center">
           <Link href="/"
-            className="font-mono text-2xs text-muted uppercase tracking-widest-2 hover:text-ink transition-colors">
-            ← Starcoins
+            className="font-heading font-bold text-xl text-ink hover:opacity-70 transition-opacity">
+            Starcoins
           </Link>
-          <h1 className="font-heading text-ink mt-6 mb-1"
-            style={{ fontSize: '2.25rem', lineHeight: '1.1' }}>
+        </div>
+
+        {/* Card */}
+        <div className="bg-card rounded-card border border-border p-8"
+          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+
+          <h1 className="font-heading font-bold text-ink text-2xl mb-1">
             Welcome back.
           </h1>
-          <p className="font-mono text-2xs text-muted tracking-wider">
-            Sign in to access your strategies
+          <p className="font-sans text-sm text-muted mb-8">
+            Sign in to access your analyses.
           </p>
-        </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          <div className="space-y-1.5">
-            <label className="block font-mono text-2xs text-muted uppercase tracking-widest"
-              htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-card text-ink text-sm"
-              placeholder="you@example.com"
-              autoComplete="email"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block font-mono text-2xs text-muted uppercase tracking-widest"
-              htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-card text-ink text-sm"
-              placeholder="••••••••"
-              autoComplete="current-password"
-            />
-          </div>
-
-          {error && (
-            <div className="font-mono text-xs px-4 py-3 rounded-card"
-              style={{
-                background: 'rgba(201,79,79,0.08)',
-                border: '1px solid rgba(201,79,79,0.25)',
-                color: '#c94f4f',
-              }}
-              role="alert"
-              aria-live="polite">
-              {error}
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <div className="space-y-1.5">
+              <label htmlFor="email"
+                className="block font-sans text-xs font-medium text-dim uppercase tracking-widest-2">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="w-full px-4 py-3 text-sm"
+                placeholder="you@example.com"
+              />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full font-mono text-sm font-medium py-3.5 rounded-pill transition-all disabled:opacity-50 glow-green"
-            style={{ background: '#1ed48a', color: '#07080e' }}>
-            {loading ? 'Signing in…' : 'Sign in →'}
-          </button>
-        </form>
+            <div className="space-y-1.5">
+              <label htmlFor="password"
+                className="block font-sans text-xs font-medium text-dim uppercase tracking-widest-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="w-full px-4 py-3 text-sm"
+                placeholder="Your password"
+              />
+            </div>
 
-        {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-border text-center">
-          <p className="font-mono text-2xs text-muted">
-            No account?{' '}
-            <Link href="/auth/signup" className="text-green hover:underline">
-              Create one free
-            </Link>
-          </p>
+            {error && (
+              <div className="font-sans text-xs px-4 py-3 rounded-card"
+                style={{
+                  background: 'rgba(239,68,68,0.06)',
+                  border:     '1px solid rgba(239,68,68,0.2)',
+                  color:      '#DC2626',
+                }}
+                role="alert"
+                aria-live="polite">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full font-heading font-bold text-ink text-sm py-3.5 rounded-pill transition-all disabled:opacity-50 glow-yellow mt-2"
+              style={{ background: '#FACC15' }}>
+              {loading ? 'Signing in…' : 'Sign in →'}
+            </button>
+          </form>
         </div>
+
+        {/* Footer links */}
+        <p className="text-center font-sans text-xs text-muted mt-6">
+          Don't have an account?{' '}
+          <Link href="/auth/signup" className="text-ink font-semibold hover:underline">
+            Create one free
+          </Link>
+        </p>
       </div>
     </main>
   )
@@ -125,7 +122,7 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-bg" />}>
+    <Suspense fallback={<div className="min-h-screen" style={{ background: '#F5F5F7' }} />}>
       <SignInForm />
     </Suspense>
   )

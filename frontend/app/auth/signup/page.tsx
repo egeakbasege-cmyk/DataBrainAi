@@ -36,7 +36,6 @@ export default function SignUpPage() {
         return
       }
 
-      // Auto sign-in after registration
       const result = await signIn('credentials', { email, password, redirect: false })
       if (result?.error) {
         setError('Account created — please sign in.')
@@ -50,118 +49,132 @@ export default function SignUpPage() {
     }
   }
 
+  const strength = password.length >= 12 ? 4
+    : password.length >= 10 ? 3
+    : password.length >= 8  ? 2
+    : password.length > 0   ? 1
+    : 0
+
   return (
-    <main className="min-h-screen bg-bg flex items-center justify-center px-6">
+    <main className="min-h-screen flex items-center justify-center px-6 py-12"
+      style={{ background: '#F5F5F7' }}>
 
-      {/* Ambient glyph */}
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none select-none"
-        aria-hidden="true">
-        <span className="editorial-number" style={{ opacity: 0.025 }}>✦</span>
-      </div>
+      <div className="w-full max-w-sm animate-fade-up">
 
-      <div className="relative z-10 w-full max-w-sm animate-fade-up">
-
-        {/* Header */}
-        <div className="mb-10">
+        {/* Logo */}
+        <div className="mb-10 text-center">
           <Link href="/"
-            className="font-mono text-2xs text-muted uppercase tracking-widest-2 hover:text-ink transition-colors">
-            ← Starcoins
+            className="font-heading font-bold text-xl text-ink hover:opacity-70 transition-opacity">
+            Starcoins
           </Link>
-          <h1 className="font-heading text-ink mt-6 mb-1"
-            style={{ fontSize: '2.25rem', lineHeight: '1.1' }}>
-            Get started.
-          </h1>
-          <div className="flex items-center gap-2 mt-2">
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block', flexShrink: 0 }} />
-            <p className="font-mono text-2xs text-green uppercase tracking-widest">
-              First analysis completely free
-            </p>
-          </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          <div className="space-y-1.5">
-            <label htmlFor="email"
-              className="block font-mono text-2xs text-muted uppercase tracking-widest">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className="w-full px-4 py-3 rounded-card text-ink text-sm"
-              placeholder="you@example.com"
-            />
+        {/* Card */}
+        <div className="bg-card rounded-card border border-border p-8"
+          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+
+          {/* Free badge */}
+          <div className="flex items-center gap-2 mb-5">
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FACC15', display: 'inline-block', boxShadow: '0 0 6px rgba(250,204,21,0.5)', flexShrink: 0 }} />
+            <span className="font-sans text-xs font-medium uppercase tracking-widest-2"
+              style={{ color: '#92400E' }}>
+              First analysis completely free
+            </span>
           </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="password"
-              className="block font-mono text-2xs text-muted uppercase tracking-widest">
-              Password
-              <span className="ml-2 normal-case tracking-normal opacity-60">(8+ characters)</span>
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="w-full px-4 py-3 rounded-card text-ink text-sm"
-              placeholder="At least 8 characters"
-            />
-            {/* Password strength indicator */}
-            {password.length > 0 && (
-              <div className="flex gap-1 mt-1" aria-label="Password strength">
-                {[1, 2, 3, 4].map((lvl) => {
-                  const strength = password.length >= 12 ? 4 : password.length >= 10 ? 3 : password.length >= 8 ? 2 : 1
-                  return (
-                    <div key={lvl} className="h-0.5 flex-1 rounded-full transition-all duration-300"
-                      style={{ background: lvl <= strength
-                        ? strength >= 3 ? 'var(--green)' : strength === 2 ? 'var(--gold)' : 'var(--warning)'
-                        : 'var(--border)' }} />
-                  )
-                })}
+          <h1 className="font-heading font-bold text-ink text-2xl mb-1">
+            Get started.
+          </h1>
+          <p className="font-sans text-sm text-muted mb-8">
+            Create your free account in seconds.
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <div className="space-y-1.5">
+              <label htmlFor="email"
+                className="block font-sans text-xs font-medium text-dim uppercase tracking-widest-2">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="w-full px-4 py-3 text-sm"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label htmlFor="password"
+                  className="block font-sans text-xs font-medium text-dim uppercase tracking-widest-2">
+                  Password
+                </label>
+                <span className="font-sans text-xs text-muted">8+ characters</span>
+              </div>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                autoComplete="new-password"
+                className="w-full px-4 py-3 text-sm"
+                placeholder="At least 8 characters"
+              />
+              {/* Strength indicator */}
+              {password.length > 0 && (
+                <div className="flex gap-1 mt-1.5" aria-label="Password strength">
+                  {[1, 2, 3, 4].map((lvl) => (
+                    <div key={lvl} className="h-1 flex-1 rounded-full transition-all duration-300"
+                      style={{
+                        background: lvl <= strength
+                          ? strength >= 3 ? '#16A34A'
+                          : strength === 2 ? '#FACC15'
+                          : '#F59E0B'
+                          : '#E5E7EB',
+                      }} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <div className="font-sans text-xs px-4 py-3 rounded-card"
+                style={{
+                  background: 'rgba(239,68,68,0.06)',
+                  border:     '1px solid rgba(239,68,68,0.2)',
+                  color:      '#DC2626',
+                }}
+                role="alert"
+                aria-live="polite">
+                {error}
               </div>
             )}
-          </div>
 
-          {error && (
-            <div className="font-mono text-xs px-4 py-3 rounded-card"
-              style={{
-                background: 'rgba(201,79,79,0.08)',
-                border:     '1px solid rgba(201,79,79,0.25)',
-                color:      'var(--danger)',
-              }}
-              role="alert"
-              aria-live="polite">
-              {error}
-            </div>
-          )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full font-heading font-bold text-ink text-sm py-3.5 rounded-pill transition-all disabled:opacity-50 glow-yellow mt-2"
+              style={{ background: '#FACC15' }}>
+              {loading ? 'Creating account…' : 'Create account — free →'}
+            </button>
+          </form>
+        </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full font-mono text-sm font-medium py-3.5 rounded-pill transition-all disabled:opacity-50 glow-green"
-            style={{ background: 'var(--green)', color: 'var(--bg)' }}>
-            {loading ? 'Creating account…' : 'Create account — free →'}
-          </button>
-        </form>
-
-        {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-border space-y-3 text-center">
-          <p className="font-mono text-2xs text-muted">
+        {/* Footer links */}
+        <div className="text-center mt-6 space-y-2">
+          <p className="font-sans text-xs text-muted">
             Already have an account?{' '}
-            <Link href="/auth/signin" className="text-accent hover:underline">
+            <Link href="/auth/signin" className="text-ink font-medium hover:underline">
               Sign in
             </Link>
           </p>
-          <p className="font-mono text-2xs text-muted opacity-60">
+          <p className="font-sans text-xs text-muted opacity-60">
             By creating an account you agree to our terms of service.
           </p>
         </div>
