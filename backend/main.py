@@ -85,7 +85,9 @@ async def _init_db() -> None:
     engine = create_async_engine(db_url)
     try:
         async with engine.begin() as conn:
-            await conn.exec_driver_sql(schema_sql)
+            # asyncpg requires statements executed one at a time
+            raw = await conn.get_raw_connection()
+            await raw.driver_connection.execute(schema_sql)
         logger.info("Database schema applied successfully")
     except Exception as e:
         logger.error(f"DB init error: {e}")
