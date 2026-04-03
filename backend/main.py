@@ -72,7 +72,7 @@ async def _init_db() -> None:
     import pathlib
     from sqlalchemy.ext.asyncio import create_async_engine
 
-    db_url = os.environ["DATABASE_URL"].replace(
+    db_url = os.environ["DATABASE_URL"].strip().replace(
         "postgresql://", "postgresql+asyncpg://", 1
     ).replace("postgres://", "postgresql+asyncpg://", 1)
 
