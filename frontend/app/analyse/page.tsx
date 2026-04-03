@@ -9,6 +9,8 @@ import { StrategyResultView } from '../../components/StrategyResult'
 import { PaywallModal } from '../../components/PaywallModal'
 import { CreditPanel } from '../../components/CreditPanel'
 import { Dock } from '../../components/Dock'
+import FeedbackForm from '../../components/FeedbackForm'
+import { AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
 const QUICK_PICKS = [
@@ -28,10 +30,11 @@ export default function AnalysePage() {
   const router       = useRouter()
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
 
-  const [input,       setInput]       = useState('')
-  const [showPaywall, setShowPaywall] = useState(false)
-  const [credits,     setCredits]     = useState<number | null>(null)
-  const [freeUsed,    setFreeUsed]    = useState(false)
+  const [input,        setInput]        = useState('')
+  const [showPaywall,  setShowPaywall]  = useState(false)
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [credits,      setCredits]      = useState<number | null>(null)
+  const [freeUsed,     setFreeUsed]     = useState(false)
 
   const { analyse, reset, progress, currentStep, result, confidence, error, status } =
     useStrategyStream()
@@ -302,6 +305,35 @@ export default function AnalysePage() {
           onSuccess={handleCreditsAdded}
         />
       )}
+
+      {/* ── Feedback button + modal ──────────────────── */}
+      <button
+        onClick={() => setShowFeedback(true)}
+        className="fixed right-5 bottom-24 z-40 font-sans text-xs font-medium px-3.5 py-2 rounded-pill transition-all no-print"
+        style={{
+          background:           'rgba(255,255,255,0.6)',
+          backdropFilter:       'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border:               '1px solid rgba(229,231,235,0.9)',
+          boxShadow:            '0 2px 12px rgba(0,0,0,0.06)',
+          color:                '#64748B',
+        }}
+        aria-label="Give feedback"
+      >
+        Feedback
+      </button>
+
+      <AnimatePresence>
+        {showFeedback && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            style={{ background: 'rgba(15,23,42,0.25)', backdropFilter: 'blur(6px)' }}
+            onClick={(e) => { if (e.target === e.currentTarget) setShowFeedback(false) }}
+          >
+            <FeedbackForm onClose={() => setShowFeedback(false)} />
+          </div>
+        )}
+      </AnimatePresence>
 
       <Dock />
     </main>

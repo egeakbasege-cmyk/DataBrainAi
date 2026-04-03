@@ -8,19 +8,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Core Airy Chrome tokens
         bg:      '#FFFFFF',
-        surface: '#F5F5F7',
+        surface: '#FDFDFD',
         card:    '#FFFFFF',
         border:  '#E5E7EB',
-        ink:     '#111827',
-        dim:     '#6B7280',
-        muted:   '#9CA3AF',
-        chrome:  '#D1D5DB',
+        ink:     '#1E293B',
+        dim:     '#64748B',
+        muted:   '#94A3B8',
+        chrome:  '#CBD5E1',
         green:   '#16A34A',
         accent:  '#FACC15',
         gold:    '#FACC15',
         warning: '#F59E0B',
         danger:  '#EF4444',
+        // Named Airy Chrome aliases
+        'airy-white':     '#FFFFFF',
+        'airy-pearl':     '#FDFDFD',
+        'airy-silver':    '#E5E7EB',
+        'kinetic-yellow': '#FACC15',
+        'text-main':      '#334155',
       },
       fontFamily: {
         heading: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
@@ -48,6 +55,7 @@ module.exports = {
         'md':      '0 4px 16px rgba(0,0,0,0.08)',
         'lg':      '0 8px 32px rgba(0,0,0,0.10)',
         'dock':    '0 8px 32px rgba(0,0,0,0.10), 0 0 0 1px rgba(229,231,235,0.8)',
+        'glass':   '0 4px 30px rgba(0,0,0,0.03)',
         'yellow':  '0 0 20px rgba(250,204,21,0.35)',
         'accent':  '0 0 20px rgba(250,204,21,0.3)',
         'green':   '0 0 20px rgba(22,163,74,0.2)',
