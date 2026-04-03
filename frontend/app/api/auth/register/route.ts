@@ -10,16 +10,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid email or password.' }, { status: 400 })
   }
 
-  const res = await fetch(`${BACKEND}/api/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  })
+  try {
+    const res = await fetch(`${BACKEND}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
 
-  const data = await res.json()
-  if (!res.ok) {
-    return NextResponse.json({ error: data.detail || 'Registration failed.' }, { status: res.status })
+    const data = await res.json()
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: data.detail || 'Registration failed.' },
+        { status: res.status }
+      )
+    }
+
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('Register fetch error:', err, 'BACKEND_URL:', BACKEND)
+    return NextResponse.json(
+      { error: 'Could not reach server. Please try again.' },
+      { status: 502 }
+    )
   }
-
-  return NextResponse.json({ ok: true })
 }
