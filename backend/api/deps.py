@@ -16,8 +16,15 @@ from core.strategy_engine import StrategyEngine
 
 # ── Database ──────────────────────────────────────────────────────────
 
+# Railway provides postgresql:// but asyncpg needs postgresql+asyncpg://
+_db_url = os.environ["DATABASE_URL"].replace(
+    "postgresql://", "postgresql+asyncpg://", 1
+).replace(
+    "postgres://", "postgresql+asyncpg://", 1
+)
+
 _engine = create_async_engine(
-    os.environ["DATABASE_URL"],
+    _db_url,
     pool_size=10,
     max_overflow=20,
     echo=False,
