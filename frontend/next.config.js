@@ -57,9 +57,8 @@ const nextConfig = {
   poweredByHeader: false,
   swcMinify:       true,
 
-  // standalone output bundles everything needed for Docker / Fly.io
-  // The Dockerfile copies .next/standalone → server.js entrypoint
-  output: 'standalone',
+  // standalone output is only for Docker / Fly.io deployments
+  // output: 'standalone',
 
   images: {
     formats: ['image/avif', 'image/webp'],
