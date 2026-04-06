@@ -39,17 +39,17 @@ export function MetricsPanel({ metrics }: Props) {
   const category = metrics.benchmark_category?.replace(/_/g, ' ')
 
   return (
-    <div className="rounded-card overflow-hidden"
-      style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
+    <div className="rounded-card overflow-hidden border border-border bg-card"
+      style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-        <span className="font-mono text-2xs text-muted uppercase tracking-widest">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-border bg-surface">
+        <span className="font-sans text-xs font-medium text-muted uppercase tracking-widest-2">
           Benchmark metrics
         </span>
         {category && (
-          <span className="font-mono text-2xs capitalize"
-            style={{ color: '#18b8e0' }}>
+          <span className="font-sans text-xs font-medium capitalize"
+            style={{ color: '#A16207' }}>
             {category}
           </span>
         )}
@@ -57,13 +57,13 @@ export function MetricsPanel({ metrics }: Props) {
 
       {/* Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 divide-x divide-y divide-border">
-        {entries.map(([key, value], i) => (
-          <div key={key} className="px-5 py-4 space-y-1">
-            <div className="font-mono text-2xs text-muted truncate">
+        {entries.map(([key, value]) => (
+          <div key={key} className="px-5 py-4 space-y-1 hover:bg-surface transition-colors">
+            <div className="font-sans text-xs text-muted truncate font-medium">
               {formatKey(key)}
             </div>
-            <div className="font-heading text-ink tabular-nums"
-              style={{ fontSize: '1.35rem', letterSpacing: '-0.01em' }}>
+            <div className="font-heading font-bold text-ink tabular-nums"
+              style={{ fontSize: '1.3rem', letterSpacing: '-0.02em' }}>
               {formatValue(key, value)}
             </div>
           </div>
@@ -71,8 +71,8 @@ export function MetricsPanel({ metrics }: Props) {
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-3 border-t border-border">
-        <p className="font-mono text-2xs text-muted">
+      <div className="px-5 py-3 border-t border-border bg-surface">
+        <p className="font-sans text-xs text-muted">
           Computed from industry benchmarks · not estimated by AI
         </p>
       </div>

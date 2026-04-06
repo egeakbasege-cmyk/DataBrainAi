@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from 'next'
+import dynamic from 'next/dynamic'
 import './globals.css'
 import { AuthProvider } from '../components/AuthProvider'
+
+// Dynamically import Background3D — WebGL is browser-only, must never SSR
+const Background3D = dynamic(
+  () => import('../components/Background3D'),
+  { ssr: false }
+)
 
 export const metadata: Metadata = {
   title: {
@@ -28,20 +35,22 @@ export const metadata: Metadata = {
     title:       'Starcoins Strategy AI',
     description: 'Business strategy in 60 seconds. Real numbers, no guesswork.',
   },
-  robots:  { index: true, follow: true },
+  robots: { index: true, follow: true },
 }
 
 export const viewport: Viewport = {
-  width:               'device-width',
-  initialScale:        1,
-  themeColor:          '#07080e',
-  colorScheme:         'dark',
+  width:        'device-width',
+  initialScale: 1,
+  themeColor:   '#FFFFFF',
+  colorScheme:  'light',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-bg text-ink font-sans antialiased">
+      <body className="min-h-screen bg-airy-pearl text-dim font-sans antialiased">
+        {/* Liquid chrome 3D layer — sits behind all content, z-index: -1 */}
+        <Background3D />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

@@ -67,12 +67,41 @@ if sentry_dsn:
 
 # ── App lifecycle ─────────────────────────────────────────────────────
 
+async def _init_db() -> None:
+    """Run schema.sql on startup if tables don't exist yet."""
+    import pathlib
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    db_url = os.environ["DATABASE_URL"].strip().replace(
+        "postgresql://", "postgresql+asyncpg://", 1
+    ).replace("postgres://", "postgresql+asyncpg://", 1)
+
+    schema_path = pathlib.Path(__file__).parent / "schema.sql"
+    if not schema_path.exists():
+        logger.warning("schema.sql not found, skipping DB init")
+        return
+
+    schema_sql = schema_path.read_text()
+    engine = create_async_engine(db_url)
+    try:
+        async with engine.begin() as conn:
+            # asyncpg requires statements executed one at a time
+            raw = await conn.get_raw_connection()
+            await raw.driver_connection.execute(schema_sql)
+        logger.info("Database schema applied successfully")
+    except Exception as e:
+        logger.error(f"DB init error: {e}")
+    finally:
+        await engine.dispose()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(
         "Starcoins API starting",
         extra={"env": os.environ.get("APP_ENV", "production"), "version": "1.0.0"},
     )
+    await _init_db()
     yield
     logger.info("Starcoins API shutting down")
 

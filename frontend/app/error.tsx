@@ -15,31 +15,37 @@ export default function ErrorPage({
   }, [error])
 
   return (
-    <main className="min-h-screen bg-bg flex items-center justify-center px-6">
+    <main className="min-h-screen flex items-center justify-center px-6 py-12"
+      style={{ background: '#F5F5F7' }}>
       <div className="text-center max-w-sm animate-fade-up space-y-6">
-        <div className="editorial-number" style={{ opacity: 0.04, fontSize: '10rem' }}>!</div>
-        <div className="-mt-16 space-y-3">
-          <p className="font-mono text-2xs text-muted uppercase tracking-widest-2">Error</p>
-          <h1 className="font-heading text-ink" style={{ fontSize: '2rem', lineHeight: 1.1 }}>
+
+        <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center"
+          style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+          <span className="font-heading font-bold text-2xl" style={{ color: '#DC2626' }}>!</span>
+        </div>
+
+        <div className="space-y-2">
+          <p className="font-sans text-xs font-medium text-muted uppercase tracking-widest-2">Error</p>
+          <h1 className="font-heading font-bold text-ink text-2xl">
             Something went wrong.
           </h1>
-          <p className="font-sans text-dim text-sm" style={{ fontWeight: 300 }}>
+          <p className="font-sans text-sm text-dim">
             An unexpected error occurred. We've logged it automatically.
           </p>
           {error.digest && (
-            <p className="font-mono text-2xs text-muted">ref: {error.digest}</p>
+            <p className="font-sans text-xs text-muted">ref: {error.digest}</p>
           )}
         </div>
+
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={reset}
-            className="font-mono text-sm px-6 py-3 rounded-pill transition-all"
-            style={{ background: 'var(--green)', color: 'var(--bg)' }}
-          >
+            className="font-heading font-bold text-ink text-sm px-6 py-3 rounded-pill transition-all glow-yellow"
+            style={{ background: '#FACC15' }}>
             Try again
           </button>
           <Link href="/"
-            className="font-mono text-sm px-6 py-3 rounded-pill border border-border text-dim hover:text-ink transition-all">
+            className="font-sans text-sm px-6 py-3 rounded-pill border border-border bg-card text-dim hover:text-ink transition-all">
             Go home
           </Link>
         </div>
