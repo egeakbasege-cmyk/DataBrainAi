@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ConfidenceBadge } from './ConfidenceBadge'
 import { MetricsPanel } from './MetricsPanel'
+import { MetricsChart } from './MetricsChart'
 
 interface Action {
   title:         string
@@ -75,6 +76,7 @@ export function StrategyResultView({ result, metrics, confidence, pipelineSteps 
 
       {/* ── Metrics ───────────────────────────────── */}
       <MetricsPanel metrics={metrics} />
+      <MetricsChart metrics={metrics} />
 
       {/* ── 3-Step strategy ───────────────────────── */}
       <div className="space-y-2">

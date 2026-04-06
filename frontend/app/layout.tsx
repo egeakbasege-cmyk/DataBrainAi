@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import dynamic from 'next/dynamic'
 import './globals.css'
 import { AuthProvider } from '../components/AuthProvider'
+import { AppModeProvider } from '../context/AppModeContext'
 
 // Dynamically import Background3D — WebGL is browser-only, must never SSR
 const Background3D = dynamic(
@@ -51,7 +52,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-airy-pearl text-dim font-sans antialiased">
         {/* Liquid chrome 3D layer — sits behind all content, z-index: -1 */}
         <Background3D />
-        <AuthProvider>{children}</AuthProvider>
+        <AppModeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </AppModeProvider>
       </body>
     </html>
   )
