@@ -23,6 +23,8 @@ export default function SignUpPage() {
 
     setLoading(true)
     try {
+      // /api/auth/register is a beforeFiles rewrite → goes straight to
+      // the Railway backend, bypassing NextAuth's [...nextauth] catch-all.
       const res = await fetch('/api/auth/register', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,7 +33,8 @@ export default function SignUpPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || 'Registration failed. Please try again.')
+        // Backend returns { detail: "..." }; old proxy returned { error: "..." }
+        setError(data.detail || data.error || 'Registration failed. Please try again.')
         setLoading(false)
         return
       }
