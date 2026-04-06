@@ -21,7 +21,15 @@ function SignInForm() {
     setLoading(true)
     const res = await signIn('credentials', { email, password, redirect: false, callbackUrl })
     setLoading(false)
-    if (res?.error) setError('Incorrect email or password. Please try again.')
+    if (res?.error) {
+      // NextAuth passes the thrown Error message through res.error when using
+      // error: 'CredentialsSignin' the raw message isn't exposed, but custom
+      // throws from authorize() come through as the error string itself.
+      const msg = res.error === 'CredentialsSignin'
+        ? 'Incorrect email or password. Please try again.'
+        : res.error
+      setError(msg)
+    }
     else router.push(callbackUrl)
   }
 

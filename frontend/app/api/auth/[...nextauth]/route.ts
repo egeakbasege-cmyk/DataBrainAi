@@ -2,7 +2,11 @@ import NextAuth from 'next-auth'
 import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:8000'
+const BACKEND = process.env.BACKEND_URL
+
+if (!BACKEND) {
+  console.error('[nextauth] BACKEND_URL is not set — login will fail.')
+}
 
 const authOptions: NextAuthOptions = {
   providers: [
@@ -15,29 +19,48 @@ const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
+        if (!BACKEND) {
+          console.error('[nextauth] authorize: BACKEND_URL not configured')
+          throw new Error('Server configuration error. Contact support.')
+        }
+
+        let res: Response
         try {
-          const res = await fetch(`${BACKEND}/api/auth/login`, {
+          res = await fetch(`${BACKEND}/api/auth/login`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({
               email:    credentials.email,
               password: credentials.password,
             }),
-            signal: AbortSignal.timeout(10_000), // 10s timeout
+            signal: AbortSignal.timeout(10_000),
           })
+        } catch (err: any) {
+          const isNetwork = err?.code === 'ECONNREFUSED' ||
+            err?.name === 'TimeoutError' ||
+            err?.cause?.code === 'ECONNREFUSED'
+          console.error('[nextauth] authorize: backend unreachable:', err?.message)
+          throw new Error(
+            isNetwork
+              ? 'Cannot reach server. Please try again in a moment.'
+              : 'Login failed. Please try again.'
+          )
+        }
 
-          if (!res.ok) return null
+        if (res.status === 401) return null   // wrong password — let NextAuth show standard error
 
-          const data = await res.json()
-          return {
-            id:          data.user_id,
-            email:       data.email,
-            accessToken: data.access_token,
-            credits:     data.credits,
-            freeUsed:    data.free_used,
-          }
-        } catch {
-          return null
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          throw new Error(data.detail || data.error || 'Login failed. Please try again.')
+        }
+
+        const data = await res.json()
+        return {
+          id:          data.user_id,
+          email:       data.email,
+          accessToken: data.access_token,
+          credits:     data.credits,
+          freeUsed:    data.free_used,
         }
       },
     }),
@@ -63,6 +86,7 @@ const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/auth/signin',
+    error:  '/auth/signin',
   },
   session: { strategy: 'jwt', maxAge: 24 * 60 * 60 },
   secret: process.env.NEXTAUTH_SECRET,

@@ -23,6 +23,8 @@ export default function SignUpPage() {
 
     setLoading(true)
     try {
+      // /api/register is an explicit Next.js API route that proxies to the
+      // Railway backend server-side — completely separate from NextAuth routes.
       const res = await fetch('/api/register', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },

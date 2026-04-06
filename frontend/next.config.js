@@ -5,8 +5,9 @@ const nextConfig = {
   reactStrictMode: true,
 
   // ── API proxy ────────────────────────────────────────────────────
-  // /api/auth/** is handled by NextAuth locally — must NOT be proxied.
-  // All other /api/** paths are forwarded to the FastAPI backend.
+  // /api/auth/** → NextAuth (local Next.js routes — never proxied)
+  // /api/register → explicit Next.js API route (app/api/register/route.ts)
+  // Everything else → FastAPI backend on Railway
   async rewrites() {
     return [
       { source: '/api/analyse/:path*',  destination: `${BACKEND}/api/analyse/:path*`  },
