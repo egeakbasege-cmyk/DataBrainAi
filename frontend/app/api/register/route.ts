@@ -1,35 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:8000'
+const BACKEND = process.env.BACKEND_URL
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { email, password } = body
+  // Fail fast with a clear message if BACKEND_URL isn't configured
+  if (!BACKEND) {
+    console.error('[register] BACKEND_URL env variable is not set.')
+    return NextResponse.json(
+      { error: 'Server configuration error. Contact support.' },
+      { status: 503 }
+    )
+  }
 
+  let body: { email?: string; password?: string }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 })
+  }
+
+  const { email, password } = body
   if (!email || !password || password.length < 8) {
     return NextResponse.json({ error: 'Invalid email or password.' }, { status: 400 })
   }
 
   try {
     const res = await fetch(`${BACKEND}/api/auth/register`, {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body:    JSON.stringify({ email, password }),
+      signal:  AbortSignal.timeout(10_000),
     })
 
     const data = await res.json()
+
     if (!res.ok) {
       return NextResponse.json(
-        { error: data.detail || 'Registration failed.' },
+        { error: data.detail || data.error || 'Registration failed.' },
         { status: res.status }
       )
     }
 
     return NextResponse.json({ ok: true })
-  } catch (err) {
-    console.error('Register fetch error:', err, 'BACKEND_URL:', BACKEND)
+  } catch (err: any) {
+    // ECONNREFUSED or timeout → backend unreachable
+    const isNetworkError = err?.code === 'ECONNREFUSED' ||
+      err?.name === 'TimeoutError' ||
+      err?.cause?.code === 'ECONNREFUSED'
+
+    if (isNetworkError) {
+      console.error('[register] Cannot reach backend:', BACKEND, err?.message)
+      return NextResponse.json(
+        { error: 'Cannot reach server. Please try again in a moment.' },
+        { status: 503 }
+      )
+    }
+
+    console.error('[register] Unexpected error:', err)
     return NextResponse.json(
-      { error: 'Could not reach server. Please try again.' },
+      { error: 'Unexpected error. Please try again.' },
       { status: 502 }
     )
   }

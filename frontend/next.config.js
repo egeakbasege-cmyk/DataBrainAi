@@ -5,25 +5,16 @@ const nextConfig = {
   reactStrictMode: true,
 
   // ── API proxy ────────────────────────────────────────────────────
-  // /api/auth/** is handled by NextAuth locally — must NOT be proxied.
-  // All other /api/** paths are forwarded to the FastAPI backend.
+  // /api/auth/** → NextAuth (local Next.js routes — never proxied)
+  // /api/register → explicit Next.js API route (app/api/register/route.ts)
+  // Everything else → FastAPI backend on Railway
   async rewrites() {
-    return {
-      // beforeFiles rewrites run BEFORE Next.js routes — this means
-      // /api/auth/register is proxied to the backend before NextAuth's
-      // [...nextauth] catch-all ever sees the request.
-      beforeFiles: [
-        { source: '/api/auth/register', destination: `${BACKEND}/api/auth/register` },
-        { source: '/api/auth/login',    destination: `${BACKEND}/api/auth/login`    },
-      ],
-      // afterFiles rewrites run after routes but before 404
-      afterFiles: [
-        { source: '/api/analyse/:path*',  destination: `${BACKEND}/api/analyse/:path*`  },
-        { source: '/api/analyses/:path*', destination: `${BACKEND}/api/analyses/:path*` },
-        { source: '/api/credits/:path*',  destination: `${BACKEND}/api/credits/:path*`  },
-        { source: '/api/health',          destination: `${BACKEND}/api/health`           },
-      ],
-    }
+    return [
+      { source: '/api/analyse/:path*',  destination: `${BACKEND}/api/analyse/:path*`  },
+      { source: '/api/analyses/:path*', destination: `${BACKEND}/api/analyses/:path*` },
+      { source: '/api/credits/:path*',  destination: `${BACKEND}/api/credits/:path*`  },
+      { source: '/api/health',          destination: `${BACKEND}/api/health`           },
+    ]
   },
 
   // ── Security headers ─────────────────────────────────────────────
