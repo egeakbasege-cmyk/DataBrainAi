@@ -35,13 +35,19 @@ export async function POST(req: NextRequest) {
     const data = await res.json()
 
     if (!res.ok) {
+      console.error('[register] backend error status:', res.status, 'body:', JSON.stringify(data))
       const detail = data.detail
       const errMsg =
-        typeof detail === 'string'   ? detail :
-        Array.isArray(detail)        ? (detail[0]?.msg || 'Registration failed.') :
-        detail?.message              ? detail.message :
-        typeof data.error === 'string' ? data.error :
-        'Registration failed.'
+        typeof detail === 'string'        ? detail :
+        Array.isArray(detail)             ? (detail[0]?.msg || detail[0]?.message || 'Validation failed.') :
+        detail?.message                   ? String(detail.message) :
+        detail?.msg                       ? String(detail.msg) :
+        typeof data.message === 'string'  ? data.message :
+        typeof data.error === 'string'    ? data.error :
+        res.status === 409               ? 'An account with this email already exists.' :
+        res.status === 400               ? 'Invalid email or password format.' :
+        res.status === 422               ? 'Invalid request. Check your email and password.' :
+        'Registration failed. Please try again.'
       return NextResponse.json({ error: errMsg }, { status: res.status })
     }
 
