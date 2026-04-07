@@ -51,7 +51,14 @@ const authOptions: NextAuthOptions = {
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
-          throw new Error(data.detail || data.error || 'Login failed. Please try again.')
+          const detail = data.detail
+          const errMsg =
+            typeof detail === 'string'     ? detail :
+            Array.isArray(detail)          ? (detail[0]?.msg || 'Login failed. Please try again.') :
+            detail?.message                ? detail.message :
+            typeof data.error === 'string' ? data.error :
+            'Login failed. Please try again.'
+          throw new Error(errMsg)
         }
 
         const data = await res.json()

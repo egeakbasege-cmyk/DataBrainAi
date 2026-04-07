@@ -33,7 +33,8 @@ export default function SignUpPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || 'Registration failed. Please try again.')
+        const rawErr = data.error
+      setError(typeof rawErr === 'string' ? rawErr : 'Registration failed. Please try again.')
         setLoading(false)
         return
       }

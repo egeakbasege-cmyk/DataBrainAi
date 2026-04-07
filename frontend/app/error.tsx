@@ -32,16 +32,6 @@ export default function ErrorPage({
           <p className="font-sans text-sm text-dim">
             An unexpected error occurred. We've logged it automatically.
           </p>
-          {error.message && (
-            <p className="font-sans text-xs text-muted font-mono mt-2 px-3 py-2 rounded-lg bg-gray-100 text-left break-all">
-              {error.message}
-            </p>
-          )}
-          {error.stack && (
-            <pre className="font-sans text-xs text-muted font-mono mt-1 px-3 py-2 rounded-lg bg-gray-100 text-left overflow-auto max-h-40 whitespace-pre-wrap break-all">
-              {error.stack}
-            </pre>
-          )}
           {error.digest && (
             <p className="font-sans text-xs text-muted">ref: {error.digest}</p>
           )}

@@ -35,10 +35,14 @@ export async function POST(req: NextRequest) {
     const data = await res.json()
 
     if (!res.ok) {
-      return NextResponse.json(
-        { error: data.detail || data.error || 'Registration failed.' },
-        { status: res.status }
-      )
+      const detail = data.detail
+      const errMsg =
+        typeof detail === 'string'   ? detail :
+        Array.isArray(detail)        ? (detail[0]?.msg || 'Registration failed.') :
+        detail?.message              ? detail.message :
+        typeof data.error === 'string' ? data.error :
+        'Registration failed.'
+      return NextResponse.json({ error: errMsg }, { status: res.status })
     }
 
     return NextResponse.json({ ok: true })
