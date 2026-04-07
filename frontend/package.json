@@ -2,6 +2,9 @@
   "name": "starcoins-frontend",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,13 +12,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.28.0",
     "@stripe/react-stripe-js": "^2.7.1",
     "@stripe/stripe-js": "^3.4.1",
-    "@types/bcryptjs": "^2.4.6",
-    "bcryptjs": "^3.0.3",
     "framer-motion": "^12.38.0",
-    "html2pdf.js": "^0.10.2",
     "next": "14.2.3",
     "next-auth": "^4.24.7",
     "react": "^18.3.1",
