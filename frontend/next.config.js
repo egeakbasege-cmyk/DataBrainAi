@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:8000'
+const _raw = process.env.BACKEND_URL || 'http://localhost:8000'
+const BACKEND = _raw.startsWith('http') ? _raw : `https://${_raw}`
 
 const nextConfig = {
   reactStrictMode: true,
