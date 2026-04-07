@@ -54,6 +54,9 @@ class LoginRequest(BaseModel):
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     if len(body.password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
+    # bcrypt has a hard 72-byte limit; enforce a safe maximum
+    if len(body.password.encode("utf-8")) > 64:
+        raise HTTPException(status_code=400, detail="Password must be 64 characters or fewer.")
 
     existing = await db.execute(
         text("SELECT id FROM users WHERE email = :e"), {"e": body.email}

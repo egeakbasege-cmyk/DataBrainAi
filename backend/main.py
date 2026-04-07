@@ -171,7 +171,7 @@ async def global_handler(request: Request, exc: Exception):
             "success": False,
             "error": {
                 "code":             "INTERNAL_SERVER_ERROR",
-                "message":          f"{type(exc).__name__}: {exc}",
+                "message":          "An unexpected error occurred.",
                 "correlation_id":   cid,
             },
         },

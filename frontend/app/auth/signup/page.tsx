@@ -20,6 +20,10 @@ export default function SignUpPage() {
       setError('Password must be at least 8 characters.')
       return
     }
+    if (password.length > 64) {
+      setError('Password must be 64 characters or fewer.')
+      return
+    }
 
     setLoading(true)
     try {
