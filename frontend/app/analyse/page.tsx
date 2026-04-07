@@ -41,8 +41,9 @@ export default function AnalysePage() {
 
   useEffect(() => {
     if (session) {
-      setCredits((session as any).credits  ?? null)
-      setFreeUsed((session as any).freeUsed ?? false)
+      const raw = (session as any).credits
+      setCredits(typeof raw === 'number' ? raw : null)
+      setFreeUsed(!!(session as any).freeUsed)
     }
   }, [session])
 
@@ -234,7 +235,7 @@ export default function AnalysePage() {
                 }}
                 role="alert"
                 aria-live="assertive">
-                {error}
+                {typeof error === 'string' ? error : 'Analysis failed. Please try again.'}
                 <button onClick={reset} className="ml-3 underline opacity-70 hover:opacity-100">
                   Try again
                 </button>
