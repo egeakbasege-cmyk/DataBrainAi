@@ -16,9 +16,13 @@ from core.strategy_engine import StrategyEngine
 
 # ── Database ──────────────────────────────────────────────────────────
 
-# Railway provides postgresql:// but asyncpg needs postgresql+asyncpg://
-# .strip() removes any trailing newlines that Railway references may include
-_db_url = os.environ["DATABASE_URL"].strip().replace(
+# Railway provides postgresql:// but asyncpg needs postgresql+asyncpg://.
+# asyncpg does NOT understand ?sslmode= URL parameters — strip it and pass
+# ssl via connect_args instead (Railway postgres requires SSL externally).
+import re as _re
+
+_db_raw = os.environ["DATABASE_URL"].strip()
+_db_url = _re.sub(r"[?&]sslmode=[^&]*", "", _db_raw).replace(
     "postgresql://", "postgresql+asyncpg://", 1
 ).replace(
     "postgres://", "postgresql+asyncpg://", 1
@@ -29,6 +33,7 @@ _engine = create_async_engine(
     pool_size=10,
     max_overflow=20,
     echo=False,
+    connect_args={"ssl": "require"},
 )
 _session_factory = async_sessionmaker(_engine, expire_on_commit=False)
 

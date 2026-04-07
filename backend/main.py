@@ -70,9 +70,12 @@ if sentry_dsn:
 async def _init_db() -> None:
     """Run schema.sql on startup if tables don't exist yet."""
     import pathlib
+    import re
+    from sqlalchemy import text as sa_text
     from sqlalchemy.ext.asyncio import create_async_engine
 
-    db_url = os.environ["DATABASE_URL"].strip().replace(
+    db_raw = os.environ["DATABASE_URL"].strip()
+    db_url = re.sub(r"[?&]sslmode=[^&]*", "", db_raw).replace(
         "postgresql://", "postgresql+asyncpg://", 1
     ).replace("postgres://", "postgresql+asyncpg://", 1)
 
@@ -82,15 +85,15 @@ async def _init_db() -> None:
         return
 
     schema_sql = schema_path.read_text()
-    engine = create_async_engine(db_url)
+    engine = create_async_engine(db_url, connect_args={"ssl": "require"})
     try:
+        # asyncpg can execute multiple statements via the raw driver
         async with engine.begin() as conn:
-            # asyncpg requires statements executed one at a time
             raw = await conn.get_raw_connection()
             await raw.driver_connection.execute(schema_sql)
         logger.info("Database schema applied successfully")
     except Exception as e:
-        logger.error(f"DB init error: {e}")
+        logger.error(f"DB init error (schema may already be applied): {e}")
     finally:
         await engine.dispose()
 
