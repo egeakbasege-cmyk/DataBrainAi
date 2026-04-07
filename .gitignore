@@ -215,3 +215,4 @@ frontend/.env*.local
 # Runtime / generated data
 system_data/
 frontend/tsconfig.tsbuildinfo
+package-lock.json
