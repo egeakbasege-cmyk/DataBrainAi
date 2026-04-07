@@ -10,7 +10,6 @@ import { PaywallModal } from '../../components/PaywallModal'
 import { CreditPanel } from '../../components/CreditPanel'
 import { Dock } from '../../components/Dock'
 import FeedbackForm from '../../components/FeedbackForm'
-import { AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
 const QUICK_PICKS = [
@@ -324,17 +323,15 @@ export default function AnalysePage() {
         Feedback
       </button>
 
-      <AnimatePresence>
-        {showFeedback && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center px-4"
-            style={{ background: 'rgba(15,23,42,0.25)', backdropFilter: 'blur(6px)' }}
-            onClick={(e) => { if (e.target === e.currentTarget) setShowFeedback(false) }}
-          >
-            <FeedbackForm onClose={() => setShowFeedback(false)} />
-          </div>
-        )}
-      </AnimatePresence>
+      {showFeedback && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: 'rgba(15,23,42,0.25)', backdropFilter: 'blur(6px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowFeedback(false) }}
+        >
+          <FeedbackForm onClose={() => setShowFeedback(false)} />
+        </div>
+      )}
 
       <Dock />
     </main>
