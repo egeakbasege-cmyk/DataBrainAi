@@ -68,34 +68,26 @@ if sentry_dsn:
 # ── App lifecycle ─────────────────────────────────────────────────────
 
 async def _init_db() -> None:
-    """Run schema.sql on startup if tables don't exist yet."""
+    """Apply schema.sql on startup using the shared engine from deps."""
     import pathlib
-    import re
     from sqlalchemy import text as sa_text
-    from sqlalchemy.ext.asyncio import create_async_engine
-
-    db_raw = os.environ["DATABASE_URL"].strip()
-    db_url = re.sub(r"[?&]sslmode=[^&]*", "", db_raw).replace(
-        "postgresql://", "postgresql+asyncpg://", 1
-    ).replace("postgres://", "postgresql+asyncpg://", 1)
+    # Use the same engine (with SSL + pool config) already built in deps
+    from api.deps import _engine
 
     schema_path = pathlib.Path(__file__).parent / "schema.sql"
     if not schema_path.exists():
-        logger.warning("schema.sql not found, skipping DB init")
+        logger.warning("schema.sql not found — skipping DB init")
         return
 
     schema_sql = schema_path.read_text()
-    engine = create_async_engine(db_url, connect_args={"ssl": "require"})
     try:
-        # asyncpg can execute multiple statements via the raw driver
-        async with engine.begin() as conn:
+        async with _engine.begin() as conn:
             raw = await conn.get_raw_connection()
             await raw.driver_connection.execute(schema_sql)
-        logger.info("Database schema applied successfully")
+        logger.info("DB schema applied OK")
     except Exception as e:
-        logger.error(f"DB init error (schema may already be applied): {e}")
-    finally:
-        await engine.dispose()
+        # Non-fatal: tables may already exist (IF NOT EXISTS guards most stmts)
+        logger.error(f"DB init warning: {type(e).__name__}: {e}")
 
 
 @asynccontextmanager
@@ -179,7 +171,7 @@ async def global_handler(request: Request, exc: Exception):
             "success": False,
             "error": {
                 "code":             "INTERNAL_SERVER_ERROR",
-                "message":          "An unexpected error occurred.",
+                "message":          f"{type(exc).__name__}: {exc}",
                 "correlation_id":   cid,
             },
         },
