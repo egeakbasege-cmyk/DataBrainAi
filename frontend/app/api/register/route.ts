@@ -36,17 +36,22 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       console.error('[register] backend error status:', res.status, 'body:', JSON.stringify(data))
+      // Backend uses two error shapes:
+      //   HTTPException  → { detail: "string" }
+      //   Custom handler → { error: { code, message, correlation_id } }
       const detail = data.detail
+      const errObj = data.error
       const errMsg =
-        typeof detail === 'string'        ? detail :
-        Array.isArray(detail)             ? (detail[0]?.msg || detail[0]?.message || 'Validation failed.') :
-        detail?.message                   ? String(detail.message) :
-        detail?.msg                       ? String(detail.msg) :
-        typeof data.message === 'string'  ? data.message :
-        typeof data.error === 'string'    ? data.error :
-        res.status === 409               ? 'An account with this email already exists.' :
-        res.status === 400               ? 'Invalid email or password format.' :
-        res.status === 422               ? 'Invalid request. Check your email and password.' :
+        typeof detail === 'string'                          ? detail :
+        Array.isArray(detail)                               ? (detail[0]?.msg || detail[0]?.message || 'Validation failed.') :
+        detail?.message                                     ? String(detail.message) :
+        typeof errObj === 'string'                          ? errObj :
+        errObj?.message && typeof errObj.message === 'string' ? errObj.message :
+        typeof data.message === 'string'                    ? data.message :
+        res.status === 409                                 ? 'An account with this email already exists.' :
+        res.status === 400                                 ? 'Invalid email or password format.' :
+        res.status === 422                                 ? 'Invalid request. Check your details and try again.' :
+        res.status >= 500                                  ? 'Server error. Please try again in a moment.' :
         'Registration failed. Please try again.'
       return NextResponse.json({ error: errMsg }, { status: res.status })
     }

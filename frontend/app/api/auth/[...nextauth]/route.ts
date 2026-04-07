@@ -51,12 +51,19 @@ const authOptions: NextAuthOptions = {
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
+          // Backend uses two error shapes:
+          //   HTTPException  → { detail: "string" }
+          //   Custom handler → { error: { code, message, correlation_id } }
           const detail = data.detail
+          const errObj = data.error
           const errMsg =
-            typeof detail === 'string'     ? detail :
-            Array.isArray(detail)          ? (detail[0]?.msg || 'Login failed. Please try again.') :
-            detail?.message                ? detail.message :
-            typeof data.error === 'string' ? data.error :
+            typeof detail === 'string'                            ? detail :
+            Array.isArray(detail)                                 ? (detail[0]?.msg || 'Login failed. Please try again.') :
+            detail?.message                                       ? String(detail.message) :
+            typeof errObj === 'string'                            ? errObj :
+            errObj?.message && typeof errObj.message === 'string' ? errObj.message :
+            res.status === 401                                   ? 'Invalid credentials.' :
+            res.status >= 500                                    ? 'Server error. Please try again in a moment.' :
             'Login failed. Please try again.'
           throw new Error(errMsg)
         }
