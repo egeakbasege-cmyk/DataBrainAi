@@ -2,9 +2,6 @@
   "name": "starcoins-frontend",
   "version": "1.0.0",
   "private": true,
-  "engines": {
-    "node": "20.x"
-  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,7 +11,7 @@
   "dependencies": {
     "@stripe/react-stripe-js": "^2.7.1",
     "@stripe/stripe-js": "^3.4.1",
-    "framer-motion": "^12.38.0",
+    "framer-motion": "^11.15.0",
     "next": "14.2.3",
     "next-auth": "^4.24.7",
     "react": "^18.3.1",
