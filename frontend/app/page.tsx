@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import { Dock } from '../components/Dock'
 
 const CASES = [
@@ -34,6 +35,9 @@ const STATS = [
 ]
 
 export default function LandingPage() {
+  const { data: session } = useSession()
+  const loggedIn = !!session
+
   return (
     <main className="min-h-screen bg-bg pb-28">
 
@@ -49,15 +53,25 @@ export default function LandingPage() {
           Starcoins
         </span>
         <div className="flex items-center gap-3">
-          <Link href="/auth/signin"
-            className="font-sans text-sm text-dim hover:text-ink transition-colors px-4 py-2 rounded-pill">
-            Sign in
-          </Link>
-          <Link href="/analyse"
-            className="font-heading font-bold text-sm text-ink px-5 py-2 rounded-pill transition-all glow-yellow"
-            style={{ background: '#FACC15' }}>
-            Get started
-          </Link>
+          {loggedIn ? (
+            <Link href="/analyse"
+              className="font-heading font-bold text-sm text-ink px-5 py-2 rounded-pill transition-all glow-yellow"
+              style={{ background: '#FACC15' }}>
+              Go to app →
+            </Link>
+          ) : (
+            <>
+              <Link href="/auth/signin"
+                className="font-sans text-sm text-dim hover:text-ink transition-colors px-4 py-2 rounded-pill">
+                Sign in
+              </Link>
+              <Link href="/auth/signup"
+                className="font-heading font-bold text-sm text-ink px-5 py-2 rounded-pill transition-all glow-yellow"
+                style={{ background: '#FACC15' }}>
+                Get started
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
