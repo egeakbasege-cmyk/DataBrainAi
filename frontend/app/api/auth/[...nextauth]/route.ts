@@ -26,12 +26,16 @@ const authOptions: NextAuthOptions = {
 
         let res: Response
         try {
+          // Clamp to bcrypt's 72-byte limit before sending
+          const pwBuf  = Buffer.from(credentials.password, 'utf8')
+          const safePw = pwBuf.length > 72 ? pwBuf.subarray(0, 72).toString('utf8') : credentials.password
+
           res = await fetch(`${BACKEND}/api/auth/login`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({
               email:    credentials.email,
-              password: credentials.password,
+              password: safePw,
             }),
             signal: AbortSignal.timeout(10_000),
           })

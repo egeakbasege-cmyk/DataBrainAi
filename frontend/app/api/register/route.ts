@@ -23,20 +23,17 @@ export async function POST(req: NextRequest) {
   if (!email || !password || password.length < 8) {
     return NextResponse.json({ error: 'Invalid email or password.' }, { status: 400 })
   }
-  // bcrypt has a hard 72-byte limit — check byte length server-side
-  // (handles unicode chars which may be >1 byte each)
-  if (Buffer.byteLength(password, 'utf8') > 64) {
-    return NextResponse.json(
-      { error: 'Password must be shorter. Please use 64 characters or fewer.' },
-      { status: 400 }
-    )
-  }
+
+  // bcrypt has a hard 72-byte limit. Silently clamp to 72 bytes so the
+  // backend never sees a password that would crash pwd_ctx.hash().
+  const pwBytes = Buffer.from(password, 'utf8')
+  const safePw  = pwBytes.length > 72 ? pwBytes.subarray(0, 72).toString('utf8') : password
 
   try {
     const res = await fetch(`${BACKEND}/api/auth/register`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ email, password }),
+      body:    JSON.stringify({ email, password: safePw }),
       signal:  AbortSignal.timeout(10_000),
     })
 
