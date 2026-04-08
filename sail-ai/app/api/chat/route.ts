@@ -1,8 +1,13 @@
 import { NextRequest } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const model = genai.getGenerativeModel({
+  model:             'gemini-1.5-flash',
+  systemInstruction: SYSTEM_PROMPT,
+  generationConfig:  { maxOutputTokens: 1200, temperature: 0.4 },
+})
 
 export async function POST(req: NextRequest) {
   const { message } = await req.json()
@@ -18,27 +23,23 @@ export async function POST(req: NextRequest) {
       try {
         let buffer = ''
 
-        const aiStream = await client.messages.stream({
-          model:      'claude-sonnet-4-6',
-          max_tokens: 1200,
-          system:     SYSTEM_PROMPT,
-          messages:   [{ role: 'user', content: buildUserMessage(message) }],
-        })
+        const result = await model.generateContentStream(buildUserMessage(message))
 
-        for await (const chunk of aiStream) {
-          if (
-            chunk.type === 'content_block_delta' &&
-            chunk.delta.type === 'text_delta'
-          ) {
-            buffer += chunk.delta.text
+        for await (const chunk of result.stream) {
+          const text = chunk.text()
+          if (text) {
+            buffer += text
             controller.enqueue(encoder.encode(buffer))
           }
         }
 
-        // Ensure final complete JSON is flushed
-        const final = await aiStream.finalMessage()
-        const text  = final.content[0]?.type === 'text' ? final.content[0].text : buffer
-        controller.enqueue(encoder.encode(text))
+        // Strip markdown fences if Gemini wraps output
+        if (buffer.startsWith('```')) {
+          buffer = buffer.split('\n', 2)[1]
+          buffer = buffer.substring(0, buffer.lastIndexOf('```')).trim()
+        }
+
+        controller.enqueue(encoder.encode(buffer))
         controller.close()
       } catch (err: any) {
         controller.enqueue(
@@ -51,8 +52,8 @@ export async function POST(req: NextRequest) {
 
   return new Response(stream, {
     headers: {
-      'Content-Type':  'text/plain; charset=utf-8',
-      'Cache-Control': 'no-cache',
+      'Content-Type':      'text/plain; charset=utf-8',
+      'Cache-Control':     'no-cache',
       'X-Accel-Buffering': 'no',
     },
   })
