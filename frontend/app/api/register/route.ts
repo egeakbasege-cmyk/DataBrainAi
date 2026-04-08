@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   // bcrypt has a hard 72-byte limit. Silently clamp to 72 bytes so the
   // backend never sees a password that would crash pwd_ctx.hash().
   const pwBytes = Buffer.from(password, 'utf8')
-  const safePw  = pwBytes.length > 72 ? pwBytes.subarray(0, 72).toString('utf8') : password
+  const safePw  = pwBytes.length > 64 ? pwBytes.subarray(0, 64).toString('utf8') : password
 
   try {
     const res = await fetch(`${BACKEND}/api/auth/register`, {
