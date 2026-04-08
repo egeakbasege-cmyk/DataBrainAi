@@ -120,7 +120,7 @@ export default function SignUpPage() {
                   className="block font-sans text-xs font-medium text-dim uppercase tracking-widest-2">
                   Password
                 </label>
-                <span className="font-sans text-xs text-muted">8+ characters</span>
+                <span className="font-sans text-xs text-muted">8–64 characters</span>
               </div>
               <input
                 id="password"
@@ -129,6 +129,7 @@ export default function SignUpPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
+                maxLength={64}
                 autoComplete="new-password"
                 className="w-full px-4 py-3 text-sm"
                 placeholder="At least 8 characters"
