@@ -48,7 +48,7 @@ export function useStrategyStream() {
     setStatus('idle')
   }, [])
 
-  const analyse = useCallback(async (input: string, token: string) => {
+  const analyse = useCallback(async (input: string, token: string, systemPrompt?: string) => {
     // Cancel previous run if still active
     abortRef.current?.abort()
     const controller = new AbortController()
@@ -71,7 +71,7 @@ export function useStrategyStream() {
           'Content-Type':  'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body:   JSON.stringify({ input }),
+        body:   JSON.stringify({ input, system_prompt: systemPrompt }),
         signal: controller.signal,
       })
 

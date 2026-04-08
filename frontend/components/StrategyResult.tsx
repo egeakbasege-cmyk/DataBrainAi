@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ConfidenceBadge } from './ConfidenceBadge'
 import { MetricsPanel } from './MetricsPanel'
+import { MetricsChart } from './MetricsChart'
 
 interface Tactic {
   step:           number
@@ -101,6 +102,7 @@ export function StrategyResultView({ result, metrics, confidence, pipelineSteps 
 
       {/* ── Metrics ───────────────────────────────── */}
       <MetricsPanel metrics={metrics} />
+      <MetricsChart metrics={metrics} />
 
       {/* ── Benchmarks (new format) ───────────────── */}
       {result.benchmarks?.metrics?.length ? (
