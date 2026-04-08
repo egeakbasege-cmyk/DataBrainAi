@@ -3,17 +3,58 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
 
 const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = genai.getGenerativeModel({
-  model:             'gemini-1.5-flash',
-  systemInstruction: SYSTEM_PROMPT,
-  generationConfig:  { maxOutputTokens: 1200, temperature: 0.4 },
-})
+
+function getModel() {
+  return genai.getGenerativeModel({
+    model:             'gemini-1.5-flash',
+    systemInstruction: SYSTEM_PROMPT,
+    generationConfig: {
+      maxOutputTokens: 1400,
+      temperature:     0.35,
+      responseMimeType: 'application/json',
+    },
+  })
+}
+
+// Simple in-memory rate limiter: max 10 requests per IP per minute
+const rateMap = new Map<string, { count: number; reset: number }>()
+
+function checkRate(ip: string): boolean {
+  const now   = Date.now()
+  const entry = rateMap.get(ip)
+  if (!entry || now > entry.reset) {
+    rateMap.set(ip, { count: 1, reset: now + 60_000 })
+    return true
+  }
+  if (entry.count >= 10) return false
+  entry.count++
+  return true
+}
 
 export async function POST(req: NextRequest) {
-  const { message } = await req.json()
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
 
-  if (!message?.trim()) {
+  if (!checkRate(ip)) {
+    return new Response(JSON.stringify({ error: 'Too many requests. Please wait a minute.' }), {
+      status:  429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  let message: string
+  try {
+    const body = await req.json()
+    message    = (body.message ?? '').trim()
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid request body.' }), { status: 400 })
+  }
+
+  if (!message) {
     return new Response(JSON.stringify({ error: 'Message is required.' }), { status: 400 })
+  }
+
+  if (message.length > 2000) {
+    return new Response(JSON.stringify({ error: 'Message too long (max 2000 characters).' }), { status: 400 })
   }
 
   const encoder = new TextEncoder()
@@ -21,30 +62,21 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        let buffer = ''
-
+        const model  = getModel()
         const result = await model.generateContentStream(buildUserMessage(message))
 
         for await (const chunk of result.stream) {
           const text = chunk.text()
           if (text) {
-            buffer += text
-            controller.enqueue(encoder.encode(buffer))
+            // Send only the delta — client accumulates
+            controller.enqueue(encoder.encode(text))
           }
         }
 
-        // Strip markdown fences if Gemini wraps output
-        if (buffer.startsWith('```')) {
-          buffer = buffer.split('\n', 2)[1]
-          buffer = buffer.substring(0, buffer.lastIndexOf('```')).trim()
-        }
-
-        controller.enqueue(encoder.encode(buffer))
         controller.close()
       } catch (err: any) {
-        controller.enqueue(
-          encoder.encode(JSON.stringify({ error: err.message || 'Generation failed.' }))
-        )
+        const msg = err?.message?.includes('API_KEY') ? 'Service unavailable.' : (err.message || 'Generation failed.')
+        controller.enqueue(encoder.encode(JSON.stringify({ error: msg })))
         controller.close()
       }
     },
@@ -53,8 +85,9 @@ export async function POST(req: NextRequest) {
   return new Response(stream, {
     headers: {
       'Content-Type':      'text/plain; charset=utf-8',
-      'Cache-Control':     'no-cache',
+      'Cache-Control':     'no-store',
       'X-Accel-Buffering': 'no',
+      'Transfer-Encoding': 'chunked',
     },
   })
 }
