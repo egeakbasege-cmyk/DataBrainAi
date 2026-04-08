@@ -11,7 +11,8 @@ async function apiFetch(path: string, token: string, options: RequestInit = {}) 
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err?.detail?.message || err?.detail || `HTTP ${res.status}`)
+    const d = err?.detail
+    throw new Error((typeof d === 'string' ? d : d?.message) || `HTTP ${res.status}`)
   }
   return res.json()
 }

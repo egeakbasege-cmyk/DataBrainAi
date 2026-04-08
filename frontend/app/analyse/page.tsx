@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Papa from 'papaparse'
 import { useStrategyStream } from '../../lib/useStrategyStream'
 import { ProgressBar } from '../../components/ProgressBar'
 import { StrategyResultView } from '../../components/StrategyResult'
@@ -11,38 +10,39 @@ import { PaywallModal } from '../../components/PaywallModal'
 import { CreditPanel } from '../../components/CreditPanel'
 import { Dock } from '../../components/Dock'
 import FeedbackForm from '../../components/FeedbackForm'
-import { ModeSelector } from '../../components/ModeSelector'
-import { ScenarioCards } from '../../components/ScenarioCards'
-import { useAppMode, MODE_META } from '../../context/AppModeContext'
-import { AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+
+const QUICK_PICKS = [
+  'How do I get my first 10 paying customers?',
+  'Where am I losing money?',
+  'What should I focus on this month?',
+  'How do I raise prices without losing clients?',
+  'What is my fastest path to $10k/month?',
+  'How do I reduce churn?',
+]
 
 const MIN_CHARS = 10
 const MAX_CHARS = 1200
-const MAX_CSV_ROWS = 200
 
 export default function AnalysePage() {
   const { data: session, status: sessionStatus } = useSession()
-  const { mode } = useAppMode()
   const router       = useRouter()
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [input,        setInput]        = useState('')
   const [showPaywall,  setShowPaywall]  = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const [credits,      setCredits]      = useState<number | null>(null)
   const [freeUsed,     setFreeUsed]     = useState(false)
-  const [csvContext,   setCsvContext]   = useState<string | null>(null)
-  const [csvName,      setCsvName]      = useState<string | null>(null)
 
   const { analyse, reset, progress, currentStep, result, confidence, error, status } =
     useStrategyStream()
 
   useEffect(() => {
     if (session) {
-      setCredits((session as any).credits  ?? null)
-      setFreeUsed((session as any).freeUsed ?? false)
+      const raw = (session as any).credits
+      setCredits(typeof raw === 'number' ? raw : null)
+      setFreeUsed(!!(session as any).freeUsed)
     }
   }, [session])
 
@@ -78,13 +78,8 @@ export default function AnalysePage() {
       return
     }
 
-    const token        = (session as any)?.accessToken || ''
-    const systemPrompt = MODE_META[mode].systemPrompt
-    const fullPrompt   = csvContext
-      ? `[DATA CONTEXT]\n${csvContext}\n\n[USER QUESTION]\n${input.trim()}`
-      : input.trim()
-
-    await analyse(fullPrompt, token, systemPrompt)
+    const token = (session as any)?.accessToken || ''
+    await analyse(input.trim(), token)
 
     if (freeUsed && credits && credits > 0) {
       setCredits((c) => (c !== null ? c - 1 : c))
@@ -102,39 +97,6 @@ export default function AnalysePage() {
   const handleCreditsAdded = (n: number) => {
     setCredits((c) => (c ?? 0) + n)
     setShowPaywall(false)
-  }
-
-  const handleScenarioSelect = (prompt: string) => {
-    setInput(prompt)
-    setTimeout(() => textareaRef.current?.focus(), 50)
-  }
-
-  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    Papa.parse(file, {
-      header:         true,
-      skipEmptyLines: true,
-      preview:        MAX_CSV_ROWS,
-      complete: (results) => {
-        const rows   = results.data as Record<string, string>[]
-        const fields = results.meta.fields ?? []
-        const lines  = rows.map((r) =>
-          fields.map((f) => `${f}: ${r[f] ?? ''}`).join(' | ')
-        )
-        const summary =
-          `CSV: ${file.name} (${rows.length} rows, columns: ${fields.join(', ')})\n\n` +
-          lines.slice(0, MAX_CSV_ROWS).join('\n')
-        setCsvContext(summary)
-        setCsvName(file.name)
-      },
-    })
-    e.target.value = ''
-  }
-
-  const handleRemoveCsv = () => {
-    setCsvContext(null)
-    setCsvName(null)
   }
 
   if (sessionStatus === 'loading') {
@@ -166,10 +128,10 @@ export default function AnalysePage() {
         {!isComplete && (
           <div className="space-y-6 animate-fade-up">
 
-            {/* Heading + Mode selector */}
-            <div className="space-y-4">
+            {/* Heading */}
+            <div className="space-y-2">
               {!freeUsed && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-3">
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FACC15', display: 'inline-block', boxShadow: '0 0 6px rgba(250,204,21,0.5)' }} />
                   <span className="font-sans text-xs font-medium uppercase tracking-widest-2"
                     style={{ color: '#92400E' }}>
@@ -177,22 +139,14 @@ export default function AnalysePage() {
                   </span>
                 </div>
               )}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h1 className="font-heading font-extrabold text-ink"
-                  style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', letterSpacing: '-0.03em' }}>
-                  What's your challenge?
-                </h1>
-                <ModeSelector />
-              </div>
+              <h1 className="font-heading font-extrabold text-ink"
+                style={{ fontSize: 'clamp(1.6rem, 4vw, 2.25rem)', letterSpacing: '-0.03em' }}>
+                What's your challenge?
+              </h1>
               <p className="font-sans text-sm text-dim">
-                {MODE_META[mode].hint} — be specific for sharper output.
+                Be specific — revenue model, audience size, current metrics. More detail = sharper strategy.
               </p>
             </div>
-
-            {/* Scenario cards (zero state) */}
-            {!input && !isStreaming && (
-              <ScenarioCards onSelect={handleScenarioSelect} />
-            )}
 
             {/* Textarea card */}
             <div className="bg-card rounded-card border border-border p-1"
@@ -212,7 +166,7 @@ export default function AnalysePage() {
                   background:   'transparent',
                   border:       'none',
                   borderRadius: '14px',
-                  minHeight:    160,
+                  minHeight:    180,
                   outline:      'none',
                   boxShadow:    'none',
                 }}
@@ -231,59 +185,36 @@ export default function AnalysePage() {
               </div>
             </div>
 
-            {/* CSV upload row */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {csvContext ? (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-pill"
-                  style={{
-                    background: 'rgba(250,204,21,0.10)',
-                    border:     '1px solid rgba(250,204,21,0.35)',
-                  }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FACC15', display: 'inline-block' }} />
-                  <span className="font-sans text-xs font-medium" style={{ color: '#92400E' }}>
-                    Data Context Active — {csvName}
-                  </span>
+            {/* Quick picks */}
+            <div className="space-y-2">
+              <p className="font-sans text-xs font-medium text-muted uppercase tracking-widest-2">
+                Quick starts
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {QUICK_PICKS.map((q) => (
                   <button
-                    onClick={handleRemoveCsv}
-                    className="font-sans text-xs ml-1 opacity-60 hover:opacity-100 transition-opacity"
-                    style={{ color: '#92400E' }}
-                    aria-label="Remove CSV data context"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    className="hidden"
-                    onChange={handleCsvUpload}
-                    aria-label="Upload CSV data file"
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
+                    key={q}
+                    onClick={() => { setInput(q); textareaRef.current?.focus() }}
                     disabled={isStreaming}
-                    className="flex items-center gap-1.5 font-sans text-xs px-3.5 py-2 rounded-pill border transition-all disabled:opacity-40"
+                    className="font-sans text-xs px-3.5 py-2 rounded-pill border transition-all disabled:opacity-40"
                     style={{ borderColor: '#E5E7EB', color: '#6B7280', background: '#FFFFFF' }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = '#D1D5DB'
-                      e.currentTarget.style.color       = '#374151'
+                      const el = e.currentTarget
+                      el.style.borderColor = '#D1D5DB'
+                      el.style.color       = '#111827'
+                      el.style.background  = '#F5F5F7'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = '#E5E7EB'
-                      e.currentTarget.style.color       = '#6B7280'
+                      const el = e.currentTarget
+                      el.style.borderColor = '#E5E7EB'
+                      el.style.color       = '#6B7280'
+                      el.style.background  = '#FFFFFF'
                     }}
                   >
-                    <span>📎</span>
-                    <span>Upload CSV data</span>
+                    {q}
                   </button>
-                  <span className="font-sans text-xs text-muted">
-                    Attach financials or metrics for deeper analysis
-                  </span>
-                </>
-              )}
+                ))}
+              </div>
             </div>
 
             {/* Progress bar (streaming) */}
@@ -303,7 +234,7 @@ export default function AnalysePage() {
                 }}
                 role="alert"
                 aria-live="assertive">
-                {error}
+                {typeof error === 'string' ? error : 'Analysis failed. Please try again.'}
                 <button onClick={reset} className="ml-3 underline opacity-70 hover:opacity-100">
                   Try again
                 </button>
@@ -335,21 +266,6 @@ export default function AnalysePage() {
             {/* Progress summary */}
             <div className="bg-card rounded-card border border-border p-5">
               <ProgressBar progress={100} currentStep="cache_written" status="complete" />
-            </div>
-
-            {/* Mode used badge */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FACC15', display: 'inline-block' }} />
-              <span className="font-sans text-xs font-medium uppercase tracking-widest-2"
-                style={{ color: '#92400E' }}>
-                {MODE_META[mode].label} mode
-              </span>
-              {csvName && (
-                <>
-                  <span className="font-sans text-xs text-muted">·</span>
-                  <span className="font-sans text-xs text-muted">📎 {csvName}</span>
-                </>
-              )}
             </div>
 
             <StrategyResultView
@@ -407,17 +323,15 @@ export default function AnalysePage() {
         Feedback
       </button>
 
-      <AnimatePresence>
-        {showFeedback && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center px-4"
-            style={{ background: 'rgba(15,23,42,0.25)', backdropFilter: 'blur(6px)' }}
-            onClick={(e) => { if (e.target === e.currentTarget) setShowFeedback(false) }}
-          >
-            <FeedbackForm onClose={() => setShowFeedback(false)} />
-          </div>
-        )}
-      </AnimatePresence>
+      {showFeedback && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: 'rgba(15,23,42,0.25)', backdropFilter: 'blur(6px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowFeedback(false) }}
+        >
+          <FeedbackForm onClose={() => setShowFeedback(false)} />
+        </div>
+      )}
 
       <Dock />
     </main>

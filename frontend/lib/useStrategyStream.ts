@@ -79,10 +79,12 @@ export function useStrategyStream() {
         let msg: string
         try {
           const errData = await res.json()
+          const detail = errData?.detail
+          const detailStr = typeof detail === 'string' ? detail : detail?.message ?? null
           msg =
             res.status === 402 ? 'No credits remaining. Buy credits to continue.' :
             res.status === 429 ? 'Rate limit reached. Please wait a moment before retrying.' :
-            errData?.detail?.message || errData?.detail || `Request failed (${res.status})`
+            detailStr || `Request failed (${res.status})`
         } catch {
           msg = `Request failed (${res.status})`
         }

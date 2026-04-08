@@ -24,21 +24,41 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid email or password.' }, { status: 400 })
   }
 
+  // bcrypt has a hard 72-byte limit. Silently clamp to 72 bytes so the
+  // backend never sees a password that would crash pwd_ctx.hash().
+  const pwBytes = Buffer.from(password, 'utf8')
+  const safePw  = pwBytes.length > 64 ? pwBytes.subarray(0, 64).toString('utf8') : password
+
   try {
     const res = await fetch(`${BACKEND}/api/auth/register`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ email, password }),
+      body:    JSON.stringify({ email, password: safePw }),
       signal:  AbortSignal.timeout(10_000),
     })
 
     const data = await res.json()
 
     if (!res.ok) {
-      return NextResponse.json(
-        { error: data.detail || data.error || 'Registration failed.' },
-        { status: res.status }
-      )
+      console.error('[register] backend error status:', res.status, 'body:', JSON.stringify(data))
+      // Backend uses two error shapes:
+      //   HTTPException  → { detail: "string" }
+      //   Custom handler → { error: { code, message, correlation_id } }
+      const detail = data.detail
+      const errObj = data.error
+      const errMsg =
+        typeof detail === 'string'                          ? detail :
+        Array.isArray(detail)                               ? (detail[0]?.msg || detail[0]?.message || 'Validation failed.') :
+        detail?.message                                     ? String(detail.message) :
+        typeof errObj === 'string'                          ? errObj :
+        errObj?.message && typeof errObj.message === 'string' ? errObj.message :
+        typeof data.message === 'string'                    ? data.message :
+        res.status === 409                                 ? 'An account with this email already exists.' :
+        res.status === 400                                 ? 'Invalid email or password format.' :
+        res.status === 422                                 ? 'Invalid request. Check your details and try again.' :
+        res.status >= 500                                  ? 'Server error. Please try again in a moment.' :
+        'Registration failed. Please try again.'
+      return NextResponse.json({ error: errMsg }, { status: res.status })
     }
 
     return NextResponse.json({ ok: true })

@@ -68,31 +68,26 @@ if sentry_dsn:
 # ── App lifecycle ─────────────────────────────────────────────────────
 
 async def _init_db() -> None:
-    """Run schema.sql on startup if tables don't exist yet."""
+    """Apply schema.sql on startup using the shared engine from deps."""
     import pathlib
-    from sqlalchemy.ext.asyncio import create_async_engine
-
-    db_url = os.environ["DATABASE_URL"].strip().replace(
-        "postgresql://", "postgresql+asyncpg://", 1
-    ).replace("postgres://", "postgresql+asyncpg://", 1)
+    from sqlalchemy import text as sa_text
+    # Use the same engine (with SSL + pool config) already built in deps
+    from api.deps import _engine
 
     schema_path = pathlib.Path(__file__).parent / "schema.sql"
     if not schema_path.exists():
-        logger.warning("schema.sql not found, skipping DB init")
+        logger.warning("schema.sql not found — skipping DB init")
         return
 
     schema_sql = schema_path.read_text()
-    engine = create_async_engine(db_url)
     try:
-        async with engine.begin() as conn:
-            # asyncpg requires statements executed one at a time
+        async with _engine.begin() as conn:
             raw = await conn.get_raw_connection()
             await raw.driver_connection.execute(schema_sql)
-        logger.info("Database schema applied successfully")
+        logger.info("DB schema applied OK")
     except Exception as e:
-        logger.error(f"DB init error: {e}")
-    finally:
-        await engine.dispose()
+        # Non-fatal: tables may already exist (IF NOT EXISTS guards most stmts)
+        logger.error(f"DB init warning: {type(e).__name__}: {e}")
 
 
 @asynccontextmanager

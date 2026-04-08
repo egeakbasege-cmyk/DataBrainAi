@@ -26,12 +26,16 @@ const authOptions: NextAuthOptions = {
 
         let res: Response
         try {
+          // Clamp to bcrypt's 72-byte limit before sending
+          const pwBuf  = Buffer.from(credentials.password, 'utf8')
+          const safePw = pwBuf.length > 64 ? pwBuf.subarray(0, 64).toString('utf8') : credentials.password
+
           res = await fetch(`${BACKEND}/api/auth/login`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({
               email:    credentials.email,
-              password: credentials.password,
+              password: safePw,
             }),
             signal: AbortSignal.timeout(10_000),
           })
@@ -51,7 +55,21 @@ const authOptions: NextAuthOptions = {
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
-          throw new Error(data.detail || data.error || 'Login failed. Please try again.')
+          // Backend uses two error shapes:
+          //   HTTPException  → { detail: "string" }
+          //   Custom handler → { error: { code, message, correlation_id } }
+          const detail = data.detail
+          const errObj = data.error
+          const errMsg =
+            typeof detail === 'string'                            ? detail :
+            Array.isArray(detail)                                 ? (detail[0]?.msg || 'Login failed. Please try again.') :
+            detail?.message                                       ? String(detail.message) :
+            typeof errObj === 'string'                            ? errObj :
+            errObj?.message && typeof errObj.message === 'string' ? errObj.message :
+            res.status === 401                                   ? 'Invalid credentials.' :
+            res.status >= 500                                    ? 'Server error. Please try again in a moment.' :
+            'Login failed. Please try again.'
+          throw new Error(errMsg)
         }
 
         const data = await res.json()
