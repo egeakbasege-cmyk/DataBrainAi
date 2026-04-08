@@ -9,9 +9,9 @@ from __future__ import annotations
 import os
 from datetime import datetime, timedelta
 
+import bcrypt as _bcrypt
 from fastapi import APIRouter, Depends, HTTPException
 from jose import jwt
-from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .deps import get_current_user, get_db
 
 router = APIRouter()
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Use bcrypt directly — passlib 1.7.4 is incompatible with bcrypt 4.x and
+# raises ValueError even for short passwords.  Direct usage is simpler and
+# works with any bcrypt version.  Always truncate to 72 bytes (hard limit).
+def _hash_pw(password: str) -> str:
+    pw = password.encode("utf-8")[:72]
+    return _bcrypt.hashpw(pw, _bcrypt.gensalt()).decode("utf-8")
+
+def _verify_pw(password: str, hashed: str) -> bool:
+    pw = password.encode("utf-8")[:72]
+    try:
+        return _bcrypt.checkpw(pw, hashed.encode("utf-8"))
+    except Exception:
+        return False
 
 _raw_secret = os.environ.get("NEXTAUTH_SECRET", "")
 if not _raw_secret:
@@ -64,7 +77,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     if existing.first():
         raise HTTPException(status_code=409, detail="Email already registered.")
 
-    hashed = pwd_ctx.hash(body.password)
+    hashed = _hash_pw(body.password)
     result = await db.execute(
         text(
             "INSERT INTO users (email, hashed_password) VALUES (:e, :h) RETURNING id"
@@ -83,7 +96,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
         {"e": body.email},
     )
     user = row.mappings().first()
-    if not user or not pwd_ctx.verify(body.password, user["hashed_password"]):
+    if not user or not _verify_pw(body.password, user["hashed_password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
 
     token = _make_token(str(user["id"]), body.email)
