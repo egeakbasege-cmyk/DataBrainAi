@@ -25,15 +25,8 @@ export async function POST(req: NextRequest) {
   }
 
   // bcrypt has a hard 72-byte limit. Clamp to 64 bytes before forwarding.
-  const pwBytes   = Buffer.from(password, 'utf8')
-  const pwLen     = pwBytes.length
-  const safePw    = pwLen > 64 ? pwBytes.subarray(0, 64).toString('utf8') : password
-  const safeBytes = Buffer.from(safePw, 'utf8').length
-  console.log(`[register] pw chars=${password.length} bytes_in=${pwLen} bytes_out=${safeBytes}`)
-  if (safeBytes > 72) {
-    // Hard stop: should never happen given clamp above, but guards Railway
-    return NextResponse.json({ error: 'Password is too long. Please use a shorter password.' }, { status: 400 })
-  }
+  const pwBytes = Buffer.from(password, 'utf8')
+  const safePw  = pwBytes.length > 64 ? pwBytes.subarray(0, 64).toString('utf8') : password
 
   try {
     const res = await fetch(`${BACKEND}/api/auth/register`, {
