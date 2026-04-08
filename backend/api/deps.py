@@ -28,12 +28,19 @@ _db_url = _re.sub(r"[?&]sslmode=[^&]*", "", _db_raw).replace(
     "postgres://", "postgresql+asyncpg://", 1
 )
 
+# Railway internal connections (*.railway.internal) don't support SSL —
+# only external proxy connections (*.up.railway.app / *.rlwy.net) do.
+_needs_ssl = not any(
+    x in _db_raw
+    for x in ("railway.internal", "localhost", "127.0.0.1")
+)
+
 _engine = create_async_engine(
     _db_url,
     pool_size=10,
     max_overflow=20,
     echo=False,
-    connect_args={"ssl": "require"},
+    connect_args={"ssl": "require"} if _needs_ssl else {},
 )
 _session_factory = async_sessionmaker(_engine, expire_on_commit=False)
 
