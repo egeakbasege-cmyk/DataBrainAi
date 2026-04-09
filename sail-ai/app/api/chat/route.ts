@@ -24,9 +24,9 @@ function checkRate(ip: string): boolean {
 
   // Prune stale entries every 500 calls to prevent memory leak
   if (rateMap.size > 500) {
-    for (const [key, val] of rateMap) {
+    rateMap.forEach((val, key) => {
       if (now > val.reset) rateMap.delete(key)
-    }
+    })
   }
 
   const entry = rateMap.get(ip)
