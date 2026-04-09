@@ -10,9 +10,11 @@ interface Props {
 export function DailyCounter({ used, isPro }: Props) {
   if (isPro) {
     return (
-      <span className="text-xs font-medium px-3 py-1 rounded-pill"
-        style={{ background: 'rgba(192,57,43,0.12)', color: '#C0392B', border: '1px solid rgba(192,57,43,0.2)' }}>
-        Pro · unlimited
+      <span
+        className="label-caps px-3 py-1.5"
+        style={{ border: '1px solid rgba(43,74,42,0.3)', color: '#2B4A2A', background: 'rgba(43,74,42,0.06)' }}
+      >
+        Pro · Unlimited
       </span>
     )
   }
@@ -22,14 +24,14 @@ export function DailyCounter({ used, isPro }: Props) {
 
   return (
     <span
-      className="text-xs font-medium px-3 py-1 rounded-pill"
+      className="label-caps px-3 py-1.5"
       style={{
-        background: urgent ? 'rgba(192,57,43,0.1)' : 'rgba(255,255,255,0.05)',
-        color:      urgent ? '#C0392B'              : '#94A3B8',
-        border:     `1px solid ${urgent ? 'rgba(192,57,43,0.25)' : 'rgba(255,255,255,0.08)'}`,
+        border:     `1px solid ${urgent ? 'rgba(107,39,55,0.3)' : 'rgba(26,24,20,0.15)'}`,
+        color:      urgent ? '#6B2737' : '#7A7062',
+        background: urgent ? 'rgba(107,39,55,0.05)' : 'transparent',
       }}
     >
-      {remaining} / {FREE_LIMIT} free today
+      {remaining}/{FREE_LIMIT} free today
     </span>
   )
 }

@@ -8,6 +8,7 @@ import { SailboatAnimation } from '@/components/SailboatAnimation'
 import { AnswerCard }        from '@/components/AnswerCard'
 import { DailyCounter }      from '@/components/DailyCounter'
 import { PaywallModal }      from '@/components/PaywallModal'
+import { WaveRule }          from '@/components/Ornaments'
 import { useSailState }      from '@/hooks/useSailState'
 import { useSubscription }   from '@/hooks/useSubscription'
 
@@ -18,58 +19,43 @@ const PLACEHOLDERS = [
   'SaaS product, 340 free users, $0 paid conversions after 3 months. Charging $29/month…',
 ]
 
-const MAX_CHARS = 2000
+const MAX = 2000
 
 export default function ChatPage() {
-  const [input, setInput]             = useState('')
-  const [phIdx, setPhIdx]             = useState(0)
-  const [isMac, setIsMac]             = useState(true)
-  const textareaRef                   = useRef<HTMLTextAreaElement>(null)
+  const [input, setInput]   = useState('')
+  const [phIdx, setPhIdx]   = useState(0)
+  const [isMac, setIsMac]   = useState(true)
+  const textareaRef          = useRef<HTMLTextAreaElement>(null)
 
   const { state, streamText, result, error, submit, reset } = useSailState()
-  const {
-    isPro, usedToday, canAnalyse,
-    showPaywall, recordUsage, triggerPaywall, closePaywall, activatePro,
-  } = useSubscription()
+  const { isPro, usedToday, canAnalyse, showPaywall, recordUsage, triggerPaywall, closePaywall, activatePro } = useSubscription()
 
-  // Detect platform for shortcut hint
-  useEffect(() => {
-    setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent))
-  }, [])
-
-  // Rotate placeholder every 4s
+  useEffect(() => { setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent)) }, [])
   useEffect(() => {
     const iv = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 4000)
     return () => clearInterval(iv)
   }, [])
-
-  // Auto-grow textarea
   useEffect(() => {
     const ta = textareaRef.current
     if (!ta) return
     ta.style.height = 'auto'
     ta.style.height = `${Math.min(ta.scrollHeight, 220)}px`
   }, [input])
-
-  // Activate Pro from Stripe redirect (?pro=1)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get('pro') === '1') {
-      activatePro()
-      window.history.replaceState({}, '', '/chat')
-    }
+    if (params.get('pro') === '1') { activatePro(); window.history.replaceState({}, '', '/chat') }
   }, [activatePro])
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    if (e.target.value.length <= MAX_CHARS) setInput(e.target.value)
+    if (e.target.value.length <= MAX) setInput(e.target.value)
   }
 
   async function handleSubmit() {
-    const trimmed = input.trim()
-    if (!trimmed || state === 'THINKING' || state === 'STREAMING') return
+    const t = input.trim()
+    if (!t || state === 'THINKING' || state === 'STREAMING') return
     if (!canAnalyse) { triggerPaywall(); return }
     recordUsage()
-    await submit(trimmed)
+    await submit(t)
   }
 
   function handleReset() {
@@ -80,11 +66,11 @@ export default function ChatPage() {
 
   const isActive   = state === 'THINKING' || state === 'STREAMING'
   const isComplete = state === 'COMPLETE'
-  const charsLeft  = MAX_CHARS - input.length
-  const charsWarn  = charsLeft < 200
+  const charsLeft  = MAX - input.length
+  const warn       = charsLeft < 200
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#0A0F1E' }}>
+    <main className="min-h-screen flex flex-col" style={{ background: '#FAFAF5' }}>
       <Nav />
 
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-8 flex flex-col gap-6">
@@ -94,12 +80,12 @@ export default function ChatPage() {
           <div className="flex-1 min-w-0">
             <SailboatAnimation state={state} />
           </div>
-          <div className="flex-shrink-0 pb-2">
+          <div className="flex-shrink-0 pb-1">
             <DailyCounter used={usedToday} isPro={isPro} />
           </div>
         </div>
 
-        {/* Status label */}
+        {/* Status */}
         <AnimatePresence mode="wait">
           {isActive && (
             <motion.p
@@ -107,8 +93,7 @@ export default function ChatPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-xs font-medium text-center tracking-widest uppercase"
-              style={{ color: '#94A3B8' }}
+              className="label-caps text-center"
             >
               {state === 'THINKING' ? 'Charting your course…' : 'Reading the wind…'}
             </motion.p>
@@ -124,12 +109,10 @@ export default function ChatPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.3 }}
-              className="rounded-card overflow-hidden"
+              className="card-linen overflow-hidden"
               style={{
-                background:  '#111827',
-                border:      `1px solid ${isActive ? 'rgba(192,57,43,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                transition:  'border-color 0.3s',
-                boxShadow:   isActive ? '0 0 24px rgba(192,57,43,0.08)' : 'none',
+                borderColor: isActive ? 'rgba(43,74,42,0.35)' : 'rgba(26,24,20,0.12)',
+                transition: 'border-color 0.3s',
               }}
             >
               <textarea
@@ -137,40 +120,29 @@ export default function ChatPage() {
                 value={input}
                 onChange={handleChange}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                    e.preventDefault()
-                    handleSubmit()
-                  }
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSubmit() }
                 }}
                 placeholder={PLACEHOLDERS[phIdx]}
                 disabled={isActive}
                 rows={4}
-                className="w-full p-5 text-sm leading-relaxed bg-transparent disabled:opacity-40"
-                style={{ color: '#F1F5F9', caretColor: '#C0392B' }}
+                className="w-full p-5 bg-transparent text-sm leading-relaxed disabled:opacity-40"
+                style={{ color: '#1A1814', caretColor: '#2B4A2A' }}
               />
 
-              <div
-                className="flex items-center justify-between px-5 py-3 gap-4"
-                style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
-              >
+              <div className="mx-5">
+                <WaveRule color="#2B4A2A" opacity={0.15} />
+              </div>
+
+              <div className="flex items-center justify-between px-5 py-3 gap-4">
                 <div className="flex items-center gap-4">
-                  <span className="text-xs hidden sm:block" style={{ color: '#94A3B8' }}>
-                    {isMac ? '⌘' : 'Ctrl'} + Enter
-                  </span>
+                  <span className="label-caps hidden sm:block">{isMac ? '⌘' : 'Ctrl'} + Enter</span>
                   {input.length > 0 && (
-                    <span
-                      className="text-xs tabular-nums"
-                      style={{ color: charsWarn ? '#FCD34D' : '#94A3B8' }}
-                    >
+                    <span className="label-caps tabular-nums" style={{ color: warn ? '#6B2737' : '#7A7062' }}>
                       {charsLeft}
                     </span>
                   )}
                 </div>
-                <HelmButton
-                  state={state}
-                  onClick={handleSubmit}
-                  disabled={isActive || !input.trim()}
-                />
+                <HelmButton state={state} onClick={handleSubmit} disabled={isActive || !input.trim()} />
               </div>
             </motion.div>
           )}
@@ -183,14 +155,12 @@ export default function ChatPage() {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="rounded-card p-4 flex items-start gap-3"
-              style={{ background: 'rgba(192,57,43,0.08)', border: '1px solid rgba(192,57,43,0.25)' }}
+              className="p-4 flex items-start gap-3"
+              style={{ background: 'rgba(107,39,55,0.05)', border: '1px solid rgba(107,39,55,0.2)' }}
             >
-              <span style={{ color: '#C0392B', fontSize: '1rem', lineHeight: 1.4 }}>⚠</span>
-              <p className="text-sm leading-relaxed" style={{ color: '#FDA4AF' }}>
-                {error === 'RATE_LIMIT'
-                  ? 'Too many requests. Give it a minute, then try again.'
-                  : error}
+              <span style={{ color: '#6B2737', lineHeight: 1.5 }}>⚠</span>
+              <p className="text-sm leading-relaxed" style={{ color: '#6B2737', fontFamily: 'Jost' }}>
+                {error === 'RATE_LIMIT' ? 'Too many requests. Give it a moment, then try again.' : error}
               </p>
             </motion.div>
           )}
@@ -206,11 +176,7 @@ export default function ChatPage() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.35 }}
             >
-              <AnswerCard
-                result={result}
-                streamText={streamText}
-                isStreaming={state === 'STREAMING'}
-              />
+              <AnswerCard result={result} streamText={streamText} isStreaming={state === 'STREAMING'} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -226,10 +192,9 @@ export default function ChatPage() {
             >
               <button
                 onClick={handleReset}
-                className="flex items-center gap-2.5 px-6 py-3 rounded-pill text-sm font-semibold transition-all hover:opacity-80 active:scale-95"
-                style={{ background: 'rgba(192,57,43,0.1)', color: '#C0392B', border: '1px solid rgba(192,57,43,0.25)' }}
+                className="btn-ghost flex items-center gap-2.5"
               >
-                <HelmSVG size={14} /> New analysis
+                <HelmSVG /> New analysis
               </button>
             </motion.div>
           )}
@@ -241,9 +206,9 @@ export default function ChatPage() {
   )
 }
 
-function HelmSVG({ size = 16 }: { size?: number }) {
+function HelmSVG() {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9.5"  stroke="currentColor" strokeWidth="1.5" />
       <circle cx="12" cy="12" r="2.5"  stroke="currentColor" strokeWidth="1.5" />
       <line x1="12" y1="2.5"  x2="12" y2="9.5"  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

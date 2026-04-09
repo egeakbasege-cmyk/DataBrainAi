@@ -3,43 +3,36 @@
 import Link from 'next/link'
 import { Logo } from './Logo'
 
-interface Props {
-  transparent?: boolean
-}
-
-export function Nav({ transparent = false }: Props) {
+export function Nav() {
   return (
     <header
-      className="sticky top-0 z-30 flex items-center justify-between px-6 md:px-10 py-4"
-      style={{
-        background:     transparent ? 'transparent' : 'rgba(10,15,30,0.85)',
-        backdropFilter: transparent ? 'none' : 'blur(20px)',
-        borderBottom:   transparent ? 'none' : '1px solid rgba(255,255,255,0.06)',
-      }}
+      className="sticky top-0 z-30"
+      style={{ background: 'rgba(250,250,245,0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(26,24,20,0.1)' }}
     >
-      <Link href="/" className="flex items-center gap-2.5 group">
-        <Logo size={26} />
-        <span className="font-bold text-sm tracking-tight" style={{ color: '#F1F5F9' }}>
-          Sail AI
-        </span>
-      </Link>
+      <div className="max-w-6xl mx-auto flex items-center justify-between px-6 md:px-10 py-4">
+        <Link href="/" className="flex items-center gap-2.5">
+          <Logo size={28} />
+          <span
+            className="font-serif font-semibold tracking-wide"
+            style={{ fontSize: '1.05rem', color: '#2B4A2A', letterSpacing: '0.05em' }}
+          >
+            SAIL AI
+          </span>
+        </Link>
 
-      <nav className="flex items-center gap-3">
-        <Link
-          href="/pricing"
-          className="text-sm transition-opacity hover:opacity-80"
-          style={{ color: '#94A3B8' }}
-        >
-          Pricing
-        </Link>
-        <Link
-          href="/chat"
-          className="text-sm font-semibold px-4 py-2 rounded-pill transition-all"
-          style={{ background: '#C0392B', color: '#F1F5F9', boxShadow: '0 0 16px rgba(192,57,43,0.3)' }}
-        >
-          Launch app →
-        </Link>
-      </nav>
+        <nav className="flex items-center gap-6">
+          <Link
+            href="/pricing"
+            className="label-caps hover:opacity-70 transition-opacity"
+            style={{ color: '#7A7062' }}
+          >
+            Pricing
+          </Link>
+          <Link href="/chat" className="btn-primary">
+            Launch →
+          </Link>
+        </nav>
+      </div>
     </header>
   )
 }

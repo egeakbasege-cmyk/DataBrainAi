@@ -9,40 +9,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        navy:    '#0A0F1E',
-        crimson: '#C0392B',
-        'navy-2': '#111827',
-        'navy-3': '#1C2333',
-        'navy-4': '#243044',
-        dim:     '#94A3B8',
-        ink:     '#F1F5F9',
+        cream:     '#FAFAF5',
+        linen:     '#F0EBE0',
+        parchment: '#E5DECE',
+        ink:       '#1A1814',
+        muted:     '#7A7062',
+        green:     '#2B4A2A',
+        navy:      '#1B3649',
+        gold:      '#C4973A',
+        claret:    '#6B2737',
       },
       fontFamily: {
-        sans:    ['Inter', 'system-ui', 'sans-serif'],
-        heading: ['Inter', 'system-ui', 'sans-serif'],
-      },
-      borderRadius: {
-        card: '12px',
-        pill: '9999px',
+        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+        sans:  ['Jost', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         'fade-up': {
-          '0%':   { opacity: '0', transform: 'translateY(12px)' },
+          '0%':   { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         'fade-in': {
           '0%':   { opacity: '0' },
           '100%': { opacity: '1' },
         },
-        'spin-full': {
-          '0%':   { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
-        },
       },
       animation: {
-        'fade-up':  'fade-up 0.4s ease both',
-        'fade-in':  'fade-in 0.3s ease both',
-        'spin-full': 'spin-full 2s linear infinite',
+        'fade-up':  'fade-up 0.45s ease both',
+        'fade-in':  'fade-in 0.35s ease both',
       },
     },
   },

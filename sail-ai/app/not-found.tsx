@@ -1,35 +1,26 @@
 import Link from 'next/link'
 import { Logo } from '@/components/Logo'
+import { CompassRose } from '@/components/Ornaments'
 
 export default function NotFound() {
   return (
-    <main
-      className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
-      style={{ background: '#0A0F1E' }}
-    >
-      <Logo size={36} />
-      <p
-        className="mt-6 font-bold tabular-nums"
-        style={{ fontSize: 'clamp(4rem, 12vw, 8rem)', color: 'rgba(192,57,43,0.15)', letterSpacing: '-0.04em', lineHeight: 1 }}
-      >
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#FAFAF5' }}>
+      <div className="relative mb-4">
+        <CompassRose size={120} color="#2B4A2A" opacity={0.09} />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Logo size={40} />
+        </div>
+      </div>
+      <p className="font-serif font-bold" style={{ fontSize: 'clamp(4rem, 12vw, 7rem)', color: '#E5DECE', letterSpacing: '-0.04em', lineHeight: 1 }}>
         404
       </p>
-      <h1
-        className="mt-2 font-bold"
-        style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)', color: '#F1F5F9', letterSpacing: '-0.02em' }}
-      >
-        Page not found
+      <h1 className="font-serif italic mt-2 mb-3" style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)', color: '#1A1814' }}>
+        This page drifted off the chart
       </h1>
-      <p className="mt-3 text-sm" style={{ color: '#94A3B8' }}>
-        This page drifted off the chart.
+      <p className="text-sm mb-10" style={{ color: '#7A7062', fontFamily: 'Jost', fontWeight: 300 }}>
+        The waters here are uncharted.
       </p>
-      <Link
-        href="/"
-        className="mt-8 px-6 py-3 rounded-pill text-sm font-semibold transition-all"
-        style={{ background: '#C0392B', color: '#F1F5F9', boxShadow: '0 0 20px rgba(192,57,43,0.35)' }}
-      >
-        Back to port →
-      </Link>
+      <Link href="/" className="btn-primary">Back to port →</Link>
     </main>
   )
 }

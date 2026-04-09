@@ -1,41 +1,30 @@
+/** Sail AI crest-style logo — vintage yacht club aesthetic */
 export function Logo({ size = 32 }: { size?: number }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="Sail AI logo"
-    >
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-label="Sail AI">
+      {/* Outer crest ring */}
+      <circle cx="16" cy="16" r="14.5" stroke="#2B4A2A" strokeWidth="0.75" opacity="0.45" />
+      {/* Water */}
+      <path d="M5 23 Q10.5 20.5 16 23 Q21.5 25.5 27 23" stroke="#2B4A2A" strokeWidth="0.85" fill="none" opacity="0.45" />
       {/* Hull */}
-      <path
-        d="M4 24 Q16 28 28 24 L26 22 Q16 25.5 6 22 Z"
-        fill="#C0392B"
-      />
-
+      <path d="M8 21.5 Q16 25 24 21.5 L22.5 19.5 Q16 23 9.5 19.5 Z" fill="#2B4A2A" />
       {/* Mast */}
-      <line x1="16" y1="6" x2="16" y2="23" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" />
-
-      {/* Main sail with circuit traces */}
-      <path d="M16 7 L26 20 L16 22 Z" fill="rgba(192,57,43,0.15)" stroke="#C0392B" strokeWidth="1" />
-
-      {/* Circuit trace lines on sail */}
-      <line x1="18" y1="10" x2="18" y2="13" stroke="#C0392B" strokeWidth="0.75" strokeLinecap="round" />
-      <line x1="18" y1="13" x2="22" y2="13" stroke="#C0392B" strokeWidth="0.75" strokeLinecap="round" />
-      <line x1="22" y1="13" x2="22" y2="16" stroke="#C0392B" strokeWidth="0.75" strokeLinecap="round" />
-      <line x1="20" y1="16" x2="24" y2="16" stroke="#C0392B" strokeWidth="0.75" strokeLinecap="round" />
-
-      {/* Chip nodes on circuit */}
-      <rect x="17.5" y="9.5" width="1" height="1" rx="0.25" fill="#C0392B" />
-      <rect x="21.5" y="12.5" width="1" height="1" rx="0.25" fill="#C0392B" />
-      <rect x="21.5" y="15.5" width="1" height="1" rx="0.25" fill="#C0392B" />
-
+      <line x1="16" y1="6.5" x2="16" y2="21" stroke="#2B4A2A" strokeWidth="1.4" strokeLinecap="round" />
+      {/* Main sail */}
+      <path d="M16 8 L24 19 L16 21 Z" fill="#2B4A2A" opacity="0.13" stroke="#2B4A2A" strokeWidth="0.9" />
+      {/* Sail engraving */}
+      <line x1="17.5" y1="10.5" x2="21.5" y2="13.5" stroke="#2B4A2A" strokeWidth="0.4" opacity="0.35" />
+      <line x1="17.5" y1="13.5" x2="22.5" y2="16.5" stroke="#2B4A2A" strokeWidth="0.4" opacity="0.35" />
+      <line x1="17.5" y1="16.5" x2="23"   y2="18.5" stroke="#2B4A2A" strokeWidth="0.4" opacity="0.35" />
       {/* Foresail */}
-      <path d="M16 9 L8 20 L16 22 Z" fill="rgba(192,57,43,0.08)" stroke="rgba(192,57,43,0.5)" strokeWidth="0.75" />
-
-      {/* Water line */}
-      <path d="M2 26 Q8 24.5 16 26 Q24 27.5 30 26" stroke="rgba(192,57,43,0.3)" strokeWidth="1" fill="none" strokeLinecap="round" />
+      <path d="M16 9 L9.5 19 L16 21 Z" fill="#2B4A2A" opacity="0.05" stroke="#2B4A2A" strokeWidth="0.7" />
+      {/* Burgee */}
+      <path d="M16 5.5 L21 8 L16 10 Z" fill="#2B4A2A" opacity="0.65" />
+      {/* Crest tick marks */}
+      <line x1="16" y1="1.5" x2="16" y2="3"    stroke="#2B4A2A" strokeWidth="0.6" opacity="0.3" />
+      <line x1="16" y1="29"  x2="16" y2="30.5"  stroke="#2B4A2A" strokeWidth="0.6" opacity="0.3" />
+      <line x1="1.5" y1="16" x2="3"  y2="16"    stroke="#2B4A2A" strokeWidth="0.6" opacity="0.3" />
+      <line x1="29"  y1="16" x2="30.5" y2="16"  stroke="#2B4A2A" strokeWidth="0.6" opacity="0.3" />
     </svg>
   )
 }
