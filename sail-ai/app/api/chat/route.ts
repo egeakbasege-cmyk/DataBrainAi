@@ -4,9 +4,17 @@ import { SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
 
 const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-function getModel() {
+// Model fallback chain — tries each in order until one succeeds
+const MODEL_CHAIN = [
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+]
+
+function getModel(modelName: string) {
   return genai.getGenerativeModel({
-    model:             'gemini-1.5-flash-8b',
+    model:             modelName,
     systemInstruction: SYSTEM_PROMPT,
     generationConfig: {
       maxOutputTokens: 1400,
@@ -71,31 +79,46 @@ export async function POST(req: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      try {
-        const model  = getModel()
-        const result = await model.generateContentStream(buildUserMessage(message, context))
+      let lastErr: any = null
 
-        for await (const chunk of result.stream) {
-          const text = chunk.text()
-          if (text) {
-            // Send only the delta — client accumulates
-            controller.enqueue(encoder.encode(text))
+      for (const modelName of MODEL_CHAIN) {
+        try {
+          const model  = getModel(modelName)
+          const result = await model.generateContentStream(buildUserMessage(message, context))
+
+          for await (const chunk of result.stream) {
+            const text = chunk.text()
+            if (text) {
+              controller.enqueue(encoder.encode(text))
+            }
           }
-        }
 
-        controller.close()
-      } catch (err: any) {
-        const raw = err?.message ?? ''
-        let msg = 'Analysis failed. Please try again.'
-        if (raw.includes('API_KEY') || raw.includes('API key'))
-          msg = 'Service configuration error. Please contact support.'
-        else if (raw.includes('429') || raw.includes('quota') || raw.includes('Too Many'))
-          msg = 'Service is at capacity. Please wait 60 seconds and try again, or create a new Gemini API key at aistudio.google.com.'
-        else if (raw.includes('404') || raw.includes('not found'))
-          msg = 'AI model unavailable. Please try again shortly.'
-        controller.enqueue(encoder.encode(JSON.stringify({ error: msg })))
-        controller.close()
+          controller.close()
+          return  // success — exit the loop
+        } catch (err: any) {
+          const raw: string = err?.message ?? ''
+          // Hard failures — no point retrying other models
+          if (raw.includes('API_KEY') || raw.includes('API key')) {
+            controller.enqueue(encoder.encode(JSON.stringify({
+              error: 'Service configuration error. Please contact support.',
+            })))
+            controller.close()
+            return
+          }
+          // Transient / model-specific — try next
+          lastErr = err
+          continue
+        }
       }
+
+      // All models exhausted
+      const raw: string = lastErr?.message ?? ''
+      const msg =
+        raw.includes('429') || raw.includes('quota') || raw.includes('Too Many')
+          ? 'Service is at capacity. Please create a new Gemini API key at aistudio.google.com and update your GEMINI_API_KEY in Vercel.'
+          : 'Analysis failed. Please try again in a moment.'
+      controller.enqueue(encoder.encode(JSON.stringify({ error: msg })))
+      controller.close()
     },
   })
 
