@@ -6,7 +6,7 @@ const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 function getModel() {
   return genai.getGenerativeModel({
-    model:             'gemini-1.5-flash',
+    model:             'gemini-2.0-flash',
     systemInstruction: SYSTEM_PROMPT,
     generationConfig: {
       maxOutputTokens: 1400,
