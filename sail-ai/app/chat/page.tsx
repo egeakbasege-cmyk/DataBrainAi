@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence }  from 'framer-motion'
 import { Nav }               from '@/components/Nav'
 import { HelmButton }        from '@/components/HelmButton'
@@ -11,24 +11,26 @@ import { PaywallModal }      from '@/components/PaywallModal'
 import { WaveRule }          from '@/components/Ornaments'
 import { useSailState }      from '@/hooks/useSailState'
 import { useSubscription }   from '@/hooks/useSubscription'
+import { useBusinessContext } from '@/lib/context/BusinessContext'
 
 const PLACEHOLDERS = [
-  'I run a personal training business with 2,400 Instagram followers. My $120/session rate gets 1 DM a week…',
-  'My Shopify store does $8k/month but cart abandonment is at 78%. Email list has 1,200 subscribers…',
-  'B2B agency, 6 clients, $15k MRR. I need to double revenue in 90 days without hiring anyone…',
-  'SaaS product, 340 free users, $0 paid conversions after 3 months. Charging $29/month…',
+  'E-commerce store, £8k/month revenue, 1.5% conversion rate, 68% cart abandonment…',
+  'B2B agency, 6 retainer clients, £18k MRR, need to stabilise pipeline…',
+  'SaaS product, 340 free users, 4% monthly churn, no paid conversions yet…',
+  'Personal training, 12 active clients, £95/session, want to increase throughput…',
 ]
 
 const MAX = 2000
 
 export default function ChatPage() {
-  const [input, setInput]   = useState('')
-  const [phIdx, setPhIdx]   = useState(0)
-  const [isMac, setIsMac]   = useState(true)
-  const textareaRef          = useRef<HTMLTextAreaElement>(null)
+  const [input, setInput] = useState('')
+  const [phIdx, setPhIdx] = useState(0)
+  const [isMac, setIsMac] = useState(true)
+  const textareaRef        = useRef<HTMLTextAreaElement>(null)
 
   const { state, streamText, result, error, submit, reset } = useSailState()
   const { isPro, usedToday, canAnalyse, showPaywall, recordUsage, triggerPaywall, closePaywall, activatePro } = useSubscription()
+  const { buildContext, addSession, profile } = useBusinessContext()
 
   useEffect(() => { setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent)) }, [])
   useEffect(() => {
@@ -43,8 +45,19 @@ export default function ChatPage() {
   }, [input])
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    // Pre-fill from landing page micro-analysis
+    const q = params.get('q')
+    if (q) { setInput(decodeURIComponent(q)); window.history.replaceState({}, '', '/chat') }
     if (params.get('pro') === '1') { activatePro(); window.history.replaceState({}, '', '/chat') }
   }, [activatePro])
+
+  // Persist completed strategies to session memory
+  useEffect(() => {
+    if (state === 'COMPLETE' && result && !('needsMetrics' in result)) {
+      const summary = `${result.headline} — target: ${result.target30}`
+      addSession(input, summary)
+    }
+  }, [state, result])
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     if (e.target.value.length <= MAX) setInput(e.target.value)
@@ -55,7 +68,9 @@ export default function ChatPage() {
     if (!t || state === 'THINKING' || state === 'STREAMING') return
     if (!canAnalyse) { triggerPaywall(); return }
     recordUsage()
-    await submit(t)
+    // Inject business context for Pro users with session history
+    const context = isPro ? buildContext() : ''
+    await submit(t, context)
   }
 
   function handleReset() {
@@ -69,11 +84,14 @@ export default function ChatPage() {
   const charsLeft  = MAX - input.length
   const warn       = charsLeft < 200
 
+  // Check if context is available to surface to user
+  const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0
+
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#FAFAF5' }}>
+    <main className="min-h-screen flex flex-col" style={{ background: '#FAFAF8' }}>
       <Nav />
 
-      <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-8 flex flex-col gap-6">
+      <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-8 flex flex-col gap-5">
 
         {/* Boat + counter */}
         <div className="flex items-end justify-between gap-4">
@@ -85,6 +103,27 @@ export default function ChatPage() {
           </div>
         </div>
 
+        {/* Context indicator — shown for Pro users with prior sessions */}
+        {isPro && hasContext && state === 'IDLE' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{
+              padding:     '0.625rem 0.875rem',
+              background:  'rgba(201,169,110,0.07)',
+              border:      '1px solid rgba(201,169,110,0.2)',
+              display:     'flex',
+              alignItems:  'center',
+              gap:         '0.5rem',
+            }}
+          >
+            <span style={{ color: '#C9A96E', fontSize: '0.6rem' }}>◆</span>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', letterSpacing: '0.02em' }}>
+              Session memory active — {profile.sessions.length} prior {profile.sessions.length === 1 ? 'strategy' : 'strategies'} on record
+            </span>
+          </motion.div>
+        )}
+
         {/* Status */}
         <AnimatePresence mode="wait">
           {isActive && (
@@ -95,7 +134,7 @@ export default function ChatPage() {
               exit={{ opacity: 0 }}
               className="label-caps text-center"
             >
-              {state === 'THINKING' ? 'Charting your course…' : 'Reading the wind…'}
+              {state === 'THINKING' ? 'Retrieving benchmarks…' : 'Composing analysis…'}
             </motion.p>
           )}
         </AnimatePresence>
@@ -109,10 +148,11 @@ export default function ChatPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.3 }}
-              className="card-linen overflow-hidden"
               style={{
-                borderColor: isActive ? 'rgba(43,74,42,0.35)' : 'rgba(26,24,20,0.12)',
-                transition: 'border-color 0.3s',
+                background:  '#FFFFFF',
+                border:      `1px solid ${isActive ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.11)'}`,
+                overflow:    'hidden',
+                transition:  'border-color 0.25s',
               }}
             >
               <textarea
@@ -125,19 +165,28 @@ export default function ChatPage() {
                 placeholder={PLACEHOLDERS[phIdx]}
                 disabled={isActive}
                 rows={4}
-                className="w-full p-5 bg-transparent text-sm leading-relaxed disabled:opacity-40"
-                style={{ color: '#1A1814', caretColor: '#2B4A2A' }}
+                className="w-full p-5 bg-transparent disabled:opacity-40"
+                style={{
+                  color:      '#0C0C0E',
+                  caretColor: '#C9A96E',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize:   '0.9rem',
+                  lineHeight: 1.7,
+                }}
               />
 
               <div className="mx-5">
-                <WaveRule color="#2B4A2A" opacity={0.15} />
+                <WaveRule color="#0C0C0E" opacity={0.07} />
               </div>
 
               <div className="flex items-center justify-between px-5 py-3 gap-4">
                 <div className="flex items-center gap-4">
                   <span className="label-caps hidden sm:block">{isMac ? '⌘' : 'Ctrl'} + Enter</span>
                   {input.length > 0 && (
-                    <span className="label-caps tabular-nums" style={{ color: warn ? '#6B2737' : '#7A7062' }}>
+                    <span
+                      className="label-caps tabular-nums"
+                      style={{ color: warn ? '#991B1B' : '#A1A1AA' }}
+                    >
                       {charsLeft}
                     </span>
                   )}
@@ -155,12 +204,18 @@ export default function ChatPage() {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="p-4 flex items-start gap-3"
-              style={{ background: 'rgba(107,39,55,0.05)', border: '1px solid rgba(107,39,55,0.2)' }}
+              style={{
+                padding:     '1rem',
+                display:     'flex',
+                alignItems:  'flex-start',
+                gap:         '0.75rem',
+                background:  'rgba(153,27,27,0.05)',
+                border:      '1px solid rgba(153,27,27,0.18)',
+              }}
             >
-              <span style={{ color: '#6B2737', lineHeight: 1.5 }}>⚠</span>
-              <p className="text-sm leading-relaxed" style={{ color: '#6B2737', fontFamily: 'Jost' }}>
-                {error === 'RATE_LIMIT' ? 'Too many requests. Give it a moment, then try again.' : error}
+              <span style={{ color: '#991B1B', lineHeight: 1.5, flexShrink: 0 }}>⚠</span>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.6, color: '#991B1B' }}>
+                {error === 'RATE_LIMIT' ? 'Request limit reached. Please wait a moment before trying again.' : error}
               </p>
             </motion.div>
           )}
@@ -190,10 +245,7 @@ export default function ChatPage() {
               exit={{ opacity: 0 }}
               className="flex justify-center pb-8"
             >
-              <button
-                onClick={handleReset}
-                className="btn-ghost flex items-center gap-2.5"
-              >
+              <button onClick={handleReset} className="btn-ghost flex items-center gap-2.5">
                 <HelmSVG /> New analysis
               </button>
             </motion.div>

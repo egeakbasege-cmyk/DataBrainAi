@@ -6,29 +6,54 @@ import { Logo } from './Logo'
 export function Nav() {
   return (
     <header
-      className="sticky top-0 z-30"
-      style={{ background: 'rgba(250,250,245,0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(26,24,20,0.1)' }}
+      style={{
+        position:    'sticky',
+        top:         0,
+        zIndex:      30,
+        background:  'rgba(250,250,248,0.95)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom:'1px solid rgba(0,0,0,0.09)',
+      }}
     >
-      <div className="max-w-6xl mx-auto flex items-center justify-between px-6 md:px-10 py-4">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Logo size={28} />
+      <div
+        className="max-w-6xl mx-auto px-6 md:px-10"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '3.75rem' }}
+      >
+        {/* Brand */}
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+          <Logo size={26} />
           <span
-            className="font-serif font-semibold tracking-wide"
-            style={{ fontSize: '1.05rem', color: '#2B4A2A', letterSpacing: '0.05em' }}
+            style={{
+              fontFamily:    'Cormorant Garamond, Georgia, serif',
+              fontSize:      '1rem',
+              fontWeight:    600,
+              color:         '#0C0C0E',
+              letterSpacing: '0.07em',
+            }}
           >
             SAIL AI
           </span>
         </Link>
 
-        <nav className="flex items-center gap-6">
+        {/* Nav */}
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
           <Link
             href="/pricing"
-            className="label-caps hover:opacity-70 transition-opacity"
-            style={{ color: '#7A7062' }}
+            style={{
+              fontFamily:    'Inter, sans-serif',
+              fontSize:      '0.6875rem',
+              fontWeight:    600,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color:         '#71717A',
+              textDecoration:'none',
+              transition:    'color 0.15s',
+            }}
           >
             Pricing
           </Link>
-          <Link href="/chat" className="btn-primary">
+          <Link href="/chat" className="btn-primary" style={{ padding: '0.5625rem 1.25rem', fontSize: '0.7rem' }}>
             Launch →
           </Link>
         </nav>

@@ -57,7 +57,7 @@ export function useSailState() {
   const [error, setError]           = useState<string | null>(null)
   const abortRef                    = useRef<AbortController | null>(null)
 
-  const submit = useCallback(async (input: string) => {
+  const submit = useCallback(async (input: string, context?: string) => {
     if (state === 'THINKING' || state === 'STREAMING') return
 
     setError(null)
@@ -71,7 +71,7 @@ export function useSailState() {
       const res = await fetch('/api/chat', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ message: input }),
+        body:    JSON.stringify({ message: input, context }),
         signal:  abortRef.current.signal,
       })
 

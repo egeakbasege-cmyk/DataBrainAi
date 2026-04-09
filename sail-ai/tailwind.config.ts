@@ -5,27 +5,28 @@ const config: Config = {
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
     './hooks/**/*.{ts,tsx}',
+    './lib/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {
       colors: {
-        cream:     '#FAFAF5',
-        linen:     '#F0EBE0',
-        parchment: '#E5DECE',
-        ink:       '#1A1814',
-        muted:     '#7A7062',
-        green:     '#2B4A2A',
-        navy:      '#1B3649',
-        gold:      '#C4973A',
-        claret:    '#6B2737',
+        ink:       '#0C0C0E',
+        charcoal:  '#1C1C1E',
+        steel:     '#3A3A3C',
+        slate:     '#71717A',
+        silver:    '#A1A1AA',
+        canvas:    '#FAFAF8',
+        champagne: '#C9A96E',
+        pearl:     '#F5F2EC',
+        error:     '#991B1B',
       },
       fontFamily: {
         serif: ['Cormorant Garamond', 'Georgia', 'serif'],
-        sans:  ['Jost', 'system-ui', 'sans-serif'],
+        sans:  ['Inter', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         'fade-up': {
-          '0%':   { opacity: '0', transform: 'translateY(10px)' },
+          '0%':   { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         'fade-in': {
@@ -34,8 +35,8 @@ const config: Config = {
         },
       },
       animation: {
-        'fade-up':  'fade-up 0.45s ease both',
-        'fade-in':  'fade-in 0.35s ease both',
+        'fade-up': 'fade-up 0.4s ease both',
+        'fade-in': 'fade-in 0.3s ease both',
       },
     },
   },

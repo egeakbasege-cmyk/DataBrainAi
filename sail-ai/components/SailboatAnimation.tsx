@@ -4,10 +4,10 @@ import { motion, useAnimation } from 'framer-motion'
 import { useEffect } from 'react'
 import type { SailState } from '@/hooks/useSailState'
 
-const G = '#2B4A2A'   // bottle green
-const GM = 'rgba(43,74,42,0.18)'
-const GD = 'rgba(43,74,42,0.08)'
-const GW = 'rgba(43,74,42,0.22)'
+const G  = '#0C0C0E'                  // ink
+const GM = 'rgba(12,12,14,0.18)'
+const GD = 'rgba(12,12,14,0.07)'
+const GW = 'rgba(12,12,14,0.18)'
 
 interface Props { state: SailState }
 
@@ -114,7 +114,7 @@ function BoatIcon({ sailControls }: { sailControls: ReturnType<typeof useAnimati
         initial={{ scaleY: 0.28 }}
         style={{ transformBox: 'fill-box', transformOrigin: 'bottom center' }}
       >
-        {/* Main sail with engraving */}
+        {/* Main sail */}
         <path d="M36 6 L60 33 L36 36 Z" fill={GM} stroke={G} strokeWidth="1.3" />
         {[14,20,26].map((y, i) => {
           const t  = (y - 6) / (33 - 6)
@@ -132,8 +132,8 @@ function BoatIcon({ sailControls }: { sailControls: ReturnType<typeof useAnimati
       {/* Rigging */}
       <line x1="36" y1="6" x2="14" y2="34" stroke={G} strokeWidth="0.5" opacity="0.2" />
       <line x1="36" y1="6" x2="58" y2="31" stroke={G} strokeWidth="0.5" opacity="0.15" />
-      {/* Burgee */}
-      <path d="M36 2 L44 5 L36 8 Z" fill={G} opacity="0.6" />
+      {/* Burgee — champagne */}
+      <path d="M36 2 L44 5 L36 8 Z" fill="#C9A96E" opacity="0.85" />
       {/* Porthole */}
       <circle cx="46" cy="36" r="2.5" stroke={G} strokeWidth="0.7" fill="none" opacity="0.4" />
     </svg>
@@ -153,7 +153,7 @@ function MarinaIcon() {
       <rect x="20" y="8" width="14" height="22" rx="3" fill={GD} stroke={GW} strokeWidth="0.8" />
       <path d="M18 8 L27 0 L36 8 Z" fill={GM} />
       {/* Light */}
-      <circle cx="27" cy="5" r="3" fill={G} opacity="0.45" />
+      <circle cx="27" cy="5" r="3" fill="#C9A96E" opacity="0.5" />
       {/* Stripes */}
       <rect x="20" y="15" width="14" height="2.5" rx="0.5" fill={GM} />
       <rect x="20" y="22" width="14" height="2.5" rx="0.5" fill={GM} />

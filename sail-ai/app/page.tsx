@@ -1,211 +1,324 @@
 import Link from 'next/link'
 import { Nav } from '@/components/Nav'
 import { Logo } from '@/components/Logo'
-import { CompassRose, OrnamentRule, WaveRule, EngravedSailboat, AnchorIcon } from '@/components/Ornaments'
+import { MicroAnalysis } from '@/components/MicroAnalysis'
+import { CompassRose, EngravedSailboat } from '@/components/Ornaments'
 
+/* ── Realistic outcome examples ───────────────────────
+   Copy principles: measurable, qualified, no superlatives.
+   All projections are time-bounded and verifiable.         */
 const CASES = [
-  { n: '01', sector: 'Personal Training', headline: 'Convert 3% of your 2,400 followers into paying clients', stat: 'Industry avg: 3% conversion · Most coaches sit below 0.1%', upside: '+180%' },
-  { n: '02', sector: 'E-Commerce',        headline: 'Recover 15% of abandoned carts with one email sequence', stat: '70% of carts abandoned · 3-email sequence recovers 15%',  upside: '+45%'  },
-  { n: '03', sector: 'B2B Agency',        headline: 'Double MRR by activating your referral engine this week', stat: 'Referral leads close at 25% vs 5% cold outreach',          upside: '+120%' },
+  {
+    n:       '01',
+    sector:  'E-Commerce',
+    headline:'Structured checkout optimisation to close a 0.8-point conversion gap',
+    detail:  'Median sector CVR: 2.3% · Client starting point: 1.5% · 90-day horizon',
+    outcome: '+0.8pp CVR',
+  },
+  {
+    n:       '02',
+    sector:  'B2B SaaS',
+    headline:'Onboarding sequence redesign to reduce month-1 churn from 12% to below 8%',
+    detail:  'OpenView benchmark for sub-$2M ARR: 7–9% monthly churn · 60-day implementation',
+    outcome: '−4pp churn',
+  },
+  {
+    n:       '03',
+    sector:  'Professional Services',
+    headline:'Referral programme implementation targeting 20% of new clients from existing base',
+    detail:  'Industry average referral rate: 18–22% of new business · Standard payback: <45 days',
+    outcome: '+20% new clients',
+  },
 ]
+
+const HOW = [
+  {
+    n:     '01',
+    title: 'Describe your situation',
+    body:  'Provide your sector, one or two key metrics, and the primary constraint you are working against. Plain language is sufficient.',
+  },
+  {
+    n:     '02',
+    title: 'Receive a benchmarked analysis',
+    body:  'The system retrieves relevant industry benchmarks, compares your position, and identifies the highest-leverage action available to you.',
+  },
+  {
+    n:     '03',
+    title: 'A clear, executable plan',
+    body:  'Three specific actions with defined timeframes, a realistic 30-day target, and the single risk most likely to undermine execution.',
+  },
+]
+
+/* ── Divider component ───────────────────────────────── */
+function Rule() {
+  return <div style={{ height: 1, background: 'rgba(0,0,0,0.09)' }} />
+}
 
 export default function LandingPage() {
   return (
-    <main style={{ background: '#FAFAF5' }}>
+    <main style={{ background: '#FAFAF8' }}>
       <Nav />
 
-      {/* ── Hero ─────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-6 md:px-10 pt-20 md:pt-28 pb-16">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+      {/* ══════════════════════════════════════════════
+          HERO — Swiss typographic statement
+      ══════════════════════════════════════════════ */}
+      <section style={{ background: '#0C0C0E', paddingBottom: 0 }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10 pt-20 md:pt-28">
 
-          {/* Left — editorial headline */}
-          <div>
-            <div className="flex items-center gap-3 mb-8">
-              <AnchorIcon size={14} color="#2B4A2A" opacity={0.5} />
-              <span className="label-caps" style={{ color: '#7A7062' }}>
-                Premium AI advisory · Est. 2024
-              </span>
+          {/* Eyebrow */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#C9A96E' }}>
+              AI Business Advisory
+            </span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(201,169,110,0.2)' }} />
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)' }}>
+              Est. 2024
+            </span>
+          </div>
+
+          {/* Headline grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '3rem' }}>
+            <div>
+              <h1
+                style={{
+                  fontFamily:    'Cormorant Garamond, Georgia, serif',
+                  fontSize:      'clamp(3.5rem, 7vw, 6rem)',
+                  fontWeight:    600,
+                  fontStyle:     'italic',
+                  lineHeight:    1.04,
+                  letterSpacing: '-0.025em',
+                  color:         '#FFFFFF',
+                  maxWidth:      '16ch',
+                }}
+              >
+                Strategy grounded
+                in{' '}
+                <span style={{ color: '#C9A96E' }}>evidence.</span>
+              </h1>
+
+              <p
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize:   '1rem',
+                  lineHeight: 1.75,
+                  color:      'rgba(255,255,255,0.5)',
+                  maxWidth:   '48ch',
+                  marginTop:  '1.75rem',
+                  fontWeight: 300,
+                }}
+              >
+                Sail AI delivers benchmarked business strategy for independent operators.
+                Each analysis draws on verified industry data — not heuristics —
+                and is calibrated to your specific numbers.
+              </p>
+
+              <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <Link href="/chat" className="btn-primary">
+                  Begin analysis →
+                </Link>
+                <Link href="/pricing" className="btn-ghost-white">
+                  View plans
+                </Link>
+              </div>
+
+              <p style={{ marginTop: '1rem', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.05em' }}>
+                5 analyses included at no cost · No account required
+              </p>
             </div>
+          </div>
 
-            <h1
-              className="font-serif text-balance"
+          {/* ── Micro-analysis preview strip ──────────── */}
+          <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '1rem' }}>
+              Preview — instant insight
+            </p>
+            <MicroAnalysis />
+          </div>
+
+          {/* Sailboat visual — decorative, below fold */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '4rem', opacity: 0.2, pointerEvents: 'none' }}>
+            <div style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CompassRose size={220} color="#C9A96E" opacity={0.3} />
+              </div>
+              <EngravedSailboat size={180} color="#FFFFFF" opacity={0.6} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          STATS BAR
+      ══════════════════════════════════════════════ */}
+      <section style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.09)' }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-9" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', borderTop: '1px solid rgba(0,0,0,0.09)' }}>
+          {[
+            { v: '< 60s', l: 'Time to analysis' },
+            { v: '100%',  l: 'Benchmark-referenced' },
+            { v: '3 tiers', l: 'Pricing transparency' },
+          ].map((s, i) => (
+            <div
+              key={s.l}
               style={{
-                fontSize:      'clamp(2.8rem, 5vw, 4.5rem)',
-                lineHeight:    '1.08',
-                letterSpacing: '-0.025em',
-                color:         '#1A1814',
-                fontStyle:     'italic',
+                padding:     '0 2rem',
+                borderRight: i < 2 ? '1px solid rgba(0,0,0,0.09)' : 'none',
               }}
             >
-              Business strategy,{' '}
-              <span style={{ color: '#2B4A2A' }}>charted.</span>
-            </h1>
-
-            <div className="my-7">
-              <WaveRule color="#2B4A2A" opacity={0.3} />
-            </div>
-
-            <p className="text-base leading-relaxed mb-10" style={{ color: '#7A7062', fontFamily: 'Jost', maxWidth: '42ch', fontWeight: 300 }}>
-              For the small business owner who expects the same quality of advice as the world&apos;s best advisory firms — delivered in under 60 seconds.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-start gap-4">
-              <Link href="/chat" className="btn-primary">
-                Begin your analysis →
-              </Link>
-              <Link href="/pricing" className="btn-ghost">
-                View plans
-              </Link>
-            </div>
-
-            <p className="mt-5 text-xs" style={{ color: '#7A7062', fontFamily: 'Jost', letterSpacing: '0.06em' }}>
-              Five analyses complimentary · No account required
-            </p>
-          </div>
-
-          {/* Right — engraved sailboat visual */}
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative flex items-center justify-center">
-              {/* Background compass rose */}
-              <div className="absolute" style={{ opacity: 0.35 }}>
-                <CompassRose size={220} color="#2B4A2A" opacity={1} />
-              </div>
-              {/* Engraved sailboat */}
-              <EngravedSailboat size={200} color="#2B4A2A" opacity={0.85} />
-            </div>
-            <p
-              className="font-serif italic text-center"
-              style={{ color: '#7A7062', fontSize: '0.95rem', maxWidth: '28ch' }}
-            >
-              &ldquo;Every great voyage begins with a chart.&rdquo;
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Stats ─────────────────────────────────── */}
-      <section style={{ borderTop: '1px solid rgba(26,24,20,0.1)', borderBottom: '1px solid rgba(26,24,20,0.1)', background: '#F0EBE0' }}>
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-10 grid grid-cols-3 divide-x divide-parchment">
-          {[
-            { v: '< 60s',  l: 'Time to strategy' },
-            { v: '100%',   l: 'Benchmark-validated' },
-            { v: '$4/mo',  l: 'Pro plan' },
-          ].map((s) => (
-            <div key={s.l} className="px-6 md:px-12 first:pl-0 last:pr-0">
-              <p
-                className="font-serif font-semibold"
-                style={{ fontSize: 'clamp(1.8rem, 3vw, 2.8rem)', letterSpacing: '-0.03em', color: '#1A1814' }}
-              >
+              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', fontWeight: 700, letterSpacing: '-0.03em', color: '#0C0C0E', lineHeight: 1 }}>
                 {s.v}
               </p>
-              <span className="label-caps" style={{ color: '#7A7062' }}>{s.l}</span>
+              <span className="label-caps" style={{ display: 'block', marginTop: '0.4rem' }}>{s.l}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Sample outcomes ──────────────────────── */}
-      <section className="max-w-6xl mx-auto px-6 md:px-10 py-20">
-        <div className="flex items-end justify-between mb-10">
-          <span className="label-caps">Sample outcomes</span>
-          <span className="font-serif italic text-sm" style={{ color: '#7A7062' }}>
-            Real strategies, anonymised
-          </span>
-        </div>
+      {/* ══════════════════════════════════════════════
+          SAMPLE OUTCOMES
+      ══════════════════════════════════════════════ */}
+      <section style={{ background: '#FAFAF8' }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
 
-        <OrnamentRule />
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2rem' }}>
+            <span className="label-caps">Indicative outputs</span>
+            <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: '#71717A' }}>
+              Realistic projections, qualified by source data
+            </span>
+          </div>
 
-        <div style={{ borderBottom: '1px solid rgba(26,24,20,0.1)' }}>
-          {CASES.map((c) => (
+          <Rule />
+
+          {CASES.map((c, i) => (
             <div
               key={c.n}
-              className="group py-8 grid grid-cols-12 gap-4 items-center"
-              style={{ borderBottom: '1px solid rgba(26,24,20,0.08)', transition: 'background 0.15s' }}
+              style={{
+                display:       'grid',
+                gridTemplateColumns: '2.5rem 1fr auto',
+                gap:           '1.5rem',
+                alignItems:    'center',
+                padding:       '1.75rem 0',
+                borderBottom:  '1px solid rgba(0,0,0,0.07)',
+              }}
             >
-              <div className="col-span-1">
-                <span className="font-serif" style={{ fontSize: '0.85rem', color: '#E5DECE' }}>{c.n}</span>
-              </div>
-              <div className="col-span-2">
-                <span
-                  className="label-caps px-2.5 py-1"
-                  style={{ border: '1px solid rgba(43,74,42,0.25)', color: '#2B4A2A', background: 'rgba(43,74,42,0.06)' }}
-                >
-                  {c.sector}
-                </span>
-              </div>
-              <div className="col-span-7">
-                <p className="font-serif font-medium leading-snug mb-1.5" style={{ fontSize: 'clamp(0.95rem, 1.4vw, 1.12rem)', color: '#1A1814', fontStyle: 'italic' }}>
+              {/* Number */}
+              <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.8rem', color: '#D4D4D8', fontWeight: 600 }}>
+                {c.n}
+              </span>
+
+              {/* Content */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#0C0C0E', padding: '2px 8px', border: '1px solid rgba(0,0,0,0.14)' }}>
+                    {c.sector}
+                  </span>
+                </div>
+                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 1.5vw, 1.15rem)', color: '#0C0C0E', lineHeight: 1.4, marginBottom: '0.375rem' }}>
                   {c.headline}
                 </p>
-                <p className="text-xs leading-relaxed" style={{ color: '#7A7062', fontFamily: 'Jost' }}>{c.stat}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', lineHeight: 1.5 }}>
+                  {c.detail}
+                </p>
               </div>
-              <div className="col-span-2 text-right">
-                <span className="font-serif font-bold" style={{ fontSize: 'clamp(1.2rem, 2vw, 1.8rem)', color: '#2B4A2A' }}>
-                  {c.upside}
+
+              {/* Outcome */}
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.2rem, 2vw, 1.6rem)', fontWeight: 700, color: '#C9A96E', lineHeight: 1, display: 'block' }}>
+                  {c.outcome}
                 </span>
-                <p className="label-caps" style={{ color: '#7A7062' }}>uplift</p>
+                <span className="label-caps" style={{ display: 'block', marginTop: '0.2rem' }}>est. outcome</span>
               </div>
             </div>
           ))}
+
+          {/* Disclaimer */}
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', lineHeight: 1.6, marginTop: '1.25rem', maxWidth: '60ch' }}>
+            Projections are indicative, based on published industry benchmarks. Individual results depend on execution quality and market conditions.
+          </p>
         </div>
       </section>
 
-      {/* ── How it works ─────────────────────────── */}
-      <section style={{ background: '#F0EBE0', borderTop: '1px solid rgba(26,24,20,0.1)', borderBottom: '1px solid rgba(26,24,20,0.1)' }}>
+      {/* ══════════════════════════════════════════════
+          HOW IT WORKS — numbered list, Swiss grid
+      ══════════════════════════════════════════════ */}
+      <section style={{ background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.09)', borderBottom: '1px solid rgba(0,0,0,0.09)' }}>
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
-          <div className="flex items-center gap-6 mb-14">
-            <span className="label-caps">How it works</span>
-            <div className="flex-1 h-px" style={{ background: 'rgba(26,24,20,0.1)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3.5rem' }}>
+            <span className="label-caps">Methodology</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.09)' }} />
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { n: 'I',   title: 'Describe your challenge', body: 'Tell Sail AI your situation in plain language — revenue model, audience size, your biggest obstacle.' },
-              { n: 'II',  title: 'Strategy in seconds',     body: 'Metric extraction → benchmark retrieval → validated strategy plan. Delivered in real time.' },
-              { n: 'III', title: 'Act on your plan',        body: 'Three concrete steps tied to real benchmarks. A 30-day target and the single risk to avoid.' },
-            ].map((h) => (
-              <div key={h.n} className="card-cream p-6">
-                <p className="font-serif font-bold mb-5" style={{ fontSize: '1.5rem', color: '#C4973A', opacity: 0.7 }}>
-                  {h.n}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0' }}>
+            {HOW.map((h, i) => (
+              <div
+                key={h.n}
+                style={{
+                  padding:     '2rem',
+                  borderRight: i < HOW.length - 1 ? '1px solid rgba(0,0,0,0.09)' : 'none',
+                  borderLeft:  i === 0 ? '1px solid rgba(0,0,0,0.09)' : 'none',
+                  borderTop:   '1px solid rgba(0,0,0,0.09)',
+                  borderBottom:'1px solid rgba(0,0,0,0.09)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                  <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '2.5rem', fontWeight: 700, color: 'rgba(0,0,0,0.06)', lineHeight: 1 }}>
+                    {h.n}
+                  </span>
+                  <div style={{ width: 24, height: 2, background: '#C9A96E', marginTop: '1rem' }} />
+                </div>
+                <h4 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.15rem', fontWeight: 600, color: '#0C0C0E', marginBottom: '0.625rem' }}>
+                  {h.title}
+                </h4>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.75, color: '#71717A', fontWeight: 300 }}>
+                  {h.body}
                 </p>
-                <h4 className="font-serif font-semibold text-lg mb-3" style={{ color: '#1A1814' }}>{h.title}</h4>
-                <p className="text-sm leading-relaxed" style={{ color: '#7A7062', fontFamily: 'Jost', fontWeight: 300 }}>{h.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── CTA ──────────────────────────────────── */}
-      <section>
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-20 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-          <div>
-            <h2 className="font-serif italic mb-2" style={{ fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#1A1814' }}>
-              Your first five analyses are complimentary.
-            </h2>
-            <p className="text-sm" style={{ color: '#7A7062', fontFamily: 'Jost' }}>
-              No account. No card. Just answers.
-            </p>
+      {/* ══════════════════════════════════════════════
+          CTA — dark, minimal
+      ══════════════════════════════════════════════ */}
+      <section style={{ background: '#0C0C0E' }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-20" style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+          <Rule />
+          <div style={{ paddingTop: '3rem', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap' }}>
+            <div>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', color: '#FFFFFF', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
+                Your first five analyses are complimentary.
+              </h2>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: 'rgba(255,255,255,0.38)', fontWeight: 300 }}>
+                No account. No payment details. Cancel or downgrade at any time.
+              </p>
+            </div>
+            <Link href="/chat" className="btn-ghost-white" style={{ flexShrink: 0 }}>
+              Begin →
+            </Link>
           </div>
-          <Link href="/chat" className="btn-primary flex-shrink-0">
-            Begin →
-          </Link>
         </div>
       </section>
 
-      {/* ── Footer ───────────────────────────────── */}
-      <footer
-        className="px-6 md:px-10 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-        style={{ borderTop: '1px solid rgba(26,24,20,0.1)' }}
-      >
-        <div className="flex items-center gap-3">
-          <Logo size={22} />
-          <span className="font-serif font-semibold tracking-widest" style={{ color: '#2B4A2A', fontSize: '0.85rem', letterSpacing: '0.1em' }}>
-            SAIL AI
-          </span>
+      {/* ══════════════════════════════════════════════
+          FOOTER
+      ══════════════════════════════════════════════ */}
+      <footer style={{ background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.09)', padding: '1.75rem 0' }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Logo size={20} />
+            <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600, color: '#0C0C0E', fontSize: '0.875rem', letterSpacing: '0.08em' }}>
+              SAIL AI
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+            <Link href="/pricing" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', textDecoration: 'none', letterSpacing: '0.05em' }}>
+              Pricing
+            </Link>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#A1A1AA', letterSpacing: '0.04em' }}>
+              © {new Date().getFullYear()} Sail AI
+            </span>
+          </div>
         </div>
-        <span className="text-xs" style={{ color: '#7A7062', fontFamily: 'Jost', letterSpacing: '0.06em' }}>
-          © {new Date().getFullYear()} · Premium AI strategy · $4 / month after free tier
-        </span>
       </footer>
     </main>
   )

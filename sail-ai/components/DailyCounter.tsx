@@ -11,10 +11,15 @@ export function DailyCounter({ used, isPro }: Props) {
   if (isPro) {
     return (
       <span
-        className="label-caps px-3 py-1.5"
-        style={{ border: '1px solid rgba(43,74,42,0.3)', color: '#2B4A2A', background: 'rgba(43,74,42,0.06)' }}
+        className="label-caps"
+        style={{
+          padding:     '3px 10px',
+          border:      '1px solid rgba(201,169,110,0.35)',
+          color:       '#C9A96E',
+          background:  'rgba(201,169,110,0.07)',
+        }}
       >
-        Pro · Unlimited
+        Professional · Unlimited
       </span>
     )
   }
@@ -24,11 +29,12 @@ export function DailyCounter({ used, isPro }: Props) {
 
   return (
     <span
-      className="label-caps px-3 py-1.5"
+      className="label-caps"
       style={{
-        border:     `1px solid ${urgent ? 'rgba(107,39,55,0.3)' : 'rgba(26,24,20,0.15)'}`,
-        color:      urgent ? '#6B2737' : '#7A7062',
-        background: urgent ? 'rgba(107,39,55,0.05)' : 'transparent',
+        padding:    '3px 10px',
+        border:     `1px solid ${urgent ? 'rgba(153,27,27,0.25)' : 'rgba(0,0,0,0.14)'}`,
+        color:      urgent ? '#991B1B' : '#71717A',
+        background: urgent ? 'rgba(153,27,27,0.04)' : 'transparent',
       }}
     >
       {remaining}/{FREE_LIMIT} free today

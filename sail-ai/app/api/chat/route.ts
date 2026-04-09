@@ -50,9 +50,11 @@ export async function POST(req: NextRequest) {
   }
 
   let message: string
+  let context: string | undefined
   try {
     const body = await req.json()
     message    = (body.message ?? '').trim()
+    context    = typeof body.context === 'string' ? body.context : undefined
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request body.' }), { status: 400 })
   }
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       try {
         const model  = getModel()
-        const result = await model.generateContentStream(buildUserMessage(message))
+        const result = await model.generateContentStream(buildUserMessage(message, context))
 
         for await (const chunk of result.stream) {
           const text = chunk.text()

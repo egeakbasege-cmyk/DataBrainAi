@@ -1,0 +1,160 @@
+'use client'
+
+import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
+
+/* ── Types ──────────────────────────────────────────── */
+export interface BusinessMetric {
+  label:   string
+  value:   string
+  addedAt: string
+}
+
+export interface BusinessSession {
+  id:        string
+  prompt:    string
+  summary:   string
+  createdAt: string
+}
+
+export interface BusinessProfile {
+  sector:   string
+  metrics:  BusinessMetric[]
+  sessions: BusinessSession[]
+}
+
+const EMPTY_PROFILE: BusinessProfile = {
+  sector:   '',
+  metrics:  [],
+  sessions: [],
+}
+
+/* ── Actions ────────────────────────────────────────── */
+type Action =
+  | { type: 'SET_SECTOR';    sector:  string }
+  | { type: 'ADD_METRIC';    label:   string; value: string }
+  | { type: 'ADD_SESSION';   prompt:  string; summary: string }
+  | { type: 'CLEAR' }
+  | { type: 'HYDRATE';       profile: BusinessProfile }
+
+function reducer(state: BusinessProfile, action: Action): BusinessProfile {
+  switch (action.type) {
+    case 'SET_SECTOR':
+      return { ...state, sector: action.sector }
+
+    case 'ADD_METRIC': {
+      // Replace existing metric with same label, or append
+      const existing = state.metrics.findIndex(m => m.label === action.label)
+      const metric: BusinessMetric = { label: action.label, value: action.value, addedAt: new Date().toISOString() }
+      const metrics = existing >= 0
+        ? state.metrics.map((m, i) => i === existing ? metric : m)
+        : [...state.metrics.slice(-9), metric]  // keep last 10
+      return { ...state, metrics }
+    }
+
+    case 'ADD_SESSION': {
+      const session: BusinessSession = {
+        id:        crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+        prompt:    action.prompt,
+        summary:   action.summary,
+        createdAt: new Date().toISOString(),
+      }
+      return {
+        ...state,
+        sessions: [...state.sessions.slice(-19), session], // keep last 20
+      }
+    }
+
+    case 'CLEAR':
+      return EMPTY_PROFILE
+
+    case 'HYDRATE':
+      return action.profile
+
+    default:
+      return state
+  }
+}
+
+/* ── Context ────────────────────────────────────────── */
+interface BusinessContextValue {
+  profile:       BusinessProfile
+  setSector:     (sector: string) => void
+  addMetric:     (label: string, value: string) => void
+  addSession:    (prompt: string, summary: string) => void
+  clearProfile:  () => void
+  /** Returns a compact memory string to prepend to AI prompts */
+  buildContext:  () => string
+}
+
+const BusinessContext = createContext<BusinessContextValue | null>(null)
+
+const STORAGE_KEY = 'sail_business_profile'
+
+export function BusinessProvider({ children }: { children: React.ReactNode }) {
+  const [profile, dispatch] = useReducer(reducer, EMPTY_PROFILE)
+
+  // Hydrate from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) dispatch({ type: 'HYDRATE', profile: JSON.parse(raw) })
+    } catch {
+      // Ignore parse errors
+    }
+  }, [])
+
+  // Persist to localStorage on every change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
+    } catch {
+      // Ignore quota errors
+    }
+  }, [profile])
+
+  const setSector    = useCallback((sector: string) => dispatch({ type: 'SET_SECTOR', sector }), [])
+  const addMetric    = useCallback((label: string, value: string) => dispatch({ type: 'ADD_METRIC', label, value }), [])
+  const addSession   = useCallback((prompt: string, summary: string) => dispatch({ type: 'ADD_SESSION', prompt, summary }), [])
+  const clearProfile = useCallback(() => dispatch({ type: 'CLEAR' }), [])
+
+  /** Builds a concise context block injected before each AI prompt */
+  const buildContext = useCallback((): string => {
+    const parts: string[] = []
+
+    if (profile.sector) {
+      parts.push(`Business sector: ${profile.sector}`)
+    }
+
+    if (profile.metrics.length > 0) {
+      const metricLines = profile.metrics
+        .slice(-5)
+        .map(m => `  • ${m.label}: ${m.value}`)
+        .join('\n')
+      parts.push(`Known metrics (from previous sessions):\n${metricLines}`)
+    }
+
+    if (profile.sessions.length > 0) {
+      const recent = profile.sessions
+        .slice(-3)
+        .map(s => `  • ${s.summary}`)
+        .join('\n')
+      parts.push(`Recent strategy sessions:\n${recent}`)
+    }
+
+    if (parts.length === 0) return ''
+
+    return `[USER CONTEXT — from previous sessions]\n${parts.join('\n\n')}\n[END CONTEXT]\n\n`
+  }, [profile])
+
+  return (
+    <BusinessContext.Provider value={{ profile, setSector, addMetric, addSession, clearProfile, buildContext }}>
+      {children}
+    </BusinessContext.Provider>
+  )
+}
+
+export function useBusinessContext(): BusinessContextValue {
+  const ctx = useContext(BusinessContext)
+  if (!ctx) throw new Error('useBusinessContext must be used inside <BusinessProvider>')
+  return ctx
+}
