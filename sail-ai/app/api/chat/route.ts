@@ -6,7 +6,7 @@ const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 function getModel() {
   return genai.getGenerativeModel({
-    model:             'gemini-2.0-flash-lite',
+    model:             'gemini-1.5-flash-8b',
     systemInstruction: SYSTEM_PROMPT,
     generationConfig: {
       maxOutputTokens: 1400,
@@ -85,7 +85,14 @@ export async function POST(req: NextRequest) {
 
         controller.close()
       } catch (err: any) {
-        const msg = err?.message?.includes('API_KEY') ? 'Service unavailable.' : (err.message || 'Generation failed.')
+        const raw = err?.message ?? ''
+        let msg = 'Analysis failed. Please try again.'
+        if (raw.includes('API_KEY') || raw.includes('API key'))
+          msg = 'Service configuration error. Please contact support.'
+        else if (raw.includes('429') || raw.includes('quota') || raw.includes('Too Many'))
+          msg = 'Service is at capacity. Please wait 60 seconds and try again, or create a new Gemini API key at aistudio.google.com.'
+        else if (raw.includes('404') || raw.includes('not found'))
+          msg = 'AI model unavailable. Please try again shortly.'
         controller.enqueue(encoder.encode(JSON.stringify({ error: msg })))
         controller.close()
       }
