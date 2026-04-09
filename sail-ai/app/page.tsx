@@ -113,7 +113,7 @@ export default function LandingPage() {
               </p>
 
               <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                <Link href="/chat" className="btn-primary">
+                <Link href="/onboarding" className="btn-primary">
                   Begin analysis →
                 </Link>
                 <Link href="/pricing" className="btn-ghost-white">
@@ -292,7 +292,7 @@ export default function LandingPage() {
                 No account. No payment details. Cancel or downgrade at any time.
               </p>
             </div>
-            <Link href="/chat" className="btn-ghost-white" style={{ flexShrink: 0 }}>
+            <Link href="/onboarding" className="btn-ghost-white" style={{ flexShrink: 0 }}>
               Begin →
             </Link>
           </div>

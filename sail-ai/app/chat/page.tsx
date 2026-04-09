@@ -72,8 +72,10 @@ export default function ChatPage() {
     if (!t || state === 'THINKING' || state === 'STREAMING') return
     if (!canAnalyse) { triggerPaywall(); return }
     recordUsage()
-    // Inject business context for Pro users with session history
-    const context = isPro ? buildContext() : ''
+    // Diagnostic profile is always injected; session memory only for Pro
+    const context = profile.diagnosticPrompt
+      ? (isPro ? buildContext() : profile.diagnosticPrompt + '\n\n')
+      : (isPro ? buildContext() : '')
     await submit(t, context)
   }
 
@@ -88,8 +90,7 @@ export default function ChatPage() {
   const charsLeft  = MAX - input.length
   const warn       = charsLeft < 200
 
-  // Check if context is available to surface to user
-  const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0
+  const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
@@ -108,22 +109,25 @@ export default function ChatPage() {
         </div>
 
         {/* Context indicator — shown for Pro users with prior sessions */}
-        {isPro && hasContext && state === 'IDLE' && (
+        {hasContext && state === 'IDLE' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             style={{
-              padding:     '0.625rem 0.875rem',
-              background:  'rgba(201,169,110,0.07)',
-              border:      '1px solid rgba(201,169,110,0.2)',
-              display:     'flex',
-              alignItems:  'center',
-              gap:         '0.5rem',
+              padding:    '0.625rem 0.875rem',
+              background: 'rgba(201,169,110,0.07)',
+              border:     '1px solid rgba(201,169,110,0.2)',
+              display:    'flex',
+              alignItems: 'center',
+              gap:        '0.5rem',
             }}
           >
             <span style={{ color: '#C9A96E', fontSize: '0.6rem' }}>◆</span>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', letterSpacing: '0.02em' }}>
-              Session memory active — {profile.sessions.length} prior {profile.sessions.length === 1 ? 'strategy' : 'strategies'} on record
+              {profile.diagnostic
+                ? `Diagnostic loaded — ${profile.diagnostic.industry} · ${profile.diagnostic.teamSize} · Health score active`
+                : `Session memory active — ${profile.sessions.length} prior ${profile.sessions.length === 1 ? 'strategy' : 'strategies'} on record`
+              }
             </span>
           </motion.div>
         )}

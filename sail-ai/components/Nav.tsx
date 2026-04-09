@@ -53,7 +53,7 @@ export function Nav() {
           >
             Pricing
           </Link>
-          <Link href="/chat" className="btn-primary" style={{ padding: '0.5625rem 1.25rem', fontSize: '0.7rem' }}>
+          <Link href="/onboarding" className="btn-primary" style={{ padding: '0.5625rem 1.25rem', fontSize: '0.7rem' }}>
             Launch →
           </Link>
         </nav>

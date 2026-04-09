@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
+import type { DiagnosticInput } from '@/lib/diagnostic'
 
 /* ── Types ──────────────────────────────────────────── */
 export interface BusinessMetric {
@@ -17,24 +18,29 @@ export interface BusinessSession {
 }
 
 export interface BusinessProfile {
-  sector:   string
-  metrics:  BusinessMetric[]
-  sessions: BusinessSession[]
+  sector:          string
+  metrics:         BusinessMetric[]
+  sessions:        BusinessSession[]
+  diagnostic:      DiagnosticInput | null
+  diagnosticPrompt: string | null
 }
 
 const EMPTY_PROFILE: BusinessProfile = {
-  sector:   '',
-  metrics:  [],
-  sessions: [],
+  sector:          '',
+  metrics:         [],
+  sessions:        [],
+  diagnostic:      null,
+  diagnosticPrompt: null,
 }
 
 /* ── Actions ────────────────────────────────────────── */
 type Action =
-  | { type: 'SET_SECTOR';    sector:  string }
-  | { type: 'ADD_METRIC';    label:   string; value: string }
-  | { type: 'ADD_SESSION';   prompt:  string; summary: string }
+  | { type: 'SET_SECTOR';      sector:  string }
+  | { type: 'ADD_METRIC';      label:   string; value: string }
+  | { type: 'ADD_SESSION';     prompt:  string; summary: string }
+  | { type: 'SET_DIAGNOSTIC';  data: DiagnosticInput; prompt: string }
   | { type: 'CLEAR' }
-  | { type: 'HYDRATE';       profile: BusinessProfile }
+  | { type: 'HYDRATE';         profile: BusinessProfile }
 
 function reducer(state: BusinessProfile, action: Action): BusinessProfile {
   switch (action.type) {
@@ -64,6 +70,9 @@ function reducer(state: BusinessProfile, action: Action): BusinessProfile {
       }
     }
 
+    case 'SET_DIAGNOSTIC':
+      return { ...state, diagnostic: action.data, diagnosticPrompt: action.prompt }
+
     case 'CLEAR':
       return EMPTY_PROFILE
 
@@ -77,13 +86,14 @@ function reducer(state: BusinessProfile, action: Action): BusinessProfile {
 
 /* ── Context ────────────────────────────────────────── */
 interface BusinessContextValue {
-  profile:       BusinessProfile
-  setSector:     (sector: string) => void
-  addMetric:     (label: string, value: string) => void
-  addSession:    (prompt: string, summary: string) => void
-  clearProfile:  () => void
+  profile:         BusinessProfile
+  setSector:       (sector: string) => void
+  addMetric:       (label: string, value: string) => void
+  addSession:      (prompt: string, summary: string) => void
+  setDiagnostic:   (data: DiagnosticInput, prompt: string) => void
+  clearProfile:    () => void
   /** Returns a compact memory string to prepend to AI prompts */
-  buildContext:  () => string
+  buildContext:    () => string
 }
 
 const BusinessContext = createContext<BusinessContextValue | null>(null)
@@ -112,16 +122,20 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
     }
   }, [profile])
 
-  const setSector    = useCallback((sector: string) => dispatch({ type: 'SET_SECTOR', sector }), [])
-  const addMetric    = useCallback((label: string, value: string) => dispatch({ type: 'ADD_METRIC', label, value }), [])
-  const addSession   = useCallback((prompt: string, summary: string) => dispatch({ type: 'ADD_SESSION', prompt, summary }), [])
-  const clearProfile = useCallback(() => dispatch({ type: 'CLEAR' }), [])
+  const setSector      = useCallback((sector: string) => dispatch({ type: 'SET_SECTOR', sector }), [])
+  const addMetric      = useCallback((label: string, value: string) => dispatch({ type: 'ADD_METRIC', label, value }), [])
+  const addSession     = useCallback((prompt: string, summary: string) => dispatch({ type: 'ADD_SESSION', prompt, summary }), [])
+  const setDiagnostic  = useCallback((data: DiagnosticInput, prompt: string) => dispatch({ type: 'SET_DIAGNOSTIC', data, prompt }), [])
+  const clearProfile   = useCallback(() => dispatch({ type: 'CLEAR' }), [])
 
-  /** Builds a concise context block injected before each AI prompt */
+  /** Builds a context block injected before each AI prompt */
   const buildContext = useCallback((): string => {
     const parts: string[] = []
 
-    if (profile.sector) {
+    // Diagnostic profile takes precedence — full system prompt
+    if (profile.diagnosticPrompt) {
+      parts.push(profile.diagnosticPrompt)
+    } else if (profile.sector) {
       parts.push(`Business sector: ${profile.sector}`)
     }
 
@@ -143,11 +157,11 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
 
     if (parts.length === 0) return ''
 
-    return `[USER CONTEXT — from previous sessions]\n${parts.join('\n\n')}\n[END CONTEXT]\n\n`
+    return `${parts.join('\n\n')}\n\n`
   }, [profile])
 
   return (
-    <BusinessContext.Provider value={{ profile, setSector, addMetric, addSession, clearProfile, buildContext }}>
+    <BusinessContext.Provider value={{ profile, setSector, addMetric, addSession, setDiagnostic, clearProfile, buildContext }}>
       {children}
     </BusinessContext.Provider>
   )
