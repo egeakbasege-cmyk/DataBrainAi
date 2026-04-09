@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence }  from 'framer-motion'
-import { Nav }               from '@/components/Nav'
-import { HelmButton }        from '@/components/HelmButton'
+import { Nav }            from '@/components/Nav'
+import { HelmButton }     from '@/components/HelmButton'
 import { SailboatAnimation } from '@/components/SailboatAnimation'
-import { AnswerCard }        from '@/components/AnswerCard'
-import { DailyCounter }      from '@/components/DailyCounter'
-import { PaywallModal }      from '@/components/PaywallModal'
-import { WaveRule }          from '@/components/Ornaments'
+import { AnswerCard }     from '@/components/AnswerCard'
+import { DailyCounter }   from '@/components/DailyCounter'
+import { PaywallModal }   from '@/components/PaywallModal'
+import { FeedbackModal }  from '@/components/FeedbackModal'
+import { WaveRule }       from '@/components/Ornaments'
 import { useSailState }      from '@/hooks/useSailState'
 import { useSubscription }   from '@/hooks/useSubscription'
 import { useBusinessContext } from '@/lib/context/BusinessContext'
@@ -23,10 +24,11 @@ const PLACEHOLDERS = [
 const MAX = 2000
 
 export default function ChatPage() {
-  const [input, setInput] = useState('')
-  const [phIdx, setPhIdx] = useState(0)
-  const [isMac, setIsMac] = useState(true)
-  const textareaRef        = useRef<HTMLTextAreaElement>(null)
+  const [input,          setInput]          = useState('')
+  const [phIdx,          setPhIdx]          = useState(0)
+  const [isMac,          setIsMac]          = useState(true)
+  const [showFeedback,   setShowFeedback]   = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const { state, streamText, result, error, submit, reset } = useSailState()
   const { isPro, usedToday, canAnalyse, showPaywall, recordUsage, triggerPaywall, closePaywall, activatePro } = useSubscription()
@@ -45,9 +47,11 @@ export default function ChatPage() {
   }, [input])
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    // Pre-fill from landing page micro-analysis
     const q = params.get('q')
-    if (q) { setInput(decodeURIComponent(q)); window.history.replaceState({}, '', '/chat') }
+    if (q) {
+      try { setInput(decodeURIComponent(q)) } catch { setInput(q) }
+      window.history.replaceState({}, '', '/chat')
+    }
     if (params.get('pro') === '1') { activatePro(); window.history.replaceState({}, '', '/chat') }
   }, [activatePro])
 
@@ -88,7 +92,7 @@ export default function ChatPage() {
   const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#FAFAF8' }}>
+    <main className="min-h-screen flex flex-col" style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
       <Nav />
 
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-8 flex flex-col gap-5">
@@ -254,6 +258,35 @@ export default function ChatPage() {
       </div>
 
       <PaywallModal open={showPaywall} onClose={closePaywall} />
+
+      {/* Feedback button — fixed bottom-right, above dock */}
+      <button
+        onClick={() => setShowFeedback(true)}
+        aria-label="Send feedback"
+        style={{
+          position:  'fixed',
+          bottom:    '5.5rem',
+          right:     '1.25rem',
+          zIndex:    50,
+          width:     '2.25rem',
+          height:    '2.25rem',
+          borderRadius: '50%',
+          background: '#0C0C0E',
+          border:    'none',
+          cursor:    'pointer',
+          display:   'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+          transition: 'opacity 0.15s',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FAFAF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      </button>
+
+      <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
     </main>
   )
 }

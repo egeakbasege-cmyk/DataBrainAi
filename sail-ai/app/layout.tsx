@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { BusinessProvider } from '@/lib/context/BusinessContext'
+import { Dock }             from '@/components/Dock'
 
 export const metadata: Metadata = {
   title:       'Sail AI — Business Strategy, Grounded in Evidence',
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <BusinessProvider>
           {children}
+          <Dock />
         </BusinessProvider>
       </body>
     </html>

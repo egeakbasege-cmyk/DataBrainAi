@@ -56,7 +56,7 @@ function Rule() {
 
 export default function LandingPage() {
   return (
-    <main style={{ background: '#FAFAF8' }}>
+    <main style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
       <Nav />
 
       {/* ══════════════════════════════════════════════
