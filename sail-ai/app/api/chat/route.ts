@@ -20,7 +20,15 @@ function getModel() {
 const rateMap = new Map<string, { count: number; reset: number }>()
 
 function checkRate(ip: string): boolean {
-  const now   = Date.now()
+  const now = Date.now()
+
+  // Prune stale entries every 500 calls to prevent memory leak
+  if (rateMap.size > 500) {
+    for (const [key, val] of rateMap) {
+      if (now > val.reset) rateMap.delete(key)
+    }
+  }
+
   const entry = rateMap.get(ip)
   if (!entry || now > entry.reset) {
     rateMap.set(ip, { count: 1, reset: now + 60_000 })

@@ -6,7 +6,9 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Nav } from '@/components/Nav'
 import { FREE_LIMIT } from '@/lib/stripe'
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null
 
 const FREE_FEATURES = [
   `${FREE_LIMIT} analyses per day`,
@@ -29,13 +31,16 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(false)
 
   async function handleUpgrade() {
+    if (!stripePromise) { alert('Payments not configured yet.'); return }
     setLoading(true)
     try {
       const res    = await fetch('/api/checkout', { method: 'POST' })
       const data   = await res.json()
+      if (data.error) throw new Error(data.error)
       const stripe = await stripePromise
       await stripe?.redirectToCheckout({ sessionId: data.sessionId })
-    } catch {
+    } catch (err: any) {
+      console.error('Checkout error:', err.message)
       setLoading(false)
     }
   }

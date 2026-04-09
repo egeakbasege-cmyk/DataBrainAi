@@ -88,7 +88,7 @@ export default function LandingPage() {
 
       {/* ── Stats ─────────────────────────────────────── */}
       <section style={{ borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(17,24,39,0.5)' }}>
-        <div className="max-w-5xl mx-auto px-6 md:px-10 py-10 grid grid-cols-3 divide-x" style={{ divideColor: 'rgba(255,255,255,0.06)' }}>
+        <div className="max-w-5xl mx-auto px-6 md:px-10 py-10 grid grid-cols-3 divide-x divide-white/[0.06]">
           {[
             { v: '< 60s', l: 'Time to strategy' },
             { v: '100%',  l: 'Benchmark-validated' },

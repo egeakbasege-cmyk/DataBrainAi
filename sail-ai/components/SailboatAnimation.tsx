@@ -75,7 +75,7 @@ export function SailboatAnimation({ state }: Props) {
         animate={boatControls}
         initial={{ x: 0, rotate: 0 }}
         className="absolute bottom-6 left-10"
-        style={{ originY: 1 }}
+        style={{ originX: 0.5, originY: 1 }}
       >
         <BoatIcon sailControls={sailControls} />
       </motion.div>
@@ -118,11 +118,11 @@ function BoatIcon({ sailControls }: { sailControls: ReturnType<typeof useAnimati
       <path d="M6 38 Q36 46 66 38 L62 34 Q36 41 10 34 Z" fill="#C0392B" />
       {/* Mast */}
       <line x1="36" y1="4" x2="36" y2="37" stroke="#C0392B" strokeWidth="2" strokeLinecap="round" />
-      {/* Sails group — scales from base */}
+      {/* Sails group — scales from base of mast */}
       <motion.g
         animate={sailControls}
         initial={{ scaleY: 0.3 }}
-        style={{ transformOrigin: '36px 37px' }}
+        style={{ transformBox: 'fill-box', transformOrigin: 'bottom center' }}
       >
         {/* Main sail */}
         <path d="M36 6 L60 34 L36 37 Z" fill="rgba(192,57,43,0.18)" stroke="#C0392B" strokeWidth="1.5" />
