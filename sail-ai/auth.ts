@@ -46,6 +46,7 @@ function buildProviders() {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  secret:   process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   adapter:  PrismaAdapter(prisma),
   session:  { strategy: 'jwt' },
   providers: buildProviders(),
