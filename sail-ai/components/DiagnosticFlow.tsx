@@ -536,13 +536,13 @@ export function DiagnosticFlow() {
         </div>
       )}
 
-      {/* Content */}
+      {/* Content — extra bottom padding clears the fixed nav bar + Dock */}
       <div style={{
         flex:      1,
         maxWidth:  '560px',
         width:     '100%',
         margin:    '0 auto',
-        padding:   '1.5rem 1.25rem 8rem',
+        padding:   '1.5rem 1.25rem 14rem',
         boxSizing: 'border-box',
       }}>
         <AnimatePresence mode="wait">
@@ -563,23 +563,24 @@ export function DiagnosticFlow() {
         </AnimatePresence>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation — sits above the Dock (z-50, bottom-6 ≈ 1.5rem, ~3.5rem tall) */}
       {!isResult && (
         <div style={{
           position:   'fixed',
-          bottom:     0,
+          bottom:     '5rem',   /* clears the Dock pill */
           left:       0,
           right:      0,
-          background: 'rgba(250,250,248,0.92)',
+          background: 'rgba(250,250,248,0.96)',
           backdropFilter:       'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderTop:  '1px solid rgba(12,12,14,0.08)',
-          padding:    '1rem 1.25rem',
+          borderBottom: '1px solid rgba(12,12,14,0.05)',
+          padding:    '0.875rem 1.25rem',
           display:    'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap:        '1rem',
-          zIndex:     20,
+          zIndex:     40,   /* above page content, below Dock (z-50) is fine — Dock is separate */
         }}>
           <button
             type="button"

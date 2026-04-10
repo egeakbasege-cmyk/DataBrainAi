@@ -78,11 +78,13 @@ export default function ChatPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, result])
 
-  // Show key panel automatically when AI fails due to quota/access
+  // Show key panel on any AI failure that could be fixed with BYOK
   useEffect(() => {
-    if (error && (error.includes('quota') || error.includes('aistudio') || error.includes('API key') || error.includes('Unable to reach'))) {
-      setShowKeyPanel(true)
-    }
+    if (!error) return
+    const isAiError = error.includes('quota') || error.includes('aistudio') ||
+      error.includes('API key') || error.includes('Unable to reach') ||
+      error.includes('AI_') || error.includes('exhausted') || error.includes('unavailable')
+    if (isAiError) setShowKeyPanel(true)
   }, [error])
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -256,8 +258,12 @@ export default function ChatPage() {
               style={{ padding: '1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', background: 'rgba(153,27,27,0.05)', border: '1px solid rgba(153,27,27,0.18)' }}
             >
               <span style={{ color: '#991B1B', lineHeight: 1.5, flexShrink: 0 }}>⚠</span>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.6, color: '#991B1B' }}>
-                {error === 'RATE_LIMIT' ? 'Request limit reached. Please wait a moment.' : error}
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.6, color: '#991B1B', margin: 0 }}>
+                {error === 'RATE_LIMIT'
+                  ? 'Request limit reached. Please wait a moment before trying again.'
+                  : error.toLowerCase().includes('sign in') || error.toLowerCase().includes('unauthorized')
+                  ? <span>Session expired. <a href="/login" style={{ color: '#991B1B', textDecoration: 'underline' }}>Sign in again →</a></span>
+                  : error}
               </p>
             </motion.div>
           )}

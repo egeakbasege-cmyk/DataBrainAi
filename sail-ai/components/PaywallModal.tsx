@@ -122,14 +122,20 @@ export function PaywallModal({ open, onClose }: Props) {
                       lineHeight: 1,
                     }}
                   >
-                    $4
+                    $29
                   </span>
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
                     /month · cancel any time
                   </span>
                 </div>
                 <ul className="space-y-2">
-                  {['Unlimited analyses per day', 'Priority response time', 'Early access to new features'].map((f) => (
+                  {[
+                    'Unlimited analyses per day',
+                    'Session memory across conversations',
+                    'Business profile persistence',
+                    'Priority response time',
+                    'Exportable strategy summaries',
+                  ].map((f) => (
                     <li
                       key={f}
                       className="flex items-center gap-2.5"

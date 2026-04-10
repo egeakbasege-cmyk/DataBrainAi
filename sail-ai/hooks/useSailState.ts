@@ -78,7 +78,8 @@ export function useSailState() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         if (res.status === 429) throw new Error('RATE_LIMIT')
-        throw new Error(data.error || 'Request failed. Please try again.')
+        // Middleware returns { message } (ApiError format); route returns { error }
+        throw new Error(data.message ?? data.error ?? 'Request failed. Please try again.')
       }
 
       setState('STREAMING')
@@ -100,8 +101,10 @@ export function useSailState() {
 
       const parsed = parseJSON(buffer)
 
-      // Surface embedded errors from the AI
-      if ('error' in parsed) throw new Error((parsed as any).error)
+      // Surface embedded errors (AI model errors sent through stream)
+      if ('error' in parsed && typeof (parsed as any).error === 'string') {
+        throw new Error((parsed as any).error)
+      }
 
       setResult(parsed)
       setState('COMPLETE')
