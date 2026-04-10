@@ -2,6 +2,7 @@ import { NextRequest }          from 'next/server'
 import { auth }                 from '@/auth'
 import { GoogleGenerativeAI }   from '@google/generative-ai'
 import { SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
+import { ChatRequestSchema }    from '@/schema/analysis'
 
 const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
@@ -62,26 +63,21 @@ export async function POST(req: NextRequest) {
     })
   }
 
+  // Strict Zod validation — structured errors for the client
   let message: string
   let context: string | undefined
   let userApiKey: string | undefined
 
   try {
-    const body  = await req.json()
-    message     = (body.message ?? '').trim()
-    context     = typeof body.context === 'string' ? body.context : undefined
-    userApiKey  = typeof body.apiKey === 'string' && body.apiKey.length > 10
-      ? body.apiKey
-      : undefined
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid request body.' }), { status: 400 })
-  }
-
-  if (!message) {
-    return new Response(JSON.stringify({ error: 'Message is required.' }), { status: 400 })
-  }
-  if (message.length > 2000) {
-    return new Response(JSON.stringify({ error: 'Message too long (max 2000 characters).' }), { status: 400 })
+    const raw      = await req.json()
+    const parsed   = ChatRequestSchema.parse({ ...raw, message: (raw.message ?? '').trim() })
+    message        = parsed.message
+    context        = parsed.context
+    userApiKey     = parsed.apiKey
+  } catch (err: any) {
+    const isZod    = err?.name === 'ZodError'
+    const details  = isZod ? err.flatten().fieldErrors : undefined
+    return new Response(JSON.stringify({ error: isZod ? 'Invalid request.' : 'Invalid request body.', details }), { status: 400 })
   }
 
   const encoder = new TextEncoder()
