@@ -1,9 +1,18 @@
 'use client'
 
-import Link from 'next/link'
+import Link     from 'next/link'
+import { useState } from 'react'
+import { useSession, signOut } from 'next-auth/react'
 import { Logo } from './Logo'
 
 export function Nav() {
+  const { data: session } = useSession()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const initial = session?.user?.name?.[0]?.toUpperCase()
+    ?? session?.user?.email?.[0]?.toUpperCase()
+    ?? '?'
+
   return (
     <header
       style={{
@@ -23,21 +32,19 @@ export function Nav() {
         {/* Brand */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
           <Logo size={26} />
-          <span
-            style={{
-              fontFamily:    'Cormorant Garamond, Georgia, serif',
-              fontSize:      '1rem',
-              fontWeight:    600,
-              color:         '#0C0C0E',
-              letterSpacing: '0.07em',
-            }}
-          >
+          <span style={{
+            fontFamily:    'Cormorant Garamond, Georgia, serif',
+            fontSize:      '1rem',
+            fontWeight:    600,
+            color:         '#0C0C0E',
+            letterSpacing: '0.07em',
+          }}>
             SAIL AI
           </span>
         </Link>
 
         {/* Nav */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <Link
             href="/pricing"
             style={{
@@ -48,16 +55,125 @@ export function Nav() {
               textTransform: 'uppercase',
               color:         '#71717A',
               textDecoration:'none',
-              transition:    'color 0.15s',
             }}
           >
             Pricing
           </Link>
-          <Link href="/onboarding" className="btn-primary" style={{ padding: '0.5625rem 1.25rem', fontSize: '0.7rem' }}>
-            Launch →
-          </Link>
+
+          {session?.user ? (
+            /* User avatar + dropdown */
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setMenuOpen(o => !o)}
+                style={{
+                  width:          '2rem',
+                  height:         '2rem',
+                  borderRadius:   '50%',
+                  background:     session.user.isPro ? 'rgba(201,169,110,0.15)' : 'rgba(12,12,14,0.08)',
+                  border:         session.user.isPro ? '1.5px solid rgba(201,169,110,0.5)' : '1.5px solid rgba(12,12,14,0.15)',
+                  display:        'flex',
+                  alignItems:     'center',
+                  justifyContent: 'center',
+                  fontFamily:     'Inter, sans-serif',
+                  fontSize:       '0.75rem',
+                  fontWeight:     600,
+                  color:          session.user.isPro ? '#C9A96E' : '#0C0C0E',
+                  cursor:         'pointer',
+                  overflow:       'hidden',
+                  padding:        0,
+                }}
+                aria-label="Account menu"
+              >
+                {session.user.image ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={session.user.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : initial}
+              </button>
+
+              {menuOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    onClick={() => setMenuOpen(false)}
+                    style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+                  />
+                  {/* Dropdown */}
+                  <div style={{
+                    position:  'absolute',
+                    top:       'calc(100% + 0.5rem)',
+                    right:     0,
+                    zIndex:    41,
+                    background:'#FFFFFF',
+                    border:    '1px solid rgba(12,12,14,0.1)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.09)',
+                    minWidth:  '180px',
+                    padding:   '0.375rem 0',
+                  }}>
+                    <div style={{
+                      padding:    '0.625rem 1rem',
+                      borderBottom: '1px solid rgba(12,12,14,0.07)',
+                    }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 500, color: '#0C0C0E', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {session.user.name ?? session.user.email}
+                      </p>
+                      {session.user.isPro && (
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#C9A96E', letterSpacing: '0.07em', textTransform: 'uppercase', marginTop: '2px' }}>
+                          Professional
+                        </p>
+                      )}
+                    </div>
+
+                    <MenuItem href="/chat"     onClick={() => setMenuOpen(false)} label="Chart Course" />
+                    <MenuItem href="/pricing"  onClick={() => setMenuOpen(false)} label="Pricing" />
+
+                    <div style={{ height: 1, background: 'rgba(12,12,14,0.07)', margin: '0.25rem 0' }} />
+
+                    <button
+                      onClick={() => { setMenuOpen(false); signOut({ callbackUrl: '/' }) }}
+                      style={{
+                        width:         '100%',
+                        textAlign:     'left',
+                        padding:       '0.5rem 1rem',
+                        fontFamily:    'Inter, sans-serif',
+                        fontSize:      '0.8rem',
+                        color:         '#71717A',
+                        background:    'none',
+                        border:        'none',
+                        cursor:        'pointer',
+                      }}
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <Link href="/onboarding" className="btn-primary" style={{ padding: '0.5625rem 1.25rem', fontSize: '0.7rem' }}>
+              Launch →
+            </Link>
+          )}
         </nav>
       </div>
     </header>
+  )
+}
+
+function MenuItem({ href, label, onClick }: { href: string; label: string; onClick: () => void }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      style={{
+        display:    'block',
+        padding:    '0.5rem 1rem',
+        fontFamily: 'Inter, sans-serif',
+        fontSize:   '0.8rem',
+        color:      '#0C0C0E',
+        textDecoration: 'none',
+      }}
+    >
+      {label}
+    </Link>
   )
 }

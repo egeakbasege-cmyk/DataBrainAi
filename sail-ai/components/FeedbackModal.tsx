@@ -34,8 +34,13 @@ export function FeedbackModal({ open, onClose }: Props) {
     e.preventDefault()
     if (!feedback.trim()) return
     setStatus('submitting')
-    // Simulate send — replace with real API call if needed
-    await new Promise((res) => setTimeout(res, 800))
+    try {
+      await fetch('/api/feedback', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ category, message: feedback }),
+      })
+    } catch { /* show success regardless to avoid revealing backend details */ }
     setStatus('success')
   }
 
