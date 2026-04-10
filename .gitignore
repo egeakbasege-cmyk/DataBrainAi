@@ -216,3 +216,8 @@ frontend/.env*.local
 system_data/
 frontend/tsconfig.tsbuildinfo
 package-lock.json
+
+# Root-level node_modules (should never exist — packages live in subdirs)
+/node_modules/
+/package.json
+/package-lock.json
