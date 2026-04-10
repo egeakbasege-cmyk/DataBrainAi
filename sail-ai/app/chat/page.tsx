@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence }  from 'framer-motion'
 import { Nav }               from '@/components/Nav'
 import { HelmButton }        from '@/components/HelmButton'
@@ -9,7 +9,6 @@ import { AnswerCard }        from '@/components/AnswerCard'
 import { DailyCounter }      from '@/components/DailyCounter'
 import { PaywallModal }      from '@/components/PaywallModal'
 import { FeedbackModal }     from '@/components/FeedbackModal'
-import { WaveRule }          from '@/components/Ornaments'
 import { useSailState }      from '@/hooks/useSailState'
 import { useSubscription }   from '@/hooks/useSubscription'
 import { useBusinessContext } from '@/lib/context/BusinessContext'
@@ -70,10 +69,12 @@ export default function ChatPage() {
     }
   }, [activatePro])
 
-  // Save completed strategies to session memory
+  // Save completed strategies + deduct 1 credit ONLY when a full strategy is returned
+  // Clarifying questions (needsMetrics) do NOT consume a daily limit
   useEffect(() => {
     if (state === 'COMPLETE' && result && !('needsMetrics' in result)) {
       addSession(input, `${result.headline} — target: ${result.target30}`)
+      recordUsage()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, result])
@@ -95,7 +96,8 @@ export default function ChatPage() {
     const t = input.trim()
     if (!t || state === 'THINKING' || state === 'STREAMING') return
     if (!canAnalyse) { triggerPaywall(); return }
-    recordUsage()
+    // Note: recordUsage() is intentionally NOT called here.
+    // Credit deduction happens only after a full StrategyResult is received.
     const context = profile.diagnosticPrompt
       ? (isPro ? buildContext() : profile.diagnosticPrompt + '\n\n')
       : (isPro ? buildContext() : '')
@@ -125,85 +127,85 @@ export default function ChatPage() {
     <main className="min-h-screen flex flex-col" style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
       <Nav />
 
-      <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-8 flex flex-col gap-5">
+      <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 flex flex-col gap-4">
 
-        {/* Boat + counter */}
-        <div className="flex items-end justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <SailboatAnimation state={state} />
-          </div>
-          <div className="flex-shrink-0 pb-1">
+        {/* ── Header: Boat animation + counter ── */}
+        <div
+          style={{
+            background:   '#FFFFFF',
+            border:       '1px solid rgba(0,0,0,0.08)',
+            borderRadius: '12px',
+            overflow:     'hidden',
+          }}
+        >
+          <SailboatAnimation state={state} />
+
+          {/* Context + counter bar */}
+          <div
+            style={{
+              display:       'flex',
+              alignItems:    'center',
+              justifyContent:'space-between',
+              padding:       '0.5rem 1rem',
+              borderTop:     '1px solid rgba(0,0,0,0.06)',
+              background:    'rgba(0,0,0,0.015)',
+              gap:           '0.75rem',
+              flexWrap:      'wrap',
+            }}
+          >
+            {/* Context badge */}
+            {hasContext ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ color: '#C9A96E', fontSize: '0.55rem' }}>◆</span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A' }}>
+                  {profile.diagnostic
+                    ? `${profile.diagnostic.industry} · ${profile.diagnostic.teamSize} · Diagnostic loaded`
+                    : `${profile.sessions.length} prior ${profile.sessions.length === 1 ? 'strategy' : 'strategies'} in memory`}
+                </span>
+              </div>
+            ) : (
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#A1A1AA', letterSpacing: '0.03em' }}>
+                No session context
+              </span>
+            )}
             <DailyCounter used={usedToday} isPro={isPro} />
           </div>
         </div>
 
-        {/* Diagnostic / context indicator */}
-        {hasContext && state === 'IDLE' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            style={{
-              padding:    '0.625rem 0.875rem',
-              background: 'rgba(201,169,110,0.07)',
-              border:     '1px solid rgba(201,169,110,0.2)',
-              display:    'flex',
-              alignItems: 'center',
-              gap:        '0.5rem',
-            }}
-          >
-            <span style={{ color: '#C9A96E', fontSize: '0.6rem' }}>◆</span>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', letterSpacing: '0.02em' }}>
-              {profile.diagnostic
-                ? `Diagnostic loaded — ${profile.diagnostic.industry} · ${profile.diagnostic.teamSize} · Health score active`
-                : `Session memory active — ${profile.sessions.length} prior ${profile.sessions.length === 1 ? 'strategy' : 'strategies'} on record`
-              }
-            </span>
-          </motion.div>
-        )}
-
-        {/* Active API key indicator */}
+        {/* ── API key indicator (compact) ── */}
         {apiKey && state === 'IDLE' && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
             style={{
-              padding:    '0.5rem 0.875rem',
-              background: 'rgba(12,12,14,0.03)',
-              border:     '1px solid rgba(12,12,14,0.08)',
-              display:    'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap:        '0.5rem',
+              padding:       '0.4rem 0.875rem',
+              background:    'rgba(201,169,110,0.06)',
+              border:        '1px solid rgba(201,169,110,0.2)',
+              borderRadius:  '6px',
+              display:       'flex',
+              alignItems:    'center',
+              justifyContent:'space-between',
+              gap:           '0.5rem',
             }}
           >
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#71717A' }}>
-              Custom API key active · {apiKey.slice(0, 8)}…
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.5" strokeLinecap="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A' }}>
+                Custom key · {apiKey.slice(0, 8)}…
+              </span>
+            </div>
             <button
               onClick={() => setShowKeyPanel(true)}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#C9A96E', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               Change
             </button>
           </motion.div>
         )}
 
-        {/* Status */}
-        <AnimatePresence mode="wait">
-          {isActive && (
-            <motion.p
-              key="status"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="label-caps text-center"
-            >
-              {state === 'THINKING' ? 'Retrieving benchmarks…' : 'Composing analysis…'}
-            </motion.p>
-          )}
-        </AnimatePresence>
-
-        {/* Input */}
+        {/* ── Input area ── */}
         <AnimatePresence mode="wait">
           {!isComplete && (
             <motion.div
@@ -211,53 +213,170 @@ export default function ChatPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.3 }}
-              style={{
-                background: '#FFFFFF',
-                border:     `1px solid ${isActive ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.11)'}`,
-                overflow:   'hidden',
-                transition: 'border-color 0.25s',
-              }}
+              transition={{ duration: 0.28 }}
             >
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={handleChange}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSubmit() }
-                }}
-                placeholder={PLACEHOLDERS[phIdx]}
-                disabled={isActive}
-                rows={4}
-                className="w-full p-5 bg-transparent disabled:opacity-40"
-                style={{ color: '#0C0C0E', caretColor: '#C9A96E', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', lineHeight: 1.7 }}
-              />
-              <div className="mx-5"><WaveRule color="#0C0C0E" opacity={0.07} /></div>
-              <div className="flex items-center justify-between px-5 py-3 gap-4">
-                <div className="flex items-center gap-4">
-                  <span className="label-caps hidden sm:block">{isMac ? '⌘' : 'Ctrl'} + Enter</span>
-                  {input.length > 0 && (
-                    <span className="label-caps tabular-nums" style={{ color: warn ? '#991B1B' : '#A1A1AA' }}>
-                      {charsLeft}
+              {/* Status label above input */}
+              <AnimatePresence mode="wait">
+                {isActive && (
+                  <motion.div
+                    key="status"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      display:       'flex',
+                      alignItems:    'center',
+                      gap:           '0.5rem',
+                      marginBottom:  '0.5rem',
+                      paddingLeft:   '0.25rem',
+                    }}
+                  >
+                    <motion.span
+                      animate={{ opacity: [1, 0.3, 1] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                      style={{
+                        display:      'inline-block',
+                        width:         6,
+                        height:        6,
+                        borderRadius: '50%',
+                        background:   '#C9A96E',
+                        flexShrink:   0,
+                      }}
+                    />
+                    <span className="label-caps" style={{ color: '#71717A' }}>
+                      {state === 'THINKING' ? 'Retrieving benchmarks…' : 'Composing analysis…'}
                     </span>
-                  )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Input card */}
+              <div
+                style={{
+                  background:   '#FFFFFF',
+                  border:       `1.5px solid ${isActive ? 'rgba(201,169,110,0.5)' : 'rgba(0,0,0,0.1)'}`,
+                  borderRadius: '12px',
+                  overflow:     'hidden',
+                  boxShadow:    isActive ? '0 0 0 3px rgba(201,169,110,0.08)' : '0 1px 4px rgba(0,0,0,0.04)',
+                  transition:   'border-color 0.25s, box-shadow 0.25s',
+                }}
+              >
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={handleChange}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSubmit() }
+                  }}
+                  placeholder={PLACEHOLDERS[phIdx]}
+                  disabled={isActive}
+                  rows={4}
+                  className="w-full bg-transparent disabled:opacity-40"
+                  style={{
+                    padding:    '1.125rem 1.25rem 0.875rem',
+                    color:      '#0C0C0E',
+                    caretColor: '#C9A96E',
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize:   '0.9rem',
+                    lineHeight: 1.7,
+                    resize:     'none',
+                  }}
+                />
+
+                {/* Toolbar */}
+                <div
+                  style={{
+                    display:       'flex',
+                    alignItems:    'center',
+                    justifyContent:'space-between',
+                    padding:       '0.625rem 1.25rem 0.875rem',
+                    borderTop:     '1px solid rgba(0,0,0,0.06)',
+                    gap:           '0.75rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                    {/* Keyboard shortcut hint */}
+                    <span className="label-caps hidden sm:block" style={{ color: '#C9A9AA' }}>
+                      {isMac ? '⌘' : 'Ctrl'} + Enter
+                    </span>
+                    {/* Char counter */}
+                    {input.length > 0 && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="label-caps tabular-nums"
+                        style={{ color: warn ? '#991B1B' : '#C8C8D0' }}
+                      >
+                        {charsLeft}
+                      </motion.span>
+                    )}
+                  </div>
+                  <HelmButton state={state} onClick={handleSubmit} disabled={isActive || !input.trim()} />
                 </div>
-                <HelmButton state={state} onClick={handleSubmit} disabled={isActive || !input.trim()} />
               </div>
+
+              {/* Quick picks */}
+              {state === 'IDLE' && input.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  style={{ marginTop: '0.625rem', display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}
+                >
+                  {PLACEHOLDERS.map((ph, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        const q = ph.split('…')[0].split(',')[0].trim().replace(/^[A-Z-a-z\s]+,?\s*/, '')
+                        const questions = [
+                          'How do I get my first 10 paying customers?',
+                          'Where am I losing money?',
+                          'What should I focus on this month?',
+                          'How do I raise prices without losing clients?',
+                        ]
+                        setInput(questions[i] ?? questions[0])
+                        textareaRef.current?.focus()
+                      }}
+                      style={{
+                        padding:       '0.3rem 0.75rem',
+                        border:        '1px solid rgba(0,0,0,0.1)',
+                        borderRadius:  '999px',
+                        background:    '#FFFFFF',
+                        fontFamily:    'Inter, sans-serif',
+                        fontSize:      '0.72rem',
+                        color:         '#71717A',
+                        cursor:        'pointer',
+                        whiteSpace:    'nowrap',
+                        transition:    'border-color 0.15s, color 0.15s',
+                      }}
+                    >
+                      {['First 10 customers', 'Find losses', 'Monthly focus', 'Raise prices'][i]}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Error */}
+        {/* ── Error ── */}
         <AnimatePresence>
           {error && (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              style={{ padding: '1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', background: 'rgba(153,27,27,0.05)', border: '1px solid rgba(153,27,27,0.18)' }}
+              style={{
+                padding:      '0.875rem 1rem',
+                display:      'flex',
+                alignItems:   'flex-start',
+                gap:          '0.75rem',
+                background:   'rgba(153,27,27,0.04)',
+                border:       '1px solid rgba(153,27,27,0.16)',
+                borderRadius: '8px',
+              }}
             >
-              <span style={{ color: '#991B1B', lineHeight: 1.5, flexShrink: 0 }}>⚠</span>
+              <span style={{ color: '#991B1B', lineHeight: 1.5, flexShrink: 0, fontSize: '0.85rem' }}>⚠</span>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.6, color: '#991B1B', margin: 0 }}>
                 {error === 'RATE_LIMIT'
                   ? 'Request limit reached. Please wait a moment before trying again.'
@@ -269,14 +388,20 @@ export default function ChatPage() {
           )}
         </AnimatePresence>
 
-        {/* API Key Panel — shown on quota errors or manually */}
+        {/* ── API Key Panel ── */}
         <AnimatePresence>
           {showKeyPanel && (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              style={{ padding: '1.25rem', background: '#FFFFFF', border: '1px solid rgba(12,12,14,0.1)' }}
+              style={{
+                padding:      '1.25rem',
+                background:   '#FFFFFF',
+                border:       '1px solid rgba(12,12,14,0.1)',
+                borderRadius: '10px',
+                boxShadow:    '0 4px 16px rgba(0,0,0,0.06)',
+              }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#A1A1AA', margin: 0 }}>
@@ -288,9 +413,7 @@ export default function ChatPage() {
               </div>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', marginBottom: '0.875rem', lineHeight: 1.5 }}>
                 Paste your own key from{' '}
-                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E' }}>
-                  console.groq.com
-                </a>
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E' }}>console.groq.com</a>
                 {' '}→ API Keys → Create API key.
               </p>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -301,25 +424,22 @@ export default function ChatPage() {
                   placeholder="gsk_…"
                   style={{
                     flex: 1, padding: '0.625rem 0.75rem',
-                    border: '1px solid rgba(12,12,14,0.15)',
+                    border: '1px solid rgba(12,12,14,0.15)', borderRadius: '6px',
                     background: 'transparent', outline: 'none',
                     fontFamily: 'Inter, monospace', fontSize: '0.8rem', color: '#0C0C0E',
                   }}
                 />
-                <button
-                  onClick={saveApiKey}
-                  style={{
-                    padding: '0.625rem 1rem', background: '#0C0C0E', color: '#FAFAF8',
-                    border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase',
-                  }}
-                >
+                <button onClick={saveApiKey} style={{
+                  padding: '0.625rem 1rem', background: '#0C0C0E', color: '#FAFAF8',
+                  border: 'none', borderRadius: '6px', cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase',
+                }}>
                   Save
                 </button>
                 {apiKey && (
                   <button
                     onClick={() => { setApiKey(''); setApiKeyInput(''); localStorage.removeItem(API_KEY_STORE); setShowKeyPanel(false) }}
-                    style={{ padding: '0.625rem 0.75rem', background: 'transparent', border: '1px solid rgba(12,12,14,0.12)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#71717A' }}
+                    style={{ padding: '0.625rem 0.75rem', background: 'transparent', border: '1px solid rgba(12,12,14,0.12)', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#71717A' }}
                   >
                     Clear
                   </button>
@@ -329,19 +449,30 @@ export default function ChatPage() {
           )}
         </AnimatePresence>
 
-        {/* Result */}
+        {/* ── Result ── */}
         <AnimatePresence>
           {(state === 'STREAMING' || isComplete) && (
-            <motion.div key="answer" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+            <motion.div
+              key="answer"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+            >
               <AnswerCard result={result} streamText={streamText} isStreaming={state === 'STREAMING'} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* New analysis */}
+        {/* ── New analysis CTA ── */}
         <AnimatePresence>
           {isComplete && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex justify-center pb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex justify-center pb-8"
+            >
               <button onClick={handleReset} className="btn-ghost flex items-center gap-2.5">
                 <HelmSVG /> New analysis
               </button>
@@ -352,7 +483,7 @@ export default function ChatPage() {
 
       <PaywallModal open={showPaywall} onClose={closePaywall} />
 
-      {/* Settings / API key button */}
+      {/* Settings button */}
       <button
         onClick={() => setShowKeyPanel(o => !o)}
         aria-label="API key settings"

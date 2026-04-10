@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { WaveRule } from './Ornaments'
+import { CaptainFigure } from './CaptainFigure'
 import type { AIResponse, NeedsMetrics, StrategyResult } from '@/hooks/useSailState'
 
 interface Props {
@@ -48,84 +49,87 @@ export function AnswerCard({ result, streamText, isStreaming }: Props) {
 /* ── Captain asks for more info ───────────────────── */
 function CaptainCard({ data }: { data: NeedsMetrics }) {
   return (
-    <motion.div {...up()} className="card-linen overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="card-linen overflow-hidden"
+    >
       <div className="stripe-accent" />
-      <div className="p-6 md:p-8 flex gap-6 items-start">
-        <div className="flex-shrink-0">
-          <CaptainSVG />
-        </div>
-        <div>
-          <span className="label-caps block mb-3" style={{ color: '#C9A96E' }}>
-            Your captain asks
-          </span>
-          <p
-            style={{
-              fontFamily: 'Cormorant Garamond, Georgia, serif',
-              fontStyle:  'italic',
-              fontSize:   'clamp(1.1rem, 2vw, 1.3rem)',
-              color:      '#0C0C0E',
-              lineHeight: 1.5,
-            }}
-          >
-            &ldquo;{data.question}&rdquo;
-          </p>
-          <p
-            style={{
-              marginTop:  '0.75rem',
-              fontFamily: 'Inter, sans-serif',
-              fontSize:   '0.85rem',
-              color:      '#71717A',
-            }}
-          >
-            Add your numbers and I&apos;ll chart the course.
-          </p>
+      <div className="p-6 md:p-8">
+        {/* Captain + speech bubble layout */}
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+          {/* Captain figure */}
+          <div style={{ flexShrink: 0 }}>
+            <CaptainFigure size={88} />
+          </div>
+
+          {/* Speech area */}
+          <div style={{ flex: 1, paddingTop: '0.5rem' }}>
+            <span className="label-caps block mb-3" style={{ color: '#C9A96E' }}>
+              Your captain asks
+            </span>
+
+            {/* Speech bubble */}
+            <div
+              style={{
+                position:   'relative',
+                background: '#FFFFFF',
+                border:     '1px solid rgba(201,169,110,0.3)',
+                borderRadius: '0 12px 12px 12px',
+                padding:    '1rem 1.25rem',
+                boxShadow:  '0 2px 12px rgba(0,0,0,0.05)',
+              }}
+            >
+              {/* Triangle */}
+              <div style={{
+                position:    'absolute',
+                top:         -1,
+                left:        -10,
+                width:       0,
+                height:      0,
+                borderTop:   '8px solid rgba(201,169,110,0.3)',
+                borderLeft:  '10px solid transparent',
+              }} />
+              <div style={{
+                position:    'absolute',
+                top:         0,
+                left:        -8,
+                width:       0,
+                height:      0,
+                borderTop:   '7px solid #FFFFFF',
+                borderLeft:  '9px solid transparent',
+              }} />
+
+              <p
+                style={{
+                  fontFamily: 'Cormorant Garamond, Georgia, serif',
+                  fontStyle:  'italic',
+                  fontSize:   'clamp(1rem, 2vw, 1.2rem)',
+                  color:      '#0C0C0E',
+                  lineHeight: 1.55,
+                  margin:     0,
+                }}
+              >
+                &ldquo;{data.question}&rdquo;
+              </p>
+            </div>
+
+            <p
+              style={{
+                marginTop:  '0.875rem',
+                fontFamily: 'Inter, sans-serif',
+                fontSize:   '0.8rem',
+                color:      '#71717A',
+                lineHeight: 1.5,
+              }}
+            >
+              Add your numbers above and I&apos;ll chart the course.
+            </p>
+          </div>
         </div>
       </div>
     </motion.div>
-  )
-}
-
-function CaptainSVG() {
-  return (
-    <svg width="64" height="80" viewBox="0 0 64 80" fill="none">
-      {/* Captain's hat */}
-      <rect x="18" y="14" width="28" height="7" rx="2" fill="#163450" />
-      <path d="M14 21 Q32 18 50 21 L52 25 Q32 22 12 25 Z" fill="#163450" />
-      <line x1="14" y1="21" x2="50" y2="21" stroke="#C49A3A" strokeWidth="1.5" />
-      <path d="M32 17 L34 21 L32 20 L30 21 Z" fill="#C49A3A" opacity="0.85" />
-      {/* Head */}
-      <ellipse cx="32" cy="34" rx="12" ry="13" fill="#E8D5B0" />
-      {/* Eyes */}
-      <ellipse cx="27" cy="32" rx="2" ry="2.2" fill="#0A1628" />
-      <ellipse cx="37" cy="32" rx="2" ry="2.2" fill="#0A1628" />
-      <circle cx="27.8" cy="31.5" r="0.7" fill="white" />
-      <circle cx="37.8" cy="31.5" r="0.7" fill="white" />
-      {/* Brows */}
-      <path d="M24 28 Q27 26.5 30 28" stroke="#8B6914" strokeWidth="1" fill="none" />
-      <path d="M34 28 Q37 26.5 40 28" stroke="#8B6914" strokeWidth="1" fill="none" />
-      {/* Moustache */}
-      <path d="M26 38 Q32 41 38 38" stroke="#8B6914" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      <path d="M28 38 Q32 36 36 38" fill="#8B6914" opacity="0.4" />
-      {/* Neck */}
-      <rect x="28" y="46" width="8" height="6" rx="2" fill="#E8D5B0" />
-      {/* Uniform body */}
-      <path d="M14 52 Q32 48 50 52 L54 78 H10 Z" fill="#163450" />
-      {/* Collar */}
-      <path d="M28 52 L32 60 L36 52" fill="#FAFAF8" opacity="0.9" />
-      {/* Buttons */}
-      <circle cx="32" cy="63" r="1.5" fill="#C49A3A" />
-      <circle cx="32" cy="70" r="1.5" fill="#C49A3A" />
-      {/* Epaulettes */}
-      <rect x="9"  y="52" width="8" height="4" rx="1" fill="#C49A3A" opacity="0.8" />
-      <rect x="47" y="52" width="8" height="4" rx="1" fill="#C49A3A" opacity="0.8" />
-      {/* Anchor badge */}
-      <g opacity="0.55" transform="translate(23, 56)">
-        <circle cx="5" cy="3" r="2" stroke="#C49A3A" strokeWidth="0.8" />
-        <line x1="5" y1="5" x2="5" y2="10" stroke="#C49A3A" strokeWidth="0.8" />
-        <line x1="2" y1="7" x2="8" y2="7" stroke="#C49A3A" strokeWidth="0.8" />
-        <path d="M2 10 Q5 9 8 10" stroke="#C49A3A" strokeWidth="0.8" fill="none" />
-      </g>
-    </svg>
   )
 }
 

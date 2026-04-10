@@ -136,38 +136,50 @@ export default function LandingPage() {
           </div>
 
           {/* Sailboat visual — decorative, below fold */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '4rem', opacity: 0.2, pointerEvents: 'none' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '3rem', opacity: 0.28, pointerEvents: 'none', transform: 'scale(1.1)', transformOrigin: 'right bottom' }}>
             <div style={{ position: 'relative' }}>
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CompassRose size={220} color="#C9A96E" opacity={0.3} />
+                <CompassRose size={260} color="#C9A96E" opacity={0.4} />
               </div>
-              <EngravedSailboat size={180} color="#FFFFFF" opacity={0.6} />
+              <EngravedSailboat size={200} color="#FFFFFF" opacity={0.7} />
             </div>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════
-          STATS BAR
+          STATS BAR — 4-column, gold accent numbers
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.09)' }}>
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-9" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', borderTop: '1px solid rgba(0,0,0,0.09)' }}>
+      <section style={{ background: '#111318', borderBottom: '1px solid rgba(201,169,110,0.12)' }}>
+        <div
+          className="max-w-6xl mx-auto px-6 md:px-10"
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)' }}
+        >
           {[
-            { v: '< 60s', l: 'Time to analysis' },
-            { v: '100%',  l: 'Benchmark-referenced' },
-            { v: '3 tiers', l: 'Pricing transparency' },
+            { v: '< 60s',   l: 'Time to analysis',     sub: 'From input to full plan' },
+            { v: '100%',    l: 'Benchmark-referenced',  sub: 'Every data point sourced' },
+            { v: '5 free',  l: 'Analyses included',     sub: 'No credit card required' },
+            { v: '3 tiers', l: 'Transparent pricing',   sub: 'From $0 to advisory' },
           ].map((s, i) => (
             <div
               key={s.l}
               style={{
-                padding:     '0 2rem',
-                borderRight: i < 2 ? '1px solid rgba(0,0,0,0.09)' : 'none',
+                padding:      'clamp(1.25rem,3vw,2rem) clamp(1rem,2.5vw,2rem)',
+                borderRight:  i < 3 ? '1px solid rgba(255,255,255,0.07)' : 'none',
+                display:      'flex',
+                flexDirection:'column',
+                gap:          '0.15rem',
               }}
             >
-              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', fontWeight: 700, letterSpacing: '-0.03em', color: '#0C0C0E', lineHeight: 1 }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.6rem,2.8vw,2.2rem)', fontWeight: 700, letterSpacing: '-0.03em', color: '#C9A96E', lineHeight: 1, margin: 0 }}>
                 {s.v}
               </p>
-              <span className="label-caps" style={{ display: 'block', marginTop: '0.4rem' }}>{s.l}</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginTop: '0.35rem', display: 'block' }}>
+                {s.l}
+              </span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.28)', display: 'block' }}>
+                {s.sub}
+              </span>
             </div>
           ))}
         </div>
