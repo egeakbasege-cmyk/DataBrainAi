@@ -32,9 +32,9 @@ function buildProviders() {
 
         if (!user?.password) return null
 
-        // Dynamic import to keep argon2 out of Edge runtime
-        const argon2 = await import('argon2')
-        const valid  = await argon2.verify(user.password, credentials.password as string)
+        // Dynamic import to keep bcryptjs out of Edge runtime
+        const bcrypt = await import('bcryptjs')
+        const valid  = await bcrypt.compare(credentials.password as string, user.password)
         if (!valid) return null
 
         return user

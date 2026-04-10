@@ -17,7 +17,7 @@
     "@google/generative-ai": "^0.21.0",
     "@prisma/client": "^5.22.0",
     "@stripe/stripe-js": "^4.4.0",
-    "argon2": "^0.41.1",
+    "bcryptjs": "^2.4.3",
     "framer-motion": "^11.3.0",
     "next": "14.2.13",
     "next-auth": "^5.0.0-beta.25",
@@ -27,6 +27,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

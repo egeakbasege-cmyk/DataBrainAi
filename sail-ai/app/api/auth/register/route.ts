@@ -19,9 +19,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 3. Hash password with argon2 (dynamic import keeps it out of Edge bundles)
-    const argon2         = await import('argon2')
-    const hashedPassword = await argon2.hash(password)
+    // 3. Hash password with bcryptjs
+    const bcrypt         = await import('bcryptjs')
+    const hashedPassword = await bcrypt.hash(password, 12)
 
     // 4. Create user
     await prisma.user.create({
