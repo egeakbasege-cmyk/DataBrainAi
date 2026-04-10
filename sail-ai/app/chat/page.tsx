@@ -22,7 +22,7 @@ const PLACEHOLDERS = [
 ]
 
 const MAX           = 2000
-const API_KEY_STORE = 'sail_gemini_key'
+const API_KEY_STORE = 'sail_groq_key'
 
 export default function ChatPage() {
   const [input,        setInput]        = useState('')
@@ -280,7 +280,7 @@ export default function ChatPage() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#A1A1AA', margin: 0 }}>
-                  Gemini API Key
+                  Groq API Key
                 </p>
                 <button onClick={() => setShowKeyPanel(false)} style={{ color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -288,17 +288,17 @@ export default function ChatPage() {
               </div>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', marginBottom: '0.875rem', lineHeight: 1.5 }}>
                 Paste your own key from{' '}
-                <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E' }}>
-                  aistudio.google.com
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E' }}>
+                  console.groq.com
                 </a>
-                {' '}→ Get API key → Create API key (new project).
+                {' '}→ API Keys → Create API key.
               </p>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input
                   type="password"
                   value={apiKeyInput}
                   onChange={e => setApiKeyInput(e.target.value)}
-                  placeholder="AIzaSy…"
+                  placeholder="gsk_…"
                   style={{
                     flex: 1, padding: '0.625rem 0.75rem',
                     border: '1px solid rgba(12,12,14,0.15)',
@@ -356,7 +356,7 @@ export default function ChatPage() {
       <button
         onClick={() => setShowKeyPanel(o => !o)}
         aria-label="API key settings"
-        title="Configure Gemini API key"
+        title="Configure Groq API key"
         style={{
           position: 'fixed', bottom: '5.5rem', right: '4rem', zIndex: 50,
           width: '2.25rem', height: '2.25rem', borderRadius: '50%',

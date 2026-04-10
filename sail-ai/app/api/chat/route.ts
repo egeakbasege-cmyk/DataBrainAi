@@ -1,30 +1,21 @@
 import { NextRequest }          from 'next/server'
 import { auth }                 from '@/auth'
-import { GoogleGenerativeAI }   from '@google/generative-ai'
+import Groq                     from 'groq-sdk'
 import { SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
 import { ChatRequestSchema }    from '@/schema/analysis'
 
-const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 // Model fallback chain — tries each in order until one succeeds
 const MODEL_CHAIN = [
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
+  'llama-3.3-70b-versatile',
+  'llama-3.1-70b-versatile',
+  'mixtral-8x7b-32768',
+  'llama3-70b-8192',
 ]
 
-function getModel(modelName: string, apiKey?: string) {
-  const client = apiKey ? new GoogleGenerativeAI(apiKey) : genai
-  return client.getGenerativeModel({
-    model:             modelName,
-    systemInstruction: SYSTEM_PROMPT,
-    generationConfig: {
-      maxOutputTokens:  1400,
-      temperature:      0.35,
-      responseMimeType: 'application/json',
-    },
-  })
+function getClient(apiKey?: string) {
+  return apiKey ? new Groq({ apiKey }) : groqClient
 }
 
 // Rate limiter keyed by user email — max 10 requests per minute
@@ -46,7 +37,6 @@ function checkRate(identity: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
-  // Auth.js v5 — auth() works in both App Router and Pages Router
   const session = await auth()
   if (!session?.user?.email) {
     return new Response(JSON.stringify({ error: 'Please sign in to use Sail AI.' }), {
@@ -63,7 +53,6 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // Strict Zod validation — structured errors for the client
   let message: string
   let context: string | undefined
   let userApiKey: string | undefined
@@ -84,15 +73,23 @@ export async function POST(req: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      let lastErr: any = null
+      const client = getClient(userApiKey)
 
       for (const modelName of MODEL_CHAIN) {
         try {
-          const model  = getModel(modelName, userApiKey)
-          const result = await model.generateContentStream(buildUserMessage(message, context))
+          const completion = await client.chat.completions.create({
+            model:       modelName,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user',   content: buildUserMessage(message, context) },
+            ],
+            max_tokens:  1400,
+            temperature: 0.35,
+            stream:      true,
+          })
 
-          for await (const chunk of result.stream) {
-            const text = chunk.text()
+          for await (const chunk of completion) {
+            const text = chunk.choices[0]?.delta?.content ?? ''
             if (text) controller.enqueue(encoder.encode(text))
           }
 
@@ -100,29 +97,26 @@ export async function POST(req: NextRequest) {
           return
 
         } catch (err: any) {
-          const raw: string = err?.message ?? ''
-          if (raw.includes('API_KEY') || raw.includes('API key') || raw.includes('INVALID_ARGUMENT')) {
+          const msg: string = err?.message ?? ''
+          const isAuthError = msg.includes('API key') || msg.includes('auth') || msg.includes('401') || msg.includes('invalid_api_key')
+          if (isAuthError) {
             controller.enqueue(encoder.encode(JSON.stringify({
               error: userApiKey
-                ? 'Your API key is invalid or has no access. Please check it and try again.'
-                : 'Service configuration error. Please contact support.',
+                ? 'Your API key is invalid. Please check it and try again.'
+                : 'AI service configuration error. Please contact support.',
             })))
             controller.close()
             return
           }
-          lastErr = err
+          // Try next model
           continue
         }
       }
 
       // All models exhausted
-      const raw: string = lastErr?.message ?? ''
-      const isQuota = raw.includes('429') || raw.includes('quota') || raw.includes('RESOURCE_EXHAUSTED')
-      const msg = isQuota
-        ? 'AI quota exhausted. Fix: go to aistudio.google.com → create a new API key → paste it in Settings below, or update GEMINI_API_KEY in Vercel.'
-        : 'Unable to reach AI models. Please enter your own Gemini API key in Settings, or try again shortly.'
-
-      controller.enqueue(encoder.encode(JSON.stringify({ error: msg })))
+      controller.enqueue(encoder.encode(JSON.stringify({
+        error: 'AI service temporarily unavailable. Please try again in a moment.',
+      })))
       controller.close()
     },
   })
