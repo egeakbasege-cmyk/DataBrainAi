@@ -1,65 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getStripe }                  from '@/lib/stripe'
+import { verifyWebhookSignature }     from '@/lib/lemonsqueezy'
 import { markPro, revokePro }         from '@/lib/proStore'
-import type Stripe                    from 'stripe'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET
-  if (!secret || !process.env.STRIPE_SECRET_KEY) {
+  if (!process.env.LEMONSQUEEZY_WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'Webhook not configured.' }, { status: 503 })
   }
 
-  const body      = await req.text()
-  const signature = req.headers.get('stripe-signature') ?? ''
+  const payload   = await req.text()
+  const signature = req.headers.get('x-signature') ?? ''
 
-  let event: Stripe.Event
-  try {
-    event = getStripe().webhooks.constructEvent(body, signature, secret)
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message)
+  if (!verifyWebhookSignature(payload, signature)) {
+    console.error('[Webhook] Invalid signature')
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 })
   }
 
-  switch (event.type) {
+  const event = JSON.parse(payload)
+  const name  = event?.meta?.event_name as string
+  const data  = event?.data?.attributes
 
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session
-      const email   = session.customer_email ?? session.customer_details?.email
-      if (email) {
-        markPro(email)
-        console.log('[Webhook] Pro activated:', email)
-      }
-      break
-    }
+  // Resolve user email: custom checkout data → billing email
+  const email: string =
+    event?.meta?.custom_data?.user_email ??
+    data?.user_email ??
+    data?.billing_address?.email ??
+    ''
 
-    case 'customer.subscription.updated': {
-      const sub      = event.data.object as Stripe.Subscription
-      const customer = await getStripe().customers.retrieve(sub.customer as string)
-      const email    = (customer as Stripe.Customer).email
-      if (email) {
-        if (sub.status === 'active' || sub.status === 'trialing') {
-          markPro(email)
-          console.log('[Webhook] Subscription active:', email)
-        } else {
-          revokePro(email)
-          console.log('[Webhook] Subscription inactive:', email, sub.status)
-        }
-      }
-      break
-    }
+  console.log(`[Webhook] ${name} — email: ${email || 'unknown'}`)
 
-    case 'customer.subscription.deleted': {
-      const sub      = event.data.object as Stripe.Subscription
-      const customer = await getStripe().customers.retrieve(sub.customer as string)
-      const email    = (customer as Stripe.Customer).email
-      if (email) {
-        revokePro(email)
-        console.log('[Webhook] Pro revoked:', email)
-      }
+  switch (name) {
+    case 'order_created':
+    case 'subscription_created':
+    case 'subscription_resumed':
+      if (email) await markPro(email)
       break
-    }
+
+    case 'subscription_cancelled':
+    case 'subscription_expired':
+    case 'subscription_paused':
+      if (email) await revokePro(email)
+      break
 
     default:
       break

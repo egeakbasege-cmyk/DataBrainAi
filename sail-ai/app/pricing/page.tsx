@@ -2,13 +2,8 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { loadStripe } from '@stripe/stripe-js'
 import { Nav } from '@/components/Nav'
 import { FREE_LIMIT } from '@/lib/stripe'
-
-const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-  : null
 
 /* ── Tier definitions ──────────────────────────────── */
 const TIERS = [
@@ -30,7 +25,7 @@ const TIERS = [
   {
     key:     'professional',
     name:    'Professional',
-    price:   '$29',
+    price:   '$9.99',
     period:  'per month',
     summary: 'Unlimited access with session memory — built for operators running ongoing strategy work.',
     features: [
@@ -80,7 +75,7 @@ const FAQ = [
   },
   {
     q: 'Can I cancel at any time?',
-    a: 'Yes. Professional subscriptions are managed through Stripe and can be cancelled with a single click from your billing dashboard. No notice period required.',
+    a: 'Professional subscriptions are managed through Stripe and can be cancelled with a single click from your billing dashboard. No notice period required.',
   },
   {
     q: 'Is my business data stored?',
@@ -96,16 +91,15 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(false)
 
   async function handleStripe() {
-    if (!stripePromise) { alert('Payments not configured yet.'); return }
     setLoading(true)
     try {
-      const res    = await fetch('/api/checkout', { method: 'POST' })
-      const data   = await res.json()
+      const res  = await fetch('/api/checkout', { method: 'POST' })
+      const data = await res.json()
       if (data.error) throw new Error(data.error)
-      const stripe = await stripePromise
-      await stripe?.redirectToCheckout({ sessionId: data.sessionId })
+      window.location.href = data.url
     } catch (err: any) {
       console.error('Checkout error:', err.message)
+      alert(err.message)
       setLoading(false)
     }
   }

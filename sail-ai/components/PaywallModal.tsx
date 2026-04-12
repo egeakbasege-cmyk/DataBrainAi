@@ -1,7 +1,6 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { loadStripe } from '@stripe/stripe-js'
 import { useState } from 'react'
 import { Logo } from './Logo'
 
@@ -10,24 +9,19 @@ interface Props {
   onClose: () => void
 }
 
-const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-  : null
-
 export function PaywallModal({ open, onClose }: Props) {
   const [loading, setLoading] = useState(false)
 
   async function handleUpgrade() {
-    if (!stripePromise) { alert('Payments are not configured yet.'); return }
     setLoading(true)
     try {
-      const res    = await fetch('/api/checkout', { method: 'POST' })
-      const data   = await res.json()
+      const res  = await fetch('/api/checkout', { method: 'POST' })
+      const data = await res.json()
       if (data.error) throw new Error(data.error)
-      const stripe = await stripePromise
-      await stripe?.redirectToCheckout({ sessionId: data.sessionId })
+      window.location.href = data.url
     } catch (err: any) {
       console.error('Checkout error:', err.message)
+      alert(err.message)
       setLoading(false)
     }
   }
@@ -122,7 +116,7 @@ export function PaywallModal({ open, onClose }: Props) {
                       lineHeight: 1,
                     }}
                   >
-                    $29
+                    $9.99
                   </span>
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
                     /month · cancel any time
