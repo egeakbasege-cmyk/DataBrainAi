@@ -1,36 +1,35 @@
 'use client'
 
 import { Suspense, useState, useEffect } from 'react'
-import { signIn, getProviders } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/Logo'
 
 type Mode = 'signin' | 'register'
 
-// ── Inner component — uses useSearchParams() so must be inside <Suspense> ──
 function LoginForm() {
   const router      = useRouter()
   const params      = useSearchParams()
   const callbackUrl = params.get('callbackUrl') ?? '/onboarding'
   const errorCode   = params.get('error')
 
-  const [mode,        setMode]       = useState<Mode>('signin')
-  const [name,        setName]       = useState('')
-  const [email,       setEmail]      = useState('')
-  const [password,    setPassword]   = useState('')
-  const [confirm,     setConfirm]    = useState('')
-  const [showPw,      setShowPw]     = useState(false)
-  const [loading,     setLoading]    = useState(false)
-  const [error,       setError]      = useState('')
-  const [googleAvail, setGoogleAvail] = useState(false)
+  const [mode,          setMode]          = useState<Mode>('signin')
+  const [name,          setName]          = useState('')
+  const [email,         setEmail]         = useState('')
+  const [password,      setPassword]      = useState('')
+  const [confirm,       setConfirm]       = useState('')
+  const [showPw,        setShowPw]        = useState(false)
+  const [loading,       setLoading]       = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [error,         setError]         = useState('')
 
   useEffect(() => {
-    getProviders().then(p => setGoogleAvail(!!p?.google))
-  }, [])
-
-  useEffect(() => {
-    if (errorCode === 'CredentialsSignin')       setError('Incorrect email or password.')
-    if (errorCode === 'OAuthAccountNotLinked')   setError('An account already exists with this email. Please sign in with your original method.')
+    if (errorCode === 'CredentialsSignin')
+      setError('Incorrect email or password.')
+    if (errorCode === 'OAuthAccountNotLinked')
+      setError('An account already exists with this email. Please sign in with your original method.')
+    if (errorCode === 'OAuthSignin' || errorCode === 'OAuthCallback')
+      setError('Google sign-in failed. Please try again or use email.')
   }, [errorCode])
 
   function switchMode(m: Mode) {
@@ -38,8 +37,14 @@ function LoginForm() {
   }
 
   async function handleGoogle() {
-    setLoading(true); setError('')
-    await signIn('google', { callbackUrl })
+    setGoogleLoading(true)
+    setError('')
+    try {
+      await signIn('google', { callbackUrl })
+    } catch {
+      setError('Could not connect to Google. Please try again.')
+      setGoogleLoading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -47,15 +52,16 @@ function LoginForm() {
     setError('')
 
     if (mode === 'register') {
-      if (!name.trim())          { setError('Please enter your name.'); return }
-      if (password !== confirm)  { setError('Passwords do not match.'); return }
-      if (password.length < 8)   { setError('Password must be at least 8 characters.'); return }
+      if (!name.trim())         { setError('Please enter your name.'); return }
+      if (password !== confirm) { setError('Passwords do not match.'); return }
+      if (password.length < 8)  { setError('Password must be at least 8 characters.'); return }
 
       setLoading(true)
       try {
         const res  = await fetch('/api/auth/register', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body:   JSON.stringify({ email, password, name }),
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email, password, name }),
         })
         const data = await res.json()
         if (!res.ok) { setError(data.message ?? data.error ?? 'Registration failed.'); setLoading(false); return }
@@ -83,11 +89,12 @@ function LoginForm() {
     color: '#0C0C0E', boxSizing: 'border-box', transition: 'border-color 0.15s',
   }
 
+  const isLoading = loading || googleLoading
+
   return (
     <main style={{ minHeight: '100vh', background: '#FAFAF8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem 1.25rem' }}>
 
-      {/* Card */}
-      <div style={{ width: '100%', maxWidth: '400px', background: '#FFFFFF', border: '1px solid rgba(12,12,14,0.09)', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', padding: '2.5rem 2rem' }}>
+      <div style={{ width: '100%', maxWidth: '400px', background: '#FFFFFF', border: '1px solid rgba(12,12,14,0.09)', borderRadius: '4px', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', padding: '2.5rem 2rem' }}>
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2rem', justifyContent: 'center' }}>
@@ -116,24 +123,43 @@ function LoginForm() {
           ))}
         </div>
 
-        {/* Google */}
-        {googleAvail && (
-          <>
-            <button
-              type="button" onClick={handleGoogle} disabled={loading}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '0.75rem', background: '#FFFFFF', border: '1px solid rgba(12,12,14,0.14)', cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', fontWeight: 500, color: '#0C0C0E', transition: 'background 0.15s', opacity: loading ? 0.6 : 1 }}
-            >
-              <GoogleIcon /> Continue with Google
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1.25rem 0' }}>
-              <div style={{ flex: 1, height: 1, background: 'rgba(12,12,14,0.09)' }} />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', letterSpacing: '0.05em' }}>or</span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(12,12,14,0.09)' }} />
-            </div>
-          </>
-        )}
+        {/* ── Google button — always visible ─────────────── */}
+        <button
+          type="button"
+          onClick={handleGoogle}
+          disabled={isLoading}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.75rem',
+            padding: '0.75rem',
+            background: googleLoading ? '#F4F4F5' : '#FFFFFF',
+            border: '1px solid rgba(12,12,14,0.16)',
+            borderRadius: '3px',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            color: '#0C0C0E',
+            transition: 'background 0.15s, border-color 0.15s',
+            opacity: isLoading ? 0.7 : 1,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          }}
+        >
+          {googleLoading ? <SpinIcon /> : <GoogleIcon />}
+          {googleLoading ? 'Connecting to Google…' : 'Continue with Google'}
+        </button>
 
-        {/* Form */}
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1.25rem 0' }}>
+          <div style={{ flex: 1, height: 1, background: 'rgba(12,12,14,0.09)' }} />
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', letterSpacing: '0.05em' }}>or</span>
+          <div style={{ flex: 1, height: 1, background: 'rgba(12,12,14,0.09)' }} />
+        </div>
+
+        {/* ── Email / password form ──────────────────────── */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {mode === 'register' && (
             <div>
@@ -157,7 +183,7 @@ function LoginForm() {
                 required style={{ ...inp, paddingRight: '2rem' }}
                 autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
               />
-              <button type="button" onClick={() => setShowPw(v => !v)} aria-label={showPw ? 'Hide password' : 'Show password'} style={{ position: 'absolute', right: 0, bottom: '0.65rem', background: 'none', border: 'none', cursor: 'pointer', color: '#A1A1AA', padding: 0, lineHeight: 1 }}>
+              <button type="button" onClick={() => setShowPw(v => !v)} aria-label={showPw ? 'Hide' : 'Show'} style={{ position: 'absolute', right: 0, bottom: '0.65rem', background: 'none', border: 'none', cursor: 'pointer', color: '#A1A1AA', padding: 0, lineHeight: 1 }}>
                 {showPw ? <EyeOffIcon /> : <EyeIcon />}
               </button>
             </div>
@@ -171,14 +197,14 @@ function LoginForm() {
           )}
 
           {error && (
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#991B1B', background: 'rgba(153,27,27,0.05)', border: '1px solid rgba(153,27,27,0.15)', padding: '0.625rem 0.75rem', margin: 0 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#991B1B', background: 'rgba(153,27,27,0.05)', border: '1px solid rgba(153,27,27,0.15)', padding: '0.625rem 0.75rem', margin: 0, borderRadius: '3px', lineHeight: 1.5 }}>
               {error}
             </p>
           )}
 
           <button
-            type="submit" disabled={loading}
-            style={{ width: '100%', padding: '0.8125rem', background: loading ? '#3A3A3C' : '#0C0C0E', color: '#FAFAF8', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', transition: 'background 0.15s' }}
+            type="submit" disabled={isLoading}
+            style={{ width: '100%', padding: '0.8125rem', background: isLoading ? '#3A3A3C' : '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '3px', cursor: isLoading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', transition: 'background 0.15s' }}
           >
             {loading
               ? (mode === 'register' ? 'Creating account…' : 'Signing in…')
@@ -201,13 +227,11 @@ function LoginForm() {
   )
 }
 
-// ── Page — wraps LoginForm in Suspense (required by Next.js 14 for useSearchParams) ──
 export default function LoginPage() {
   return (
     <Suspense fallback={
       <main style={{ minHeight: '100vh', background: '#FAFAF8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 28, height: 28, border: '2px solid rgba(12,12,14,0.1)', borderTopColor: '#0C0C0E', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        <SpinIcon size={28} />
       </main>
     }>
       <LoginForm />
@@ -215,13 +239,25 @@ export default function LoginPage() {
   )
 }
 
+/* ── Icons ─────────────────────────────────────────────── */
 function GoogleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    </svg>
+  )
+}
+
+function SpinIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" stroke="rgba(12,12,14,0.1)" strokeWidth="3" />
+      <path d="M12 2 a10 10 0 0 1 10 10" stroke="#0C0C0E" strokeWidth="3" strokeLinecap="round">
+        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.7s" repeatCount="indefinite" />
+      </path>
     </svg>
   )
 }

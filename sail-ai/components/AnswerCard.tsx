@@ -284,37 +284,51 @@ function StrategyCard({ data }: { data: StrategyResult }) {
         </motion.div>
       )}
 
-      {/* 30-day + Risk */}
-      <motion.div {...up(0.36)} className="grid sm:grid-cols-2 gap-3">
-        {data.target30 && (
-          <div className="card-linen p-4">
-            <span className="label-caps block mb-2" style={{ color: '#C9A96E' }}>30-day target</span>
-            <p
-              style={{
-                fontFamily: 'Cormorant Garamond, Georgia, serif',
-                fontStyle:  'italic',
-                fontSize:   '1rem',
-                color:      '#0C0C0E',
-              }}
-            >
-              {data.target30}
-            </p>
-          </div>
-        )}
+      {/* Opportunity Cost */}
+      {data.opportunity_cost && (
+        <motion.div {...up(0.3)} className="card-linen p-4" style={{ borderColor: 'rgba(201,169,110,0.3)', background: 'rgba(201,169,110,0.04)' }}>
+          <span className="label-caps block mb-2" style={{ color: '#C9A96E' }}>Opportunity cost</span>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.65, color: '#0C0C0E' }}>
+            {data.opportunity_cost}
+          </p>
+        </motion.div>
+      )}
+
+      {/* 30 / 60 / 90 day targets + Risk */}
+      <motion.div {...up(0.36)} style={{ display: 'grid', gap: '0.75rem' }}>
+        {/* Targets row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem' }}>
+          {data.target30 && (
+            <div className="card-linen p-4">
+              <span className="label-caps block mb-2" style={{ color: '#C9A96E' }}>30 days</span>
+              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.95rem', color: '#0C0C0E', lineHeight: 1.45 }}>
+                {data.target30}
+              </p>
+            </div>
+          )}
+          {data.target60 && (
+            <div className="card-linen p-4">
+              <span className="label-caps block mb-2" style={{ color: '#A1855A' }}>60 days</span>
+              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.95rem', color: '#0C0C0E', lineHeight: 1.45 }}>
+                {data.target60}
+              </p>
+            </div>
+          )}
+          {data.target90 && (
+            <div className="card-linen p-4">
+              <span className="label-caps block mb-2" style={{ color: '#71717A' }}>90 days</span>
+              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.95rem', color: '#0C0C0E', lineHeight: 1.45 }}>
+                {data.target90}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Risk */}
         {data.risk && (
-          <div
-            className="card-linen p-4"
-            style={{ borderColor: 'rgba(153,27,27,0.18)', background: 'rgba(153,27,27,0.04)' }}
-          >
+          <div className="card-linen p-4" style={{ borderColor: 'rgba(153,27,27,0.18)', background: 'rgba(153,27,27,0.04)' }}>
             <span className="label-caps block mb-2" style={{ color: '#991B1B' }}>Watch out for</span>
-            <p
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize:   '0.85rem',
-                lineHeight: 1.6,
-                color:      '#71717A',
-              }}
-            >
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.6, color: '#71717A' }}>
               {data.risk}
             </p>
           </div>

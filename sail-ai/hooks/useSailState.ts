@@ -18,12 +18,15 @@ export interface Benchmark {
 }
 
 export interface StrategyResult {
-  headline:   string
-  signal:     string
-  tactics:    Tactic[]
-  target30:   string
-  risk:       string
-  benchmarks: Benchmark[]
+  headline:         string
+  signal:           string
+  opportunity_cost: string
+  tactics:          Tactic[]
+  target30:         string
+  target60:         string
+  target90:         string
+  risk:             string
+  benchmarks:       Benchmark[]
 }
 
 export interface NeedsMetrics {
