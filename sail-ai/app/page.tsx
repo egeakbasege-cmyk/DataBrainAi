@@ -301,7 +301,7 @@ export default function LandingPage() {
                 Your first five analyses are complimentary.
               </h2>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: 'rgba(255,255,255,0.38)', fontWeight: 300 }}>
-                No account. No payment details. Cancel or downgrade at any time.
+                Zero friction. No payment details. Professional-grade strategy, validated by data.
               </p>
             </div>
             <Link href="/onboarding" className="btn-ghost-white" style={{ flexShrink: 0 }}>
