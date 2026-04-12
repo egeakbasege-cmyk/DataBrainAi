@@ -122,7 +122,7 @@ export default function LandingPage() {
               </div>
 
               <p style={{ marginTop: '1rem', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.05em' }}>
-                5 analyses included at no cost · No account required
+                5 analyses included at no cost · Unbiased, Data-Driven Strategy.
               </p>
             </div>
           </div>
