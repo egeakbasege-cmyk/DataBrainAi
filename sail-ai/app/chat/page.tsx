@@ -121,6 +121,7 @@ export default function ChatPage() {
   const [isMac,        setIsMac]        = useState(true)
   const [showFeedback, setShowFeedback] = useState(false)
   const [showKeyPanel, setShowKeyPanel] = useState(false)
+  const [showHistory,  setShowHistory]  = useState(false)
   const [apiKey,       setApiKey]       = useState('')
   const [apiKeyInput,  setApiKeyInput]  = useState('')
   const [attachment,   setAttachment]   = useState<Attachment | null>(null)
@@ -293,6 +294,14 @@ export default function ChatPage() {
                     ? `${profile.diagnostic.industry} · ${profile.diagnostic.teamSize} · Diagnostic loaded`
                     : `${profile.sessions.length} prior ${profile.sessions.length === 1 ? 'strategy' : 'strategies'} in memory`}
                 </span>
+                {profile.sessions.length > 0 && (
+                  <button
+                    onClick={() => setShowHistory(true)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#C9A96E', padding: '0 0.25rem', textDecoration: 'underline' }}
+                  >
+                    View
+                  </button>
+                )}
               </div>
             ) : (
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#A1A1AA', letterSpacing: '0.03em' }}>
@@ -720,6 +729,60 @@ export default function ChatPage() {
       </button>
 
       <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
+
+      {/* ── History Panel ── */}
+      {showHistory && (
+        <>
+          <div onClick={() => setShowHistory(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 50 }} />
+          <div style={{
+            position:   'fixed',
+            top:        0,
+            right:      0,
+            bottom:     0,
+            width:      'min(380px, 92vw)',
+            background: '#FAFAF8',
+            boxShadow:  '-8px 0 32px rgba(0,0,0,0.12)',
+            zIndex:     51,
+            display:    'flex',
+            flexDirection: 'column',
+            overflow:   'hidden',
+          }}>
+            {/* Header */}
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 600, color: '#0C0C0E', margin: 0 }}>Session Memory</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A', margin: '2px 0 0' }}>{profile.sessions.length} past {profile.sessions.length === 1 ? 'analysis' : 'analyses'} on record</p>
+              </div>
+              <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: '#71717A', lineHeight: 1 }}>×</button>
+            </div>
+
+            {/* List */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+              {profile.sessions.length === 0 ? (
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#A1A1AA', textAlign: 'center', marginTop: '2rem' }}>No analyses yet. Run your first strategy to build memory.</p>
+              ) : (
+                [...profile.sessions].reverse().map((s, i) => (
+                  <div key={s.id ?? i} style={{
+                    padding:      '0.875rem 1rem',
+                    marginBottom: '0.5rem',
+                    background:   '#FFFFFF',
+                    border:       '1px solid rgba(0,0,0,0.07)',
+                    borderRadius: '8px',
+                  }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px', lineHeight: 1.4 }}>{s.prompt?.slice(0, 80)}{(s.prompt?.length ?? 0) > 80 ? '…' : ''}</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#71717A', margin: '0 0 6px', lineHeight: 1.4 }}>{s.summary?.slice(0, 120)}{(s.summary?.length ?? 0) > 120 ? '…' : ''}</p>
+                    {s.createdAt && (
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#A1A1AA', margin: 0 }}>
+                        {new Date(s.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </main>
   )
 }
