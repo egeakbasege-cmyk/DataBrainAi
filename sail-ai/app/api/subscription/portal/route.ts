@@ -9,10 +9,9 @@ export async function POST() {
   }
 
   try {
-    const email    = session.user.email
-    const storeId  = process.env.LEMONSQUEEZY_STORE_ID ?? ''
+    const email = session.user.email.toLowerCase()
 
-    // Find active subscription by user email
+    // List all subscriptions and find by email (LS bracket-filter is unreliable)
     const res = await lsRequest<{
       data: Array<{
         attributes: {
@@ -21,15 +20,17 @@ export async function POST() {
           urls:       { customer_portal: string }
         }
       }>
-    }>(`/subscriptions?filter[store_id]=${storeId}&sort=-createdAt`)
+    }>('/subscriptions?sort=-createdAt&page[size]=50')
 
     const sub = res.data?.find(
-      s => s.attributes.user_email?.toLowerCase() === email.toLowerCase()
+      s => s.attributes.user_email?.toLowerCase() === email
     )
 
     const portalUrl = sub?.attributes?.urls?.customer_portal
     if (!portalUrl) {
-      return NextResponse.json({ error: 'No active subscription found.' }, { status: 404 })
+      // Fallback: send user to LS billing page directly
+      const storeSlug = 'sail-ai'
+      return NextResponse.json({ url: `https://${storeSlug}.lemonsqueezy.com/billing` })
     }
 
     return NextResponse.json({ url: portalUrl })

@@ -168,8 +168,22 @@ export default function ChatPage() {
   // Clarifying questions (needsMetrics) do NOT consume a daily limit
   useEffect(() => {
     if (state === 'COMPLETE' && result && !('needsMetrics' in result)) {
-      addSession(input, `${result.headline} — target: ${result.target30}`)
+      const summary = `${result.headline} — target: ${result.target30}`
+      addSession(input, summary)
       recordUsage()
+      // Persist to DB for Pro users (session memory across devices)
+      if (isPro) {
+        fetch('/api/sessions', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            prompt:  input,
+            summary,
+            sector:  input.slice(0, 120),
+            output:  { headline: result.headline, target30: result.target30 },
+          }),
+        }).catch(() => undefined)
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, result])
