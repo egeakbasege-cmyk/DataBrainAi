@@ -6,8 +6,11 @@ export const ChatRequestSchema = z.object({
     .string({ message: 'Message is required.' })
     .min(1,    'Message cannot be empty.')
     .max(2000, 'Message is too long (max 2000 characters).'),
-  context: z.string().max(5000).optional(),
-  apiKey:  z.string().min(10).optional(),
+  context:       z.string().max(6000).optional(),
+  apiKey:        z.string().min(10).optional(),
+  imageBase64:   z.string().optional(),
+  imageMimeType: z.string().optional(),
+  fileContent:   z.string().max(40000).optional(),
 })
 
 export type ChatRequestType = z.infer<typeof ChatRequestSchema>

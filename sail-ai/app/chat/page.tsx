@@ -1,17 +1,19 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence }  from 'framer-motion'
-import { Nav }               from '@/components/Nav'
-import { HelmButton }        from '@/components/HelmButton'
-import { SailboatAnimation } from '@/components/SailboatAnimation'
-import { AnswerCard }        from '@/components/AnswerCard'
-import { DailyCounter }      from '@/components/DailyCounter'
-import { PaywallModal }      from '@/components/PaywallModal'
-import { FeedbackModal }     from '@/components/FeedbackModal'
-import { useSailState }      from '@/hooks/useSailState'
-import { useSubscription }   from '@/hooks/useSubscription'
-import { useBusinessContext } from '@/lib/context/BusinessContext'
+import { motion, AnimatePresence }    from 'framer-motion'
+import { Nav }                        from '@/components/Nav'
+import { HelmButton }                 from '@/components/HelmButton'
+import { SailboatAnimation }          from '@/components/SailboatAnimation'
+import { AnswerCard }                 from '@/components/AnswerCard'
+import { DailyCounter }               from '@/components/DailyCounter'
+import { PaywallModal }               from '@/components/PaywallModal'
+import { FeedbackModal }              from '@/components/FeedbackModal'
+import { FileAttachmentPill }         from '@/components/FileAttachmentPill'
+import type { Attachment }            from '@/components/FileAttachmentPill'
+import { useSailState }               from '@/hooks/useSailState'
+import { useSubscription }            from '@/hooks/useSubscription'
+import { useBusinessContext }         from '@/lib/context/BusinessContext'
 
 const PLACEHOLDERS = [
   'E-commerce store, £8k/month revenue, 1.5% conversion rate, 68% cart abandonment…',
@@ -20,8 +22,98 @@ const PLACEHOLDERS = [
   'Personal training, 12 active clients, £95/session, want to increase throughput…',
 ]
 
-const MAX           = 2000
-const API_KEY_STORE = 'sail_groq_key'
+const MAX            = 2000
+const API_KEY_STORE  = 'sail_groq_key'
+const MAX_FILE_BYTES = 5 * 1024 * 1024  // 5 MB
+
+/* ── Client-side file → Attachment ──────────────────────────── */
+async function parseFile(file: File): Promise<Attachment> {
+  const isImage = file.type.startsWith('image/')
+
+  if (isImage) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = reader.result as string
+        // dataUrl = "data:image/png;base64,<b64>"
+        const base64  = dataUrl.split(',')[1]
+        resolve({
+          name:     file.name,
+          size:     file.size,
+          mimeType: file.type,
+          isImage:  true,
+          content:  base64,
+          preview:  dataUrl,
+        })
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
+  // CSV / TSV
+  if (file.type === 'text/csv' || file.name.endsWith('.csv') || file.name.endsWith('.tsv')) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const text   = reader.result as string
+        const lines  = text.split('\n').filter(l => l.trim())
+        const header = lines[0] ?? ''
+        const sample = lines.slice(1, 51).join('\n')
+        const summary = `Rows: ${lines.length - 1}\nColumns: ${header}\n\nSample data (first 50 rows):\n${header}\n${sample}`
+        resolve({ name: file.name, size: file.size, mimeType: file.type, isImage: false, content: summary })
+      }
+      reader.onerror = reject
+      reader.readAsText(file)
+    })
+  }
+
+  // XLSX — dynamic import to avoid SSR issues
+  if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        try {
+          const XLSX    = await import('xlsx')
+          const wb      = XLSX.read(reader.result, { type: 'array' })
+          const parts: string[] = []
+          for (const sheetName of wb.SheetNames.slice(0, 3)) {
+            const ws   = wb.Sheets[sheetName]
+            const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
+            const cols = json.length > 0 ? Object.keys(json[0]).join(', ') : 'unknown'
+            const rows = json.slice(0, 50).map(r => Object.values(r).join('\t')).join('\n')
+            parts.push(`Sheet: ${sheetName}\nRows: ${json.length}\nColumns: ${cols}\n\n${rows}`)
+          }
+          resolve({ name: file.name, size: file.size, mimeType: file.type, isImage: false, content: parts.join('\n\n---\n\n') })
+        } catch (e) { reject(e) }
+      }
+      reader.onerror = reject
+      reader.readAsArrayBuffer(file)
+    })
+  }
+
+  // PDF — text extraction (best-effort; binary PDF will show garbled text)
+  if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const raw   = reader.result as string
+        // Extract readable ASCII text from PDF binary
+        const clean = raw.replace(/[^\x20-\x7E\n\t]/g, ' ').replace(/\s{3,}/g, '\n').slice(0, 12000)
+        const content = clean.length > 200
+          ? `PDF content (extracted text):\n${clean}`
+          : `[PDF: ${file.name} — text could not be extracted from this file. Please describe the key metrics manually.]`
+        resolve({ name: file.name, size: file.size, mimeType: file.type, isImage: false, content })
+      }
+      reader.onerror = reject
+      reader.readAsBinaryString(file)
+    })
+  }
+
+  // Unsupported
+  throw new Error(`Unsupported file type: ${file.type || file.name}`)
+}
 
 export default function ChatPage() {
   const [input,        setInput]        = useState('')
@@ -31,7 +123,10 @@ export default function ChatPage() {
   const [showKeyPanel, setShowKeyPanel] = useState(false)
   const [apiKey,       setApiKey]       = useState('')
   const [apiKeyInput,  setApiKeyInput]  = useState('')
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [attachment,   setAttachment]   = useState<Attachment | null>(null)
+  const [fileError,    setFileError]    = useState('')
+  const textareaRef  = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { state, streamText, result, error, submit, reset } = useSailState()
   const { isPro, usedToday, canAnalyse, showPaywall, recordUsage, triggerPaywall, closePaywall, activatePro } = useSubscription()
@@ -101,12 +196,34 @@ export default function ChatPage() {
     const context = profile.diagnosticPrompt
       ? (isPro ? buildContext() : profile.diagnosticPrompt + '\n\n')
       : (isPro ? buildContext() : '')
-    await submit(t, context, apiKey || undefined)
+    await submit(t, context, apiKey || undefined, attachment ?? undefined)
+  }
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!fileInputRef.current) return
+    fileInputRef.current.value = ''
+    if (!file) return
+    setFileError('')
+
+    if (file.size > MAX_FILE_BYTES) {
+      setFileError(`File too large — max 5 MB (this file is ${(file.size / (1024 * 1024)).toFixed(1)} MB)`)
+      return
+    }
+
+    try {
+      const parsed = await parseFile(file)
+      setAttachment(parsed)
+    } catch (err: any) {
+      setFileError(err.message ?? 'Could not read file. Please try a different format.')
+    }
   }
 
   function handleReset() {
     reset()
     setInput('')
+    setAttachment(null)
+    setFileError('')
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
 
@@ -261,6 +378,19 @@ export default function ChatPage() {
                   transition:   'border-color 0.25s, box-shadow 0.25s',
                 }}
               >
+                {/* Attachment pill (above textarea, inside card) */}
+                <AnimatePresence>
+                  {attachment && (
+                    <div style={{ padding: '0.625rem 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <FileAttachmentPill
+                        attachment={attachment}
+                        analyzing={isActive}
+                        onRemove={() => { setAttachment(null); setFileError('') }}
+                      />
+                    </div>
+                  )}
+                </AnimatePresence>
+
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -294,11 +424,52 @@ export default function ChatPage() {
                     gap:           '0.75rem',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+
+                    {/* + Attach button */}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isActive}
+                      title="Attach file (CSV, XLSX, PDF, image)"
+                      aria-label="Attach file"
+                      style={{
+                        display:        'flex',
+                        alignItems:     'center',
+                        justifyContent: 'center',
+                        width:           30,
+                        height:          30,
+                        borderRadius:    '6px',
+                        background:      attachment ? 'rgba(201,169,110,0.1)' : 'rgba(0,0,0,0.05)',
+                        border:          attachment ? '1px solid rgba(201,169,110,0.4)' : '1px solid transparent',
+                        cursor:          isActive ? 'not-allowed' : 'pointer',
+                        opacity:         isActive ? 0.4 : 1,
+                        transition:      'all 0.15s',
+                        flexShrink:      0,
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke={attachment ? '#C9A96E' : '#71717A'}
+                        strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                      </svg>
+                    </button>
+
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv,.tsv,.xlsx,.xls,.pdf,image/png,image/jpeg,image/webp,image/gif"
+                      onChange={handleFileSelect}
+                      style={{ display: 'none' }}
+                    />
+
                     {/* Keyboard shortcut hint */}
                     <span className="label-caps hidden sm:block" style={{ color: '#C9A9AA' }}>
                       {isMac ? '⌘' : 'Ctrl'} + Enter
                     </span>
+
                     {/* Char counter */}
                     {input.length > 0 && (
                       <motion.span
@@ -314,6 +485,20 @@ export default function ChatPage() {
                   <HelmButton state={state} onClick={handleSubmit} disabled={isActive || !input.trim()} />
                 </div>
               </div>
+
+              {/* File error */}
+              <AnimatePresence>
+                {fileError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#991B1B', marginTop: '0.375rem', paddingLeft: '0.25rem' }}
+                  >
+                    {fileError}
+                  </motion.p>
+                )}
+              </AnimatePresence>
 
               {/* Quick picks */}
               {state === 'IDLE' && input.length === 0 && (

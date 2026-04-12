@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
+import type { Attachment } from '@/components/FileAttachmentPill'
 
 export type SailState = 'IDLE' | 'THINKING' | 'STREAMING' | 'COMPLETE'
 
@@ -60,7 +61,12 @@ export function useSailState() {
   const [error, setError]           = useState<string | null>(null)
   const abortRef                    = useRef<AbortController | null>(null)
 
-  const submit = useCallback(async (input: string, context?: string, apiKey?: string) => {
+  const submit = useCallback(async (
+    input:      string,
+    context?:   string,
+    apiKey?:    string,
+    attachment?: Attachment,
+  ) => {
     if (state === 'THINKING' || state === 'STREAMING') return
 
     setError(null)
@@ -71,17 +77,26 @@ export function useSailState() {
     abortRef.current = new AbortController()
 
     try {
+      const body: Record<string, string> = { message: input }
+      if (context)                          body.context       = context
+      if (apiKey)                           body.apiKey        = apiKey
+      if (attachment?.isImage)  {
+        body.imageBase64   = attachment.content
+        body.imageMimeType = attachment.mimeType
+      } else if (attachment?.content) {
+        body.fileContent = attachment.content
+      }
+
       const res = await fetch('/api/chat', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ message: input, context, apiKey }),
+        body:    JSON.stringify(body),
         signal:  abortRef.current.signal,
       })
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         if (res.status === 429) throw new Error('RATE_LIMIT')
-        // Middleware returns { message } (ApiError format); route returns { error }
         throw new Error(data.message ?? data.error ?? 'Request failed. Please try again.')
       }
 
@@ -94,17 +109,14 @@ export function useSailState() {
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
-        // Server sends deltas — accumulate on client
         buffer += decoder.decode(value, { stream: true })
         setStreamText(buffer)
       }
 
-      // Flush any remaining bytes
       buffer += decoder.decode()
 
       const parsed = parseJSON(buffer)
 
-      // Surface embedded errors (AI model errors sent through stream)
       if ('error' in parsed && typeof (parsed as any).error === 'string') {
         throw new Error((parsed as any).error)
       }

@@ -1,6 +1,7 @@
 import { NextRequest }          from 'next/server'
 import { auth }                 from '@/auth'
 import Groq                     from 'groq-sdk'
+import { GoogleGenerativeAI }   from '@google/generative-ai'
 import { SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
 import { ChatRequestSchema }    from '@/schema/analysis'
 
@@ -53,23 +54,76 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  let message: string
-  let context: string | undefined
-  let userApiKey: string | undefined
+  let message:       string
+  let context:       string | undefined
+  let userApiKey:    string | undefined
+  let imageBase64:   string | undefined
+  let imageMimeType: string | undefined
+  let fileContent:   string | undefined
 
   try {
-    const raw      = await req.json()
-    const parsed   = ChatRequestSchema.parse({ ...raw, message: (raw.message ?? '').trim() })
-    message        = parsed.message
-    context        = parsed.context
-    userApiKey     = parsed.apiKey
+    const raw    = await req.json()
+    const parsed = ChatRequestSchema.parse({ ...raw, message: (raw.message ?? '').trim() })
+    message       = parsed.message
+    context       = parsed.context
+    userApiKey    = parsed.apiKey
+    imageBase64   = parsed.imageBase64
+    imageMimeType = parsed.imageMimeType
+    fileContent   = parsed.fileContent
   } catch (err: any) {
-    const isZod    = err?.name === 'ZodError'
-    const details  = isZod ? err.flatten().fieldErrors : undefined
+    const isZod   = err?.name === 'ZodError'
+    const details = isZod ? err.flatten().fieldErrors : undefined
     return new Response(JSON.stringify({ error: isZod ? 'Invalid request.' : 'Invalid request body.', details }), { status: 400 })
   }
 
   const encoder = new TextEncoder()
+
+  // ── IMAGE PATH → Gemini Vision (Groq LLaMA is text-only) ─────────────────
+  if (imageBase64 && imageMimeType) {
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '')
+          const model = genai.getGenerativeModel({
+            model:            'gemini-2.0-flash',
+            systemInstruction: SYSTEM_PROMPT,
+          })
+
+          const result = await model.generateContentStream([
+            {
+              inlineData: {
+                mimeType: imageMimeType as string,
+                data:     imageBase64 as string,
+              },
+            },
+            `Analyse this image as part of the business strategy.\n\nBUSINESS CHALLENGE:\n${message}`,
+          ])
+
+          for await (const chunk of result.stream) {
+            const text = chunk.text()
+            if (text) controller.enqueue(encoder.encode(text))
+          }
+        } catch (err: any) {
+          controller.enqueue(encoder.encode(JSON.stringify({
+            error: 'Image analysis failed. Please try again or describe the image in text.',
+          })))
+        } finally {
+          controller.close()
+        }
+      },
+    })
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type':      'text/plain; charset=utf-8',
+        'Cache-Control':     'no-store',
+        'X-Accel-Buffering': 'no',
+      },
+    })
+  }
+
+  // ── TEXT PATH → Groq streaming ────────────────────────────────────────────
+  const userMessage = buildUserMessage(message, context, fileContent)
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -81,9 +135,9 @@ export async function POST(req: NextRequest) {
             model:       modelName,
             messages: [
               { role: 'system', content: SYSTEM_PROMPT },
-              { role: 'user',   content: buildUserMessage(message, context) },
+              { role: 'user',   content: userMessage },
             ],
-            max_tokens:  1400,
+            max_tokens:  1600,
             temperature: 0.35,
             stream:      true,
           })
@@ -108,7 +162,6 @@ export async function POST(req: NextRequest) {
             controller.close()
             return
           }
-          // Try next model
           continue
         }
       }

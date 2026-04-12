@@ -45,7 +45,12 @@ MANDATORY RULES:
 7. Projected outcomes in tactic results must include a qualifier such as "typically", "based on sector data", or "industry median suggests".
 8. All timeframes must be realistic — no tactic should claim major results in under 7 days without strong justification.`
 
-export function buildUserMessage(input: string, context?: string): string {
-  const prefix = context || ''
-  return `${prefix}BUSINESS CHALLENGE:\n${input.trim()}`
+export function buildUserMessage(input: string, context?: string, fileContent?: string): string {
+  let msg = context
+    ? `${context}BUSINESS CHALLENGE:\n${input.trim()}`
+    : `BUSINESS CHALLENGE:\n${input.trim()}`
+  if (fileContent) {
+    msg += `\n\n[ATTACHED FILE DATA — analyse this data as an integral part of your strategy response]:\n${fileContent}`
+  }
+  return msg
 }
