@@ -8,10 +8,25 @@ import { Logo } from './Logo'
 export function Nav() {
   const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
 
   const initial = session?.user?.name?.[0]?.toUpperCase()
     ?? session?.user?.email?.[0]?.toUpperCase()
     ?? '?'
+
+  async function handleManageSubscription() {
+    setPortalLoading(true)
+    try {
+      const res  = await fetch('/api/subscription/portal', { method: 'POST' })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      window.location.href = data.url
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setPortalLoading(false)
+    }
+  }
 
   return (
     <header
@@ -106,7 +121,7 @@ export function Nav() {
                     background:'#FFFFFF',
                     border:    '1px solid rgba(12,12,14,0.1)',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.09)',
-                    minWidth:  '180px',
+                    minWidth:  '190px',
                     padding:   '0.375rem 0',
                   }}>
                     <div style={{
@@ -123,8 +138,29 @@ export function Nav() {
                       )}
                     </div>
 
-                    <MenuItem href="/chat"     onClick={() => setMenuOpen(false)} label="Chart Course" />
-                    <MenuItem href="/pricing"  onClick={() => setMenuOpen(false)} label="Pricing" />
+                    <MenuItem href="/chat"    onClick={() => setMenuOpen(false)} label="Chart Course" />
+                    <MenuItem href="/pricing" onClick={() => setMenuOpen(false)} label="Pricing" />
+
+                    {session.user.isPro && (
+                      <button
+                        onClick={() => { setMenuOpen(false); handleManageSubscription() }}
+                        disabled={portalLoading}
+                        style={{
+                          width:         '100%',
+                          textAlign:     'left',
+                          padding:       '0.5rem 1rem',
+                          fontFamily:    'Inter, sans-serif',
+                          fontSize:      '0.8rem',
+                          color:         '#C9A96E',
+                          background:    'none',
+                          border:        'none',
+                          cursor:        portalLoading ? 'wait' : 'pointer',
+                          opacity:       portalLoading ? 0.6 : 1,
+                        }}
+                      >
+                        {portalLoading ? 'Loading…' : 'Manage Subscription'}
+                      </button>
+                    )}
 
                     <div style={{ height: 1, background: 'rgba(12,12,14,0.07)', margin: '0.25rem 0' }} />
 
