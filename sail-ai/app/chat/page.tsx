@@ -122,6 +122,7 @@ export default function ChatPage() {
   const [showFeedback, setShowFeedback] = useState(false)
   const [showKeyPanel, setShowKeyPanel] = useState(false)
   const [showHistory,  setShowHistory]  = useState(false)
+  const [expandedSession, setExpandedSession] = useState<string | null>(null)
   const [apiKey,       setApiKey]       = useState('')
   const [apiKeyInput,  setApiKeyInput]  = useState('')
   const [attachment,   setAttachment]   = useState<Attachment | null>(null)
@@ -761,23 +762,48 @@ export default function ChatPage() {
               {profile.sessions.length === 0 ? (
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#A1A1AA', textAlign: 'center', marginTop: '2rem' }}>No analyses yet. Run your first strategy to build memory.</p>
               ) : (
-                [...profile.sessions].reverse().map((s, i) => (
-                  <div key={s.id ?? i} style={{
-                    padding:      '0.875rem 1rem',
-                    marginBottom: '0.5rem',
-                    background:   '#FFFFFF',
-                    border:       '1px solid rgba(0,0,0,0.07)',
-                    borderRadius: '8px',
-                  }}>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px', lineHeight: 1.4 }}>{s.prompt?.slice(0, 80)}{(s.prompt?.length ?? 0) > 80 ? '…' : ''}</p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#71717A', margin: '0 0 6px', lineHeight: 1.4 }}>{s.summary?.slice(0, 120)}{(s.summary?.length ?? 0) > 120 ? '…' : ''}</p>
-                    {s.createdAt && (
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#A1A1AA', margin: 0 }}>
-                        {new Date(s.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                [...profile.sessions].reverse().map((s, i) => {
+                  const key      = s.id ?? String(i)
+                  const expanded = expandedSession === key
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => setExpandedSession(expanded ? null : key)}
+                      style={{
+                        padding:      '0.875rem 1rem',
+                        marginBottom: '0.5rem',
+                        background:   expanded ? '#FFF9F0' : '#FFFFFF',
+                        border:       `1px solid ${expanded ? 'rgba(201,169,110,0.4)' : 'rgba(0,0,0,0.07)'}`,
+                        borderRadius: '8px',
+                        cursor:       'pointer',
+                        transition:   'background 0.15s, border-color 0.15s',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>
+                          {s.prompt}
+                        </p>
+                        <span style={{ color: '#C9A96E', fontSize: '0.65rem', flexShrink: 0, marginTop: '2px' }}>{expanded ? '▲' : '▼'}</span>
+                      </div>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#71717A', margin: '0 0 6px', lineHeight: 1.5 }}>
+                        {expanded ? s.summary : `${s.summary?.slice(0, 120) ?? ''}${(s.summary?.length ?? 0) > 120 ? '…' : ''}`}
                       </p>
-                    )}
-                  </div>
-                ))
+                      {s.createdAt && (
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#A1A1AA', margin: 0 }}>
+                          {new Date(s.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      )}
+                      {expanded && (
+                        <button
+                          onClick={e => { e.stopPropagation(); setInput(s.prompt ?? ''); setShowHistory(false) }}
+                          style={{ marginTop: '0.75rem', padding: '0.35rem 0.75rem', background: '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '4px', fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', cursor: 'pointer' }}
+                        >
+                          Re-run this analysis →
+                        </button>
+                      )}
+                    </div>
+                  )
+                })
               )}
             </div>
           </div>
