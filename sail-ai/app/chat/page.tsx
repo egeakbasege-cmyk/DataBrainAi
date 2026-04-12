@@ -298,9 +298,13 @@ export default function ChatPage() {
                 {profile.sessions.length > 0 && (
                   <button
                     onClick={() => setShowHistory(true)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#C9A96E', padding: '0 0.25rem', textDecoration: 'underline' }}
+                    title="Session History"
+                    style={{ background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.3)', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.5rem', color: '#C9A96E' }}
                   >
-                    View
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/>
+                    </svg>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.63rem', fontWeight: 500 }}>History</span>
                   </button>
                 )}
               </div>
