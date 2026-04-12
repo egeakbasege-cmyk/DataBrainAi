@@ -41,6 +41,7 @@ type Action =
   | { type: 'SET_DIAGNOSTIC';  data: DiagnosticInput; prompt: string }
   | { type: 'CLEAR' }
   | { type: 'HYDRATE';         profile: BusinessProfile }
+  | { type: 'HYDRATE_SESSIONS'; sessions: BusinessSession[] }
 
 function reducer(state: BusinessProfile, action: Action): BusinessProfile {
   switch (action.type) {
@@ -79,6 +80,18 @@ function reducer(state: BusinessProfile, action: Action): BusinessProfile {
     case 'HYDRATE':
       return action.profile
 
+    case 'HYDRATE_SESSIONS': {
+      // Merge DB sessions with local ones, deduplicate by id, keep most recent 20
+      const merged = [...action.sessions, ...state.sessions]
+      const seen   = new Set<string>()
+      const unique = merged.filter(s => {
+        if (seen.has(s.id)) return false
+        seen.add(s.id)
+        return true
+      })
+      return { ...state, sessions: unique.slice(0, 20) }
+    }
+
     default:
       return state
   }
@@ -103,7 +116,7 @@ const STORAGE_KEY = 'sail_business_profile'
 export function BusinessProvider({ children }: { children: React.ReactNode }) {
   const [profile, dispatch] = useReducer(reducer, EMPTY_PROFILE)
 
-  // Hydrate from localStorage on mount
+  // Hydrate from localStorage first, then merge DB sessions
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -111,6 +124,16 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore parse errors
     }
+
+    // Fetch persisted sessions from DB (Pro users)
+    fetch('/api/sessions')
+      .then(r => r.json())
+      .then(({ sessions }) => {
+        if (Array.isArray(sessions) && sessions.length > 0) {
+          dispatch({ type: 'HYDRATE_SESSIONS', sessions })
+        }
+      })
+      .catch(() => undefined)
   }, [])
 
   // Persist to localStorage on every change

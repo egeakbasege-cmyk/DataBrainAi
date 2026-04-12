@@ -1,6 +1,6 @@
-import { NextResponse }         from 'next/server'
-import { auth }                 from '@/auth'
-import { lsRequest }            from '@/lib/lemonsqueezy'
+import { NextResponse }  from 'next/server'
+import { auth }          from '@/auth'
+import { lsRequest }     from '@/lib/lemonsqueezy'
 
 export async function POST() {
   const session = await auth()
@@ -9,39 +9,30 @@ export async function POST() {
   }
 
   try {
-    // Find the customer by email in Lemon Squeezy
-    const customers = await lsRequest<{ data: Array<{ id: string }> }>(
-      `/customers?filter[email]=${encodeURIComponent(session.user.email)}&filter[store_id]=${process.env.LEMONSQUEEZY_STORE_ID}`
+    const email    = session.user.email
+    const storeId  = process.env.LEMONSQUEEZY_STORE_ID ?? ''
+
+    // Find active subscription by user email
+    const res = await lsRequest<{
+      data: Array<{
+        attributes: {
+          user_email: string
+          status:     string
+          urls:       { customer_portal: string }
+        }
+      }>
+    }>(`/subscriptions?filter[store_id]=${storeId}&sort=-createdAt`)
+
+    const sub = res.data?.find(
+      s => s.attributes.user_email?.toLowerCase() === email.toLowerCase()
     )
 
-    const customerId = customers?.data?.[0]?.id
-    if (!customerId) {
-      return NextResponse.json({ error: 'No subscription found for this account.' }, { status: 404 })
+    const portalUrl = sub?.attributes?.urls?.customer_portal
+    if (!portalUrl) {
+      return NextResponse.json({ error: 'No active subscription found.' }, { status: 404 })
     }
 
-    // Create a customer portal session
-    const portal = await lsRequest<{ data: { attributes: { url: string } } }>(
-      '/customer-portal-sessions',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          data: {
-            type: 'customer-portal-sessions',
-            attributes: {},
-            relationships: {
-              customer: {
-                data: { type: 'customers', id: customerId },
-              },
-            },
-          },
-        }),
-      }
-    )
-
-    const url = portal?.data?.attributes?.url
-    if (!url) throw new Error('No portal URL returned')
-
-    return NextResponse.json({ url })
+    return NextResponse.json({ url: portalUrl })
   } catch (err: any) {
     console.error('[Portal] Error:', err.message)
     return NextResponse.json({ error: err.message }, { status: 500 })
