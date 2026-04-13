@@ -138,8 +138,9 @@ export function Nav() {
                       )}
                     </div>
 
-                    <MenuItem href="/chat"    onClick={() => setMenuOpen(false)} label="Chart Course" />
-                    <MenuItem href="/pricing" onClick={() => setMenuOpen(false)} label="Pricing" />
+                    <MenuItem href="/chat"      onClick={() => setMenuOpen(false)} label="Chart Course" />
+                    <MenuItem href="/dashboard" onClick={() => setMenuOpen(false)} label="Dashboard"    />
+                    <MenuItem href="/pricing"  onClick={() => setMenuOpen(false)} label="Pricing" />
 
                     {session.user.isPro && (
                       <button

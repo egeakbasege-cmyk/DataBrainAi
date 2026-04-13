@@ -11,7 +11,12 @@ import { PaywallModal }               from '@/components/PaywallModal'
 import { FeedbackModal }              from '@/components/FeedbackModal'
 import { FileAttachmentPill }         from '@/components/FileAttachmentPill'
 import type { Attachment }            from '@/components/FileAttachmentPill'
+import { ModeSelector }               from '@/components/ModeSelector'
+import type { AnalysisMode }          from '@/components/ModeSelector'
+import { VoiceInput }                 from '@/components/VoiceInput'
+import { ExportModal }                from '@/components/ExportModal'
 import { useSailState }               from '@/hooks/useSailState'
+import type { StrategyResult }        from '@/hooks/useSailState'
 import { useSubscription }            from '@/hooks/useSubscription'
 import { useBusinessContext }         from '@/lib/context/BusinessContext'
 
@@ -122,11 +127,13 @@ export default function ChatPage() {
   const [showFeedback, setShowFeedback] = useState(false)
   const [showKeyPanel, setShowKeyPanel] = useState(false)
   const [showHistory,  setShowHistory]  = useState(false)
+  const [showExport,   setShowExport]   = useState(false)
   const [expandedSession, setExpandedSession] = useState<string | null>(null)
   const [apiKey,       setApiKey]       = useState('')
   const [apiKeyInput,  setApiKeyInput]  = useState('')
   const [attachment,   setAttachment]   = useState<Attachment | null>(null)
   const [fileError,    setFileError]    = useState('')
+  const [mode,         setMode]         = useState<AnalysisMode>('upwind')
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -170,9 +177,22 @@ export default function ChatPage() {
   // Clarifying questions (needsMetrics) do NOT consume a daily limit
   useEffect(() => {
     if (state === 'COMPLETE' && result && !('needsMetrics' in result)) {
-      const summary = `${result.headline} — target: ${result.target30}`
+      const r = result as StrategyResult
+      const summary = `${r.headline} — target: ${r.target30}`
       addSession(input, summary)
       recordUsage()
+      // Save to dashboard history
+      try {
+        const prev: unknown[] = JSON.parse(localStorage.getItem('sail_analysis_history') ?? '[]')
+        prev.push({
+          id:        crypto.randomUUID(),
+          prompt:    input.slice(0, 120),
+          headline:  r.headline,
+          target30:  r.target30,
+          createdAt: new Date().toISOString(),
+        })
+        localStorage.setItem('sail_analysis_history', JSON.stringify(prev.slice(-100)))
+      } catch { /* ignore */ }
       // Persist to DB for Pro users (session memory across devices)
       if (isPro) {
         fetch('/api/sessions', {
@@ -212,7 +232,7 @@ export default function ChatPage() {
     const context = profile.diagnosticPrompt
       ? (isPro ? buildContext() : profile.diagnosticPrompt + '\n\n')
       : (isPro ? buildContext() : '')
-    await submit(t, context, apiKey || undefined, attachment ?? undefined)
+    await submit(t, context, apiKey || undefined, attachment ?? undefined, mode)
   }
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -395,6 +415,13 @@ export default function ChatPage() {
                 )}
               </AnimatePresence>
 
+              {/* Mode selector */}
+              {state === 'IDLE' && (
+                <div style={{ marginBottom: '0.625rem' }}>
+                  <ModeSelector mode={mode} onChange={setMode} />
+                </div>
+              )}
+
               {/* Input card */}
               <div
                 style={{
@@ -491,6 +518,12 @@ export default function ChatPage() {
                       accept=".csv,.tsv,.xlsx,.xls,.pdf,image/png,image/jpeg,image/webp,image/gif"
                       onChange={handleFileSelect}
                       style={{ display: 'none' }}
+                    />
+
+                    {/* Voice input */}
+                    <VoiceInput
+                      disabled={isActive}
+                      onTranscript={text => setInput(prev => prev ? `${prev} ${text}` : text)}
                     />
 
                     {/* Keyboard shortcut hint */}
@@ -677,18 +710,45 @@ export default function ChatPage() {
           )}
         </AnimatePresence>
 
-        {/* ── New analysis CTA ── */}
+        {/* ── New analysis CTA + Export ── */}
         <AnimatePresence>
           {isComplete && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex justify-center pb-8"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', paddingBottom: '2rem' }}
             >
               <button onClick={handleReset} className="btn-ghost flex items-center gap-2.5">
                 <HelmSVG /> New analysis
               </button>
+              {result && !('needsMetrics' in result) && (
+                <button
+                  onClick={() => setShowExport(true)}
+                  style={{
+                    display:     'flex',
+                    alignItems:  'center',
+                    gap:         '0.4rem',
+                    padding:     '0.5rem 1rem',
+                    background:  'transparent',
+                    border:      '1px solid rgba(201,169,110,0.4)',
+                    borderRadius:'6px',
+                    cursor:      'pointer',
+                    fontFamily:  'Inter, sans-serif',
+                    fontSize:    '0.72rem',
+                    fontWeight:  600,
+                    letterSpacing:'0.06em',
+                    textTransform:'uppercase',
+                    color:       '#C9A96E',
+                    transition:  'all 0.15s',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                    <path d="M4 4h16v2H4z"/><path d="M4 10h10"/><path d="M4 16h7"/><path d="M15 14l5 5m0-5l-5 5"/>
+                  </svg>
+                  Export
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -734,6 +794,15 @@ export default function ChatPage() {
       </button>
 
       <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
+
+      {result && !('needsMetrics' in result) && (
+        <ExportModal
+          open={showExport}
+          onClose={() => setShowExport(false)}
+          result={result as StrategyResult}
+          sector={input.slice(0, 60)}
+        />
+      )}
 
       {/* ── History Panel ── */}
       {showHistory && (
