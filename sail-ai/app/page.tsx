@@ -62,7 +62,25 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           HERO — Swiss typographic statement
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#0C0C0E', paddingBottom: 0 }}>
+      <section style={{ background: '#0C0C0E', paddingBottom: 0, position: 'relative', overflow: 'hidden' }}>
+        {/* Hero background photo */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/sail-vertical.jpg"
+          alt=""
+          aria-hidden="true"
+          style={{
+            position:   'absolute',
+            inset:      0,
+            width:      '100%',
+            height:     '100%',
+            objectFit:  'cover',
+            objectPosition: 'center top',
+            opacity:    0.18,
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        />
         <div className="max-w-6xl mx-auto px-6 md:px-10 pt-20 md:pt-28">
 
           {/* Eyebrow */}

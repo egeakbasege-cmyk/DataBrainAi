@@ -9,12 +9,48 @@ interface Props {
   onChange: (m: AnalysisMode) => void
 }
 
+function UpwindIcon({ color }: { color: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Sail */}
+      <path d="M12 3 L12 19 L4 19 Z" fill={color} opacity="0.9" />
+      <path d="M12 3 L12 19 L20 12 Z" fill={color} opacity="0.45" />
+      {/* Mast */}
+      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+      {/* Hull */}
+      <path d="M5 19 Q12 22 19 19" stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+      {/* Wind arrows pointing up-left */}
+      <path d="M2 8 L2 5 L5 5" stroke={color} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6"/>
+      <path d="M2 5 L5 8" stroke={color} strokeWidth="1.1" strokeLinecap="round" opacity="0.6"/>
+    </svg>
+  )
+}
+
+function DownwindIcon({ color }: { color: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Large spinnaker sail */}
+      <path d="M12 4 C6 6 3 12 5 19 L12 19 Z" fill={color} opacity="0.9"/>
+      <path d="M12 4 C18 6 21 12 19 19 L12 19 Z" fill={color} opacity="0.55"/>
+      {/* Mast */}
+      <line x1="12" y1="3" x2="12" y2="20" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+      {/* Hull */}
+      <path d="M5 19 Q12 22 19 19" stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+      {/* Wind arrows pointing down-right */}
+      <path d="M19 8 L22 8 L22 11" stroke={color} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6"/>
+      <path d="M22 8 L19 11" stroke={color} strokeWidth="1.1" strokeLinecap="round" opacity="0.6"/>
+    </svg>
+  )
+}
+
 export function ModeSelector({ mode, onChange }: Props) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
       {(['upwind', 'downwind'] as AnalysisMode[]).map((m) => {
         const active = mode === m
         const isUp   = m === 'upwind'
+        const activeColor = isUp ? '#1A5276' : '#00695C'
+        const iconColor   = active ? activeColor : '#71717A'
         return (
           <motion.button
             key={m}
@@ -28,17 +64,18 @@ export function ModeSelector({ mode, onChange }: Props) {
               cursor:     'pointer',
               textAlign:  'left',
               transition: 'all 0.18s',
+              borderRadius: '4px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
-              <span style={{ fontSize: '1rem' }}>{isUp ? '🧭' : '🌊'}</span>
+              {isUp ? <UpwindIcon color={iconColor} /> : <DownwindIcon color={iconColor} />}
               <span style={{
                 fontFamily:    'Inter, sans-serif',
                 fontSize:      '0.72rem',
                 fontWeight:    700,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color:         active ? (isUp ? '#1A5276' : '#00695C') : '#0C0C0E',
+                color:         active ? activeColor : '#0C0C0E',
               }}>
                 {isUp ? 'Upwind' : 'Downwind'}
               </span>
@@ -46,7 +83,7 @@ export function ModeSelector({ mode, onChange }: Props) {
             <p style={{
               fontFamily: 'Inter, sans-serif',
               fontSize:   '0.72rem',
-              color:      active ? (isUp ? '#1A5276' : '#00695C') : '#71717A',
+              color:      active ? activeColor : '#71717A',
               lineHeight: 1.4,
               margin:     0,
             }}>

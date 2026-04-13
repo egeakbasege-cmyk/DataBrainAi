@@ -149,7 +149,11 @@ export default function PricingPage() {
             >
               {/* Champagne top rule for Pro */}
               {tier.accent && (
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #0C0C0E, #C9A96E, #0C0C0E)' }} />
+                <>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #0C0C0E, #C9A96E, #0C0C0E)' }} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/sail-square.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.12, pointerEvents: 'none', borderRadius: 'inherit' }} />
+                </>
               )}
 
               <span

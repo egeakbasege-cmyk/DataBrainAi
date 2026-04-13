@@ -289,8 +289,12 @@ export default function ChatPage() {
             border:       '1px solid rgba(0,0,0,0.08)',
             borderRadius: '12px',
             overflow:     'hidden',
+            position:     'relative',
           }}
         >
+          {/* Background photo */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/sail-horizontal.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.07, pointerEvents: 'none', userSelect: 'none' }} />
           <SailboatAnimation state={state} />
 
           {/* Context + counter bar */}
