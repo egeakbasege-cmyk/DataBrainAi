@@ -11,6 +11,7 @@ export const ChatRequestSchema = z.object({
   imageBase64:   z.string().optional(),
   imageMimeType: z.string().optional(),
   fileContent:   z.string().max(40000).optional(),
+  mode:          z.enum(['upwind', 'downwind']).optional(),
 })
 
 export type ChatRequestType = z.infer<typeof ChatRequestSchema>

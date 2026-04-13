@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
   let imageBase64:   string | undefined
   let imageMimeType: string | undefined
   let fileContent:   string | undefined
+  let mode:          'upwind' | 'downwind' | undefined
 
   try {
     const raw    = await req.json()
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
     imageBase64   = parsed.imageBase64
     imageMimeType = parsed.imageMimeType
     fileContent   = parsed.fileContent
+    mode          = parsed.mode
   } catch (err: any) {
     const isZod   = err?.name === 'ZodError'
     const details = isZod ? err.flatten().fieldErrors : undefined
@@ -103,7 +105,7 @@ export async function POST(req: NextRequest) {
             const text = chunk.text()
             if (text) controller.enqueue(encoder.encode(text))
           }
-        } catch (err: any) {
+        } catch {
           controller.enqueue(encoder.encode(JSON.stringify({
             error: 'Image analysis failed. Please try again or describe the image in text.',
           })))
@@ -123,7 +125,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── TEXT PATH → Groq streaming ────────────────────────────────────────────
-  const userMessage = buildUserMessage(message, context, fileContent)
+  const userMessage = buildUserMessage(message, context, fileContent, mode)
 
   const stream = new ReadableStream({
     async start(controller) {

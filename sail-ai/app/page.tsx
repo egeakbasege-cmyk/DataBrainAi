@@ -113,7 +113,7 @@ export default function LandingPage() {
               </p>
 
               <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                <Link href="/onboarding" className="btn-primary">
+                <Link href="/login" className="btn-primary">
                   Begin analysis →
                 </Link>
                 <Link href="/pricing" className="btn-ghost-white">
@@ -304,7 +304,7 @@ export default function LandingPage() {
                 Zero friction. No payment details. Professional-grade strategy, validated by data.
               </p>
             </div>
-            <Link href="/onboarding" className="btn-ghost-white" style={{ flexShrink: 0 }}>
+            <Link href="/login" className="btn-ghost-white" style={{ flexShrink: 0 }}>
               Begin →
             </Link>
           </div>

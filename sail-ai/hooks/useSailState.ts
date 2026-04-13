@@ -62,10 +62,11 @@ export function useSailState() {
   const abortRef                    = useRef<AbortController | null>(null)
 
   const submit = useCallback(async (
-    input:      string,
-    context?:   string,
-    apiKey?:    string,
+    input:       string,
+    context?:    string,
+    apiKey?:     string,
     attachment?: Attachment,
+    mode?:       'upwind' | 'downwind',
   ) => {
     if (state === 'THINKING' || state === 'STREAMING') return
 
@@ -80,7 +81,8 @@ export function useSailState() {
       const body: Record<string, string> = { message: input }
       if (context)                          body.context       = context
       if (apiKey)                           body.apiKey        = apiKey
-      if (attachment?.isImage)  {
+      if (mode)                             body.mode          = mode
+      if (attachment?.isImage) {
         body.imageBase64   = attachment.content
         body.imageMimeType = attachment.mimeType
       } else if (attachment?.content) {

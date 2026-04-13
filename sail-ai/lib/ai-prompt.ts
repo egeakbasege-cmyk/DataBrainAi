@@ -8,13 +8,13 @@ CONTEXTUAL INPUTS — If the user provides any of the following, integrate them 
 - Image (screenshot/UI): Identify friction points and link them to the quantitative metrics provided.
 Every input type must be synthesised into a single unified analytical conclusion — never treat attachments or links as isolated.
 
-OUTPUT FORMAT — Return ONLY a valid JSON object. No prose, no markdown fences, no code blocks. Begin with { and end with }.
+OUTPUT FORMAT — Return ONLY valid JSON. No prose, no markdown, no code fences. Start with { and end with }.
 
 DECISION LOGIC:
-- If the user's message contains NO concrete numbers (revenue, users, conversion rate, churn, margin, client count, etc.), return:
-  {"needsMetrics":true,"question":"<One direct follow-up question asking for the single most important missing data point. Max 20 words. Professional tone.>"}
+If the user's message contains NO concrete numbers (revenue, users, conversion rate, churn, margin, client count, ad spend, CAC, LTV, etc.), return EXACTLY this shape:
+{"needsMetrics":true,"question":"<One direct question asking for the single most important missing metric. Max 20 words. Start with 'What is your' or 'How many'. Never leave this field empty.>"}
 
-- If sufficient numbers are present, return a strategy object with ALL of these keys:
+If sufficient numbers are present, return a strategy object with ALL of these keys:
   {
     "headline": "<One sentence: the specific improvement opportunity, grounded in their numbers. Max 14 words. No hyperbole.>",
     "signal": "<2 sentences. Reference the user's exact figures. Explain — citing a benchmark or principle — why this is the highest-leverage action available to them right now.>",
@@ -45,10 +45,20 @@ MANDATORY RULES:
 7. Projected outcomes in tactic results must include a qualifier such as "typically", "based on sector data", or "industry median suggests".
 8. All timeframes must be realistic — no tactic should claim major results in under 7 days without strong justification.`
 
-export function buildUserMessage(input: string, context?: string, fileContent?: string): string {
+export const UPWIND_PREFIX = `The user has selected Direct Mode (Upwind). Deliver a precise, benchmark-grounded action plan immediately based on their inputs. No clarifying questions — if data is sparse, make reasonable estimates from sector benchmarks and label them as estimates.\n\n`
+
+export const DOWNWIND_PREFIX = `The user has selected Guided Mode (Downwind). Begin with a concise diagnostic summary of their situation (2-3 sentences), identify the highest-leverage strategic insight, then provide a structured 3-step action plan. Use a Socratic, coaching tone — explain the reasoning behind each recommendation.\n\n`
+
+export function buildUserMessage(
+  input: string,
+  context?: string,
+  fileContent?: string,
+  mode?: 'upwind' | 'downwind',
+): string {
+  const modePrefix = mode === 'upwind' ? UPWIND_PREFIX : mode === 'downwind' ? DOWNWIND_PREFIX : ''
   let msg = context
-    ? `${context}BUSINESS CHALLENGE:\n${input.trim()}`
-    : `BUSINESS CHALLENGE:\n${input.trim()}`
+    ? `${modePrefix}${context}BUSINESS CHALLENGE:\n${input.trim()}`
+    : `${modePrefix}BUSINESS CHALLENGE:\n${input.trim()}`
   if (fileContent) {
     msg += `\n\n[ATTACHED FILE DATA — analyse this data as an integral part of your strategy response]:\n${fileContent}`
   }
