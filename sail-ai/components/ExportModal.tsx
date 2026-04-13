@@ -26,34 +26,9 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
     `\n\nWATCH OUT FOR\n${result.risk}` +
     (note ? `\n\nNOTE\n${note}` : '')
 
-  async function handleSend() {
+  function handleSend() {
     if (!email || !email.includes('@')) return
     setStatus('sending')
-
-    // Try EmailJS if configured, else fallback to mailto
-    const ejsService  = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID
-    const ejsTemplate = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID
-    const ejsKey      = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
-
-    if (ejsService && ejsTemplate && ejsKey) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const emailjsMod = await import('emailjs-com' as any)
-        const emailjs = (emailjsMod as any).default ?? emailjsMod
-        await (emailjs as any).send(ejsService, ejsTemplate, {
-          to_email:      email,
-          sector:        sector ?? 'Business',
-          analysis_text: body,
-          date:          new Date().toLocaleDateString(),
-        }, ejsKey)
-        setStatus('sent')
-        return
-      } catch {
-        // fall through to mailto
-      }
-    }
-
-    // mailto fallback
     const mailto = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
     window.open(mailto, '_blank')
     setStatus('sent')
