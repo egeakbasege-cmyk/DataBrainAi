@@ -250,6 +250,169 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════
+          MODE CARDS — Upwind vs Downwind
+      ══════════════════════════════════════════════ */}
+      <section style={{ background: '#FAFAF8', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3rem' }}>
+            <span className="label-caps">Two modes</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.09)' }} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+            {[
+              {
+                icon:   '🧭',
+                name:   'Upwind',
+                tag:    'Direct Mode',
+                desc:   'Feed your numbers and get an instant, benchmark-grounded action plan. No clarifying questions — sparse data is filled from sector medians and labelled accordingly.',
+                detail: 'Best for: operators who know their metrics and need fast execution clarity.',
+                color:  '#1A5276',
+                bg:     'rgba(26,82,118,0.05)',
+                border: 'rgba(26,82,118,0.18)',
+              },
+              {
+                icon:   '🌊',
+                name:   'Downwind',
+                tag:    'Guided Mode',
+                desc:   'Begin with a diagnostic summary, then follow a Socratic coaching flow. Each recommendation is explained with the reasoning behind it.',
+                detail: 'Best for: founders working through ambiguity who want to understand the why.',
+                color:  '#00695C',
+                bg:     'rgba(0,150,136,0.05)',
+                border: 'rgba(0,150,136,0.18)',
+              },
+            ].map(m => (
+              <div
+                key={m.name}
+                style={{
+                  padding:      '1.75rem',
+                  background:    m.bg,
+                  border:       `1px solid ${m.border}`,
+                  borderRadius: '10px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <span style={{ fontSize: '1.4rem' }}>{m.icon}</span>
+                  <div>
+                    <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.25rem', fontWeight: 700, color: m.color, display: 'block', lineHeight: 1.1 }}>
+                      {m.name}
+                    </span>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: m.color, opacity: 0.7 }}>
+                      {m.tag}
+                    </span>
+                  </div>
+                </div>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.7, color: '#0C0C0E', fontWeight: 300, marginBottom: '0.875rem' }}>
+                  {m.desc}
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', lineHeight: 1.5, borderTop: `1px solid ${m.border}`, paddingTop: '0.875rem', margin: 0 }}>
+                  {m.detail}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          FEATURES ROW — voice, file, export, dashboard
+      ══════════════════════════════════════════════ */}
+      <section style={{ background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.07)', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-16">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem' }}>
+            <span className="label-caps">Capabilities</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.09)' }} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0' }}>
+            {[
+              {
+                svg: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.8" strokeLinecap="round">
+                    <rect x="9" y="2" width="6" height="11" rx="3"/>
+                    <path d="M5 10a7 7 0 0 0 14 0"/>
+                    <line x1="12" y1="19" x2="12" y2="22"/>
+                    <line x1="9" y1="22" x2="15" y2="22"/>
+                  </svg>
+                ),
+                title: 'Voice Input',
+                body:  'Dictate your situation in English or Turkish. Transcript added directly to the input field.',
+              },
+              {
+                svg: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.8" strokeLinecap="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="12" y1="11" x2="12" y2="17"/>
+                    <line x1="9" y1="14" x2="15" y2="14"/>
+                  </svg>
+                ),
+                title: 'File & Image Upload',
+                body:  'Attach CSV, XLSX, PDF, or screenshots. Data is parsed and synthesised into the analysis.',
+              },
+              {
+                svg: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.8" strokeLinecap="round">
+                    <path d="M4 4h16v2H4z"/><path d="M4 10h10"/><path d="M4 16h7"/>
+                    <path d="M15 14l5 5m0-5l-5 5"/>
+                  </svg>
+                ),
+                title: 'Email Export',
+                body:  'Send the full strategy report — headline, tactics, benchmarks, targets — directly to your inbox.',
+              },
+              {
+                svg: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.8" strokeLinecap="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
+                ),
+                title: 'Analytics Dashboard',
+                body:  'Track every analysis you run. Weekly and monthly charts show your strategic momentum over time.',
+              },
+              {
+                svg: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.8" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M3 3l18 18M3 21L21 3"/>
+                  </svg>
+                ),
+                title: 'Session Memory',
+                body:  'Prior strategies are stored in context. Each new analysis builds on what came before.',
+              },
+              {
+                svg: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.8" strokeLinecap="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                  </svg>
+                ),
+                title: 'Benchmark Engine',
+                body:  'Every output references verified industry data. User metrics are compared against sector medians.',
+              },
+            ].map((f, i) => (
+              <div
+                key={f.title}
+                style={{
+                  padding:      '1.5rem',
+                  borderRight:  i % 3 < 2 ? '1px solid rgba(0,0,0,0.07)' : 'none',
+                  borderBottom: i < 3 ? '1px solid rgba(0,0,0,0.07)' : 'none',
+                }}
+              >
+                <div style={{ marginBottom: '0.875rem' }}>{f.svg}</div>
+                <h5 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: '#0C0C0E', marginBottom: '0.375rem', letterSpacing: '0.02em' }}>
+                  {f.title}
+                </h5>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', lineHeight: 1.65, margin: 0, fontWeight: 300 }}>
+                  {f.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
           HOW IT WORKS — numbered list, Swiss grid
       ══════════════════════════════════════════════ */}
       <section style={{ background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.09)', borderBottom: '1px solid rgba(0,0,0,0.09)' }}>
@@ -323,6 +486,12 @@ export default function LandingPage() {
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+            <Link href="/chat" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', textDecoration: 'none', letterSpacing: '0.05em' }}>
+              Chat
+            </Link>
+            <Link href="/dashboard" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', textDecoration: 'none', letterSpacing: '0.05em' }}>
+              Dashboard
+            </Link>
             <Link href="/pricing" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', textDecoration: 'none', letterSpacing: '0.05em' }}>
               Pricing
             </Link>
