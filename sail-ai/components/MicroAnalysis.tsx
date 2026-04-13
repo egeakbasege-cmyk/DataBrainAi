@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -77,10 +77,10 @@ export function MicroAnalysis() {
   const inputRef              = useRef<HTMLInputElement>(null)
 
   // Rotate placeholder quietly
-  useState(() => {
+  useEffect(() => {
     const iv = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 3500)
     return () => clearInterval(iv)
-  })
+  }, [])
 
   function handleAnalyse() {
     const t = input.trim()

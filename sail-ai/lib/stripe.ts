@@ -8,7 +8,7 @@ export function getStripe(): Stripe {
     throw new Error('STRIPE_SECRET_KEY environment variable is not configured.')
   }
   if (!_stripe) {
-    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-09-30.acacia' as Stripe.LatestApiVersion })
   }
   return _stripe
 }

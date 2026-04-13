@@ -3,7 +3,7 @@ import { z } from 'zod'
 // ── Chat endpoint ──────────────────────────────────────────────────
 export const ChatRequestSchema = z.object({
   message: z
-    .string({ message: 'Message is required.' })
+    .string()
     .min(1,    'Message cannot be empty.')
     .max(2000, 'Message is too long (max 2000 characters).'),
   context:       z.string().max(6000).optional(),
@@ -29,7 +29,7 @@ export const MetricsSchema = z.object({
 
 export const AnalysisRequestSchema = z.object({
   sector: z
-    .string({ message: 'Sector is required.' })
+    .string()
     .min(2, 'Sector name is too short.')
     .max(80, 'Sector name is too long.'),
   metrics:   MetricsSchema,
@@ -47,14 +47,14 @@ export type AnalysisRequestType = z.infer<typeof AnalysisRequestSchema>
 // ── Registration ───────────────────────────────────────────────────
 export const RegisterRequestSchema = z.object({
   name: z
-    .string({ message: 'Name is required.' })
+    .string()
     .min(1,   'Name cannot be empty.')
     .max(100, 'Name is too long.'),
   email: z
-    .string({ message: 'Email is required.' })
+    .string()
     .email('Please enter a valid email address.'),
   password: z
-    .string({ message: 'Password is required.' })
+    .string()
     .min(8, 'Password must be at least 8 characters.'),
 })
 
