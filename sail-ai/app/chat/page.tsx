@@ -742,7 +742,7 @@ export default function ChatPage() {
 
         {/* ── Result ── */}
         <AnimatePresence>
-          {(state === 'STREAMING' || isComplete) && (
+          {(state === 'STREAMING' || isComplete || isConversing) && (
             <motion.div
               key="answer"
               initial={{ opacity: 0, y: 10 }}
@@ -767,7 +767,7 @@ export default function ChatPage() {
               <button onClick={handleReset} className="btn-ghost flex items-center gap-2.5">
                 <HelmSVG /> New analysis
               </button>
-              {result && !('needsMetrics' in result) && (
+              {result && 'headline' in result && (
                 <button
                   onClick={() => setShowExport(true)}
                   style={{
@@ -840,7 +840,7 @@ export default function ChatPage() {
 
       <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
 
-      {result && !('needsMetrics' in result) && (
+      {result && 'headline' in result && (
         <ExportModal
           open={showExport}
           onClose={() => setShowExport(false)}
