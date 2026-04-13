@@ -3,7 +3,8 @@
 import { useCallback, useRef, useState } from 'react'
 import type { Attachment } from '@/components/FileAttachmentPill'
 
-export type SailState = 'IDLE' | 'THINKING' | 'STREAMING' | 'COMPLETE'
+// 'CONVERSING' = Downwind coach returned a chatMessage; input stays open
+export type SailState = 'IDLE' | 'THINKING' | 'STREAMING' | 'COMPLETE' | 'CONVERSING'
 
 export interface Tactic {
   step:      number
@@ -35,11 +36,23 @@ export interface NeedsMetrics {
   question:     string
 }
 
+// Downwind structured coaching turn
+export interface ChatMessage {
+  chatMessage:       string
+  followUpQuestion?: string
+}
+
+// Fallback when AI returns plain text instead of JSON
 export interface FreeTextResponse {
   freeText: string
 }
 
-export type AIResponse = StrategyResult | NeedsMetrics | FreeTextResponse
+export type AIResponse = StrategyResult | NeedsMetrics | ChatMessage | FreeTextResponse
+
+export interface ConvMessage {
+  role:    'user' | 'assistant'
+  content: string
+}
 
 function stripFences(raw: string): string {
   const s = raw.trim()
@@ -52,10 +65,9 @@ function stripFences(raw: string): string {
 
 function parseJSON(raw: string): AIResponse {
   const cleaned = stripFences(raw)
-  // Check if it's free text (not JSON)
   const start = cleaned.indexOf('{')
   if (start === -1) {
-    // No JSON object — treat as free text
+    // No JSON found — treat as free text (safety net)
     return { freeText: cleaned }
   }
   try {
@@ -79,6 +91,7 @@ export function useSailState() {
     apiKey?:     string,
     attachment?: Attachment,
     mode?:       'upwind' | 'downwind',
+    messages?:   ConvMessage[],
   ) => {
     if (state === 'THINKING' || state === 'STREAMING') return
 
@@ -90,10 +103,11 @@ export function useSailState() {
     abortRef.current = new AbortController()
 
     try {
-      const body: Record<string, string> = { message: input }
-      if (context)                          body.context       = context
-      if (apiKey)                           body.apiKey        = apiKey
-      if (mode)                             body.mode          = mode
+      const body: Record<string, unknown> = { message: input }
+      if (context)                 body.context       = context
+      if (apiKey)                  body.apiKey        = apiKey
+      if (mode)                    body.mode          = mode
+      if (messages?.length)        body.messages      = messages
       if (attachment?.isImage) {
         body.imageBase64   = attachment.content
         body.imageMimeType = attachment.mimeType
@@ -126,20 +140,25 @@ export function useSailState() {
         buffer += decoder.decode(value, { stream: true })
         setStreamText(buffer)
       }
-
       buffer += decoder.decode()
 
       const parsed = parseJSON(buffer)
 
-      if ('error' in parsed && typeof (parsed as any).error === 'string') {
-        throw new Error((parsed as any).error)
+      if ('error' in parsed && typeof (parsed as Record<string, unknown>).error === 'string') {
+        throw new Error((parsed as Record<string, unknown>).error as string)
       }
 
       setResult(parsed)
-      setState('COMPLETE')
-    } catch (err: any) {
-      if (err.name === 'AbortError') return
-      setError(err.message || 'Something went wrong. Please try again.')
+
+      // Downwind coaching turn — keep input open for next reply
+      if ('chatMessage' in parsed) {
+        setState('CONVERSING')
+      } else {
+        setState('COMPLETE')
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
       setState('IDLE')
     }
   }, [state])

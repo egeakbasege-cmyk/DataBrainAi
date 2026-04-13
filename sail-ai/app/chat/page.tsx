@@ -16,7 +16,7 @@ import type { AnalysisMode }          from '@/components/ModeSelector'
 import { VoiceInput }                 from '@/components/VoiceInput'
 import { ExportModal }                from '@/components/ExportModal'
 import { useSailState }               from '@/hooks/useSailState'
-import type { StrategyResult }        from '@/hooks/useSailState'
+import type { StrategyResult, ConvMessage } from '@/hooks/useSailState'
 import { useSubscription }            from '@/hooks/useSubscription'
 import { useBusinessContext }         from '@/lib/context/BusinessContext'
 
@@ -134,6 +134,8 @@ export default function ChatPage() {
   const [attachment,   setAttachment]   = useState<Attachment | null>(null)
   const [fileError,    setFileError]    = useState('')
   const [mode,         setMode]         = useState<AnalysisMode>('upwind')
+  // Downwind multi-turn conversation history
+  const [convHistory,  setConvHistory]  = useState<ConvMessage[]>([])
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -172,6 +174,25 @@ export default function ChatPage() {
       window.history.replaceState({}, '', '/chat')
     }
   }, [activatePro])
+
+  // Downwind: update conversation history + auto-focus input for next reply
+  useEffect(() => {
+    if (state === 'CONVERSING' && result && 'chatMessage' in result) {
+      // Store the user's last message and the AI's coaching response
+      const userMsg   = input.trim()
+      const assistMsg = JSON.stringify(result)
+      if (userMsg) {
+        setConvHistory(prev => [
+          ...prev,
+          { role: 'user',      content: userMsg   },
+          { role: 'assistant', content: assistMsg },
+        ])
+      }
+      setInput('')
+      setTimeout(() => textareaRef.current?.focus(), 80)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, result])
 
   // Save completed strategies + deduct 1 credit ONLY when a full strategy is returned
   // Clarifying questions (needsMetrics) do NOT consume a daily limit
@@ -228,12 +249,16 @@ export default function ChatPage() {
     const t = input.trim()
     if (!t || state === 'THINKING' || state === 'STREAMING') return
     if (!canAnalyse) { triggerPaywall(); return }
-    // Note: recordUsage() is intentionally NOT called here.
-    // Credit deduction happens only after a full StrategyResult is received.
+
     const context = profile.diagnosticPrompt
       ? (isPro ? buildContext() : profile.diagnosticPrompt + '\n\n')
       : (isPro ? buildContext() : '')
-    await submit(t, context, apiKey || undefined, attachment ?? undefined, mode)
+
+    // For Downwind: append the current user message to history AFTER we read convHistory
+    // then store the AI response once it comes back (handled in useEffect below)
+    const historyToSend = mode === 'downwind' ? convHistory : undefined
+
+    await submit(t, context, apiKey || undefined, attachment ?? undefined, mode, historyToSend)
   }
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -261,6 +286,7 @@ export default function ChatPage() {
     setInput('')
     setAttachment(null)
     setFileError('')
+    setConvHistory([])
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
 
@@ -271,8 +297,9 @@ export default function ChatPage() {
     setShowKeyPanel(false)
   }
 
-  const isActive   = state === 'THINKING' || state === 'STREAMING'
-  const isComplete = state === 'COMPLETE'
+  const isActive     = state === 'THINKING' || state === 'STREAMING'
+  const isComplete   = state === 'COMPLETE'
+  const isConversing = state === 'CONVERSING'
   const charsLeft  = MAX - input.length
   const warn       = charsLeft < 200
   const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
@@ -377,7 +404,7 @@ export default function ChatPage() {
 
         {/* ── Input area ── */}
         <AnimatePresence mode="wait">
-          {!isComplete && (
+          {(!isComplete || isConversing) && (
             <motion.div
               key="input"
               initial={{ opacity: 0, y: 8 }}
@@ -420,10 +447,23 @@ export default function ChatPage() {
                 )}
               </AnimatePresence>
 
-              {/* Mode selector */}
-              {state === 'IDLE' && (
+              {/* Mode selector — hidden mid-conversation */}
+              {(state === 'IDLE' || state === 'CONVERSING') && convHistory.length === 0 && (
                 <div style={{ marginBottom: '0.625rem' }}>
                   <ModeSelector mode={mode} onChange={setMode} />
+                </div>
+              )}
+
+              {/* Downwind conversation indicator */}
+              {isConversing && convHistory.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.625rem', padding: '0.4rem 0.75rem', background: 'rgba(0,150,136,0.06)', border: '1px solid rgba(0,150,136,0.18)', borderRadius: '6px' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00695C', flexShrink: 0 }} />
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#00695C', fontWeight: 500 }}>
+                    Guided session active · {Math.floor(convHistory.length / 2)} exchange{convHistory.length > 2 ? 's' : ''} so far
+                  </span>
+                  <button onClick={handleReset} style={{ marginLeft: 'auto', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#71717A', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                    Start over
+                  </button>
                 </div>
               )}
 

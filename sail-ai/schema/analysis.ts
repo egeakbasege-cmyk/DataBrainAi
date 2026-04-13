@@ -12,6 +12,11 @@ export const ChatRequestSchema = z.object({
   imageMimeType: z.string().optional(),
   fileContent:   z.string().max(40000).optional(),
   mode:          z.enum(['upwind', 'downwind']).optional(),
+  // Downwind multi-turn: previous exchanges (excluding current message)
+  messages:      z.array(z.object({
+    role:    z.enum(['user', 'assistant']),
+    content: z.string().max(4000),
+  })).max(20).optional(),
 })
 
 export type ChatRequestType = z.infer<typeof ChatRequestSchema>

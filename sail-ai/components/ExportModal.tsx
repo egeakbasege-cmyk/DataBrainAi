@@ -37,8 +37,9 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
 
     if (ejsService && ejsTemplate && ejsKey) {
       try {
-        const emailjsMod = await import('@emailjs/browser')
-        const emailjs = emailjsMod.default ?? emailjsMod
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const emailjsMod = await import('emailjs-com' as any)
+        const emailjs = (emailjsMod as any).default ?? emailjsMod
         await (emailjs as any).send(ejsService, ejsTemplate, {
           to_email:      email,
           sector:        sector ?? 'Business',

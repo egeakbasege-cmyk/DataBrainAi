@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { WaveRule } from './Ornaments'
 import { CaptainFigure } from './CaptainFigure'
-import type { AIResponse, NeedsMetrics, StrategyResult, FreeTextResponse } from '@/hooks/useSailState'
+import type { AIResponse, NeedsMetrics, StrategyResult, ChatMessage, FreeTextResponse } from '@/hooks/useSailState'
 
 interface Props {
   result:      AIResponse | null
@@ -43,6 +43,8 @@ export function AnswerCard({ result, streamText, isStreaming }: Props) {
 
   if ('needsMetrics' in result) return <CaptainCard data={result} />
   if ('freeText' in result) return <FreeTextCard data={result} />
+
+  if ('chatMessage' in result) return <CoachCard data={result} />
 
   return <StrategyCard data={result} />
 }
@@ -154,6 +156,101 @@ function CaptainCard({ data }: { data: NeedsMetrics }) {
               }}
             >
               Add your numbers above and I&apos;ll chart the course.
+            </p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+/* ── Downwind coaching turn ───────────────────────── */
+function CoachCard({ data }: { data: ChatMessage }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="card-linen overflow-hidden"
+    >
+      <div className="stripe-accent" style={{ background: 'linear-gradient(90deg, #00695C, #009688)' }} />
+      <div className="p-6 md:p-8">
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+          <div style={{ flexShrink: 0 }}>
+            <CaptainFigure size={88} />
+          </div>
+
+          <div style={{ flex: 1, paddingTop: '0.5rem' }}>
+            <span className="label-caps block mb-3" style={{ color: '#00695C' }}>
+              Guided Mode · Downwind
+            </span>
+
+            {/* Coach message bubble */}
+            <div
+              style={{
+                position:     'relative',
+                background:   '#FFFFFF',
+                border:       '1px solid rgba(0,150,136,0.25)',
+                borderRadius: '0 12px 12px 12px',
+                padding:      '1rem 1.25rem',
+                boxShadow:    '0 2px 12px rgba(0,0,0,0.05)',
+                marginBottom: data.followUpQuestion ? '1rem' : 0,
+              }}
+            >
+              <div style={{
+                position:    'absolute', top: -1, left: -10,
+                width: 0, height: 0,
+                borderTop:  '8px solid rgba(0,150,136,0.25)',
+                borderLeft: '10px solid transparent',
+              }} />
+              <div style={{
+                position:    'absolute', top: 0, left: -8,
+                width: 0, height: 0,
+                borderTop:  '7px solid #FFFFFF',
+                borderLeft: '9px solid transparent',
+              }} />
+              <p style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize:   '0.9rem',
+                color:      '#0C0C0E',
+                lineHeight: 1.7,
+                margin:     0,
+              }}>
+                {data.chatMessage}
+              </p>
+            </div>
+
+            {/* Follow-up question */}
+            {data.followUpQuestion && (
+              <div
+                style={{
+                  background:   'rgba(0,150,136,0.05)',
+                  border:       '1px solid rgba(0,150,136,0.2)',
+                  borderRadius: '8px',
+                  padding:      '0.875rem 1rem',
+                }}
+              >
+                <p style={{
+                  fontFamily: 'Cormorant Garamond, Georgia, serif',
+                  fontStyle:  'italic',
+                  fontSize:   'clamp(1rem, 2vw, 1.15rem)',
+                  color:      '#0C0C0E',
+                  lineHeight: 1.5,
+                  margin:     0,
+                }}>
+                  &ldquo;{data.followUpQuestion}&rdquo;
+                </p>
+              </div>
+            )}
+
+            <p style={{
+              marginTop:  '0.75rem',
+              fontFamily: 'Inter, sans-serif',
+              fontSize:   '0.78rem',
+              color:      '#71717A',
+              lineHeight: 1.5,
+            }}>
+              Type your answer above and press send — I&apos;ll keep building your strategy.
             </p>
           </div>
         </div>
