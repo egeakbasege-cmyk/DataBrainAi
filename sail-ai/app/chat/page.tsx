@@ -193,8 +193,9 @@ export default function ChatPage() {
         })
         localStorage.setItem('sail_analysis_history', JSON.stringify(prev.slice(-100)))
       } catch { /* ignore */ }
-      // Persist to DB for Pro users (session memory across devices)
-      if (isPro) {
+      // Persist to DB for Pro users (session memory across devices) — only for StrategyResult, not freeText
+      if (isPro && result && 'headline' in result) {
+        const r = result as StrategyResult
         fetch('/api/sessions', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -202,7 +203,7 @@ export default function ChatPage() {
             prompt:  input,
             summary,
             sector:  input.slice(0, 120),
-            output:  { headline: result.headline, target30: result.target30 },
+            output:  { headline: r.headline, target30: r.target30 },
           }),
         }).catch(() => undefined)
       }
