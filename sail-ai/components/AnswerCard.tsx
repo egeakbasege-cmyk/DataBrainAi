@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { WaveRule } from './Ornaments'
 import { CaptainFigure } from './CaptainFigure'
-import type { AIResponse, NeedsMetrics, StrategyResult } from '@/hooks/useSailState'
+import type { AIResponse, NeedsMetrics, StrategyResult, FreeTextResponse } from '@/hooks/useSailState'
 
 interface Props {
   result:      AIResponse | null
@@ -42,8 +42,37 @@ export function AnswerCard({ result, streamText, isStreaming }: Props) {
   if (!result) return null
 
   if ('needsMetrics' in result) return <CaptainCard data={result} />
+  if ('freeText' in result) return <FreeTextCard data={result} />
 
   return <StrategyCard data={result} />
+}
+
+/* ── Free text conversation card ──────────────────── */
+function FreeTextCard({ data }: { data: FreeTextResponse }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="card-linen overflow-hidden"
+    >
+      <div className="stripe-accent" />
+      <div className="p-6 md:p-8">
+        <span className="label-caps block mb-4" style={{ color: '#00695C' }}>Conversation</span>
+        <div
+          style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.95rem',
+            lineHeight: 1.7,
+            color: '#0C0C0E',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {data.freeText}
+        </div>
+      </div>
+    </motion.div>
+  )
 }
 
 /* ── Captain asks for more info ───────────────────── */

@@ -35,7 +35,11 @@ export interface NeedsMetrics {
   question:     string
 }
 
-export type AIResponse = StrategyResult | NeedsMetrics
+export interface FreeTextResponse {
+  freeText: string
+}
+
+export type AIResponse = StrategyResult | NeedsMetrics | FreeTextResponse
 
 function stripFences(raw: string): string {
   const s = raw.trim()
@@ -48,10 +52,18 @@ function stripFences(raw: string): string {
 
 function parseJSON(raw: string): AIResponse {
   const cleaned = stripFences(raw)
-  // Find first { or [ to handle any leading whitespace/text
+  // Check if it's free text (not JSON)
   const start = cleaned.indexOf('{')
-  if (start === -1) throw new Error('No JSON object in response')
-  return JSON.parse(cleaned.slice(start)) as AIResponse
+  if (start === -1) {
+    // No JSON object — treat as free text
+    return { freeText: cleaned }
+  }
+  try {
+    return JSON.parse(cleaned.slice(start)) as AIResponse
+  } catch {
+    // JSON parse failed — treat as free text
+    return { freeText: cleaned }
+  }
 }
 
 export function useSailState() {
