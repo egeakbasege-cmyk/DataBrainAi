@@ -19,7 +19,32 @@ export function VoiceInput({ onTranscript, disabled }: Props) {
     setSupported(!!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition))
   }, [])
 
-  if (!supported) return null
+  if (!supported) {
+    // Always show mic button, but disabled if not supported
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+        <button
+          type="button"
+          disabled
+          style={{
+            width: '2rem', height: '2rem', borderRadius: '50%',
+            background: 'transparent',
+            border: '1px solid rgba(12,12,14,0.1)',
+            cursor: 'not-allowed',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: 0.4,
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth="2" strokeLinecap="round">
+            <rect x="9" y="2" width="6" height="11" rx="3"/>
+            <path d="M5 10a7 7 0 0 0 14 0"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+            <line x1="9"  y1="22" x2="15" y2="22"/>
+          </svg>
+        </button>
+      </div>
+    )
+  }
 
   function startListening() {
     if (listening || disabled) return
@@ -37,7 +62,7 @@ export function VoiceInput({ onTranscript, disabled }: Props) {
       setTimeout(() => setStatus('idle'), 600)
     }
     recog.onerror  = () => { setStatus('error'); setTimeout(() => setStatus('idle'), 2000) }
-    recog.onend    = () => { setListening(false); if (status === 'listening') setStatus('idle') }
+    recog.onend    = () => { setListening(false); setStatus('idle') }
 
     recogRef.current = recog
     recog.start()

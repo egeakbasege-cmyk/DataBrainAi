@@ -2,7 +2,7 @@ import { NextRequest }          from 'next/server'
 import { auth }                 from '@/auth'
 import Groq                     from 'groq-sdk'
 import { GoogleGenerativeAI }   from '@google/generative-ai'
-import { SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
+import { SYSTEM_PROMPT, FREE_CHAT_SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
 import { ChatRequestSchema }    from '@/schema/analysis'
 
 const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY })
@@ -126,6 +126,8 @@ export async function POST(req: NextRequest) {
 
   // ── TEXT PATH → Groq streaming ────────────────────────────────────────────
   const userMessage = buildUserMessage(message, context, fileContent, mode)
+  const isFreeChat = mode === 'downwind'
+  const systemPrompt = isFreeChat ? FREE_CHAT_SYSTEM_PROMPT : SYSTEM_PROMPT
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -136,11 +138,11 @@ export async function POST(req: NextRequest) {
           const completion = await client.chat.completions.create({
             model:       modelName,
             messages: [
-              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'system', content: systemPrompt },
               { role: 'user',   content: userMessage },
             ],
-            max_tokens:  1600,
-            temperature: 0.35,
+            max_tokens:  isFreeChat ? 1200 : 1600,
+            temperature: isFreeChat ? 0.7 : 0.35,
             stream:      true,
           })
 

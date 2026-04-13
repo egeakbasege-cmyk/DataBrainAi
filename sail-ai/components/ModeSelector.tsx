@@ -87,7 +87,7 @@ export function ModeSelector({ mode, onChange }: Props) {
               lineHeight: 1.4,
               margin:     0,
             }}>
-              {isUp ? 'Give data → get instant precise strategy' : 'Answer 3 questions → guided discovery'}
+              {isUp ? 'Give data → get instant precise strategy' : 'Free conversation — ask anything, get real answers'}
             </p>
           </motion.button>
         )
