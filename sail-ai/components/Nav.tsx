@@ -3,10 +3,13 @@
 import Link     from 'next/link'
 import { useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
-import { Logo } from './Logo'
+import { Logo }               from './Logo'
+import { LanguageSelector }   from './LanguageSelector'
+import { useLanguage }        from '@/lib/i18n/LanguageContext'
 
 export function Nav() {
   const { data: session } = useSession()
+  const { t } = useLanguage()
   const [menuOpen, setMenuOpen] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
 
@@ -59,7 +62,8 @@ export function Nav() {
         </Link>
 
         {/* Nav */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <LanguageSelector />
           <Link
             href="/pricing"
             style={{
@@ -72,7 +76,7 @@ export function Nav() {
               textDecoration:'none',
             }}
           >
-            Pricing
+            {t('nav.pricing')}
           </Link>
 
           {session?.user ? (
@@ -133,14 +137,14 @@ export function Nav() {
                       </p>
                       {session.user.isPro && (
                         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#C9A96E', letterSpacing: '0.07em', textTransform: 'uppercase', marginTop: '2px' }}>
-                          Professional
+                          {t('nav.professional')}
                         </p>
                       )}
                     </div>
 
-                    <MenuItem href="/chat"      onClick={() => setMenuOpen(false)} label="Chart Course" />
-                    <MenuItem href="/dashboard" onClick={() => setMenuOpen(false)} label="Dashboard"    />
-                    <MenuItem href="/pricing"  onClick={() => setMenuOpen(false)} label="Pricing" />
+                    <MenuItem href="/chat"      onClick={() => setMenuOpen(false)} label={t('nav.chartCourse')} />
+                    <MenuItem href="/dashboard" onClick={() => setMenuOpen(false)} label={t('nav.dashboard')}   />
+                    <MenuItem href="/pricing"   onClick={() => setMenuOpen(false)} label={t('nav.pricing')}     />
 
                     {session.user.isPro && (
                       <button
@@ -159,7 +163,7 @@ export function Nav() {
                           opacity:       portalLoading ? 0.6 : 1,
                         }}
                       >
-                        {portalLoading ? 'Loading…' : 'Manage Subscription'}
+                        {portalLoading ? t('nav.loading') : t('nav.manageSubscription')}
                       </button>
                     )}
 
@@ -179,7 +183,7 @@ export function Nav() {
                         cursor:        'pointer',
                       }}
                     >
-                      Sign out
+                      {t('nav.signOut')}
                     </button>
                   </div>
                 </>
@@ -187,7 +191,7 @@ export function Nav() {
             </div>
           ) : (
             <Link href="/onboarding" className="btn-primary" style={{ padding: '0.5625rem 1.25rem', fontSize: '0.7rem' }}>
-              Launch →
+              {t('nav.launch')}
             </Link>
           )}
         </nav>
