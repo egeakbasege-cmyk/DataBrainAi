@@ -5,8 +5,6 @@ import { GoogleGenerativeAI }                      from '@google/generative-ai'
 import { SYSTEM_PROMPT, DOWNWIND_SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
 import { ChatRequestSchema }                       from '@/schema/analysis'
 
-const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY })
-
 const MODEL_CHAIN = [
   'llama-3.3-70b-versatile',
   'llama-3.1-8b-instant',
@@ -14,8 +12,12 @@ const MODEL_CHAIN = [
   'gemma2-9b-it',
 ]
 
+let _groqClient: Groq | null = null
+
 function getClient(apiKey?: string) {
-  return apiKey ? new Groq({ apiKey }) : groqClient
+  if (apiKey) return new Groq({ apiKey })
+  if (!_groqClient) _groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY })
+  return _groqClient
 }
 
 const rateMap = new Map<string, { count: number; reset: number }>()
