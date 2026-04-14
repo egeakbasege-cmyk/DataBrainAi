@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { WaveRule } from './Ornaments'
 import { CaptainFigure } from './CaptainFigure'
 import type { AIResponse, NeedsMetrics, StrategyResult, ChatMessage, FreeTextResponse } from '@/hooks/useSailState'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Props {
   result:      AIResponse | null
@@ -51,6 +52,7 @@ export function AnswerCard({ result, streamText, isStreaming }: Props) {
 
 /* ── Free text conversation card ──────────────────── */
 function FreeTextCard({ data }: { data: FreeTextResponse }) {
+  const { t } = useLanguage()
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -60,7 +62,7 @@ function FreeTextCard({ data }: { data: FreeTextResponse }) {
     >
       <div className="stripe-accent" />
       <div className="p-6 md:p-8">
-        <span className="label-caps block mb-4" style={{ color: '#00695C' }}>Conversation</span>
+        <span className="label-caps block mb-4" style={{ color: '#00695C' }}>{t('answer.conversation')}</span>
         <div
           style={{
             fontFamily: 'Inter, sans-serif',
@@ -79,6 +81,7 @@ function FreeTextCard({ data }: { data: FreeTextResponse }) {
 
 /* ── Captain asks for more info ───────────────────── */
 function CaptainCard({ data }: { data: NeedsMetrics }) {
+  const { t } = useLanguage()
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -98,7 +101,7 @@ function CaptainCard({ data }: { data: NeedsMetrics }) {
           {/* Speech area */}
           <div style={{ flex: 1, paddingTop: '0.5rem' }}>
             <span className="label-caps block mb-3" style={{ color: '#C9A96E' }}>
-              Your captain asks
+              {t('answer.captainAsks')}
             </span>
 
             {/* Speech bubble */}
@@ -155,7 +158,7 @@ function CaptainCard({ data }: { data: NeedsMetrics }) {
                 lineHeight: 1.5,
               }}
             >
-              Add your numbers above and I&apos;ll chart the course.
+              {t('answer.addNumbers')}
             </p>
           </div>
         </div>
@@ -166,6 +169,7 @@ function CaptainCard({ data }: { data: NeedsMetrics }) {
 
 /* ── Downwind coaching turn ───────────────────────── */
 function CoachCard({ data }: { data: ChatMessage }) {
+  const { t } = useLanguage()
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -182,7 +186,7 @@ function CoachCard({ data }: { data: ChatMessage }) {
 
           <div style={{ flex: 1, paddingTop: '0.5rem' }}>
             <span className="label-caps block mb-3" style={{ color: '#00695C' }}>
-              Guided Mode · Downwind
+              {t('answer.guidedMode')}
             </span>
 
             {/* Coach message bubble */}
@@ -250,7 +254,7 @@ function CoachCard({ data }: { data: ChatMessage }) {
               color:      '#71717A',
               lineHeight: 1.5,
             }}>
-              Type your answer above and press send — I&apos;ll keep building your strategy.
+              {t('chat.typeAnswer')}
             </p>
           </div>
         </div>
@@ -261,6 +265,7 @@ function CoachCard({ data }: { data: ChatMessage }) {
 
 /* ── Strategy card ────────────────────────────────── */
 function StrategyCard({ data }: { data: StrategyResult }) {
+  const { t } = useLanguage()
   return (
     <div className="space-y-4">
 
@@ -268,7 +273,7 @@ function StrategyCard({ data }: { data: StrategyResult }) {
       <motion.div {...up(0)} className="card-linen overflow-hidden">
         <div className="stripe-accent" />
         <div className="p-6 md:p-8">
-          <span className="label-caps block mb-4" style={{ color: '#C9A96E' }}>Strategy</span>
+          <span className="label-caps block mb-4" style={{ color: '#C9A96E' }}>{t('answer.strategy')}</span>
           <h2
             style={{
               fontFamily:    'Cormorant Garamond, Georgia, serif',
@@ -288,7 +293,7 @@ function StrategyCard({ data }: { data: StrategyResult }) {
       {/* Signal */}
       {data.signal && (
         <motion.div {...up(0.07)} className="card-linen p-5">
-          <span className="label-caps block mb-3" style={{ color: '#C9A96E' }}>Key signal</span>
+          <span className="label-caps block mb-3" style={{ color: '#C9A96E' }}>{t('answer.keySignal')}</span>
           <WaveRule color="#0C0C0E" opacity={0.2} />
           <p
             style={{
@@ -307,7 +312,7 @@ function StrategyCard({ data }: { data: StrategyResult }) {
       {/* Tactics */}
       {data.tactics?.length > 0 && (
         <motion.div {...up(0.14)} className="space-y-2">
-          <span className="label-caps block px-1">Your 3-step plan</span>
+          <span className="label-caps block px-1">{t('answer.threeStepPlan')}</span>
           {data.tactics.map((t, i) => (
             <motion.div
               key={i}
@@ -356,7 +361,7 @@ function StrategyCard({ data }: { data: StrategyResult }) {
       {/* Benchmarks */}
       {data.benchmarks?.length > 0 && (
         <motion.div {...up(0.3)} className="card-linen p-5">
-          <span className="label-caps block mb-4">Benchmarks</span>
+          <span className="label-caps block mb-4">{t('answer.benchmarks')}</span>
           <div style={{ height: 1, background: 'rgba(26,82,118,0.1)', marginBottom: '1rem' }} />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {data.benchmarks.map((b, i) => (
@@ -402,7 +407,7 @@ function StrategyCard({ data }: { data: StrategyResult }) {
                     marginTop:     '0.25rem',
                   }}
                 >
-                  {b.type === 'user' ? 'Your data' : 'Industry'}
+                  {b.type === 'user' ? t('answer.yourData') : t('answer.industry')}
                 </p>
               </div>
             ))}
@@ -413,7 +418,7 @@ function StrategyCard({ data }: { data: StrategyResult }) {
       {/* Opportunity Cost */}
       {data.opportunity_cost && (
         <motion.div {...up(0.3)} className="card-linen p-4" style={{ borderColor: 'rgba(201,169,110,0.3)', background: 'rgba(201,169,110,0.04)' }}>
-          <span className="label-caps block mb-2" style={{ color: '#C9A96E' }}>Opportunity cost</span>
+          <span className="label-caps block mb-2" style={{ color: '#C9A96E' }}>{t('answer.opportunityCost')}</span>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.65, color: '#0C0C0E' }}>
             {data.opportunity_cost}
           </p>
@@ -426,7 +431,7 @@ function StrategyCard({ data }: { data: StrategyResult }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem' }}>
           {data.target30 && (
             <div className="card-linen p-4">
-              <span className="label-caps block mb-2" style={{ color: '#C9A96E' }}>30 days</span>
+              <span className="label-caps block mb-2" style={{ color: '#C9A96E' }}>{t('answer.day30')}</span>
               <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.95rem', color: '#0C0C0E', lineHeight: 1.45 }}>
                 {data.target30}
               </p>
@@ -434,7 +439,7 @@ function StrategyCard({ data }: { data: StrategyResult }) {
           )}
           {data.target60 && (
             <div className="card-linen p-4">
-              <span className="label-caps block mb-2" style={{ color: '#A1855A' }}>60 days</span>
+              <span className="label-caps block mb-2" style={{ color: '#A1855A' }}>{t('answer.day60')}</span>
               <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.95rem', color: '#0C0C0E', lineHeight: 1.45 }}>
                 {data.target60}
               </p>
@@ -442,7 +447,7 @@ function StrategyCard({ data }: { data: StrategyResult }) {
           )}
           {data.target90 && (
             <div className="card-linen p-4">
-              <span className="label-caps block mb-2" style={{ color: '#71717A' }}>90 days</span>
+              <span className="label-caps block mb-2" style={{ color: '#71717A' }}>{t('answer.day90')}</span>
               <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.95rem', color: '#0C0C0E', lineHeight: 1.45 }}>
                 {data.target90}
               </p>
@@ -453,7 +458,7 @@ function StrategyCard({ data }: { data: StrategyResult }) {
         {/* Risk */}
         {data.risk && (
           <div className="card-linen p-4" style={{ borderColor: 'rgba(153,27,27,0.18)', background: 'rgba(153,27,27,0.04)' }}>
-            <span className="label-caps block mb-2" style={{ color: '#991B1B' }}>Watch out for</span>
+            <span className="label-caps block mb-2" style={{ color: '#991B1B' }}>{t('answer.watchOut')}</span>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.6, color: '#71717A' }}>
               {data.risk}
             </p>

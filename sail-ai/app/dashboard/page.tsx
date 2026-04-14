@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Nav } from '@/components/Nav'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip,
@@ -49,6 +50,7 @@ function groupByMonth(entries: HistoryEntry[]) {
 
 /* ── Component ──────────────────────────────────────────────── */
 export default function DashboardPage() {
+  const { t } = useLanguage()
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [view,    setView]    = useState<'week' | 'month'>('week')
 
@@ -86,19 +88,19 @@ export default function DashboardPage() {
             color:      '#0C0C0E',
             margin:     '0 0 0.25rem',
           }}>
-            Strategy Dashboard
+            {t('dash.title')}
           </h1>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#71717A', margin: 0 }}>
-            Your analysis history and performance over time
+            {t('dash.subtitle')}
           </p>
         </div>
 
         {/* ── Stat cards ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem', marginBottom: '1.75rem' }}>
           {[
-            { label: 'Total Analyses',  value: total,      sub: 'all time'   },
-            { label: 'This Week',       value: recent7,    sub: 'last 7 days' },
-            { label: 'Avg / Week',      value: avgPerWeek, sub: 'rolling avg' },
+            { label: t('dash.analyses'),  value: total,      sub: t('dash.allTime')   },
+            { label: t('dash.thisWeek'),  value: recent7,    sub: t('dash.last7Days') },
+            { label: t('dash.avgMonthly'),value: avgPerWeek, sub: t('dash.rollingAvg') },
           ].map(({ label, value, sub }) => (
             <div key={label} style={{
               background:   '#FFFFFF',
@@ -129,7 +131,7 @@ export default function DashboardPage() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E', margin: 0, letterSpacing: '0.04em' }}>
-              Analyses Over Time
+              {t('dash.analyseOverTime')}
             </p>
             <div style={{ display: 'flex', gap: '0.375rem' }}>
               {(['week', 'month'] as const).map(v => (
@@ -149,7 +151,7 @@ export default function DashboardPage() {
                     textTransform: 'capitalize',
                   }}
                 >
-                  {v}
+                  {v === 'week' ? t('dash.weekly') : t('dash.monthly')}
                 </button>
               ))}
             </div>
@@ -158,7 +160,7 @@ export default function DashboardPage() {
           {chartData.length === 0 ? (
             <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#A1A1AA' }}>
-                No data yet. Run your first analysis to see it here.
+                {t('dash.noDataYet')}
               </p>
             </div>
           ) : (
@@ -193,7 +195,7 @@ export default function DashboardPage() {
             marginBottom: '1.5rem',
           }}>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 1.25rem', letterSpacing: '0.04em' }}>
-              Monthly Breakdown
+              {t('dash.monthlyBreakdown')}
             </p>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={monthData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
@@ -219,7 +221,7 @@ export default function DashboardPage() {
         }}>
           <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E', margin: 0, letterSpacing: '0.04em' }}>
-              Recent Analyses
+              {t('dash.recentAnalyses')}
             </p>
           </div>
 
