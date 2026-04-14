@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export type AnalysisMode = 'upwind' | 'downwind'
 
@@ -44,6 +45,7 @@ function DownwindIcon({ color }: { color: string }) {
 }
 
 export function ModeSelector({ mode, onChange }: Props) {
+  const { t } = useLanguage()
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
       {(['upwind', 'downwind'] as AnalysisMode[]).map((m) => {
@@ -77,7 +79,7 @@ export function ModeSelector({ mode, onChange }: Props) {
                 textTransform: 'uppercase',
                 color:         active ? activeColor : '#0C0C0E',
               }}>
-                {isUp ? 'Upwind' : 'Downwind'}
+                {isUp ? t('mode.upwind') : t('mode.downwind')}
               </span>
             </div>
             <p style={{
@@ -87,7 +89,7 @@ export function ModeSelector({ mode, onChange }: Props) {
               lineHeight: 1.4,
               margin:     0,
             }}>
-              {isUp ? 'Give data → get instant precise strategy' : 'Guided coaching — builds strategy through dialogue'}
+              {isUp ? t('mode.upwindDesc') : t('mode.downwindDesc')}
             </p>
           </motion.button>
         )
