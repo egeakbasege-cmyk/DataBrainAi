@@ -1,6 +1,7 @@
 'use client'
 
 import { FREE_LIMIT } from '@/lib/stripe'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Props {
   used:  number
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export function DailyCounter({ used, isPro }: Props) {
+  const { t } = useLanguage()
+
   if (isPro) {
     return (
       <span
@@ -19,7 +22,7 @@ export function DailyCounter({ used, isPro }: Props) {
           background:  'rgba(201,169,110,0.07)',
         }}
       >
-        Professional · Unlimited
+        {t('counter.proUnlimited')}
       </span>
     )
   }
@@ -37,7 +40,7 @@ export function DailyCounter({ used, isPro }: Props) {
         background: urgent ? 'rgba(153,27,27,0.04)' : 'transparent',
       }}
     >
-      {remaining}/{FREE_LIMIT} free today
+      {remaining}/{FREE_LIMIT} {t('counter.freeToday')}
     </span>
   )
 }

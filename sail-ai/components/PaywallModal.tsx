@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { Logo } from './Logo'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Props {
   open:    boolean
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function PaywallModal({ open, onClose }: Props) {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
 
   async function handleUpgrade() {
@@ -25,6 +27,15 @@ export function PaywallModal({ open, onClose }: Props) {
       setLoading(false)
     }
   }
+
+  const features = [
+    t('counter.proUnlimited').split(' · ')[1] ? 'Unlimited analyses per day' : 'Unlimited analyses per day',
+    'Unlimited analyses per day',
+    'Session memory across conversations',
+    'Business profile persistence',
+    'Priority response time',
+    'Exportable strategy summaries',
+  ]
 
   return (
     <AnimatePresence>
@@ -86,7 +97,7 @@ export function PaywallModal({ open, onClose }: Props) {
                   marginBottom:  '0.625rem',
                 }}
               >
-                You&apos;ve used your complimentary analyses
+                {t('paywall.title')}
               </h2>
               <p
                 style={{
@@ -98,8 +109,7 @@ export function PaywallModal({ open, onClose }: Props) {
                   marginBottom: '1.75rem',
                 }}
               >
-                Upgrade to Pro for unlimited strategy sessions, priority responses,
-                and early access to everything new.
+                {t('paywall.subtitle')}
               </p>
 
               <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: '1.5rem' }} />
@@ -119,17 +129,11 @@ export function PaywallModal({ open, onClose }: Props) {
                     $9.99
                   </span>
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
-                    /month · cancel any time
+                    {t('paywall.perMonth')}
                   </span>
                 </div>
                 <ul className="space-y-2">
-                  {[
-                    'Unlimited analyses per day',
-                    'Session memory across conversations',
-                    'Business profile persistence',
-                    'Priority response time',
-                    'Exportable strategy summaries',
-                  ].map((f) => (
+                  {features.slice(1).map((f) => (
                     <li
                       key={f}
                       className="flex items-center gap-2.5"
@@ -150,7 +154,7 @@ export function PaywallModal({ open, onClose }: Props) {
                   className="btn-primary w-full justify-center disabled:opacity-50"
                   style={{ display: 'flex' }}
                 >
-                  {loading ? 'Redirecting…' : 'Upgrade to Pro →'}
+                  {loading ? t('paywall.redirecting') : t('paywall.upgrade')}
                 </button>
                 <button
                   onClick={onClose}
@@ -168,7 +172,7 @@ export function PaywallModal({ open, onClose }: Props) {
                     transition:    'color 0.2s',
                   }}
                 >
-                  Not now
+                  {t('paywall.notNow')}
                 </button>
               </div>
             </div>

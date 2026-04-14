@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 type Status = 'idle' | 'submitting' | 'success'
-
-const CATEGORIES = ['Bug report', 'Feature request', 'Strategy quality', 'Other'] as const
 
 interface Props {
   open:    boolean
@@ -13,13 +12,21 @@ interface Props {
 }
 
 export function FeedbackModal({ open, onClose }: Props) {
+  const { t } = useLanguage()
   const [feedback, setFeedback] = useState('')
-  const [category, setCategory] = useState<string>('Other')
+  const [category, setCategory] = useState<string>('other')
   const [status,   setStatus]   = useState<Status>('idle')
+
+  const CATEGORIES = [
+    { key: 'bug',     label: t('feedback.bug')     },
+    { key: 'feature', label: t('feedback.feature') },
+    { key: 'quality', label: t('feedback.quality') },
+    { key: 'other',   label: t('feedback.other')   },
+  ]
 
   // Reset on open
   useEffect(() => {
-    if (open) { setFeedback(''); setCategory('Other'); setStatus('idle') }
+    if (open) { setFeedback(''); setCategory('other'); setStatus('idle') }
   }, [open])
 
   // Close on Escape
@@ -99,10 +106,10 @@ export function FeedbackModal({ open, onClose }: Props) {
                   </svg>
                 </div>
                 <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600, fontSize: '1.1rem', color: '#0C0C0E', marginBottom: '0.375rem' }}>
-                  Feedback received.
+                  {t('feedback.successTitle')}
                 </p>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', marginBottom: '1.25rem' }}>
-                  We read every submission and use it to improve.
+                  {t('feedback.successSub')}
                 </p>
                 <button
                   onClick={onClose}
@@ -118,7 +125,7 @@ export function FeedbackModal({ open, onClose }: Props) {
                     cursor: 'pointer',
                   }}
                 >
-                  Close
+                  {t('feedback.close')}
                 </button>
               </div>
             ) : (
@@ -133,10 +140,10 @@ export function FeedbackModal({ open, onClose }: Props) {
                 >
                   <div>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '2px' }}>
-                      Feedback &amp; Support
+                      {t('feedback.title')}
                     </p>
                     <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#0C0C0E' }}>
-                      How can we improve?
+                      {t('feedback.subtitle')}
                     </p>
                   </div>
                   <button
@@ -155,28 +162,28 @@ export function FeedbackModal({ open, onClose }: Props) {
                 {/* Category */}
                 <div style={{ padding: '1rem 1.25rem 0' }}>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.5rem' }}>
-                    Category
+                    {t('feedback.category')}
                   </p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
-                    {CATEGORIES.map((cat) => (
+                    {CATEGORIES.map(({ key, label }) => (
                       <button
-                        key={cat}
+                        key={key}
                         type="button"
-                        onClick={() => setCategory(cat)}
+                        onClick={() => setCategory(key)}
                         style={{
                           fontFamily:    'Inter, sans-serif',
                           fontSize:      '0.72rem',
                           letterSpacing: '0.03em',
                           padding:       '4px 10px',
-                          border:        `1px solid ${category === cat ? 'rgba(201,169,110,0.6)' : 'rgba(12,12,14,0.14)'}`,
-                          background:    category === cat ? 'rgba(201,169,110,0.1)' : 'transparent',
-                          color:         category === cat ? '#C9A96E' : '#71717A',
-                          fontWeight:    category === cat ? 600 : 400,
+                          border:        `1px solid ${category === key ? 'rgba(201,169,110,0.6)' : 'rgba(12,12,14,0.14)'}`,
+                          background:    category === key ? 'rgba(201,169,110,0.1)' : 'transparent',
+                          color:         category === key ? '#C9A96E' : '#71717A',
+                          fontWeight:    category === key ? 600 : 400,
                           cursor:        'pointer',
                           transition:    'all 0.15s',
                         }}
                       >
-                        {cat}
+                        {label}
                       </button>
                     ))}
                   </div>
@@ -187,7 +194,7 @@ export function FeedbackModal({ open, onClose }: Props) {
                   <textarea
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value.slice(0, 500))}
-                    placeholder="Describe the issue or your suggestion…"
+                    placeholder={t('feedback.placeholder')}
                     rows={4}
                     required
                     style={{
@@ -234,7 +241,7 @@ export function FeedbackModal({ open, onClose }: Props) {
                       cursor:     'pointer',
                     }}
                   >
-                    Cancel
+                    {t('feedback.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -254,7 +261,7 @@ export function FeedbackModal({ open, onClose }: Props) {
                       transition:    'opacity 0.15s',
                     }}
                   >
-                    {status === 'submitting' ? 'Sending…' : 'Send'}
+                    {status === 'submitting' ? t('feedback.sending') : t('feedback.send')}
                   </button>
                 </div>
               </form>
