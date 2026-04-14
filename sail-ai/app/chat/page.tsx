@@ -756,7 +756,7 @@ export default function ChatPage() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.35 }}
             >
-              <AnswerCard result={result} streamText={streamText} isStreaming={state === 'STREAMING'} />
+              <AnswerCard result={result} streamText={streamText} isStreaming={state === 'STREAMING'} agentMode={agentMode} />
             </motion.div>
           )}
         </AnimatePresence>
