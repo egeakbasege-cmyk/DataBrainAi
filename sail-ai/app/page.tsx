@@ -1,8 +1,11 @@
+'use client'
+
 import Link from 'next/link'
 import { Nav } from '@/components/Nav'
 import { Logo } from '@/components/Logo'
 import { MicroAnalysis } from '@/components/MicroAnalysis'
 import { CompassRose, EngravedSailboat } from '@/components/Ornaments'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 /* ── Realistic outcome examples ───────────────────────
    Copy principles: measurable, qualified, no superlatives.
@@ -55,6 +58,7 @@ function Rule() {
 }
 
 export default function LandingPage() {
+  const { t } = useLanguage()
   return (
     <main style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
       <Nav />
@@ -86,7 +90,7 @@ export default function LandingPage() {
           {/* Eyebrow */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#C9A96E' }}>
-              AI Business Advisory
+              {t('landing.eyebrow')}
             </span>
             <div style={{ flex: 1, height: 1, background: 'rgba(201,169,110,0.2)' }} />
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)' }}>
@@ -109,9 +113,7 @@ export default function LandingPage() {
                   maxWidth:      '16ch',
                 }}
               >
-                Strategy grounded
-                in{' '}
-                <span style={{ color: '#C9A96E' }}>evidence.</span>
+                {t('landing.headline')}
               </h1>
 
               <p
@@ -125,22 +127,20 @@ export default function LandingPage() {
                   fontWeight: 300,
                 }}
               >
-                Sail AI delivers benchmarked business strategy for independent operators.
-                Each analysis draws on verified industry data — not heuristics —
-                and is calibrated to your specific numbers.
+                {t('landing.subheadline')}
               </p>
 
               <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 <Link href="/login" className="btn-primary">
-                  Begin analysis →
+                  {t('landing.cta')}
                 </Link>
                 <Link href="/pricing" className="btn-ghost-white">
-                  View plans
+                  {t('landing.viewPlans')}
                 </Link>
               </div>
 
               <p style={{ marginTop: '1rem', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.05em' }}>
-                5 analyses included at no cost · Unbiased, Data-Driven Strategy.
+                {t('landing.freeNote')}
               </p>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function LandingPage() {
           {/* ── Micro-analysis preview strip ──────────── */}
           <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '1rem' }}>
-              Preview — instant insight
+              {t('landing.previewLabel')}
             </p>
             <MicroAnalysis />
           </div>
@@ -174,10 +174,10 @@ export default function LandingPage() {
           style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)' }}
         >
           {[
-            { v: '< 60s',   l: 'Time to analysis',     sub: 'From input to full plan' },
-            { v: '100%',    l: 'Benchmark-referenced',  sub: 'Every data point sourced' },
-            { v: '5 free',  l: 'Analyses included',     sub: 'No credit card required' },
-            { v: '3 tiers', l: 'Transparent pricing',   sub: 'From $0 to advisory' },
+            { v: '< 60s',   l: t('stats.timeToAnalysis'),      sub: t('stats.timeToAnalysisSub')      },
+            { v: '100%',    l: t('stats.benchmarkReferenced'),  sub: t('stats.benchmarkReferencedSub') },
+            { v: '5 free',  l: t('stats.analysesIncluded'),     sub: t('stats.analysesIncludedSub')    },
+            { v: '3 tiers', l: t('stats.transparentPricing'),   sub: t('stats.transparentPricingSub')  },
           ].map((s, i) => (
             <div
               key={s.l}
@@ -210,9 +210,9 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
 
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2rem' }}>
-            <span className="label-caps">Indicative outputs</span>
+            <span className="label-caps">{t('landing.indicativeOutputs')}</span>
             <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: '#71717A' }}>
-              Realistic projections, qualified by source data
+              {t('landing.realisticProjections')}
             </span>
           </div>
 
@@ -255,7 +255,7 @@ export default function LandingPage() {
                 <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.2rem, 2vw, 1.6rem)', fontWeight: 700, color: '#C9A96E', lineHeight: 1, display: 'block' }}>
                   {c.outcome}
                 </span>
-                <span className="label-caps" style={{ display: 'block', marginTop: '0.2rem' }}>est. outcome</span>
+                <span className="label-caps" style={{ display: 'block', marginTop: '0.2rem' }}>{t('landing.estOutcome')}</span>
               </div>
             </div>
           ))}
@@ -273,7 +273,7 @@ export default function LandingPage() {
       <section style={{ background: '#FAFAF8', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3rem' }}>
-            <span className="label-caps">Two modes</span>
+            <span className="label-caps">{t('landing.twoModes')}</span>
             <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.09)' }} />
           </div>
 

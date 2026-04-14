@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { StrategyResult } from '@/hooks/useSailState'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Props {
   open:   boolean
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function ExportModal({ open, onClose, result, sector }: Props) {
+  const { t } = useLanguage()
   const [email,   setEmail]   = useState('')
   const [note,    setNote]    = useState('')
   const [status,  setStatus]  = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -21,7 +23,7 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
     `${result.headline}\n\n` +
     `KEY SIGNAL\n${result.signal}\n\n` +
     `3-STEP PLAN\n` +
-    result.tactics.map(t => `${t.step}. ${t.action} (${t.timeframe}) — ${t.result}`).join('\n') +
+    result.tactics.map(tac => `${tac.step}. ${tac.action} (${tac.timeframe}) — ${tac.result}`).join('\n') +
     `\n\n30-DAY TARGET\n${result.target30}` +
     `\n\nWATCH OUT FOR\n${result.risk}` +
     (note ? `\n\nNOTE\n${note}` : '')
@@ -63,7 +65,7 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#0C0C0E' }}>
-                Send Report
+                {t('export.title')}
               </span>
               <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A1A1AA', padding: 0 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -75,14 +77,14 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
             {status === 'sent' ? (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✓</div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#0C0C0E', fontWeight: 500 }}>Report sent!</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', marginTop: '0.25rem' }}>Check your inbox.</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#0C0C0E', fontWeight: 500 }}>{t('export.sent')}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', marginTop: '0.25rem' }}>{t('export.sentSub')}</p>
               </motion.div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                 <div>
                   <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA', display: 'block', marginBottom: '0.375rem' }}>
-                    Your email
+                    {t('export.emailLabel')}
                   </label>
                   <input
                     type="email" value={email} onChange={e => setEmail(e.target.value)}
@@ -92,11 +94,11 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
                 </div>
                 <div>
                   <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA', display: 'block', marginBottom: '0.375rem' }}>
-                    Add a note (optional)
+                    {t('export.noteLabel')}
                   </label>
                   <textarea
                     value={note} onChange={e => setNote(e.target.value)} rows={2}
-                    placeholder="e.g. Share with my business partner"
+                    placeholder={t('export.notePlaceholder')}
                     style={{ width: '100%', padding: '0.625rem 0.75rem', border: '1px solid rgba(12,12,14,0.15)', background: 'transparent', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
                   />
                 </div>
@@ -104,10 +106,10 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
                   onClick={handleSend} disabled={status === 'sending' || !email}
                   style={{ width: '100%', padding: '0.8rem', background: email ? '#0C0C0E' : '#D4D4D8', color: '#FAFAF8', border: 'none', cursor: email ? 'pointer' : 'not-allowed', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase' }}
                 >
-                  {status === 'sending' ? 'Sending…' : 'Send Report →'}
+                  {status === 'sending' ? t('export.sending') : t('export.send')}
                 </button>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#A1A1AA', textAlign: 'center', margin: 0 }}>
-                  We'll send this once. No marketing emails.
+                  {t('export.disclaimer')}
                 </p>
               </div>
             )}

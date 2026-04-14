@@ -17,6 +17,7 @@ import { VoiceInput }                 from '@/components/VoiceInput'
 import { ExportModal }                from '@/components/ExportModal'
 import { useSailState }               from '@/hooks/useSailState'
 import type { StrategyResult, ConvMessage } from '@/hooks/useSailState'
+import { useLanguage }                from '@/lib/i18n/LanguageContext'
 import { useSubscription }            from '@/hooks/useSubscription'
 import { useBusinessContext }         from '@/lib/context/BusinessContext'
 
@@ -139,6 +140,7 @@ export default function ChatPage() {
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const { t } = useLanguage()
   const { state, streamText, result, error, submit, reset } = useSailState()
   const { isPro, usedToday, canAnalyse, showPaywall, recordUsage, triggerPaywall, closePaywall, activatePro } = useSubscription()
   const { buildContext, addSession, profile } = useBusinessContext()
@@ -344,8 +346,8 @@ export default function ChatPage() {
                 <span style={{ color: '#C9A96E', fontSize: '0.55rem' }}>◆</span>
                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A' }}>
                   {profile.diagnostic
-                    ? `${profile.diagnostic.industry} · ${profile.diagnostic.teamSize} · Diagnostic loaded`
-                    : `${profile.sessions.length} prior ${profile.sessions.length === 1 ? 'strategy' : 'strategies'} in memory`}
+                    ? `${profile.diagnostic.industry} · ${profile.diagnostic.teamSize} · ${t('chat.diagnosticLoaded')}`
+                    : `${profile.sessions.length} ${t('chat.sessionMemory')}`}
                 </span>
                 {profile.sessions.length > 0 && (
                   <button
@@ -362,7 +364,7 @@ export default function ChatPage() {
               </div>
             ) : (
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#A1A1AA', letterSpacing: '0.03em' }}>
-                No session context
+                {t('chat.noContext')}
               </span>
             )}
             <DailyCounter used={usedToday} isPro={isPro} />
@@ -441,7 +443,7 @@ export default function ChatPage() {
                       }}
                     />
                     <span className="label-caps" style={{ color: '#71717A' }}>
-                      {state === 'THINKING' ? 'Retrieving benchmarks…' : 'Composing analysis…'}
+                      {state === 'THINKING' ? t('chat.thinking') : t('chat.streaming')}
                     </span>
                   </motion.div>
                 )}
@@ -459,10 +461,10 @@ export default function ChatPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.625rem', padding: '0.4rem 0.75rem', background: 'rgba(0,150,136,0.06)', border: '1px solid rgba(0,150,136,0.18)', borderRadius: '6px' }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00695C', flexShrink: 0 }} />
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#00695C', fontWeight: 500 }}>
-                    Guided session active · {Math.floor(convHistory.length / 2)} exchange{convHistory.length > 2 ? 's' : ''} so far
+                    {t('chat.guidedSession')} · {Math.floor(convHistory.length / 2)} {convHistory.length > 2 ? t('chat.exchangesPlural') : t('chat.exchanges')} so far
                   </span>
                   <button onClick={handleReset} style={{ marginLeft: 'auto', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#71717A', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-                    Start over
+                    {t('chat.startOver')}
                   </button>
                 </div>
               )}
@@ -765,7 +767,7 @@ export default function ChatPage() {
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', paddingBottom: '2rem' }}
             >
               <button onClick={handleReset} className="btn-ghost flex items-center gap-2.5">
-                <HelmSVG /> New analysis
+                <HelmSVG /> {t('chat.newAnalysis')}
               </button>
               {result && 'headline' in result && (
                 <button
@@ -791,7 +793,7 @@ export default function ChatPage() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                     <path d="M4 4h16v2H4z"/><path d="M4 10h10"/><path d="M4 16h7"/><path d="M15 14l5 5m0-5l-5 5"/>
                   </svg>
-                  Export
+                  {t('chat.export')}
                 </button>
               )}
             </motion.div>
