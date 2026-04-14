@@ -11,6 +11,7 @@ import {
   EMPTY_DIAGNOSTIC,
 } from '@/lib/diagnostic'
 import { useBusinessContext } from '@/lib/context/BusinessContext'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -163,12 +164,12 @@ function RangeSlider({ value, min, max, onChange, formatLabel, hint }: {
 
 // ─── Step screens ─────────────────────────────────────────────────────────────
 
-function StepIndustry({ data, update }: { data: DiagnosticInput; update: (k: keyof DiagnosticInput, v: any) => void }) {
+function StepIndustry({ data, update, tFn }: { data: DiagnosticInput; update: (k: keyof DiagnosticInput, v: any) => void; tFn: (k: any) => string }) {
   return (
     <div>
-      <p style={T.label}>Step 1 of 4 — The Basics</p>
-      <h2 style={T.heading}>What is your primary industry?</h2>
-      <p style={T.sub}>We calibrate every benchmark and projection to your sector.</p>
+      <p style={T.label}>{tFn('diag.step1basics')}</p>
+      <h2 style={T.heading}>{tFn('diag.industryQ')}</h2>
+      <p style={T.sub}>{tFn('diag.industrySub')}</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginTop: '1.75rem' }}>
         {INDUSTRIES.map(ind => (
           <Tile key={ind} label={ind} selected={data.industry === ind} onClick={() => update('industry', ind)} />
@@ -178,12 +179,12 @@ function StepIndustry({ data, update }: { data: DiagnosticInput; update: (k: key
   )
 }
 
-function StepTeamSize({ data, update }: { data: DiagnosticInput; update: (k: keyof DiagnosticInput, v: any) => void }) {
+function StepTeamSize({ data, update, tFn }: { data: DiagnosticInput; update: (k: keyof DiagnosticInput, v: any) => void; tFn: (k: any) => string }) {
   return (
     <div>
-      <p style={T.label}>Step 1 of 4 — The Basics</p>
-      <h2 style={T.heading}>How large is your team?</h2>
-      <p style={T.sub}>Include full-time, part-time, and regular contractors.</p>
+      <p style={T.label}>{tFn('diag.step1basics')}</p>
+      <h2 style={T.heading}>{tFn('diag.teamQ')}</h2>
+      <p style={T.sub}>{tFn('diag.teamSub')}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1.75rem' }}>
         {TEAM_SIZES.map(size => (
           <Tile key={size} label={size} wide selected={data.teamSize === size} onClick={() => update('teamSize', size)} />
@@ -193,15 +194,15 @@ function StepTeamSize({ data, update }: { data: DiagnosticInput; update: (k: key
   )
 }
 
-function StepFinancials({ data, update }: { data: DiagnosticInput; update: (k: keyof DiagnosticInput, v: any) => void }) {
+function StepFinancials({ data, update, tFn }: { data: DiagnosticInput; update: (k: keyof DiagnosticInput, v: any) => void; tFn: (k: any) => string }) {
   return (
     <div>
-      <p style={T.label}>Step 2 of 4 — The Financials</p>
-      <h2 style={T.heading}>Revenue and profitability.</h2>
-      <p style={T.sub}>Approximate figures are fine — we need order-of-magnitude context.</p>
+      <p style={T.label}>{tFn('diag.step2financials')}</p>
+      <h2 style={T.heading}>{tFn('diag.financialsQ')}</h2>
+      <p style={T.sub}>{tFn('diag.financialsSub')}</p>
 
       <div style={{ marginTop: '1.75rem' }}>
-        <p style={{ ...T.small, marginBottom: '0.625rem' }}>Annual revenue</p>
+        <p style={{ ...T.small, marginBottom: '0.625rem' }}>{tFn('diag.annualRevenue')}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
           {REVENUE_RANGES.map(r => (
             <Tile key={r} label={r} wide selected={data.revenue === r} onClick={() => update('revenue', r)} />
@@ -215,9 +216,9 @@ function StepFinancials({ data, update }: { data: DiagnosticInput; update: (k: k
           background: 'rgba(12,12,14,0.025)', border: '1px solid rgba(12,12,14,0.07)',
         }}
       >
-        <p style={{ ...T.small, marginBottom: '0.25rem' }}>Estimated net profit margin</p>
+        <p style={{ ...T.small, marginBottom: '0.25rem' }}>{tFn('diag.marginLabel')}</p>
         <RangeSlider
-          value={data.margin} min={0} max={50} hint="% net margin"
+          value={data.margin} min={0} max={50} hint={tFn('diag.marginHint')}
           onChange={v => update('margin', v)}
           formatLabel={v => v >= 50 ? '50%+' : `${v}%`}
         />
@@ -234,27 +235,27 @@ function StepFinancials({ data, update }: { data: DiagnosticInput; update: (k: k
   )
 }
 
-function StepCashReserves({ data, update }: { data: DiagnosticInput; update: (k: keyof DiagnosticInput, v: any) => void }) {
+function StepCashReserves({ data, update, tFn }: { data: DiagnosticInput; update: (k: keyof DiagnosticInput, v: any) => void; tFn: (k: any) => string }) {
   const months = data.cashReserves
   const health =
-    months < 1  ? { label: 'Critical',    color: '#991B1B' } :
-    months < 3  ? { label: 'Vulnerable',  color: '#B45309' } :
-    months < 6  ? { label: 'Moderate',    color: '#0C0C0E' } :
-    months < 9  ? { label: 'Healthy',     color: '#1A5276' } :
-                  { label: 'Strong',      color: '#C9A96E' }
+    months < 1  ? { label: tFn('diag.critical'),   color: '#991B1B' } :
+    months < 3  ? { label: tFn('diag.vulnerable'),  color: '#B45309' } :
+    months < 6  ? { label: tFn('diag.moderate'),    color: '#0C0C0E' } :
+    months < 9  ? { label: tFn('diag.healthy'),     color: '#1A5276' } :
+                  { label: tFn('diag.strong'),       color: '#C9A96E' }
 
   return (
     <div>
-      <p style={T.label}>Step 3 of 4 — The Growth</p>
-      <h2 style={T.heading}>How much cash runway do you carry?</h2>
-      <p style={T.sub}>Months of operating expenses currently held in liquid reserves.</p>
+      <p style={T.label}>{tFn('diag.step3growth')}</p>
+      <h2 style={T.heading}>{tFn('diag.cashQ')}</h2>
+      <p style={T.sub}>{tFn('diag.cashSub')}</p>
 
       <div style={{ marginTop: '2rem' }}>
         <RangeSlider
           value={months} min={0} max={12}
           onChange={v => update('cashReserves', v)}
           formatLabel={v => v >= 12 ? '12+ mo' : `${v} mo`}
-          hint="months of reserves"
+          hint={tFn('diag.cashHint')}
         />
         <div style={{
           marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.625rem',
@@ -265,7 +266,7 @@ function StepCashReserves({ data, update }: { data: DiagnosticInput; update: (k:
             {health.label}
           </span>
           <span style={T.small}>
-            — Global advisory firms recommend a minimum 6-month reserve floor.
+            {tFn('diag.reserveFloor')}
           </span>
         </div>
       </div>
@@ -273,12 +274,12 @@ function StepCashReserves({ data, update }: { data: DiagnosticInput; update: (k:
   )
 }
 
-function StepObstacle({ data, update }: { data: DiagnosticInput; update: (k: keyof DiagnosticInput, v: any) => void }) {
+function StepObstacle({ data, update, tFn }: { data: DiagnosticInput; update: (k: keyof DiagnosticInput, v: any) => void; tFn: (k: any) => string }) {
   return (
     <div>
-      <p style={T.label}>Step 4 of 4 — The Obstacle</p>
-      <h2 style={T.heading}>What's your single biggest growth bottleneck?</h2>
-      <p style={T.sub}>The AI will prioritise this constraint in every recommendation it gives you.</p>
+      <p style={T.label}>{tFn('diag.step4obstacle')}</p>
+      <h2 style={T.heading}>{tFn('diag.obstacleQ')}</h2>
+      <p style={T.sub}>{tFn('diag.obstacleSub')}</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginTop: '1.75rem' }}>
         {OBSTACLES.map(obs => (
           <Tile key={obs} label={obs} selected={data.obstacle === obs} onClick={() => update('obstacle', obs)} />
@@ -315,7 +316,7 @@ function useCountUp(target: number) {
   return n
 }
 
-function ResultScreen({ result, onConfirm }: { result: DiagnosticResult; onConfirm: () => void }) {
+function ResultScreen({ result, onConfirm, tFn }: { result: DiagnosticResult; onConfirm: () => void; tFn: (k: any) => string }) {
   const displayed = useCountUp(result.score)
   const offset    = CIRC * (1 - result.score / 100)
 
@@ -361,12 +362,12 @@ function ResultScreen({ result, onConfirm }: { result: DiagnosticResult; onConfi
         </div>
 
         <div>
-          <p style={T.label}>Business Health Score</p>
+          <p style={T.label}>{tFn('diag.healthScore')}</p>
           <h2 style={{ ...T.heading, fontSize: 'clamp(1.6rem, 5vw, 2.2rem)' }}>
             {result.grade}
           </h2>
           <p style={{ ...T.sub, fontSize: '0.78rem', marginTop: '0.375rem' }}>
-            Based on profitability, liquidity,<br />scale, and organisational resilience.
+            {tFn('diag.healthBased')}
           </p>
         </div>
       </div>
@@ -409,10 +410,10 @@ function ResultScreen({ result, onConfirm }: { result: DiagnosticResult; onConfi
         className="btn-primary"
         style={{ width: '100%', justifyContent: 'center', fontSize: '0.8rem', letterSpacing: '0.09em', padding: '0.9rem' }}
       >
-        Chart My Course →
+        {tFn('diag.chartMyCourse')}
       </button>
       <p style={{ ...T.small, textAlign: 'center', marginTop: '0.75rem' }}>
-        Your diagnostic will be pre-loaded into the AI
+        {tFn('diag.preLoaded')}
       </p>
     </motion.div>
   )
@@ -461,6 +462,7 @@ const SCREENS = [
 export function DiagnosticFlow() {
   const router = useRouter()
   const { setDiagnostic } = useBusinessContext()
+  const { t } = useLanguage()
   const [screen,    setScreen]    = useState(0)
   const [direction, setDirection] = useState<1 | -1>(1)
   const [data,      setData]      = useState<DiagnosticInput>(EMPTY_DIAGNOSTIC)
@@ -549,15 +551,15 @@ export function DiagnosticFlow() {
           <motion.div key={screen} {...variants}>
             {isResult && result ? (
               <>
-                <p style={T.label}>Diagnostic Complete</p>
-                <h2 style={{ ...T.heading, marginBottom: '1.75rem' }}>Your Business Health Report.</h2>
-                <ResultScreen result={result} onConfirm={handleConfirm} />
+                <p style={T.label}>{t('diag.complete')}</p>
+                <h2 style={{ ...T.heading, marginBottom: '1.75rem' }}>{t('diag.healthReport')}</h2>
+                <ResultScreen result={result} onConfirm={handleConfirm} tFn={t} />
               </>
-            ) : screen === 0 ? <StepIndustry    data={data} update={update} />
-            : screen === 1 ? <StepTeamSize      data={data} update={update} />
-            : screen === 2 ? <StepFinancials    data={data} update={update} />
-            : screen === 3 ? <StepCashReserves  data={data} update={update} />
-            :                <StepObstacle      data={data} update={update} />
+            ) : screen === 0 ? <StepIndustry    data={data} update={update} tFn={t} />
+            : screen === 1 ? <StepTeamSize      data={data} update={update} tFn={t} />
+            : screen === 2 ? <StepFinancials    data={data} update={update} tFn={t} />
+            : screen === 3 ? <StepCashReserves  data={data} update={update} tFn={t} />
+            :                <StepObstacle      data={data} update={update} tFn={t} />
             }
           </motion.div>
         </AnimatePresence>
@@ -580,7 +582,7 @@ export function DiagnosticFlow() {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap:        '1rem',
-          zIndex:     40,   /* above page content, below Dock (z-50) is fine — Dock is separate */
+          zIndex:     40,
         }}>
           <button
             type="button"
@@ -598,7 +600,7 @@ export function DiagnosticFlow() {
               padding:       '0.5rem 0',
             }}
           >
-            ← Back
+            {t('diag.back')}
           </button>
 
           <div style={{ flex: 1, maxWidth: '320px' }}>
@@ -616,7 +618,7 @@ export function DiagnosticFlow() {
                 cursor:         canProceed ? 'pointer' : 'not-allowed',
               }}
             >
-              {screen === SCREENS.length - 1 ? 'Run Diagnostic →' : 'Continue →'}
+              {screen === SCREENS.length - 1 ? t('diag.runDiagnostic') : t('diag.continue')}
             </button>
           </div>
         </div>

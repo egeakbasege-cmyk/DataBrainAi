@@ -4,91 +4,93 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Nav } from '@/components/Nav'
 import { FREE_LIMIT } from '@/lib/stripe'
-
-/* ── Tier definitions ──────────────────────────────── */
-const TIERS = [
-  {
-    key:     'starter',
-    name:    'Starter',
-    price:   '$0',
-    period:  'no charge',
-    summary: 'For founders and operators evaluating the platform.',
-    features: [
-      `${FREE_LIMIT} strategy analyses per day`,
-      'Full benchmark-referenced output',
-      '3-step action plan per analysis',
-      'Industry data comparisons',
-    ],
-    cta:    { label: 'Begin for free', href: '/chat', action: null },
-    accent: false,
-  },
-  {
-    key:     'professional',
-    name:    'Professional',
-    price:   '$9.99',
-    period:  'per month',
-    summary: 'Unlimited access with session memory — built for operators running ongoing strategy work.',
-    features: [
-      'Unlimited analyses per day',
-      'Session memory across conversations',
-      'Business profile persistence',
-      'Priority response time',
-      'Full benchmark-referenced output',
-      'Exportable strategy summaries',
-      'Cancel any time',
-    ],
-    cta:    { label: 'Upgrade to Professional', href: null, action: 'stripe' },
-    accent: true,
-  },
-  {
-    key:     'advisory',
-    name:    'Advisory',
-    price:   '$99',
-    period:  'per month',
-    summary: 'For advisory firms and operators requiring team access, API integration, and custom data inputs.',
-    features: [
-      'Everything in Professional',
-      'Up to 5 team seats',
-      'REST API access',
-      'Custom benchmark data upload',
-      'White-label output formatting',
-      'Dedicated support channel',
-      'Bespoke onboarding session',
-    ],
-    cta:    { label: 'Contact for Advisory', href: 'mailto:advisory@sailai.co', action: null },
-    accent: false,
-  },
-]
-
-const FAQ = [
-  {
-    q: 'How does the free tier work?',
-    a: `You receive ${FREE_LIMIT} complete strategy analyses per day at no cost. Your daily allocation resets at midnight. No payment details are required.`,
-  },
-  {
-    q: 'What does session memory mean?',
-    a: 'Professional subscribers retain a persistent business profile — sector, key metrics, and prior strategies — that the AI draws on across sessions, eliminating the need to re-enter context each time.',
-  },
-  {
-    q: 'Are the benchmarks current?',
-    a: 'Benchmark data is drawn from publicly available industry reports (McKinsey, OpenView, Baymard, KPMG, and sector-specific sources). The underlying data is reviewed quarterly.',
-  },
-  {
-    q: 'Can I cancel at any time?',
-    a: 'Professional subscriptions are managed through Stripe and can be cancelled with a single click from your billing dashboard. No notice period required.',
-  },
-  {
-    q: 'Is my business data stored?',
-    a: 'Starter tier: no data is persisted. Professional tier: your business profile is stored locally in your browser and optionally synced to our servers. Advisory tier: governed by a data processing agreement.',
-  },
-]
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 function Rule() {
   return <div style={{ height: 1, background: 'rgba(0,0,0,0.09)', margin: '0' }} />
 }
 
 export default function PricingPage() {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
+
+  /* ── Tier definitions ──────────────────────────────── */
+  const TIERS = [
+    {
+      key:     'starter',
+      name:    'Starter',
+      price:   '$0',
+      period:  t('pricing.noCharge'),
+      summary: 'For founders and operators evaluating the platform.',
+      features: [
+        `${FREE_LIMIT} strategy analyses per day`,
+        'Full benchmark-referenced output',
+        '3-step action plan per analysis',
+        'Industry data comparisons',
+      ],
+      cta:    { label: t('pricing.beginFree'), href: '/chat', action: null },
+      accent: false,
+    },
+    {
+      key:     'professional',
+      name:    'Professional',
+      price:   '$9.99',
+      period:  t('pricing.perMonth'),
+      summary: 'Unlimited access with session memory — built for operators running ongoing strategy work.',
+      features: [
+        'Unlimited analyses per day',
+        'Session memory across conversations',
+        'Business profile persistence',
+        'Priority response time',
+        'Full benchmark-referenced output',
+        'Exportable strategy summaries',
+        'Cancel any time',
+      ],
+      cta:    { label: t('pricing.upgradePro'), href: null, action: 'stripe' },
+      accent: true,
+    },
+    {
+      key:     'advisory',
+      name:    'Advisory',
+      price:   '$99',
+      period:  t('pricing.perMonth'),
+      summary: 'For advisory firms and operators requiring team access, API integration, and custom data inputs.',
+      features: [
+        'Everything in Professional',
+        'Up to 5 team seats',
+        'REST API access',
+        'Custom benchmark data upload',
+        'White-label output formatting',
+        'Dedicated support channel',
+        'Bespoke onboarding session',
+      ],
+      cta:    { label: t('pricing.contactAdvisory'), href: 'mailto:advisory@sailai.co', action: null },
+      accent: false,
+    },
+  ]
+
+  const FAQ = [
+    {
+      q: 'How does the free tier work?',
+      a: `You receive ${FREE_LIMIT} complete strategy analyses per day at no cost. Your daily allocation resets at midnight. No payment details are required.`,
+    },
+    {
+      q: 'What does session memory mean?',
+      a: 'Professional subscribers retain a persistent business profile — sector, key metrics, and prior strategies — that the AI draws on across sessions, eliminating the need to re-enter context each time.',
+    },
+    {
+      q: 'Are the benchmarks current?',
+      a: 'Benchmark data is drawn from publicly available industry reports (McKinsey, OpenView, Baymard, KPMG, and sector-specific sources). The underlying data is reviewed quarterly.',
+    },
+    {
+      q: 'Can I cancel at any time?',
+      a: 'Professional subscriptions are managed through Stripe and can be cancelled with a single click from your billing dashboard. No notice period required.',
+    },
+    {
+      q: 'Is my business data stored?',
+      a: 'Starter tier: no data is persisted. Professional tier: your business profile is stored locally in your browser and optionally synced to our servers. Advisory tier: governed by a data processing agreement.',
+    },
+  ]
 
   async function handleStripe() {
     setLoading(true)
@@ -112,7 +114,7 @@ export default function PricingPage() {
 
         {/* Header */}
         <div style={{ marginBottom: '3.5rem' }}>
-          <span className="label-caps" style={{ display: 'block', marginBottom: '1rem' }}>Membership</span>
+          <span className="label-caps" style={{ display: 'block', marginBottom: '1rem' }}>{t('pricing.membership')}</span>
           <h1
             style={{
               fontFamily:    'Cormorant Garamond, Georgia, serif',
@@ -124,11 +126,10 @@ export default function PricingPage() {
               marginBottom:  '1rem',
             }}
           >
-            Transparent pricing.<br />No lock-in.
+            {t('pricing.headline')}
           </h1>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#71717A', maxWidth: '44ch', fontWeight: 300, lineHeight: 1.7 }}>
-            Every tier includes the full strategy output. Higher tiers add persistence,
-            team access, and integration capabilities.
+            {t('pricing.subheadline')}
           </p>
         </div>
 
@@ -211,7 +212,7 @@ export default function PricingPage() {
                     transition:    'opacity 0.2s',
                   }}
                 >
-                  {loading ? 'Redirecting…' : tier.cta.label}
+                  {loading ? t('pricing.redirecting') : tier.cta.label}
                 </button>
               ) : tier.cta.href?.startsWith('mailto') ? (
                 <a
@@ -267,11 +268,11 @@ export default function PricingPage() {
         {/* FAQ */}
         <div style={{ marginTop: '5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem' }}>
-            <span className="label-caps">Common questions</span>
+            <span className="label-caps">{t('pricing.commonQ')}</span>
             <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.09)' }} />
           </div>
 
-          {FAQ.map((faq, i) => (
+          {FAQ.map((faq) => (
             <div
               key={faq.q}
               style={{ padding: '1.25rem 0', borderBottom: '1px solid rgba(0,0,0,0.07)' }}

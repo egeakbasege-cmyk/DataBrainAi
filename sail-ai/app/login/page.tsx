@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/Logo'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 type Mode = 'signin' | 'register'
 
@@ -12,6 +13,7 @@ function LoginForm() {
   const params      = useSearchParams()
   const callbackUrl = params.get('callbackUrl') ?? '/onboarding'
   const errorCode   = params.get('error')
+  const { t } = useLanguage()
 
   const [mode,          setMode]          = useState<Mode>('signin')
   const [name,          setName]          = useState('')
@@ -25,12 +27,12 @@ function LoginForm() {
 
   useEffect(() => {
     if (errorCode === 'CredentialsSignin')
-      setError('Incorrect email or password.')
+      setError(t('login.errCredentials'))
     if (errorCode === 'OAuthAccountNotLinked')
-      setError('An account already exists with this email. Please sign in with your original method.')
+      setError(t('login.errLinked'))
     if (errorCode === 'OAuthSignin' || errorCode === 'OAuthCallback')
-      setError('Google sign-in failed. Please try again or use email.')
-  }, [errorCode])
+      setError(t('login.errGoogle'))
+  }, [errorCode, t])
 
   function switchMode(m: Mode) {
     setMode(m); setError(''); setPassword(''); setConfirm(''); setShowPw(false)
@@ -42,7 +44,7 @@ function LoginForm() {
     try {
       await signIn('google', { callbackUrl })
     } catch {
-      setError('Could not connect to Google. Please try again.')
+      setError(t('login.errGoogleConn'))
       setGoogleLoading(false)
     }
   }
@@ -52,9 +54,9 @@ function LoginForm() {
     setError('')
 
     if (mode === 'register') {
-      if (!name.trim())         { setError('Please enter your name.'); return }
-      if (password !== confirm) { setError('Passwords do not match.'); return }
-      if (password.length < 8)  { setError('Password must be at least 8 characters.'); return }
+      if (!name.trim())         { setError(t('login.errName'));    return }
+      if (password !== confirm) { setError(t('login.errPwMatch')); return }
+      if (password.length < 8)  { setError(t('login.errPwLength')); return }
 
       setLoading(true)
       try {
@@ -64,13 +66,13 @@ function LoginForm() {
           body:    JSON.stringify({ email, password, name }),
         })
         const data = await res.json()
-        if (!res.ok) { setError(data.message ?? data.error ?? 'Registration failed.'); setLoading(false); return }
+        if (!res.ok) { setError(data.message ?? data.error ?? t('login.errRegister')); setLoading(false); return }
 
         const result = await signIn('credentials', { email, password, redirect: false })
-        if (result?.error) { setError('Registered — please sign in.'); setMode('signin'); setLoading(false); return }
+        if (result?.error) { setError(t('login.registered')); setMode('signin'); setLoading(false); return }
         router.push(callbackUrl)
       } catch {
-        setError('Registration failed. Please try again.')
+        setError(t('login.errRegister'))
         setLoading(false)
       }
       return
@@ -78,7 +80,7 @@ function LoginForm() {
 
     setLoading(true)
     const result = await signIn('credentials', { email, password, redirect: false })
-    if (result?.error) { setError('Incorrect email or password.'); setLoading(false); return }
+    if (result?.error) { setError(t('login.errCredentials')); setLoading(false); return }
     router.push(callbackUrl)
   }
 
@@ -118,7 +120,7 @@ function LoginForm() {
                 border: 'none', cursor: 'pointer', transition: 'all 0.15s',
               }}
             >
-              {m === 'signin' ? 'Sign In' : 'Register'}
+              {m === 'signin' ? t('login.signIn') : t('login.register')}
             </button>
           ))}
         </div>
@@ -149,13 +151,13 @@ function LoginForm() {
           }}
         >
           {googleLoading ? <SpinIcon /> : <GoogleIcon />}
-          {googleLoading ? 'Connecting to Google…' : 'Continue with Google'}
+          {googleLoading ? t('login.connectingGoogle') : t('login.withGoogle')}
         </button>
 
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1.25rem 0' }}>
           <div style={{ flex: 1, height: 1, background: 'rgba(12,12,14,0.09)' }} />
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', letterSpacing: '0.05em' }}>or</span>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', letterSpacing: '0.05em' }}>{t('login.or')}</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(12,12,14,0.09)' }} />
         </div>
 
@@ -163,23 +165,23 @@ function LoginForm() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {mode === 'register' && (
             <div>
-              <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>Name</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required style={inp} autoComplete="name" />
+              <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.nameLabel')}</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t('login.namePlaceholder')} required style={inp} autoComplete="name" />
             </div>
           )}
 
           <div>
-            <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>Email</label>
+            <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.emailLabel')}</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required style={inp} autoComplete="email" />
           </div>
 
           <div>
-            <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>Password</label>
+            <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.passwordLabel')}</label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPw ? 'text' : 'password'} value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder={mode === 'register' ? 'Minimum 8 characters' : '••••••••'}
+                placeholder={mode === 'register' ? t('login.passwordMin') : '••••••••'}
                 required style={{ ...inp, paddingRight: '2rem' }}
                 autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
               />
@@ -191,8 +193,8 @@ function LoginForm() {
 
           {mode === 'register' && (
             <div>
-              <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>Confirm Password</label>
-              <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Repeat password" required style={inp} autoComplete="new-password" />
+              <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.confirmLabel')}</label>
+              <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder={t('login.confirmPlaceholder')} required style={inp} autoComplete="new-password" />
             </div>
           )}
 
@@ -207,21 +209,21 @@ function LoginForm() {
             style={{ width: '100%', padding: '0.8125rem', background: isLoading ? '#3A3A3C' : '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '3px', cursor: isLoading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', transition: 'background 0.15s' }}
           >
             {loading
-              ? (mode === 'register' ? 'Creating account…' : 'Signing in…')
-              : (mode === 'register' ? 'Create Account' : 'Sign In')}
+              ? (mode === 'register' ? t('login.creating') : t('login.signingIn'))
+              : (mode === 'register' ? t('login.createAccount') : t('login.signIn'))}
           </button>
         </form>
 
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', textAlign: 'center', marginTop: '1.5rem', lineHeight: 1.6 }}>
-          By continuing, you agree to our{' '}
-          <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Terms</span>
+          {t('login.terms')}{' '}
+          <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>{t('login.termsLink')}</span>
           {' & '}
-          <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span>.
+          <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>{t('login.privacy')}</span>.
         </p>
       </div>
 
       <a href="/" style={{ marginTop: '1.5rem', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', textDecoration: 'none', letterSpacing: '0.04em' }}>
-        ← Back to home
+        {t('login.back')}
       </a>
     </main>
   )
