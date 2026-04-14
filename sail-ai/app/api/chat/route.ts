@@ -4,6 +4,7 @@ import Groq                                        from 'groq-sdk'
 import { GoogleGenerativeAI }                      from '@google/generative-ai'
 import { SYSTEM_PROMPT, DOWNWIND_SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
 import { ChatRequestSchema }                       from '@/schema/analysis'
+import type { AgentMode }                          from '@/types/chat'
 
 const MODEL_CHAIN = [
   'llama-3.3-70b-versatile',
@@ -12,6 +13,7 @@ const MODEL_CHAIN = [
   'gemma2-9b-it',
 ]
 
+// Lazy-initialize so the SDK does not throw at build time when the key is absent
 let _groqClient: Groq | null = null
 
 function getClient(apiKey?: string) {
@@ -35,6 +37,26 @@ function checkRate(identity: string): boolean {
   if (entry.count >= 10) return false
   entry.count++
   return true
+}
+
+/**
+ * Builds a system-prompt prefix that steers the model's cognitive approach
+ * based on the requested agent mode. The Upwind/Downwind mode is unchanged.
+ */
+function agentModePrefix(mode: AgentMode): string {
+  switch (mode) {
+    case 'strategy':
+      return 'Focus on long-term positioning, competitive dynamics, and strategic trade-offs. Prioritise durable decisions over quick wins.\n\n'
+    case 'analysis':
+      return 'Lead with benchmark comparisons and data interpretation. Structure the response around verified figures before drawing conclusions.\n\n'
+    case 'execution':
+      return 'Prioritise concrete next steps with clear owners, timeframes, and measurable outcomes. Minimise background context.\n\n'
+    case 'review':
+      return 'Identify risks, inconsistencies, and assumptions before offering recommendations. Flag what could go wrong before what should be done.\n\n'
+    case 'auto':
+    default:
+      return ''
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -61,6 +83,7 @@ export async function POST(req: NextRequest) {
   let imageMimeType: string | undefined
   let fileContent:   string | undefined
   let mode:          'upwind' | 'downwind' | undefined
+  let agentMode:     AgentMode | undefined
   let messages:      { role: 'user' | 'assistant'; content: string }[] | undefined
 
   try {
@@ -73,6 +96,7 @@ export async function POST(req: NextRequest) {
     imageMimeType = parsed.imageMimeType
     fileContent   = parsed.fileContent
     mode          = parsed.mode
+    agentMode     = (raw.agentMode as AgentMode | undefined) ?? 'auto'
     messages      = parsed.messages
   } catch (err: unknown) {
     const isZod   = (err as { name?: string })?.name === 'ZodError'
@@ -113,11 +137,10 @@ export async function POST(req: NextRequest) {
 
   // ── TEXT PATH → Groq streaming ────────────────────────────────────────────
   const isDownwind   = mode === 'downwind'
-  const systemPrompt = isDownwind ? DOWNWIND_SYSTEM_PROMPT : SYSTEM_PROMPT
+  const modePrefix   = agentModePrefix(agentMode ?? 'auto')
+  const systemPrompt = modePrefix + (isDownwind ? DOWNWIND_SYSTEM_PROMPT : SYSTEM_PROMPT)
   const userMessage  = buildUserMessage(message, context, fileContent, mode)
 
-  // Build conversation array for Groq
-  // Downwind: include prior exchanges so the AI has real memory of the thread
   type GroqMessage = { role: 'system' | 'user' | 'assistant'; content: string }
   const groqMessages: GroqMessage[] = [{ role: 'system', content: systemPrompt }]
 

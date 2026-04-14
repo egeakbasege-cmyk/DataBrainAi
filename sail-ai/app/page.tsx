@@ -1,11 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Nav } from '@/components/Nav'
 import { Logo } from '@/components/Logo'
 import { MicroAnalysis } from '@/components/MicroAnalysis'
 import { CompassRose, EngravedSailboat } from '@/components/Ornaments'
+import { AgentModeButton } from '@/components/AgentModeButton'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import type { AgentMode } from '@/types/chat'
 
 /* ── Realistic outcome examples ───────────────────────
    Copy principles: measurable, qualified, no superlatives.
@@ -52,6 +56,106 @@ const HOW = [
   },
 ]
 
+/* ── Preset action scenarios ─────────────────────────── */
+interface Preset {
+  id:        string
+  label:     string
+  sector:    string
+  problem:   string
+  insight:   string
+  source:    string
+  agent:     AgentMode
+  bars: { label: string; value: number; target: number; unit: string; lowerIsBetter?: boolean }[]
+}
+
+const PRESETS: Preset[] = [
+  {
+    id:      'ecom-cvr',
+    label:   'E-Commerce CVR',
+    sector:  'E-Commerce',
+    problem: 'Checkout abandonment is keeping conversion below the sector median.',
+    insight: 'Simplifying checkout to 3 steps and adding one recovery email sequence can close a 7.8-point abandonment gap within 90 days.',
+    source:  'Baymard Institute, 2024',
+    agent:   'analysis',
+    bars: [{ label: 'Your position', value: 78, target: 70.2, unit: '%', lowerIsBetter: true }],
+  },
+  {
+    id:      'saas-churn',
+    label:   'B2B SaaS Churn',
+    sector:  'B2B SaaS',
+    problem: 'Month-1 churn is compounding ARR erosion beyond the OpenView benchmark.',
+    insight: 'Improving onboarding activation to reach the 7–9% benchmark from 12% recovers roughly £1,400 of ARR per 100 users monthly.',
+    source:  'OpenView Partners, 2024',
+    agent:   'strategy',
+    bars: [{ label: 'Monthly churn', value: 12, target: 8, unit: '%', lowerIsBetter: true }],
+  },
+  {
+    id:      'agency-pipeline',
+    label:   'Agency Pipeline',
+    sector:  'Professional Services',
+    problem: 'Revenue concentrated in 2–3 clients creates existential pipeline risk.',
+    insight: 'Structured quarterly business reviews reduce involuntary churn by 18–22%. For a 6-client book, that recovers 1–2 retainers annually.',
+    source:  'Agency Analytics, 2024',
+    agent:   'execution',
+    bars: [{ label: 'Referral rate', value: 8, target: 20, unit: '%' }],
+  },
+  {
+    id:      'retail-basket',
+    label:   'Retail Basket Size',
+    sector:  'Retail',
+    problem: 'Average basket size is below category benchmarks.',
+    insight: 'A tier-1 loyalty programme increases average basket by 11–14% and visit frequency by 20% over 6 months. Payback period: under 60 days.',
+    source:  'KPMG Retail Pulse, 2024',
+    agent:   'analysis',
+    bars: [{ label: 'Basket uplift', value: 0, target: 13, unit: '%' }],
+  },
+]
+
+const TRUST_CUES = [
+  'Baymard · McKinsey · OpenView · KPMG',
+  '12 verified data sources',
+  'Quarterly refresh',
+]
+
+function BenchmarkBars({ bars }: { bars: Preset['bars'] }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+      {bars.map(b => {
+        const max   = Math.max(b.value, b.target) * 1.2
+        const vPct  = Math.round((b.value  / max) * 100)
+        const tPct  = Math.round((b.target / max) * 100)
+        const worse = b.lowerIsBetter ? b.value > b.target : b.value < b.target
+        return (
+          <div key={b.label}>
+            <div style={{ display: 'grid', gridTemplateColumns: '8rem 1fr 2.5rem', gap: '0.5rem', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.38)', letterSpacing: '0.03em' }}>
+                {b.label}
+              </span>
+              <div style={{ height: 3, background: 'rgba(255,255,255,0.08)' }}>
+                <div style={{ height: '100%', width: `${vPct}%`, background: worse ? '#C07A6A' : '#C9A96E', transition: 'width 0.6s ease' }} />
+              </div>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: worse ? '#C07A6A' : '#C9A96E', textAlign: 'right' }}>
+                {b.value}{b.unit}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '8rem 1fr 2.5rem', gap: '0.5rem', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.38)', letterSpacing: '0.03em' }}>
+                Sector median
+              </span>
+              <div style={{ height: 3, background: 'rgba(255,255,255,0.08)' }}>
+                <div style={{ height: '100%', width: `${tPct}%`, background: 'rgba(255,255,255,0.28)', transition: 'width 0.6s ease' }} />
+              </div>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)', textAlign: 'right' }}>
+                {b.target}{b.unit}
+              </span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 /* ── Divider component ───────────────────────────────── */
 function Rule() {
   return <div style={{ height: 1, background: 'rgba(0,0,0,0.09)' }} />
@@ -59,6 +163,11 @@ function Rule() {
 
 export default function LandingPage() {
   const { t } = useLanguage()
+  const [agentMode,    setAgentMode]    = useState<AgentMode>('auto')
+  const [activePreset, setActivePreset] = useState<string | null>(null)
+
+  const selectedPreset = PRESETS.find(p => p.id === activePreset) ?? null
+
   return (
     <main style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
       <Nav />
@@ -145,12 +254,121 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* ── Micro-analysis preview strip ──────────── */}
+          {/* ── First-entry preview experience ────────── */}
           <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '1rem' }}>
-              {t('landing.previewLabel')}
-            </p>
-            <MicroAnalysis />
+
+            {/* Row: label + agent mode selector */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                {t('landing.previewLabel')}
+              </p>
+              <AgentModeButton value={agentMode} onChange={setAgentMode} variant="dark" />
+            </div>
+
+            {/* Preset action chips */}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              {PRESETS.map(p => {
+                const active = activePreset === p.id
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setActivePreset(active ? null : p.id)}
+                    style={{
+                      padding:       '0.35rem 0.875rem',
+                      background:    active ? 'rgba(201,169,110,0.14)' : 'rgba(255,255,255,0.06)',
+                      border:        `1px solid ${active ? 'rgba(201,169,110,0.45)' : 'rgba(255,255,255,0.1)'}`,
+                      color:         active ? '#C9A96E' : 'rgba(255,255,255,0.5)',
+                      fontFamily:    'Inter, sans-serif',
+                      fontSize:      '0.7rem',
+                      fontWeight:    500,
+                      letterSpacing: '0.04em',
+                      cursor:        'pointer',
+                      borderRadius:  '2px',
+                      transition:    'all 0.18s',
+                      whiteSpace:    'nowrap',
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Benchmark insight card or free-text input */}
+            <AnimatePresence mode="wait">
+              {selectedPreset ? (
+                <motion.div
+                  key={selectedPreset.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                  style={{
+                    background:  'rgba(255,255,255,0.03)',
+                    border:      '1px solid rgba(255,255,255,0.09)',
+                    borderTop:   '2px solid #C9A96E',
+                  }}
+                >
+                  {/* Card header */}
+                  <div style={{ padding: '1rem 1.25rem 0.875rem', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C9A96E', padding: '2px 7px', border: '1px solid rgba(201,169,110,0.3)' }}>
+                        {selectedPreset.agent}
+                      </span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', padding: '2px 7px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        {selectedPreset.sector}
+                      </span>
+                    </div>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.22)', letterSpacing: '0.03em' }}>
+                      Benchmark Engine
+                    </span>
+                  </div>
+
+                  {/* Card body */}
+                  <div style={{ padding: '1.25rem' }}>
+                    <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(0.95rem, 1.6vw, 1.1rem)', lineHeight: 1.55, color: 'rgba(255,255,255,0.82)', marginBottom: '1.25rem' }}>
+                      {selectedPreset.insight}
+                    </p>
+
+                    {/* Benchmark bars */}
+                    <BenchmarkBars bars={selectedPreset.bars} />
+
+                    {/* Footer */}
+                    <div style={{ marginTop: '1.125rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.04em' }}>
+                        {selectedPreset.source}
+                      </span>
+                      <Link
+                        href={`/chat?q=${encodeURIComponent(selectedPreset.problem)}`}
+                        style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#C9A96E', textDecoration: 'none', borderBottom: '1px solid rgba(201,169,110,0.35)', paddingBottom: '1px' }}
+                      >
+                        Full analysis →
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="micro"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <MicroAnalysis />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Trust cues */}
+            <div style={{ marginTop: '0.875rem', display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+              {TRUST_CUES.map(cue => (
+                <span key={cue} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: 'rgba(255,255,255,0.22)', letterSpacing: '0.06em' }}>
+                  {cue}
+                </span>
+              ))}
+            </div>
           </div>
 
           {/* Sailboat visual — decorative, below fold */}

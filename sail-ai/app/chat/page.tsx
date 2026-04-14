@@ -13,6 +13,8 @@ import { FileAttachmentPill }         from '@/components/FileAttachmentPill'
 import type { Attachment }            from '@/components/FileAttachmentPill'
 import { ModeSelector }               from '@/components/ModeSelector'
 import type { AnalysisMode }          from '@/components/ModeSelector'
+import { AgentModeButton }            from '@/components/AgentModeButton'
+import type { AgentMode }             from '@/types/chat'
 import { VoiceInput }                 from '@/components/VoiceInput'
 import { ExportModal }                from '@/components/ExportModal'
 import { useSailState }               from '@/hooks/useSailState'
@@ -135,6 +137,7 @@ export default function ChatPage() {
   const [attachment,   setAttachment]   = useState<Attachment | null>(null)
   const [fileError,    setFileError]    = useState('')
   const [mode,         setMode]         = useState<AnalysisMode>('upwind')
+  const [agentMode,    setAgentMode]    = useState<AgentMode>('auto')
   // Downwind multi-turn conversation history
   const [convHistory,  setConvHistory]  = useState<ConvMessage[]>([])
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
@@ -260,7 +263,7 @@ export default function ChatPage() {
     // then store the AI response once it comes back (handled in useEffect below)
     const historyToSend = mode === 'downwind' ? convHistory : undefined
 
-    await submit(t, context, apiKey || undefined, attachment ?? undefined, mode, historyToSend)
+    await submit(t, context, apiKey || undefined, attachment ?? undefined, mode, historyToSend, agentMode)
   }
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -449,10 +452,11 @@ export default function ChatPage() {
                 )}
               </AnimatePresence>
 
-              {/* Mode selector — hidden mid-conversation */}
+              {/* Mode selector + Agent mode — hidden mid-conversation */}
               {(state === 'IDLE' || state === 'CONVERSING') && convHistory.length === 0 && (
-                <div style={{ marginBottom: '0.625rem' }}>
+                <div style={{ marginBottom: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                   <ModeSelector mode={mode} onChange={setMode} />
+                  <AgentModeButton value={agentMode} onChange={setAgentMode} />
                 </div>
               )}
 
