@@ -1,68 +1,90 @@
-import { NextRequest } from 'next/server'
-import { auth }        from '@/auth'
-import type { ChatPayload } from '@/types/chat'
-
 /**
- * Transparent proxy — no AI logic, no RAG logic, no business logic.
+ * Aetheris Pure Proxy — Edge Runtime
+ *
+ * This route is a zero-logic, zero-latency transparent proxy.
+ * ALL intelligence, RAG retrieval, schema enforcement, and streaming
+ * lives exclusively on the Railway backend.
  *
  * Responsibilities:
- *  1. Authenticate the session (Vercel owns auth).
- *  2. Forward the exact payload to the Railway backend.
- *  3. Pipe the upstream Response body back to the client unmodified.
- *     Streaming, status codes, and errors are preserved as-is.
+ *   1. Verify the session JWT (Edge-compatible via getToken).
+ *   2. Attach Aetheris routing headers before forwarding.
+ *   3. Pipe the upstream response body back unmodified.
  *
- * Railway owns: benchmark retrieval, agent routing, tool calling,
- * Anthropic calls, error recovery, and multi-agent orchestration.
+ * The middleware (middleware.ts) already rate-limits and guards this
+ * route — redundant checks here are intentionally minimal.
  */
+
+import { type NextRequest } from 'next/server'
+import { getToken }         from 'next-auth/jwt'
+import type { AetherisPayload } from '@/types/architecture'
+
+export const runtime = 'edge'
+
+const UPSTREAM_URL = process.env.RAILWAY_BACKEND_URL
+
 export async function POST(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.email) {
+  // ── 1. Session guard — Edge-compatible JWT verification ──────────────────
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  })
+
+  if (!token?.email) {
     return Response.json(
-      { error: 'Please sign in to use Sail AI.' },
+      { error: 'Authentication required. Please sign in.' },
       { status: 401 },
     )
   }
 
-  const backendUrl = process.env.RAILWAY_BACKEND_URL
-  if (!backendUrl) {
+  // ── 2. Upstream availability check ────────────────────────────────────────
+  if (!UPSTREAM_URL) {
     return Response.json(
-      { error: 'Backend service unavailable. Please try again shortly.' },
+      { error: 'Upstream architecture offline.' },
       { status: 503 },
     )
   }
 
-  let payload: ChatPayload
+  // ── 3. Parse and validate payload shape ──────────────────────────────────
+  let body: AetherisPayload
   try {
-    payload = (await req.json()) as ChatPayload
+    body = (await req.json()) as AetherisPayload
   } catch {
     return Response.json({ error: 'Invalid request body.' }, { status: 400 })
   }
 
+  if (!body.message?.trim() && !body.imageBase64) {
+    return Response.json({ error: 'Message is required.' }, { status: 422 })
+  }
+
+  // ── 4. Forward to Railway — zero transformation of the payload ────────────
   let upstream: Response
   try {
-    upstream = await fetch(`${backendUrl}/api/ai/chat`, {
-      method:  'POST',
+    upstream = await fetch(`${UPSTREAM_URL}/api/v1/execute`, {
+      method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-User-Email': session.user.email,
-        ...(req.headers.get('x-forwarded-for')
-          ? { 'X-Forwarded-For': req.headers.get('x-forwarded-for') as string }
-          : {}),
+        'Content-Type':      'application/json',
+        // Backend-to-backend shared secret — never exposed to the browser
+        'Authorization':     `Bearer ${process.env.INTERNAL_API_KEY ?? ''}`,
+        // Aetheris routing headers
+        'X-User-Email':       token.email as string,
+        'X-Client-Language':  req.headers.get('X-Client-Language')  ?? body.language ?? 'en',
+        'X-Aetheris-Session': req.headers.get('X-Aetheris-Session') ?? body.sessionId ?? 'init',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     })
   } catch {
     return Response.json(
-      { error: 'Backend service temporarily unavailable. Please try again in a moment.' },
+      { error: 'Proxy Forwarding Fault' },
       { status: 502 },
     )
   }
 
-  // Pipe upstream body back without modification — preserves streaming, status, and errors.
+  // ── 5. Pipe upstream body back verbatim ───────────────────────────────────
+  // Preserves streaming, status codes, and content-type without buffering.
   return new Response(upstream.body, {
-    status:  upstream.status,
+    status: upstream.status,
     headers: {
-      'Content-Type':      upstream.headers.get('Content-Type') ?? 'text/plain; charset=utf-8',
+      'Content-Type':      upstream.headers.get('Content-Type') ?? 'application/json; charset=utf-8',
       'Cache-Control':     'no-store',
       'X-Accel-Buffering': 'no',
     },
