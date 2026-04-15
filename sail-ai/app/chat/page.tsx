@@ -16,6 +16,7 @@ import { ModeSelector }                  from '@/components/ModeSelector'
 import type { AnalysisMode }             from '@/components/ModeSelector'
 import { VoiceInput }                    from '@/components/VoiceInput'
 import { ExportModal }                   from '@/components/ExportModal'
+import { AetherisShell }                 from '@/components/AetherisShell'
 import { useAetherisSubmit }             from '@/hooks/useAetherisSubmit'
 import type { ConvMessage }              from '@/hooks/useSailState'
 import { useLanguage }                   from '@/lib/i18n/LanguageContext'
@@ -294,7 +295,8 @@ export default function ChatPage() {
   const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
+    <AetherisShell showStatusBar>
+    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
       <Nav />
 
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 flex flex-col gap-4">
@@ -848,11 +850,11 @@ export default function ChatPage() {
 
       <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
 
-      {false && (
+      {response && (
         <ExportModal
           open={showExport}
           onClose={() => setShowExport(false)}
-          result={{} as import('@/hooks/useSailState').StrategyResult}
+          result={response}
           sector={input.slice(0, 60)}
         />
       )}
@@ -935,7 +937,8 @@ export default function ChatPage() {
           </div>
         </>
       )}
-    </main>
+    </div>
+    </AetherisShell>
   )
 }
 
