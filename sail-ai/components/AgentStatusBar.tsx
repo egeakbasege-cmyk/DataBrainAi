@@ -26,6 +26,8 @@ import {
   selectVectors,
 } from '@/lib/aetherisStore'
 import type { AgentMode } from '@/types/architecture'
+import { useLanguage }     from '@/lib/i18n/LanguageContext'
+import type { TranslationKey } from '@/lib/i18n/translations'
 
 const AGENT_MODES: AgentMode[] = ['Auto', 'Strategy', 'Analysis', 'Execution', 'Review']
 const TOTAL_PIPS = 10
@@ -44,6 +46,7 @@ export function AgentStatusBar() {
   const alerts      = useAetherisStore(selectActiveAlerts)
   const vectors     = useAetherisStore(selectVectors)
   const setMode     = useAetherisStore((s) => s.setAgentMode)
+  const { t }       = useLanguage()
 
   const cycleMode = useCallback(() => {
     const idx  = AGENT_MODES.indexOf(agentMode)
@@ -121,7 +124,7 @@ export function AgentStatusBar() {
         style={{ cursor: 'pointer', border: 'none' }}
       >
         <div className="ae-mode-badge__dot" />
-        {agentMode}
+        {t(`agent.mode.${agentMode}` as TranslationKey)}
       </button>
     </div>
   )

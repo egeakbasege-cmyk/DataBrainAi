@@ -23,6 +23,7 @@
 import { useRef }           from 'react'
 import { motion }           from 'framer-motion'
 import type { ActionMatrixOption } from '@/types/architecture'
+import { useLanguage }      from '@/lib/i18n/LanguageContext'
 
 interface ActionMatrixCardProps {
   option:       ActionMatrixOption
@@ -41,6 +42,7 @@ export function ActionMatrixCard({
 }: ActionMatrixCardProps) {
   const isDark = variant === 'dark'
   const ref    = useRef<HTMLDivElement>(null)
+  const { t }  = useLanguage()
 
   const successPct = Math.round(option.sectorMedianSuccessRate * 100)
 
@@ -198,7 +200,7 @@ export function ActionMatrixCard({
               color:         tk.label,
               whiteSpace:    'nowrap',
             }}>
-              Density
+              {t('aetheris.matrix.densityScore')}
             </span>
             <div style={{ flex: 1, height: 2, background: tk.barTrack, position: 'relative', overflow: 'hidden' }}>
               <motion.div
@@ -236,7 +238,7 @@ export function ActionMatrixCard({
               color:         tk.label,
               whiteSpace:    'nowrap',
             }}>
-              Success
+              {t('aetheris.matrix.successRate')}
             </span>
             <div style={{ flex: 1, height: 2, background: tk.barTrack, position: 'relative', overflow: 'hidden' }}>
               <motion.div

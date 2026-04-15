@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ActionMatrixCard }     from './ActionMatrixCard'
 import { useAetherisStore }     from '@/lib/aetherisStore'
 import type { PredictiveAlert } from '@/types/architecture'
+import { useLanguage }          from '@/lib/i18n/LanguageContext'
 
 interface PredictiveAlertBannerProps {
   alert:    PredictiveAlert
@@ -35,6 +36,7 @@ export function PredictiveAlertBanner({
 }: PredictiveAlertBannerProps) {
   const [expanded, setExpanded] = useState(false)
   const resolveAlert = useAetherisStore((s) => s.resolveAlert)
+  const { t }        = useLanguage()
 
   const isDark      = variant === 'dark'
   const deviationPct = Math.round(Math.abs(alert.forecastedDeviation))
@@ -103,7 +105,7 @@ export function PredictiveAlertBanner({
           color:         alert.isResolved ? textGhost : '#F87171',
           flexShrink:    0,
         }}>
-          {alert.isResolved ? 'Resolved' : 'Drift Alert'}
+          {alert.isResolved ? t('aetheris.drift.resolved') : t('aetheris.drift.alert')}
         </span>
 
         {/* Rule */}
@@ -223,7 +225,7 @@ export function PredictiveAlertBanner({
                   textTransform: 'uppercase',
                   color:         '#C9A96E',
                 }}>
-                  Autonomous micro-pivot
+                  {t('aetheris.drift.microPivot')}
                 </span>
                 <div style={{ height: 1, flex: 1, background: isDark ? 'rgba(201,169,110,0.12)' : 'rgba(201,169,110,0.2)' }} />
               </div>
@@ -258,7 +260,7 @@ export function PredictiveAlertBanner({
                 }}
               >
                 <span style={{ fontSize: '0.5rem' }}>✓</span>
-                Mark resolved
+                {t('aetheris.drift.markResolved')}
               </button>
             </div>
           </motion.div>

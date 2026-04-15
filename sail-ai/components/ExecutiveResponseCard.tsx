@@ -24,6 +24,7 @@ import { useState }          from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ActionMatrixCard }  from './ActionMatrixCard'
 import type { ExecutiveResponse } from '@/types/architecture'
+import { useLanguage }       from '@/lib/i18n/LanguageContext'
 
 interface ExecutiveResponseCardProps {
   response:    ExecutiveResponse | null
@@ -67,18 +68,18 @@ function StreamingSkeleton() {
 }
 
 // ── Horizon section ────────────────────────────────────────────────────────────
-const HORIZON_LABELS = [
-  { key: 'thirtyDays' as const, label: '30-Day Sprint',  accentLight: '#A8873E', accentDark: '#C9A96E' },
-  { key: 'sixtyDays'  as const, label: '60-Day Build',   accentLight: '#71717A', accentDark: '#9898B0' },
-  { key: 'ninetyDays' as const, label: '90-Day Horizon', accentLight: '#3A3A3C', accentDark: '#B0B0BC' },
-]
-
 interface HorizonSectionProps {
   horizons: NonNullable<ExecutiveResponse['executionHorizons']>
   isDark:   boolean
 }
 
 function HorizonSection({ horizons, isDark }: HorizonSectionProps) {
+  const { t } = useLanguage()
+  const HORIZON_LABELS = [
+    { key: 'thirtyDays' as const, label: t('aetheris.horizon.thirty'), accentLight: '#A8873E', accentDark: '#C9A96E' },
+    { key: 'sixtyDays'  as const, label: t('aetheris.horizon.sixty'),  accentLight: '#71717A', accentDark: '#9898B0' },
+    { key: 'ninetyDays' as const, label: t('aetheris.horizon.ninety'), accentLight: '#3A3A3C', accentDark: '#B0B0BC' },
+  ]
   const ruleColor  = isDark ? 'rgba(226,226,232,0.06)' : 'rgba(0,0,0,0.07)'
   const bodyColor  = isDark ? '#9898B0' : '#71717A'
   const itemBg     = isDark ? 'rgba(226,226,232,0.03)' : 'rgba(0,0,0,0.02)'
@@ -156,6 +157,7 @@ export function ExecutiveResponseCard({
 }: ExecutiveResponseCardProps) {
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
   const isDark = variant === 'dark'
+  const { t } = useLanguage()
 
   // Token shortcuts
   const cardBg      = isDark ? '#0E0E18'  : '#FFFFFF'
@@ -227,7 +229,7 @@ export function ExecutiveResponseCard({
                   display:       'block',
                   marginBottom:  12,
                 }}>
-                  Action Matrix
+                  {t('aetheris.matrix.title')}
                 </span>
 
                 <div style={{

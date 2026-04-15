@@ -248,6 +248,23 @@ const translations = {
     'diag.healthy':           'Healthy',
     'diag.strong':            'Strong',
     'diag.reserveFloor':      '— Global advisory firms recommend a minimum 6-month reserve floor.',
+
+    // ── Aetheris UI ────────────────────────────────────────────────────────────
+    'agent.mode.Auto':            'Auto',
+    'agent.mode.Strategy':        'Strategy',
+    'agent.mode.Analysis':        'Analysis',
+    'agent.mode.Execution':       'Execution',
+    'agent.mode.Review':          'Review',
+    'aetheris.matrix.title':      'Action Matrix',
+    'aetheris.matrix.densityScore': 'Density',
+    'aetheris.matrix.successRate':  'Success',
+    'aetheris.horizon.thirty':    '30-Day Sprint',
+    'aetheris.horizon.sixty':     '60-Day Build',
+    'aetheris.horizon.ninety':    '90-Day Horizon',
+    'aetheris.drift.alert':       'Drift Alert',
+    'aetheris.drift.resolved':    'Resolved',
+    'aetheris.drift.microPivot':  'Autonomous micro-pivot',
+    'aetheris.drift.markResolved':'Mark resolved',
   },
 
   tr: {
@@ -467,6 +484,23 @@ const translations = {
     'diag.healthy':           'Sağlıklı',
     'diag.strong':            'Güçlü',
     'diag.reserveFloor':      '— Küresel danışmanlık firmaları minimum 6 aylık rezerv tabanı tavsiye ediyor.',
+
+    // ── Aetheris UI ────────────────────────────────────────────────────────────
+    'agent.mode.Auto':            'Otomatik',
+    'agent.mode.Strategy':        'Strateji',
+    'agent.mode.Analysis':        'Analiz',
+    'agent.mode.Execution':       'Uygulama',
+    'agent.mode.Review':          'İnceleme',
+    'aetheris.matrix.title':      'Aksiyon Matrisi',
+    'aetheris.matrix.densityScore': 'Yoğunluk',
+    'aetheris.matrix.successRate':  'Başarı',
+    'aetheris.horizon.thirty':    '30 Günlük Sprint',
+    'aetheris.horizon.sixty':     '60 Günlük İnşa',
+    'aetheris.horizon.ninety':    '90 Günlük Ufuk',
+    'aetheris.drift.alert':       'Sapma Uyarısı',
+    'aetheris.drift.resolved':    'Çözüldü',
+    'aetheris.drift.microPivot':  'Otonom mikro-pivot',
+    'aetheris.drift.markResolved':'Çözüldü olarak işaretle',
   },
 
   es: {
@@ -686,6 +720,23 @@ const translations = {
     'diag.healthy':           'Saludable',
     'diag.strong':            'Sólido',
     'diag.reserveFloor':      '— Las consultoras globales recomiendan un mínimo de 6 meses de reservas.',
+
+    // ── Aetheris UI ────────────────────────────────────────────────────────────
+    'agent.mode.Auto':            'Auto',
+    'agent.mode.Strategy':        'Estrategia',
+    'agent.mode.Analysis':        'Análisis',
+    'agent.mode.Execution':       'Ejecución',
+    'agent.mode.Review':          'Revisión',
+    'aetheris.matrix.title':      'Matriz de Acción',
+    'aetheris.matrix.densityScore': 'Densidad',
+    'aetheris.matrix.successRate':  'Éxito',
+    'aetheris.horizon.thirty':    'Sprint de 30 días',
+    'aetheris.horizon.sixty':     'Construcción de 60 días',
+    'aetheris.horizon.ninety':    'Horizonte de 90 días',
+    'aetheris.drift.alert':       'Alerta de deriva',
+    'aetheris.drift.resolved':    'Resuelto',
+    'aetheris.drift.microPivot':  'Micro-pivote autónomo',
+    'aetheris.drift.markResolved':'Marcar como resuelto',
   },
 
   de: {
@@ -905,6 +956,23 @@ const translations = {
     'diag.healthy':           'Gesund',
     'diag.strong':            'Stark',
     'diag.reserveFloor':      '— Globale Beratungsunternehmen empfehlen einen Mindest-Reservepuffer von 6 Monaten.',
+
+    // ── Aetheris UI ────────────────────────────────────────────────────────────
+    'agent.mode.Auto':            'Auto',
+    'agent.mode.Strategy':        'Strategie',
+    'agent.mode.Analysis':        'Analyse',
+    'agent.mode.Execution':       'Ausführung',
+    'agent.mode.Review':          'Überprüfung',
+    'aetheris.matrix.title':      'Aktionsmatrix',
+    'aetheris.matrix.densityScore': 'Dichte',
+    'aetheris.matrix.successRate':  'Erfolg',
+    'aetheris.horizon.thirty':    '30-Tage-Sprint',
+    'aetheris.horizon.sixty':     '60-Tage-Aufbau',
+    'aetheris.horizon.ninety':    '90-Tage-Horizont',
+    'aetheris.drift.alert':       'Drift-Alarm',
+    'aetheris.drift.resolved':    'Gelöst',
+    'aetheris.drift.microPivot':  'Autonomer Mikro-Pivot',
+    'aetheris.drift.markResolved':'Als gelöst markieren',
   },
 
   fr: {
@@ -1124,6 +1192,23 @@ const translations = {
     'diag.healthy':           'Sain',
     'diag.strong':            'Solide',
     'diag.reserveFloor':      '— Les cabinets de conseil mondiaux recommandent un minimum de 6 mois de réserves.',
+
+    // ── Aetheris UI ────────────────────────────────────────────────────────────
+    'agent.mode.Auto':            'Auto',
+    'agent.mode.Strategy':        'Stratégie',
+    'agent.mode.Analysis':        'Analyse',
+    'agent.mode.Execution':       'Exécution',
+    'agent.mode.Review':          'Révision',
+    'aetheris.matrix.title':      "Matrice d'action",
+    'aetheris.matrix.densityScore': 'Densité',
+    'aetheris.matrix.successRate':  'Succès',
+    'aetheris.horizon.thirty':    'Sprint 30 jours',
+    'aetheris.horizon.sixty':     'Construction 60 jours',
+    'aetheris.horizon.ninety':    'Horizon 90 jours',
+    'aetheris.drift.alert':       'Alerte de dérive',
+    'aetheris.drift.resolved':    'Résolu',
+    'aetheris.drift.microPivot':  'Micro-pivot autonome',
+    'aetheris.drift.markResolved':'Marquer comme résolu',
   },
 
   zh: {
@@ -1343,6 +1428,23 @@ const translations = {
     'diag.healthy':           '健康',
     'diag.strong':            '强健',
     'diag.reserveFloor':      '— 全球咨询公司建议至少保持6个月的储备底线。',
+
+    // ── Aetheris UI ────────────────────────────────────────────────────────────
+    'agent.mode.Auto':            '自动',
+    'agent.mode.Strategy':        '战略',
+    'agent.mode.Analysis':        '分析',
+    'agent.mode.Execution':       '执行',
+    'agent.mode.Review':          '审查',
+    'aetheris.matrix.title':      '行动矩阵',
+    'aetheris.matrix.densityScore': '密度',
+    'aetheris.matrix.successRate':  '成功率',
+    'aetheris.horizon.thirty':    '30天冲刺',
+    'aetheris.horizon.sixty':     '60天构建',
+    'aetheris.horizon.ninety':    '90天展望',
+    'aetheris.drift.alert':       '漂移警报',
+    'aetheris.drift.resolved':    '已解决',
+    'aetheris.drift.microPivot':  '自主微调',
+    'aetheris.drift.markResolved':'标记为已解决',
   },
 } as const
 
