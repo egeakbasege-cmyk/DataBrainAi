@@ -30,7 +30,8 @@
     "recharts": "^2.12.7",
     "stripe": "^16.5.0",
     "xlsx": "^0.18.5",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

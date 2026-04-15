@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { BusinessProvider }  from '@/lib/context/BusinessContext'
-import { AuthProvider }      from '@/components/AuthProvider'
-import { Dock }              from '@/components/Dock'
-import { LanguageProvider }  from '@/lib/i18n/LanguageContext'
+import { BusinessProvider }   from '@/lib/context/BusinessContext'
+import { AuthProvider }       from '@/components/AuthProvider'
+import { AetherisProvider }   from '@/components/AetherisProvider'
+import { Dock }               from '@/components/Dock'
+import { LanguageProvider }   from '@/lib/i18n/LanguageContext'
 
 export const metadata: Metadata = {
   title:       'Sail AI — Business Strategy, Grounded in Evidence',
@@ -16,12 +17,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <AuthProvider>
-          <LanguageProvider>
-            <BusinessProvider>
-              {children}
-              <Dock />
-            </BusinessProvider>
-          </LanguageProvider>
+          {/* AetherisProvider initialises the Zustand store with the
+              authenticated user identity and a fresh session ID.
+              It must live inside AuthProvider (needs useSession). */}
+          <AetherisProvider>
+            <LanguageProvider>
+              <BusinessProvider>
+                {children}
+                <Dock />
+              </BusinessProvider>
+            </LanguageProvider>
+          </AetherisProvider>
         </AuthProvider>
       </body>
     </html>
