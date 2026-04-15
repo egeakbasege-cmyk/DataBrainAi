@@ -86,20 +86,5 @@ export function sanitiseExecutiveResponse(raw: unknown): ExecutiveResponse {
 }
 
 export function buildMockExecutiveResponse(reason = 'Service temporarily unavailable.'): ExecutiveResponse {
-  return {
-    insight: reason,
-    matrixOptions: [{
-      id:                      'mock-retry',
-      title:                   'Retry analysis',
-      description:             'Submit your query again — transient errors typically resolve within one retry.',
-      sectorMedianSuccessRate: 0.9,
-      implementationTimeDays:  0,
-      densityScore:            80,
-    }],
-    executionHorizons: {
-      thirtyDays: ['Resubmit with the same input for an immediate retry.'],
-      sixtyDays:  ['Review your input for completeness if the issue persists.'],
-      ninetyDays: ['Contact support if errors continue beyond three retries.'],
-    },
-  }
+  return { insight: reason }
 }

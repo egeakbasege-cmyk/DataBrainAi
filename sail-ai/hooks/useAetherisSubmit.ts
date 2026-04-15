@@ -144,11 +144,17 @@ export function useAetherisSubmit() {
       setError(msg)
 
       // Always give the UI a structurally valid response — never a blank screen
-      setResponse(buildMockExecutiveResponse(
-        msg === 'RATE_LIMIT'
-          ? 'Rate limit reached. Please wait a moment, then try again.'
-          : msg,
-      ))
+      // Auth/session errors: show only the error banner, not a strategy card
+      const isAuthError = msg.toLowerCase().includes('sign in') ||
+                          msg.toLowerCase().includes('unauthorized') ||
+                          msg.toLowerCase().includes('authentication')
+      if (!isAuthError) {
+        setResponse(buildMockExecutiveResponse(
+          msg === 'RATE_LIMIT'
+            ? 'Rate limit reached. Please wait a moment, then try again.'
+            : msg,
+        ))
+      }
       setState('ERROR')
     }
   }, [state, sessionId, userId, language, agentMode, computeCL])
