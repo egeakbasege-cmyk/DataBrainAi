@@ -129,25 +129,10 @@ export function sanitiseExecutiveResponse(raw: unknown): ExecutiveResponse {
  * The UI should render this gracefully in all states — this is the contract.
  */
 export function buildMockExecutiveResponse(
-  reason: string = 'Service temporarily unavailable.',
+  reason: string = 'Analysis temporarily unavailable.',
 ): ExecutiveResponse {
-  const mock: ActionMatrixOption = {
-    id:                      'mock-retry',
-    title:                   'Retry analysis',
-    description:             'Submit your query again — transient errors typically resolve within one retry.',
-    sectorMedianSuccessRate: 0.9,
-    implementationTimeDays:  0,
-    densityScore:            80,
-  }
-
   return {
     insight: reason,
-    matrixOptions: [mock],
-    executionHorizons: {
-      thirtyDays: ['Resubmit with the same data for an immediate retry.'],
-      sixtyDays:  ['If the issue persists, review your input for completeness.'],
-      ninetyDays: ['Contact support if errors continue beyond three retries.'],
-    },
   }
 }
 
