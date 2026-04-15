@@ -22,6 +22,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
       </p>
       <div className="flex flex-col sm:flex-row gap-3 mt-10">
         <button onClick={reset} className="btn-primary">Try again</button>
+        <Link href="/chat" className="btn-ghost">Chart Course</Link>
         <Link href="/" className="btn-ghost">Return home</Link>
       </div>
     </main>

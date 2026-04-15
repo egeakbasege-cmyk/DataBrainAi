@@ -16,7 +16,7 @@ import { ModeSelector }                  from '@/components/ModeSelector'
 import type { AnalysisMode }             from '@/components/ModeSelector'
 import { VoiceInput }                    from '@/components/VoiceInput'
 import { ExportModal }                   from '@/components/ExportModal'
-import { AetherisShell }                 from '@/components/AetherisShell'
+import { AgentStatusBar }                from '@/components/AgentStatusBar'
 import { useAetherisSubmit }             from '@/hooks/useAetherisSubmit'
 import type { ConvMessage }              from '@/hooks/useSailState'
 import { useLanguage }                   from '@/lib/i18n/LanguageContext'
@@ -141,10 +141,11 @@ export default function ChatPage() {
   // Downwind multi-turn conversation history
   const [convHistory,  setConvHistory]  = useState<ConvMessage[]>([])
 
-  // Aetheris store — agent mode + active drift alerts
-  const agentMode  = useAetherisStore(selectAgentMode)
+  // Aetheris store — agent mode + drift alerts (filter locally for stable refs)
+  const agentMode    = useAetherisStore(selectAgentMode)
   const setAgentMode = useAetherisStore((s) => s.setAgentMode)
-  const activeAlerts = useAetherisStore(selectActiveAlerts)
+  const allAlerts    = useAetherisStore(selectActiveAlerts)
+  const activeAlerts = allAlerts.filter((a) => !a.isResolved)
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -245,6 +246,7 @@ export default function ChatPage() {
       context:      context || undefined,
       attachment:   attachment ?? undefined,
       analysisMode: mode,
+      apiKey:       apiKey || undefined,
     })
   }
 
@@ -295,7 +297,11 @@ export default function ChatPage() {
   const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
 
   return (
-    <AetherisShell showStatusBar>
+    <>
+    {/* Aetheris agent status bar — fixed top-right */}
+    <div style={{ position: 'fixed', top: '1px', right: 0, zIndex: 50, padding: '6px 16px' }}>
+      <AgentStatusBar />
+    </div>
     <div className="min-h-screen flex flex-col" style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
       <Nav />
 
@@ -938,7 +944,7 @@ export default function ChatPage() {
         </>
       )}
     </div>
-    </AetherisShell>
+    </>
   )
 }
 

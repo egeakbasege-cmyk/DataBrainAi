@@ -165,6 +165,9 @@ export interface AetherisPayload {
   imageBase64?: string
   imageMimeType?: string
   fileContent?: string
+  context?: string
+  /** BYOK — user-supplied Groq API key (stored client-side, never persisted server-side). */
+  apiKey?: string
 }
 
 // ── Cognitive Load computation ────────────────────────────────────────────────

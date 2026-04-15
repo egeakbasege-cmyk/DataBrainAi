@@ -36,6 +36,8 @@ export interface AetherisSubmitOptions {
   context?:      string
   attachment?:   Attachment
   analysisMode?: 'upwind' | 'downwind'
+  /** BYOK — forwarded to the Edge proxy for Groq fallback calls. */
+  apiKey?:       string
 }
 
 export function useAetherisSubmit() {
@@ -96,6 +98,7 @@ export function useAetherisSubmit() {
       }
 
       if (opts?.context)                  body.context       = opts.context
+      if (opts?.apiKey?.trim())           body.apiKey        = opts.apiKey.trim()
       if (opts?.attachment?.isImage) {
         body.imageBase64   = opts.attachment.content
         body.imageMimeType = opts.attachment.mimeType

@@ -236,9 +236,16 @@ export const useAetherisStore = create<AetherisStore>()(
 
 // ── Convenience selectors (stable references, prevent re-renders) ─────────────
 
-export const selectAgentMode   = (s: AetherisStore) => s.agentMode
-export const selectCognitiveLoad = (s: AetherisStore) => s.cognitiveLoadIndex
-export const selectActiveAlerts  = (s: AetherisStore) => s.activeAlerts()
-export const selectVectors       = (s: AetherisStore) => s.activeStrategicVectors
-export const selectVerbosityTier = (s: AetherisStore) => s.verbosityTier()
-export const selectIsInitialised = (s: AetherisStore) => s.isInitialised
+export const selectAgentMode      = (s: AetherisStore) => s.agentMode
+export const selectCognitiveLoad  = (s: AetherisStore) => s.cognitiveLoadIndex
+/**
+ * Returns the raw predictiveDriftAlerts array (stable reference).
+ * Filter for unresolved alerts locally in the consuming component:
+ *   const allAlerts = useAetherisStore(selectActiveAlerts)
+ *   const active = allAlerts.filter(a => !a.isResolved)
+ * This avoids creating a new array reference on every Zustand update.
+ */
+export const selectActiveAlerts   = (s: AetherisStore) => s.predictiveDriftAlerts
+export const selectVectors        = (s: AetherisStore) => s.activeStrategicVectors
+export const selectVerbosityTier  = (s: AetherisStore) => s.verbosityTier()
+export const selectIsInitialised  = (s: AetherisStore) => s.isInitialised

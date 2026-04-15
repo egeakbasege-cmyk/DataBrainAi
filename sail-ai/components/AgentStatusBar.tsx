@@ -43,7 +43,8 @@ function getCLIPClass(pipIndex: number, loadIndex: number): string {
 export function AgentStatusBar() {
   const agentMode   = useAetherisStore(selectAgentMode)
   const clIndex     = useAetherisStore(selectCognitiveLoad)
-  const alerts      = useAetherisStore(selectActiveAlerts)
+  const allAlerts   = useAetherisStore(selectActiveAlerts)
+  const alerts      = allAlerts.filter((a) => !a.isResolved)
   const vectors     = useAetherisStore(selectVectors)
   const setMode     = useAetherisStore((s) => s.setAgentMode)
   const { t }       = useLanguage()
