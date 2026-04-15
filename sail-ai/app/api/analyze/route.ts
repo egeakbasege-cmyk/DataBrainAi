@@ -57,9 +57,8 @@ async function generateAnalysis(
         model:             modelName,
         systemInstruction: SYSTEM_PROMPT,
         generationConfig: {
-          maxOutputTokens:  1400,
+          maxOutputTokens:  1800,
           temperature:      0.35,
-          responseMimeType: 'application/json',
         },
       })
 
@@ -109,18 +108,12 @@ export async function POST(req: NextRequest) {
     const prompt  = buildAnalysisPrompt({ sector, metrics: metrics as any, focusArea, tone, context })
     const rawJson = await generateAnalysis(prompt, body.apiKey)
 
-    // 4. Parse AI output — it must be valid JSON
-    let output: unknown
-    try {
-      output = JSON.parse(rawJson)
-    } catch {
-      throw new ApiError(502, 'AI_PARSE_ERROR', 'AI returned an unreadable response. Please try again.')
+    // 4. Parse AI output — prose strategy response
+    const text = rawJson.trim()
+    if (!text) {
+      throw new ApiError(502, 'AI_PARSE_ERROR', 'AI returned an empty response. Please try again.')
     }
-
-    // 5. Check for embedded AI errors
-    if (output !== null && typeof output === 'object' && 'error' in output) {
-      throw new ApiError(502, 'AI_ERROR', (output as any).error)
-    }
+    const output = { analysis: text }
 
     // 6. Persist to database
     const record = await prisma.analysis.create({
