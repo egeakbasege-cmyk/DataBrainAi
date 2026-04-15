@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import type { Attachment } from '@/components/FileAttachmentPill'
+import type { AgentMode } from '@/types/chat'
 
 // 'CONVERSING' = Downwind coach returned a chatMessage; input stays open
 export type SailState = 'IDLE' | 'THINKING' | 'STREAMING' | 'COMPLETE' | 'CONVERSING'
@@ -92,6 +93,7 @@ export function useSailState() {
     attachment?: Attachment,
     mode?:       'upwind' | 'downwind',
     messages?:   ConvMessage[],
+    agentMode?:  AgentMode,
   ) => {
     if (state === 'THINKING' || state === 'STREAMING') return
 
@@ -108,6 +110,7 @@ export function useSailState() {
       if (apiKey)                  body.apiKey        = apiKey
       if (mode)                    body.mode          = mode
       if (messages?.length)        body.messages      = messages
+      body.agentMode = agentMode ?? 'auto'
       if (attachment?.isImage) {
         body.imageBase64   = attachment.content
         body.imageMimeType = attachment.mimeType

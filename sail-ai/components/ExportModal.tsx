@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { StrategyResult } from '@/hooks/useSailState'
+import type { ExecutiveResponse } from '@/types/architecture'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Props {
-  open:   boolean
+  open:    boolean
   onClose: () => void
-  result: StrategyResult
+  result:  ExecutiveResponse
   sector?: string
 }
 
@@ -18,14 +18,27 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
   const [note,    setNote]    = useState('')
   const [status,  setStatus]  = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
-  const subject = `Sail AI Report — ${sector ?? 'Strategy'}`
+  const subject = `Aetheris Report — ${sector ?? 'Strategy'}`
+
+  const matrixBlock = result.matrixOptions?.length
+    ? `\nACTION MATRIX\n` +
+      result.matrixOptions.map((opt, i) =>
+        `${i + 1}. ${opt.title}\n   ${opt.description}\n   Success rate: ${Math.round(opt.sectorMedianSuccessRate * 100)}% · ` +
+        `Timeline: ${opt.implementationTimeDays}d · Density: ${opt.densityScore}`
+      ).join('\n')
+    : ''
+
+  const horizonBlock = result.executionHorizons
+    ? `\n\nEXECUTION HORIZONS\n` +
+      `30-Day Sprint\n${result.executionHorizons.thirtyDays.map(s => `• ${s}`).join('\n')}\n\n` +
+      `60-Day Build\n${result.executionHorizons.sixtyDays.map(s => `• ${s}`).join('\n')}\n\n` +
+      `90-Day Horizon\n${result.executionHorizons.ninetyDays.map(s => `• ${s}`).join('\n')}`
+    : ''
+
   const body =
-    `${result.headline}\n\n` +
-    `KEY SIGNAL\n${result.signal}\n\n` +
-    `3-STEP PLAN\n` +
-    result.tactics.map(tac => `${tac.step}. ${tac.action} (${tac.timeframe}) — ${tac.result}`).join('\n') +
-    `\n\n30-DAY TARGET\n${result.target30}` +
-    `\n\nWATCH OUT FOR\n${result.risk}` +
+    `EXECUTIVE INSIGHT\n${result.insight}` +
+    matrixBlock +
+    horizonBlock +
     (note ? `\n\nNOTE\n${note}` : '')
 
   function handleSend() {

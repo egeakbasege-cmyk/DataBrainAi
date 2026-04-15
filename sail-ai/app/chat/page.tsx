@@ -1,25 +1,28 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence }    from 'framer-motion'
-import { Nav }                        from '@/components/Nav'
-import { HelmButton }                 from '@/components/HelmButton'
-import { SailboatAnimation }          from '@/components/SailboatAnimation'
-import { AnswerCard }                 from '@/components/AnswerCard'
-import { DailyCounter }               from '@/components/DailyCounter'
-import { PaywallModal }               from '@/components/PaywallModal'
-import { FeedbackModal }              from '@/components/FeedbackModal'
-import { FileAttachmentPill }         from '@/components/FileAttachmentPill'
-import type { Attachment }            from '@/components/FileAttachmentPill'
-import { ModeSelector }               from '@/components/ModeSelector'
-import type { AnalysisMode }          from '@/components/ModeSelector'
-import { VoiceInput }                 from '@/components/VoiceInput'
-import { ExportModal }                from '@/components/ExportModal'
-import { useSailState }               from '@/hooks/useSailState'
-import type { StrategyResult, ConvMessage } from '@/hooks/useSailState'
-import { useLanguage }                from '@/lib/i18n/LanguageContext'
-import { useSubscription }            from '@/hooks/useSubscription'
-import { useBusinessContext }         from '@/lib/context/BusinessContext'
+import { motion, AnimatePresence }       from 'framer-motion'
+import { Nav }                           from '@/components/Nav'
+import { HelmButton }                    from '@/components/HelmButton'
+import { SailboatAnimation }             from '@/components/SailboatAnimation'
+import { ExecutiveResponseCard }         from '@/components/ExecutiveResponseCard'
+import { PredictiveAlertList }           from '@/components/PredictiveAlertBanner'
+import { DailyCounter }                  from '@/components/DailyCounter'
+import { PaywallModal }                  from '@/components/PaywallModal'
+import { FeedbackModal }                 from '@/components/FeedbackModal'
+import { FileAttachmentPill }            from '@/components/FileAttachmentPill'
+import type { Attachment }               from '@/components/FileAttachmentPill'
+import { ModeSelector }                  from '@/components/ModeSelector'
+import type { AnalysisMode }             from '@/components/ModeSelector'
+import { VoiceInput }                    from '@/components/VoiceInput'
+import { ExportModal }                   from '@/components/ExportModal'
+import { AetherisShell }                 from '@/components/AetherisShell'
+import { useAetherisSubmit }             from '@/hooks/useAetherisSubmit'
+import type { ConvMessage }              from '@/hooks/useSailState'
+import { useLanguage }                   from '@/lib/i18n/LanguageContext'
+import { useSubscription }               from '@/hooks/useSubscription'
+import { useBusinessContext }            from '@/lib/context/BusinessContext'
+import { useAetherisStore, selectAgentMode, selectActiveAlerts } from '@/lib/aetherisStore'
 
 const PLACEHOLDERS = [
   'E-commerce store, £8k/month revenue, 1.5% conversion rate, 68% cart abandonment…',
@@ -137,11 +140,16 @@ export default function ChatPage() {
   const [mode,         setMode]         = useState<AnalysisMode>('upwind')
   // Downwind multi-turn conversation history
   const [convHistory,  setConvHistory]  = useState<ConvMessage[]>([])
+
+  // Aetheris store — agent mode + active drift alerts
+  const agentMode  = useAetherisStore(selectAgentMode)
+  const setAgentMode = useAetherisStore((s) => s.setAgentMode)
+  const activeAlerts = useAetherisStore(selectActiveAlerts)
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { t } = useLanguage()
-  const { state, streamText, result, error, submit, reset } = useSailState()
+  const { state, response, error, submit, reset } = useAetherisSubmit()
   const { isPro, usedToday, canAnalyse, showPaywall, recordUsage, triggerPaywall, closePaywall, activatePro } = useSubscription()
   const { buildContext, addSession, profile } = useBusinessContext()
 
@@ -177,31 +185,10 @@ export default function ChatPage() {
     }
   }, [activatePro])
 
-  // Downwind: update conversation history + auto-focus input for next reply
+  // Save completed analyses + deduct 1 credit when ExecutiveResponse is received
   useEffect(() => {
-    if (state === 'CONVERSING' && result && 'chatMessage' in result) {
-      // Store the user's last message and the AI's coaching response
-      const userMsg   = input.trim()
-      const assistMsg = JSON.stringify(result)
-      if (userMsg) {
-        setConvHistory(prev => [
-          ...prev,
-          { role: 'user',      content: userMsg   },
-          { role: 'assistant', content: assistMsg },
-        ])
-      }
-      setInput('')
-      setTimeout(() => textareaRef.current?.focus(), 80)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, result])
-
-  // Save completed strategies + deduct 1 credit ONLY when a full strategy is returned
-  // Clarifying questions (needsMetrics) do NOT consume a daily limit
-  useEffect(() => {
-    if (state === 'COMPLETE' && result && !('needsMetrics' in result)) {
-      const r = result as StrategyResult
-      const summary = `${r.headline} — target: ${r.target30}`
+    if (state === 'COMPLETE' && response) {
+      const summary = response.insight.slice(0, 120)
       addSession(input, summary)
       recordUsage()
       // Save to dashboard history
@@ -210,15 +197,13 @@ export default function ChatPage() {
         prev.push({
           id:        crypto.randomUUID(),
           prompt:    input.slice(0, 120),
-          headline:  r.headline,
-          target30:  r.target30,
+          headline:  summary,
           createdAt: new Date().toISOString(),
         })
         localStorage.setItem('sail_analysis_history', JSON.stringify(prev.slice(-100)))
       } catch { /* ignore */ }
-      // Persist to DB for Pro users (session memory across devices) — only for StrategyResult, not freeText
-      if (isPro && result && 'headline' in result) {
-        const r = result as StrategyResult
+      // Persist to DB for Pro users
+      if (isPro) {
         fetch('/api/sessions', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -226,13 +211,13 @@ export default function ChatPage() {
             prompt:  input,
             summary,
             sector:  input.slice(0, 120),
-            output:  { headline: r.headline, target30: r.target30 },
+            output:  { headline: summary },
           }),
         }).catch(() => undefined)
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, result])
+  }, [state, response])
 
   // Show key panel on any AI failure that could be fixed with BYOK
   useEffect(() => {
@@ -249,18 +234,18 @@ export default function ChatPage() {
 
   async function handleSubmit() {
     const t = input.trim()
-    if (!t || state === 'THINKING' || state === 'STREAMING') return
+    if (!t || state === 'THINKING') return
     if (!canAnalyse) { triggerPaywall(); return }
 
     const context = profile.diagnosticPrompt
       ? (isPro ? buildContext() : profile.diagnosticPrompt + '\n\n')
       : (isPro ? buildContext() : '')
 
-    // For Downwind: append the current user message to history AFTER we read convHistory
-    // then store the AI response once it comes back (handled in useEffect below)
-    const historyToSend = mode === 'downwind' ? convHistory : undefined
-
-    await submit(t, context, apiKey || undefined, attachment ?? undefined, mode, historyToSend)
+    await submit(t, {
+      context:      context || undefined,
+      attachment:   attachment ?? undefined,
+      analysisMode: mode,
+    })
   }
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -299,15 +284,19 @@ export default function ChatPage() {
     setShowKeyPanel(false)
   }
 
-  const isActive     = state === 'THINKING' || state === 'STREAMING'
-  const isComplete   = state === 'COMPLETE'
-  const isConversing = state === 'CONVERSING'
+  const isActive     = state === 'THINKING'
+  const isComplete   = state === 'COMPLETE' || state === 'ERROR'
+  const isConversing = false  // Aetheris uses single-turn JSON responses
+
+  // Map AetherisSubmitState → SailState for legacy components (HelmButton, SailboatAnimation)
+  const sailState = (state === 'ERROR' ? 'COMPLETE' : state) as import('@/hooks/useSailState').SailState
   const charsLeft  = MAX - input.length
   const warn       = charsLeft < 200
   const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
+    <AetherisShell showStatusBar>
+    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
       <Nav />
 
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 flex flex-col gap-4">
@@ -325,7 +314,7 @@ export default function ChatPage() {
           {/* Background photo */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/sail-horizontal.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.07, pointerEvents: 'none', userSelect: 'none' }} />
-          <SailboatAnimation state={state} />
+          <SailboatAnimation state={sailState} />
 
           {/* Context + counter bar */}
           <div
@@ -443,15 +432,15 @@ export default function ChatPage() {
                       }}
                     />
                     <span className="label-caps" style={{ color: '#71717A' }}>
-                      {state === 'THINKING' ? t('chat.thinking') : t('chat.streaming')}
+                      {t('chat.thinking')}
                     </span>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Mode selector — hidden mid-conversation */}
-              {(state === 'IDLE' || state === 'CONVERSING') && convHistory.length === 0 && (
-                <div style={{ marginBottom: '0.625rem' }}>
+              {/* Mode selector + Agent mode — hidden mid-conversation */}
+              {state === 'IDLE' && (
+                <div style={{ marginBottom: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                   <ModeSelector mode={mode} onChange={setMode} />
                 </div>
               )}
@@ -590,7 +579,7 @@ export default function ChatPage() {
                       </motion.span>
                     )}
                   </div>
-                  <HelmButton state={state} onClick={handleSubmit} disabled={isActive || !input.trim()} />
+                  <HelmButton state={sailState} onClick={handleSubmit} disabled={isActive || !input.trim()} />
                 </div>
               </div>
 
@@ -742,9 +731,24 @@ export default function ChatPage() {
           )}
         </AnimatePresence>
 
+        {/* ── Drift alerts (from Zustand store) ── */}
+        <AnimatePresence>
+          {activeAlerts.length > 0 && (
+            <motion.div
+              key="alerts"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <PredictiveAlertList alerts={activeAlerts} variant="light" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── Result ── */}
         <AnimatePresence>
-          {(state === 'STREAMING' || isComplete || isConversing) && (
+          {(state === 'THINKING' || isComplete) && (
             <motion.div
               key="answer"
               initial={{ opacity: 0, y: 10 }}
@@ -752,7 +756,11 @@ export default function ChatPage() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.35 }}
             >
-              <AnswerCard result={result} streamText={streamText} isStreaming={state === 'STREAMING'} />
+              <ExecutiveResponseCard
+                response={response}
+                isStreaming={state === 'THINKING'}
+                variant="light"
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -769,7 +777,7 @@ export default function ChatPage() {
               <button onClick={handleReset} className="btn-ghost flex items-center gap-2.5">
                 <HelmSVG /> {t('chat.newAnalysis')}
               </button>
-              {result && 'headline' in result && (
+              {response && (
                 <button
                   onClick={() => setShowExport(true)}
                   style={{
@@ -842,11 +850,11 @@ export default function ChatPage() {
 
       <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
 
-      {result && 'headline' in result && (
+      {response && (
         <ExportModal
           open={showExport}
           onClose={() => setShowExport(false)}
-          result={result as StrategyResult}
+          result={response}
           sector={input.slice(0, 60)}
         />
       )}
@@ -929,7 +937,8 @@ export default function ChatPage() {
           </div>
         </>
       )}
-    </main>
+    </div>
+    </AetherisShell>
   )
 }
 
