@@ -18,28 +18,28 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
   const [note,    setNote]    = useState('')
   const [status,  setStatus]  = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
-  const subject = `Aetheris Report — ${sector ?? 'Strategy'}`
+  const subject = `${t('export.blockInsight')} — ${sector ?? 'Strategy'}`
 
   const matrixBlock = result.matrixOptions?.length
-    ? `\nACTION MATRIX\n` +
+    ? `\n${t('export.blockMatrix')}\n` +
       result.matrixOptions.map((opt, i) =>
-        `${i + 1}. ${opt.title}\n   ${opt.description}\n   Success rate: ${Math.round(opt.sectorMedianSuccessRate * 100)}% · ` +
-        `Timeline: ${opt.implementationTimeDays}d · Density: ${opt.densityScore}`
+        `${i + 1}. ${opt.title}\n   ${opt.description}\n   ${t('export.successRate')} ${Math.round(opt.sectorMedianSuccessRate * 100)}% · ` +
+        `${t('export.timeline')} ${opt.implementationTimeDays}d · ${t('export.density')} ${opt.densityScore}`
       ).join('\n')
     : ''
 
   const horizonBlock = result.executionHorizons
-    ? `\n\nEXECUTION HORIZONS\n` +
-      `30-Day Sprint\n${result.executionHorizons.thirtyDays.map(s => `• ${s}`).join('\n')}\n\n` +
-      `60-Day Build\n${result.executionHorizons.sixtyDays.map(s => `• ${s}`).join('\n')}\n\n` +
-      `90-Day Horizon\n${result.executionHorizons.ninetyDays.map(s => `• ${s}`).join('\n')}`
+    ? `\n\n${t('export.blockHorizons')}\n` +
+      `${t('export.sprint30')}\n${result.executionHorizons.thirtyDays.map(s => `• ${s}`).join('\n')}\n\n` +
+      `${t('export.sprint60')}\n${result.executionHorizons.sixtyDays.map(s => `• ${s}`).join('\n')}\n\n` +
+      `${t('export.sprint90')}\n${result.executionHorizons.ninetyDays.map(s => `• ${s}`).join('\n')}`
     : ''
 
   const body =
-    `EXECUTIVE INSIGHT\n${result.insight}` +
+    `${t('export.blockInsight')}\n${result.insight}` +
     matrixBlock +
     horizonBlock +
-    (note ? `\n\nNOTE\n${note}` : '')
+    (note ? `\n\n${t('export.noteBlock')}\n${note}` : '')
 
   function handleSend() {
     if (!email || !email.includes('@')) return

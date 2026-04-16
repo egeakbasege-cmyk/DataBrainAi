@@ -2,14 +2,27 @@
 
 import { useState, useRef, useEffect } from 'react'
 import type { AgentMode } from '@/types/chat'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import type { TranslationKey } from '@/lib/i18n/translations'
 
-const MODES: { id: AgentMode; label: string; desc: string }[] = [
-  { id: 'auto',      label: 'Auto',      desc: 'Best fit selected per input and benchmark data'  },
-  { id: 'strategy',  label: 'Strategy',  desc: 'Long-term decisions, planning, positioning'       },
-  { id: 'analysis',  label: 'Analysis',  desc: 'Benchmark comparisons, summaries, documents'      },
-  { id: 'execution', label: 'Execution', desc: 'Action plans, next steps, implementation'         },
-  { id: 'review',    label: 'Review',    desc: 'Risk assessment, quality checks, consistency'     },
-]
+const MODE_IDS: AgentMode[] = ['auto', 'strategy', 'analysis', 'execution', 'review']
+
+// Map AgentMode → existing translation keys
+const LABEL_KEY: Record<AgentMode, TranslationKey> = {
+  auto:      'agent.mode.Auto',
+  strategy:  'agent.mode.Strategy',
+  analysis:  'agent.mode.Analysis',
+  execution: 'agent.mode.Execution',
+  review:    'agent.mode.Review',
+}
+
+const DESC_KEY: Record<AgentMode, TranslationKey> = {
+  auto:      'agent.mode.auto.desc',
+  strategy:  'agent.mode.strategy.desc',
+  analysis:  'agent.mode.analysis.desc',
+  execution: 'agent.mode.execution.desc',
+  review:    'agent.mode.review.desc',
+}
 
 interface Props {
   value:    AgentMode
@@ -19,6 +32,7 @@ interface Props {
 }
 
 export function AgentModeButton({ value, onChange, variant = 'light' }: Props) {
+  const { t }           = useLanguage()
   const [open, setOpen] = useState(false)
   const ref             = useRef<HTMLDivElement>(null)
 
@@ -30,8 +44,7 @@ export function AgentModeButton({ value, onChange, variant = 'light' }: Props) {
     return () => document.removeEventListener('mousedown', onDown)
   }, [])
 
-  const current = MODES.find(m => m.id === value)!
-  const d       = variant === 'dark'
+  const d = variant === 'dark'
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -40,7 +53,7 @@ export function AgentModeButton({ value, onChange, variant = 'light' }: Props) {
         onClick={() => setOpen(o => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        title="Agent mode"
+        title={t('agent.modeTitle')}
         style={{
           display:       'flex',
           alignItems:    'center',
@@ -61,7 +74,7 @@ export function AgentModeButton({ value, onChange, variant = 'light' }: Props) {
         }}
       >
         <span style={{ color: '#C9A96E', fontSize: '0.42rem', lineHeight: 1, flexShrink: 0 }}>◆</span>
-        {current.label}
+        {t(LABEL_KEY[value])}
         <svg width="8" height="8" viewBox="0 0 24 24" fill="none"
           stroke={d ? 'rgba(255,255,255,0.3)' : '#A1A1AA'}
           strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
@@ -85,20 +98,20 @@ export function AgentModeButton({ value, onChange, variant = 'light' }: Props) {
             zIndex:    60,
           }}
         >
-          {MODES.map((m, i) => (
+          {MODE_IDS.map((id, i) => (
             <button
-              key={m.id}
+              key={id}
               role="option"
-              aria-selected={m.id === value}
-              onClick={() => { onChange(m.id); setOpen(false) }}
+              aria-selected={id === value}
+              onClick={() => { onChange(id); setOpen(false) }}
               style={{
                 display:       'flex',
                 flexDirection: 'column',
                 width:         '100%',
                 padding:       '0.65rem 1rem',
-                background:    m.id === value ? 'rgba(201,169,110,0.09)' : 'transparent',
+                background:    id === value ? 'rgba(201,169,110,0.09)' : 'transparent',
                 border:        'none',
-                borderBottom:  i < MODES.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                borderBottom:  i < MODE_IDS.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
                 cursor:        'pointer',
                 textAlign:     'left',
                 transition:    'background 0.12s',
@@ -110,9 +123,9 @@ export function AgentModeButton({ value, onChange, variant = 'light' }: Props) {
                 fontWeight:    600,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color:         m.id === value ? '#C9A96E' : 'rgba(255,255,255,0.78)',
+                color:         id === value ? '#C9A96E' : 'rgba(255,255,255,0.78)',
               }}>
-                {m.label}
+                {t(LABEL_KEY[id])}
               </span>
               <span style={{
                 fontFamily: 'Inter, sans-serif',
@@ -121,7 +134,7 @@ export function AgentModeButton({ value, onChange, variant = 'light' }: Props) {
                 marginTop:  '0.15rem',
                 lineHeight: 1.4,
               }}>
-                {m.desc}
+                {t(DESC_KEY[id])}
               </span>
             </button>
           ))}

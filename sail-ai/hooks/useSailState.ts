@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { Attachment } from '@/components/FileAttachmentPill'
 import type { AgentMode } from '@/types/chat'
+import { useAetherisStore } from '@/lib/aetherisStore'
 
 // 'CONVERSING' = Downwind coach returned a chatMessage; input stays open
 export type SailState = 'IDLE' | 'THINKING' | 'STREAMING' | 'COMPLETE' | 'CONVERSING'
@@ -85,6 +86,7 @@ export function useSailState() {
   const [result, setResult]         = useState<AIResponse | null>(null)
   const [error, setError]           = useState<string | null>(null)
   const abortRef                    = useRef<AbortController | null>(null)
+  const language                    = useAetherisStore((s) => s.language)
 
   const submit = useCallback(async (
     input:       string,
@@ -111,6 +113,7 @@ export function useSailState() {
       if (mode)                    body.mode          = mode
       if (messages?.length)        body.messages      = messages
       body.agentMode = agentMode ?? 'auto'
+      body.language  = language ?? 'en'
       if (attachment?.isImage) {
         body.imageBase64   = attachment.content
         body.imageMimeType = attachment.mimeType

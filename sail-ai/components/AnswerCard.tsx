@@ -6,6 +6,7 @@ import { CaptainFigure } from './CaptainFigure'
 import type { AIResponse, NeedsMetrics, StrategyResult, ChatMessage, FreeTextResponse } from '@/hooks/useSailState'
 import type { AgentMode } from '@/types/chat'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import type { TranslationKey } from '@/lib/i18n/translations'
 
 interface Props {
   result:      AIResponse | null
@@ -20,15 +21,16 @@ const up = (delay = 0) => ({
   transition: { duration: 0.4, delay },
 })
 
-const AGENT_LABELS: Record<AgentMode, string> = {
-  auto:      'Auto',
-  strategy:  'Strategy',
-  analysis:  'Analysis',
-  execution: 'Execution',
-  review:    'Review',
+const AGENT_LABEL_KEY: Record<AgentMode, TranslationKey> = {
+  auto:      'agent.mode.Auto',
+  strategy:  'agent.mode.Strategy',
+  analysis:  'agent.mode.Analysis',
+  execution: 'agent.mode.Execution',
+  review:    'agent.mode.Review',
 }
 
 function AgentBadge({ mode }: { mode: AgentMode }) {
+  const { t } = useLanguage()
   if (mode === 'auto') return null
   return (
     <span style={{
@@ -47,7 +49,7 @@ function AgentBadge({ mode }: { mode: AgentMode }) {
       flexShrink:    0,
     }}>
       <span style={{ fontSize: '0.38rem' }}>◆</span>
-      {AGENT_LABELS[mode]}
+      {t(AGENT_LABEL_KEY[mode])}
     </span>
   )
 }

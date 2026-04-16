@@ -6,6 +6,16 @@ import { t as translate, LOCALES } from './translations'
 
 const STORAGE_KEY = 'sail_locale'
 
+// Sync helper — updates Zustand store without creating a React hook dependency
+function syncStoreLanguage(l: Locale) {
+  try {
+    // Dynamic import avoids circular dependency; Zustand getState() is synchronous
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { useAetherisStore } = require('@/lib/aetherisStore') as typeof import('@/lib/aetherisStore')
+    useAetherisStore.getState().setLanguage(l as import('@/types/architecture').SupportedLanguage)
+  } catch { /* ignore if store not yet initialised */ }
+}
+
 interface LanguageContextValue {
   locale:   Locale
   setLocale: (l: Locale) => void
@@ -27,18 +37,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY) as Locale | null
       if (stored && LOCALES.some(l => l.code === stored)) {
         setLocaleState(stored)
+        syncStoreLanguage(stored)
         return
       }
       // Auto-detect from browser
       const browser = navigator.language.slice(0, 2) as Locale
       if (LOCALES.some(l => l.code === browser)) {
         setLocaleState(browser)
+        syncStoreLanguage(browser)
       }
     } catch { /* SSR / private browsing */ }
   }, [])
 
   function setLocale(l: Locale) {
     setLocaleState(l)
+    syncStoreLanguage(l)
     try { localStorage.setItem(STORAGE_KEY, l) } catch { /* ignore */ }
   }
 

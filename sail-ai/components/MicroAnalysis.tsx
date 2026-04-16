@@ -1,91 +1,90 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import type { TranslationKey } from '@/lib/i18n/translations'
 
-/* ── Pattern-matched insight library ─────────────────
-   Each insight is deliberately measured, realistic,
-   and references a data point the user can verify.   */
-const INSIGHTS: { pattern: RegExp; insight: string; source: string }[] = [
+/* ── Insight key map — indexed by sector pattern ──────────────────────── */
+const INSIGHT_KEYS: { pattern: RegExp; insightKey: TranslationKey; source: string }[] = [
   {
-    pattern: /e[\-\s]?com|shopify|store|cart|woo|product|checkout/i,
-    insight: 'The Baymard Institute puts the average e-commerce checkout abandonment rate at 70.2%. Narrowing that gap by 10 percentage points — through a simplified checkout and one targeted email — is a realistic 90-day objective for most operators.',
-    source:  'Baymard Institute, 2024',
+    pattern:    /e[\-\s]?com|shopify|store|cart|woo|product|checkout/i,
+    insightKey: 'micro.insight.ecommerce',
+    source:     'Baymard Institute, 2024',
   },
   {
-    pattern: /saas|software|subscription|mrr|arr|churn|trial/i,
-    insight: 'SaaS benchmarks from OpenView Partners show that improving month-1 activation by 15% is typically worth more than equivalent ad spend — the compounding effect on retention makes it the highest-leverage action for sub-$500k ARR businesses.',
-    source:  'OpenView Partners SaaS Benchmarks 2024',
+    pattern:    /saas|software|subscription|mrr|arr|churn|trial/i,
+    insightKey: 'micro.insight.saas',
+    source:     'OpenView Partners SaaS Benchmarks 2024',
   },
   {
-    pattern: /agency|consultant|freelanc|service|client|retainer/i,
-    insight: 'Agency benchmarks indicate that structured quarterly business reviews (QBRs) reduce involuntary churn by 18–22%. For a 6-client book of business, implementing one QBR template typically recovers 1–2 at-risk retainers annually.',
-    source:  'Agency Analytics Industry Report 2024',
+    pattern:    /agency|consultant|freelanc|service|client|retainer/i,
+    insightKey: 'micro.insight.agency',
+    source:     'Agency Analytics Industry Report 2024',
   },
   {
-    pattern: /coach|train|fitness|personal train|instruct/i,
-    insight: 'Conversion data from fitness platforms shows that offering a fixed-term package (e.g. 8-session block) alongside open-ended sessions increases average transaction value by 30–40%, with no significant change in close rate.',
-    source:  'Mindbody Business Index 2024',
+    pattern:    /coach|train|fitness|personal train|instruct/i,
+    insightKey: 'micro.insight.coaching',
+    source:     'Mindbody Business Index 2024',
   },
   {
-    pattern: /restaurant|cafe|coffee|food|hospitality|dining/i,
-    insight: 'For hospitality businesses, increasing table turn rate from 1.8× to 2.2× per service period (achievable through streamlined ordering) adds roughly 20% to dinner-period revenue with no increase in covers or staff.',
-    source:  'National Restaurant Association Report 2024',
+    pattern:    /restaurant|cafe|coffee|food|hospitality|dining/i,
+    insightKey: 'micro.insight.restaurant',
+    source:     'National Restaurant Association Report 2024',
   },
   {
-    pattern: /retail|shop|boutique|fashion|clothing|apparel/i,
-    insight: 'Retail data from KPMG shows that a loyalty programme in the first tier (points-only) increases average basket size by 11–14% and visit frequency by 20% over 6 months — the payback period for implementation is typically under 60 days.',
-    source:  'KPMG Retail Pulse 2024',
+    pattern:    /retail|shop|boutique|fashion|clothing|apparel/i,
+    insightKey: 'micro.insight.retail',
+    source:     'KPMG Retail Pulse 2024',
   },
   {
-    pattern: /real estate|property|letting|landlord|agent/i,
-    insight: 'Lead-to-appointment conversion in property is highly responsive to response time. Agencies responding to enquiries within 5 minutes convert at 4× the rate of those responding after 30 minutes, per NAR lead-response data.',
-    source:  'National Association of Realtors, 2024',
+    pattern:    /real estate|property|letting|landlord|agent/i,
+    insightKey: 'micro.insight.realestate',
+    source:     'National Association of Realtors, 2024',
   },
   {
-    pattern: /market|brand|content|social|seo|ads|paid|campaign/i,
-    insight: 'HubSpot data shows that businesses publishing 4+ blog posts per week generate 3.5× more organic traffic than those publishing once weekly — but the quality-per-post threshold matters more than volume beyond that point.',
-    source:  'HubSpot Marketing Benchmarks 2024',
+    pattern:    /market|brand|content|social|seo|ads|paid|campaign/i,
+    insightKey: 'micro.insight.marketing',
+    source:     'HubSpot Marketing Benchmarks 2024',
   },
 ]
 
-const DEFAULT_INSIGHT = {
-  insight: 'McKinsey research consistently shows that improving customer retention by 5% increases profit by 25–95%, depending on sector. For most owner-managed businesses, this is a higher-return allocation than new customer acquisition at the same cost.',
-  source:  'McKinsey & Company',
-}
+const DEFAULT_INSIGHT_KEY: TranslationKey = 'micro.insight.default'
+const DEFAULT_SOURCE = 'McKinsey & Company'
+
+const PLACEHOLDER_KEYS: TranslationKey[] = [
+  'micro.placeholder.0',
+  'micro.placeholder.1',
+  'micro.placeholder.2',
+  'micro.placeholder.3',
+]
 
 function matchInsight(input: string) {
-  for (const item of INSIGHTS) {
-    if (item.pattern.test(input)) return item
+  for (const item of INSIGHT_KEYS) {
+    if (item.pattern.test(input)) return { insightKey: item.insightKey, source: item.source }
   }
-  return DEFAULT_INSIGHT
+  return { insightKey: DEFAULT_INSIGHT_KEY, source: DEFAULT_SOURCE }
 }
 
-const PLACEHOLDERS = [
-  'E-commerce, 1.5% conversion rate, £8k/month revenue…',
-  'B2B SaaS, 340 free users, 4% monthly churn…',
-  'Personal training, 12 active clients, $120/session…',
-  'Digital agency, 5 retainer clients, £22k MRR…',
-]
-
 export function MicroAnalysis() {
+  const { t } = useLanguage()
   const [input,   setInput]   = useState('')
-  const [insight, setInsight] = useState<typeof DEFAULT_INSIGHT | null>(null)
+  const [matched, setMatched] = useState<{ insightKey: TranslationKey; source: string } | null>(null)
   const [focused, setFocused] = useState(false)
   const [phIdx,   setPhIdx]   = useState(0)
-  const inputRef              = useRef<HTMLInputElement>(null)
+  const inputRef              = (null as unknown as React.RefObject<HTMLInputElement>)
 
   // Rotate placeholder quietly
   useEffect(() => {
-    const iv = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 3500)
+    const iv = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDER_KEYS.length), 3500)
     return () => clearInterval(iv)
   }, [])
 
   function handleAnalyse() {
-    const t = input.trim()
-    if (!t) return
-    setInsight(matchInsight(t))
+    const txt = input.trim()
+    if (!txt) return
+    setMatched(matchInsight(txt))
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -97,59 +96,58 @@ export function MicroAnalysis() {
       {/* ── Input row ──────────────────────────────── */}
       <div
         style={{
-          display:        'flex',
-          alignItems:     'stretch',
-          border:         `1px solid ${focused ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.14)'}`,
-          transition:     'border-color 0.2s',
-          background:     '#FFFFFF',
+          display:    'flex',
+          alignItems: 'stretch',
+          border:     `1px solid ${focused ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.14)'}`,
+          transition: 'border-color 0.2s',
+          background: '#FFFFFF',
         }}
       >
         <input
-          ref={inputRef}
           value={input}
-          onChange={e => { setInput(e.target.value); setInsight(null) }}
+          onChange={e => { setInput(e.target.value); setMatched(null) }}
           onKeyDown={handleKeyDown}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder={PLACEHOLDERS[phIdx]}
+          placeholder={t(PLACEHOLDER_KEYS[phIdx])}
           style={{
-            flex:        1,
-            padding:     '0.9375rem 1.125rem',
-            fontFamily:  'Inter, sans-serif',
-            fontSize:    '0.875rem',
-            color:       '#0C0C0E',
-            background:  'transparent',
-            border:      'none',
-            minWidth:    0,
+            flex:       1,
+            padding:    '0.9375rem 1.125rem',
+            fontFamily: 'Inter, sans-serif',
+            fontSize:   '0.875rem',
+            color:      '#0C0C0E',
+            background: 'transparent',
+            border:     'none',
+            minWidth:   0,
           }}
         />
         <button
           onClick={handleAnalyse}
           disabled={!input.trim()}
           style={{
-            padding:        '0.9375rem 1.25rem',
-            background:     input.trim() ? '#0C0C0E' : 'rgba(0,0,0,0.05)',
-            color:          input.trim() ? '#FFFFFF' : '#A1A1AA',
-            fontFamily:     'Inter, sans-serif',
-            fontSize:       '0.75rem',
-            fontWeight:     600,
-            letterSpacing:  '0.08em',
-            textTransform:  'uppercase',
-            border:         'none',
-            borderLeft:     '1px solid rgba(0,0,0,0.1)',
-            cursor:         input.trim() ? 'pointer' : 'default',
-            transition:     'background 0.18s, color 0.18s',
-            flexShrink:     0,
-            whiteSpace:     'nowrap',
+            padding:       '0.9375rem 1.25rem',
+            background:    input.trim() ? '#0C0C0E' : 'rgba(0,0,0,0.05)',
+            color:         input.trim() ? '#FFFFFF' : '#A1A1AA',
+            fontFamily:    'Inter, sans-serif',
+            fontSize:      '0.75rem',
+            fontWeight:    600,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            border:        'none',
+            borderLeft:    '1px solid rgba(0,0,0,0.1)',
+            cursor:        input.trim() ? 'pointer' : 'default',
+            transition:    'background 0.18s, color 0.18s',
+            flexShrink:    0,
+            whiteSpace:    'nowrap',
           }}
         >
-          Preview →
+          {t('micro.preview')}
         </button>
       </div>
 
       {/* ── Insight result ─────────────────────────── */}
       <AnimatePresence>
-        {insight && (
+        {matched && (
           <motion.div
             key="insight"
             initial={{ opacity: 0, y: 6 }}
@@ -169,36 +167,36 @@ export function MicroAnalysis() {
               <div>
                 <p
                   style={{
-                    fontFamily: 'Cormorant Garamond, Georgia, serif',
-                    fontStyle:  'italic',
-                    fontSize:   'clamp(1rem, 1.8vw, 1.15rem)',
-                    lineHeight: 1.55,
-                    color:      '#0C0C0E',
+                    fontFamily:   'Cormorant Garamond, Georgia, serif',
+                    fontStyle:    'italic',
+                    fontSize:     'clamp(1rem, 1.8vw, 1.15rem)',
+                    lineHeight:   1.55,
+                    color:        '#0C0C0E',
                     marginBottom: '0.75rem',
                   }}
                 >
-                  {insight.insight}
+                  {t(matched.insightKey)}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#A1A1AA', letterSpacing: '0.06em' }}>
-                    Source: {insight.source}
+                    {t('micro.source')} {matched.source}
                   </span>
                   <Link
                     href={`/chat?q=${encodeURIComponent(input)}`}
                     style={{
-                      fontFamily:    'Inter, sans-serif',
-                      fontSize:      '0.72rem',
-                      fontWeight:    600,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color:         '#0C0C0E',
-                      textDecoration:'none',
-                      borderBottom:  '1px solid rgba(0,0,0,0.2)',
-                      paddingBottom: '1px',
-                      transition:    'border-color 0.15s',
+                      fontFamily:     'Inter, sans-serif',
+                      fontSize:       '0.72rem',
+                      fontWeight:     600,
+                      letterSpacing:  '0.1em',
+                      textTransform:  'uppercase',
+                      color:          '#0C0C0E',
+                      textDecoration: 'none',
+                      borderBottom:   '1px solid rgba(0,0,0,0.2)',
+                      paddingBottom:  '1px',
+                      transition:     'border-color 0.15s',
                     }}
                   >
-                    Full analysis →
+                    {t('micro.fullAnalysis')}
                   </Link>
                 </div>
               </div>
@@ -208,17 +206,17 @@ export function MicroAnalysis() {
       </AnimatePresence>
 
       {/* ── Helper text ────────────────────────────── */}
-      {!insight && (
+      {!matched && (
         <p
           style={{
-            marginTop:  '0.625rem',
-            fontFamily: 'Inter, sans-serif',
-            fontSize:   '0.75rem',
-            color:      '#A1A1AA',
+            marginTop:     '0.625rem',
+            fontFamily:    'Inter, sans-serif',
+            fontSize:      '0.75rem',
+            color:         '#A1A1AA',
             letterSpacing: '0.02em',
           }}
         >
-          Enter a sector and one metric for an instant data-backed insight.
+          {t('micro.helperText')}
         </p>
       )}
     </div>

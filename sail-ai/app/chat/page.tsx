@@ -26,12 +26,13 @@ import { useSubscription }               from '@/hooks/useSubscription'
 import { useBusinessContext }            from '@/lib/context/BusinessContext'
 import { useAetherisStore, selectAgentMode, selectActiveAlerts } from '@/lib/aetherisStore'
 
-const PLACEHOLDERS = [
-  'E-commerce store, £8k/month revenue, 1.5% conversion rate, 68% cart abandonment…',
-  'B2B agency, 6 retainer clients, £18k MRR, need to stabilise pipeline…',
-  'SaaS product, 340 free users, 4% monthly churn, no paid conversions yet…',
-  'Personal training, 12 active clients, £95/session, want to increase throughput…',
-]
+// Placeholders are derived from translations — built inside the component
+const PLACEHOLDER_KEYS = [
+  'chat.placeholder.0',
+  'chat.placeholder.1',
+  'chat.placeholder.2',
+  'chat.placeholder.3',
+] as const
 
 const MAX            = 2000
 const API_KEY_STORE  = 'sail_groq_key'
@@ -151,7 +152,8 @@ export default function ChatPage() {
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { t, language } = useLanguage()
+  const { t } = useLanguage()
+  const PLACEHOLDERS = PLACEHOLDER_KEYS.map(k => t(k as import('@/lib/i18n/translations').TranslationKey))
 
   // ── Upwind: single-shot Aetheris (ExecutiveResponse JSON) ────────────────────
   const { state, response, error, submit, reset } = useAetherisSubmit()
@@ -299,15 +301,15 @@ export default function ChatPage() {
     setFileError('')
 
     if (file.size > MAX_FILE_BYTES) {
-      setFileError(`File too large — max 5 MB (this file is ${(file.size / (1024 * 1024)).toFixed(1)} MB)`)
+      setFileError(t('chat.fileTooLarge').replace('{size}', (file.size / (1024 * 1024)).toFixed(1)))
       return
     }
 
     try {
       const parsed = await parseFile(file)
       setAttachment(parsed)
-    } catch (err: any) {
-      setFileError(err.message ?? 'Could not read file. Please try a different format.')
+    } catch {
+      setFileError(t('chat.fileReadError'))
     }
   }
 
@@ -398,7 +400,7 @@ export default function ChatPage() {
                 {profile.sessions.length > 0 && (
                   <button
                     onClick={() => setShowHistory(true)}
-                    title="Session History"
+                    title={t('chat.sessionHistoryTitle')}
                     style={{ background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.3)', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.5rem', color: '#C9A96E' }}
                   >
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -662,18 +664,16 @@ export default function ChatPage() {
                   transition={{ delay: 0.2 }}
                   style={{ marginTop: '0.625rem', display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}
                 >
-                  {PLACEHOLDERS.map((ph, i) => (
+                  {([
+                    ['chat.pick.firstCustomers', 'chat.q.firstCustomers'],
+                    ['chat.pick.findLosses',     'chat.q.loseMoney'],
+                    ['chat.pick.monthlyFocus',   'chat.q.monthlyFocus'],
+                    ['chat.pick.raisePrices',    'chat.q.raisePrices'],
+                  ] as const).map(([labelKey, questionKey], i) => (
                     <button
                       key={i}
                       onClick={() => {
-                        const q = ph.split('…')[0].split(',')[0].trim().replace(/^[A-Z-a-z\s]+,?\s*/, '')
-                        const questions = [
-                          'How do I get my first 10 paying customers?',
-                          'Where am I losing money?',
-                          'What should I focus on this month?',
-                          'How do I raise prices without losing clients?',
-                        ]
-                        setInput(questions[i] ?? questions[0])
+                        setInput(t(questionKey as import('@/lib/i18n/translations').TranslationKey))
                         textareaRef.current?.focus()
                       }}
                       style={{
@@ -689,7 +689,7 @@ export default function ChatPage() {
                         transition:    'border-color 0.15s, color 0.15s',
                       }}
                     >
-                      {['First 10 customers', 'Find losses', 'Monthly focus', 'Raise prices'][i]}
+                      {t(labelKey as import('@/lib/i18n/translations').TranslationKey)}
                     </button>
                   ))}
                 </motion.div>
@@ -955,8 +955,8 @@ export default function ChatPage() {
             {/* Header */}
             <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 600, color: '#0C0C0E', margin: 0 }}>Session Memory</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A', margin: '2px 0 0' }}>{profile.sessions.length} past {profile.sessions.length === 1 ? 'analysis' : 'analyses'} on record</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 600, color: '#0C0C0E', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
               </div>
               <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: '#71717A', lineHeight: 1 }}>×</button>
             </div>
@@ -964,7 +964,7 @@ export default function ChatPage() {
             {/* List */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
               {profile.sessions.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#A1A1AA', textAlign: 'center', marginTop: '2rem' }}>No analyses yet. Run your first strategy to build memory.</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#A1A1AA', textAlign: 'center', marginTop: '2rem' }}>{t('chat.noAnalysesYet')}</p>
               ) : (
                 [...profile.sessions].reverse().map((s, i) => {
                   const key      = s.id ?? String(i)
@@ -1002,7 +1002,7 @@ export default function ChatPage() {
                           onClick={e => { e.stopPropagation(); setInput(s.prompt ?? ''); setShowHistory(false) }}
                           style={{ marginTop: '0.75rem', padding: '0.35rem 0.75rem', background: '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '4px', fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', cursor: 'pointer' }}
                         >
-                          Re-run this analysis →
+                          {t('chat.rerunAnalysis')}
                         </button>
                       )}
                     </div>
