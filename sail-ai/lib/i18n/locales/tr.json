@@ -35,6 +35,13 @@
   "mode.upwindDesc": "Veriyi gir → anında kesin strateji al",
   "mode.downwind":   "Rüzgarla",
   "mode.downwindDesc": "Rehberli koçluk — diyalog yoluyla strateji oluşturur",
+  "mode.sail":       "SAIL",
+  "mode.sailDesc":   "Adaptif AI — niyeti otomatik algılar ve en uygun formata yönlendirir",
+
+  "sail.creative":   "Vizyoner Analiz",
+  "sail.technical":  "Teknik Döküm",
+  "sail.analytic":   "Veri Görselleştirme",
+  "sail.detecting":  "Niyet algılanıyor…",
 
   "chat.thinking":        "Kıyaslamalar alınıyor…",
   "chat.streaming":       "Analiz hazırlanıyor…",

@@ -35,6 +35,13 @@
   "mode.upwindDesc": "Give data → get instant precise strategy",
   "mode.downwind":   "Downwind",
   "mode.downwindDesc": "Guided coaching — builds strategy through dialogue",
+  "mode.sail":       "SAIL",
+  "mode.sailDesc":   "Adaptive AI — auto-detects intent and routes to optimal format",
+
+  "sail.creative":   "Visionary Analysis",
+  "sail.technical":  "Technical Breakdown",
+  "sail.analytic":   "Data Visualization",
+  "sail.detecting":  "Detecting intent…",
 
   "chat.thinking":        "Retrieving benchmarks…",
   "chat.streaming":       "Composing analysis…",
