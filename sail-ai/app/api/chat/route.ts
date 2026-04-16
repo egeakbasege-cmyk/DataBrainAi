@@ -1,8 +1,8 @@
 /**
- * Aetheris Edge Proxy — with Groq fallback + SAIL Gemini mode
+ * Aetheris Edge Proxy — with Groq fallback + SAIL adaptive mode
  *
  * Priority:
- *   1. SAIL mode  → Gemini 2.0 Flash via REST (streaming, intent-driven)
+ *   1. SAIL mode  → Groq llama-3.3-70b streaming (intent-driven markdown)
  *   2. Railway    → Forward to Railway backend (RAILWAY_BACKEND_URL)
  *   3. Groq       → Fall back to Groq direct API (GROQ_API_KEY or body.apiKey)
  *
@@ -25,21 +25,19 @@ const { auth } = NextAuth(authConfig)
 const UPSTREAM_URL  = process.env.RAILWAY_BACKEND_URL
 const GROQ_URL      = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODEL    = 'llama-3.3-70b-versatile'
-const GEMINI_MODEL  = 'gemini-2.0-flash'
-const GEMINI_BASE   = 'https://generativelanguage.googleapis.com/v1beta/models'
 
-// ── SAIL mode: Gemini streaming via REST (Edge-compatible) ────────────────────
+// ── SAIL mode: Groq streaming (intent-driven markdown) ────────────────────────
 
 async function handleSailMode(body: AetherisPayload): Promise<Response> {
-  const geminiKey = process.env.GEMINI_API_KEY
-  if (!geminiKey) {
+  const groqKey = process.env.GROQ_API_KEY ?? (body as AetherisPayload & { apiKey?: string }).apiKey
+  if (!groqKey) {
     return Response.json(
-      { error: 'SAIL mode requires a GEMINI_API_KEY environment variable.' },
+      { error: 'AI provider not configured. Add a Groq API key in settings to continue.' },
       { status: 503 },
     )
   }
 
-  const language   = body.language ?? 'en'
+  const language     = body.language ?? 'en'
   const intentResult = classifyIntent(body.message)
   const systemText   = buildSailSystemPrompt(intentResult.intent, language)
   const userText     = [
@@ -48,50 +46,53 @@ async function handleSailMode(body: AetherisPayload): Promise<Response> {
     body.fileContent?.trim() ? `DATA\n${body.fileContent.slice(0, 8000)}` : null,
   ].filter(Boolean).join('\n\n')
 
-  const geminiUrl = `${GEMINI_BASE}/${GEMINI_MODEL}:streamGenerateContent?key=${geminiKey}&alt=sse`
-
-  let geminiRes: Response
+  let groqRes: Response
   try {
-    geminiRes = await fetch(geminiUrl, {
+    groqRes = await fetch(GROQ_URL, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${groqKey}`,
+        'Content-Type':  'application/json',
+      },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemText }] },
-        contents: [{ role: 'user', parts: [{ text: userText }] }],
-        generationConfig: {
-          temperature:     0.72,
-          maxOutputTokens: 2048,
-        },
+        model:       GROQ_MODEL,
+        messages: [
+          { role: 'system', content: systemText },
+          { role: 'user',   content: userText   },
+        ],
+        stream:      true,
+        temperature: 0.72,
+        max_tokens:  2048,
       }),
     })
   } catch {
-    return Response.json({ error: 'Unable to reach Gemini API.' }, { status: 502 })
+    return Response.json({ error: 'Unable to reach Groq API.' }, { status: 502 })
   }
 
-  if (!geminiRes.ok) {
-    const errText = await geminiRes.text().catch(() => '')
+  if (!groqRes.ok) {
+    const status = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
     return Response.json(
-      { error: `Gemini error ${geminiRes.status}: ${errText.slice(0, 200)}` },
-      { status: geminiRes.status === 429 ? 429 : 502 },
+      { error: status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : `Groq error: ${groqRes.status}` },
+      { status },
     )
   }
 
-  // Transform Gemini SSE → plain text stream consumed by the client
-  // Gemini SSE emits: data: {"candidates":[{"content":{"parts":[{"text":"..."}]}}]}
+  // Transform Groq SSE → plain text stream consumed by the client
+  // Groq SSE: data: {"choices":[{"delta":{"content":"..."}}]}
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>()
   const writer  = writable.getWriter()
   const encoder = new TextEncoder()
   const decoder = new TextDecoder()
 
-  // Attach intent metadata as the very first chunk (JSON line)
+  // First chunk: intent metadata JSON line (parsed by client to set intent badge)
   const metaLine = JSON.stringify({ __sailMeta: { intent: intentResult.intent, confidence: intentResult.confidence } })
   writer.write(encoder.encode(metaLine + '\n')).catch(() => {})
 
-  // Pipe Gemini body through, extracting text chunks
+  // Pipe Groq SSE body, extracting text deltas
   ;(async () => {
     try {
-      const reader = geminiRes.body!.getReader()
-      let buffer = ''
+      const reader = groqRes.body!.getReader()
+      let buffer   = ''
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
@@ -103,8 +104,8 @@ async function handleSailMode(body: AetherisPayload): Promise<Response> {
           const jsonStr = line.slice(6).trim()
           if (!jsonStr || jsonStr === '[DONE]') continue
           try {
-            const chunk   = JSON.parse(jsonStr)
-            const text    = chunk?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+            const chunk = JSON.parse(jsonStr)
+            const text  = chunk?.choices?.[0]?.delta?.content ?? ''
             if (text) await writer.write(encoder.encode(text))
           } catch { /* skip malformed chunk */ }
         }
