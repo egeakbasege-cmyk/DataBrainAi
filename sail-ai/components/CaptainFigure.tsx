@@ -3,168 +3,234 @@
 import { motion } from 'framer-motion'
 
 /**
- * CaptainFigure — an illustrated naval captain with:
- * - Animated eye blink
- * - Subtle breathing motion
- * - Gentle head tilt on mount
- * - Champagne gold accent details (matches Sail AI palette)
+ * CaptainFigure — a distinguished naval captain with:
+ * - Realistic human proportions and facial structure
+ * - Animated eye blink with natural timing
+ * - Subtle breathing + gentle head sway
+ * - Navy uniform with gold epaulettes and anchor badge
+ * - Champagne gold accent details matching Sail AI palette
  */
-export function CaptainFigure({ size = 88 }: { size?: number }) {
-  const scale = size / 88
+export function CaptainFigure({ size = 96 }: { size?: number }) {
+  const scale = size / 96
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.88, y: 6 }}
+      initial={{ opacity: 0, scale: 0.85, y: 8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
-      style={{ width: size, height: size * (100 / 88), flexShrink: 0 }}
+      transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+      style={{ width: size, height: size * (110 / 96), flexShrink: 0 }}
     >
       <svg
         width={size}
-        height={size * (100 / 88)}
-        viewBox="0 0 88 100"
+        height={size * (110 / 96)}
+        viewBox="0 0 96 110"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* ── Shadow ──────────────────────────── */}
-        <ellipse cx="44" cy="98" rx="22" ry="3" fill="rgba(12,12,14,0.08)" />
+        <defs>
+          {/* Skin gradient */}
+          <radialGradient id="skin" cx="50%" cy="40%" r="55%">
+            <stop offset="0%"   stopColor="#F2D4A8" />
+            <stop offset="60%"  stopColor="#E8C090" />
+            <stop offset="100%" stopColor="#D4A870" />
+          </radialGradient>
+          {/* Coat gradient */}
+          <linearGradient id="coat" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stopColor="#1A3F60" />
+            <stop offset="100%" stopColor="#0F2840" />
+          </linearGradient>
+          {/* Gold gradient */}
+          <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stopColor="#D4A95A" />
+            <stop offset="100%" stopColor="#B8882E" />
+          </linearGradient>
+          {/* Shadow under figure */}
+          <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor="rgba(12,12,14,0.18)" />
+            <stop offset="100%" stopColor="rgba(12,12,14,0)" />
+          </radialGradient>
+        </defs>
 
-        {/* ── Coat / body ─────────────────────── */}
+        {/* ── Ground shadow ──────────────────────── */}
+        <ellipse cx="48" cy="107" rx="26" ry="3.5" fill="url(#shadow)" />
+
+        {/* ── Coat / Body ────────────────────────── */}
         <motion.g
-          animate={{ scaleY: [1, 1.012, 1] }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ transformOrigin: '44px 80px' }}
+          animate={{ scaleY: [1, 1.014, 1] }}
+          transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ transformOrigin: '48px 85px' }}
         >
-          {/* Main coat */}
+          {/* Main coat body */}
           <path
-            d="M18 62 Q28 57 44 56 Q60 57 70 62 L74 95 H14 Z"
-            fill="#163450"
+            d="M20 66 Q30 60 48 59 Q66 60 76 66 L80 107 H16 Z"
+            fill="url(#coat)"
           />
-          {/* Coat lapels */}
-          <path d="M44 56 L38 70 L44 68 L50 70 L44 56 Z" fill="#FAFAF8" opacity="0.92" />
-          {/* Lapel shadow */}
-          <path d="M44 56 L38 70 L44 68" fill="rgba(12,12,14,0.08)" />
-          {/* Coat shading */}
-          <path d="M18 62 Q28 57 35 57 L28 95 H14 Z" fill="rgba(12,12,14,0.12)" />
-          {/* Centre button line */}
-          <line x1="44" y1="68" x2="44" y2="95" stroke="rgba(12,12,14,0.1)" strokeWidth="0.5" strokeDasharray="3 3" />
+          {/* Left coat shadow */}
+          <path d="M20 66 Q30 60 36 60 L28 107 H16 Z" fill="rgba(0,0,0,0.18)" />
+          {/* Right coat highlight */}
+          <path d="M76 66 Q66 60 62 61 L70 107 H80 Z" fill="rgba(255,255,255,0.04)" />
+
+          {/* Lapels — white shirt visible */}
+          <path d="M48 59 L40 76 L48 73 L56 76 L48 59 Z" fill="#F5F5F0" opacity="0.95" />
+          {/* Lapel shadow fold */}
+          <path d="M48 59 L40 76 L48 73 Z" fill="rgba(0,0,0,0.07)" />
+
+          {/* Tie — navy with thin gold stripe */}
+          <path d="M46 72 L48 80 L50 72 L48 68 Z" fill="#0A1E30" />
+          <line x1="48" y1="69" x2="48" y2="80" stroke="#C9A96E" strokeWidth="0.5" opacity="0.6" />
+
+          {/* Centre button placket */}
+          <line x1="48" y1="77" x2="48" y2="107" stroke="rgba(255,255,255,0.07)" strokeWidth="1" strokeDasharray="4 3" />
+
           {/* Buttons */}
-          {[74, 81, 88].map((y, i) => (
-            <circle key={i} cx="44" cy={y - 8} r="1.8" fill="#C9A96E" />
+          {[80, 88, 96].map((y, i) => (
+            <g key={i}>
+              <circle cx="48" cy={y} r="2.2" fill="url(#gold)" />
+              <circle cx="48" cy={y} r="1" fill="rgba(255,255,255,0.3)" />
+            </g>
           ))}
+
+          {/* Pocket — left breast */}
+          <rect x="22" y="76" width="9" height="6" rx="1" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+
+          {/* Anchor badge on breast pocket */}
+          <g transform="translate(25, 77)" opacity="0.85">
+            <circle cx="3" cy="1.8" r="1.5" stroke="#C9A96E" strokeWidth="0.8" fill="none" />
+            <line x1="3" y1="3.3" x2="3" y2="7" stroke="#C9A96E" strokeWidth="0.8" />
+            <line x1="1.2" y1="5.2" x2="4.8" y2="5.2" stroke="#C9A96E" strokeWidth="0.8" />
+            <path d="M1.2 7 Q3 6.2 4.8 7" stroke="#C9A96E" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+          </g>
         </motion.g>
 
-        {/* ── Epaulettes ──────────────────────── */}
+        {/* ── Epaulettes ─────────────────────────── */}
+        {/* Left */}
         <g>
-          {/* Left */}
-          <rect x="12" y="61" width="10" height="5" rx="1.5" fill="#C9A96E" opacity="0.9" />
-          <line x1="13" y1="63" x2="21" y2="63" stroke="rgba(12,12,14,0.2)" strokeWidth="0.6" />
-          <circle cx="12.5" cy="63" r="1" fill="#C9A96E" />
-          <circle cx="21.5" cy="63" r="1" fill="#C9A96E" />
-          {/* Right */}
-          <rect x="66" y="61" width="10" height="5" rx="1.5" fill="#C9A96E" opacity="0.9" />
-          <line x1="67" y1="63" x2="75" y2="63" stroke="rgba(12,12,14,0.2)" strokeWidth="0.6" />
-          <circle cx="66.5" cy="63" r="1" fill="#C9A96E" />
-          <circle cx="75.5" cy="63" r="1" fill="#C9A96E" />
+          <rect x="13" y="64" width="12" height="5.5" rx="2" fill="url(#gold)" />
+          <rect x="13" y="64" width="12" height="2" rx="1" fill="rgba(255,255,255,0.2)" />
+          {[15, 18, 21].map(x => <circle key={x} cx={x} cy="69" r="1.2" fill="#C9A96E" />)}
+        </g>
+        {/* Right */}
+        <g>
+          <rect x="71" y="64" width="12" height="5.5" rx="2" fill="url(#gold)" />
+          <rect x="71" y="64" width="12" height="2" rx="1" fill="rgba(255,255,255,0.2)" />
+          {[73, 76, 79].map(x => <circle key={x} cx={x} cy="69" r="1.2" fill="#C9A96E" />)}
         </g>
 
-        {/* ── Anchor badge (left breast) ──────── */}
-        <g transform="translate(22, 68)" opacity="0.7">
-          <circle cx="6" cy="3.5" r="2.2" stroke="#C9A96E" strokeWidth="0.9" />
-          <line x1="6" y1="5.7" x2="6" y2="12" stroke="#C9A96E" strokeWidth="0.9" />
-          <line x1="3" y1="8.5" x2="9" y2="8.5" stroke="#C9A96E" strokeWidth="0.9" />
-          <path d="M3 12 Q6 10.5 9 12" stroke="#C9A96E" strokeWidth="0.9" fill="none" strokeLinecap="round" />
-        </g>
-
-        {/* ── Neck ────────────────────────────── */}
-        <rect x="38" y="52" width="12" height="7" rx="3" fill="#E8C99A" />
+        {/* ── Neck ───────────────────────────────── */}
+        <rect x="40" y="54" width="16" height="8" rx="4" fill="url(#skin)" />
         {/* Collar */}
-        <path d="M36 58 L44 62 L52 58" fill="none" stroke="#FAFAF8" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d="M38 60 L48 65 L58 60" fill="none" stroke="#F5F5F0" strokeWidth="1.8" strokeLinejoin="round" />
 
-        {/* ── Head ────────────────────────────── */}
+        {/* ── Head ───────────────────────────────── */}
         <motion.g
-          animate={{ rotate: [0, 1, -0.5, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', times: [0, 0.3, 0.7, 1] }}
-          style={{ transformOrigin: '44px 52px' }}
+          animate={{ rotate: [0, 0.8, -0.5, 0.3, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', times: [0, 0.25, 0.5, 0.75, 1] }}
+          style={{ transformOrigin: '48px 50px' }}
         >
-          {/* Head shape */}
-          <ellipse cx="44" cy="40" rx="14.5" ry="15.5" fill="#E8C99A" />
-          {/* Jaw shadow */}
-          <ellipse cx="44" cy="51" rx="10" ry="4" fill="rgba(12,12,14,0.07)" />
-          {/* Cheek blush */}
-          <ellipse cx="34" cy="42" rx="3.5" ry="2" fill="rgba(220,140,100,0.15)" />
-          <ellipse cx="54" cy="42" rx="3.5" ry="2" fill="rgba(220,140,100,0.15)" />
+          {/* Head base shape — realistic oval */}
+          <ellipse cx="48" cy="37" rx="17" ry="19" fill="url(#skin)" />
 
-          {/* ── Eyes ─────────────────────────── */}
-          {/* Left eye */}
-          <ellipse cx="37.5" cy="38" rx="2.8" ry="3" fill="#1A2F4A" />
-          <ellipse cx="37.5" cy="38" rx="1.4" ry="1.5" fill="#2A4A6E" />
-          <circle cx="38.3" cy="37.2" r="0.9" fill="white" />
-          <circle cx="37.2" cy="38.5" r="0.4" fill="white" opacity="0.5" />
+          {/* Jawline definition */}
+          <path d="M34 44 Q38 52 48 55 Q58 52 62 44" fill="url(#skin)" />
+
+          {/* Jaw shadow */}
+          <ellipse cx="48" cy="53" rx="11" ry="3.5" fill="rgba(0,0,0,0.06)" />
+
+          {/* Cheek blush — subtle */}
+          <ellipse cx="35" cy="40" rx="4" ry="2.5" fill="rgba(210,130,90,0.12)" />
+          <ellipse cx="61" cy="40" rx="4" ry="2.5" fill="rgba(210,130,90,0.12)" />
+
+          {/* ── Eyes ───────────────────────────── */}
+          {/* Eye socket shadows */}
+          <ellipse cx="39" cy="36" rx="4" ry="3.5" fill="rgba(0,0,0,0.06)" />
+          <ellipse cx="57" cy="36" rx="4" ry="3.5" fill="rgba(0,0,0,0.06)" />
+
+          {/* Left eye — iris + pupil */}
+          <ellipse cx="39" cy="36" rx="3.5" ry="3.8" fill="#FAFAF8" />
+          <ellipse cx="39" cy="36" rx="2.2" ry="2.4" fill="#2A4A70" />
+          <ellipse cx="39" cy="36" rx="1.2" ry="1.3" fill="#0C1A2A" />
+          <circle  cx="40.1" cy="34.8" r="1" fill="white" />
+          <circle  cx="38.4" cy="37.2" r="0.45" fill="rgba(255,255,255,0.5)" />
+
           {/* Right eye */}
-          <ellipse cx="50.5" cy="38" rx="2.8" ry="3" fill="#1A2F4A" />
-          <ellipse cx="50.5" cy="38" rx="1.4" ry="1.5" fill="#2A4A6E" />
-          <circle cx="51.3" cy="37.2" r="0.9" fill="white" />
-          <circle cx="50.2" cy="38.5" r="0.4" fill="white" opacity="0.5" />
+          <ellipse cx="57" cy="36" rx="3.5" ry="3.8" fill="#FAFAF8" />
+          <ellipse cx="57" cy="36" rx="2.2" ry="2.4" fill="#2A4A70" />
+          <ellipse cx="57" cy="36" rx="1.2" ry="1.3" fill="#0C1A2A" />
+          <circle  cx="58.1" cy="34.8" r="1" fill="white" />
+          <circle  cx="56.4" cy="37.2" r="0.45" fill="rgba(255,255,255,0.5)" />
+
+          {/* Eyelids */}
+          <path d="M35.5 33.5 Q39 32 42.5 33.5" stroke="rgba(0,0,0,0.25)" strokeWidth="0.7" fill="none" strokeLinecap="round" />
+          <path d="M53.5 33.5 Q57 32 60.5 33.5" stroke="rgba(0,0,0,0.25)" strokeWidth="0.7" fill="none" strokeLinecap="round" />
+          <path d="M35.5 38.5 Q39 39.5 42.5 38.5" stroke="rgba(0,0,0,0.15)" strokeWidth="0.5" fill="none" strokeLinecap="round" />
+          <path d="M53.5 38.5 Q57 39.5 60.5 38.5" stroke="rgba(0,0,0,0.15)" strokeWidth="0.5" fill="none" strokeLinecap="round" />
 
           {/* Animated blink */}
           <motion.g
             animate={{ scaleY: [0, 1, 0] }}
-            transition={{ duration: 0.15, repeat: Infinity, repeatDelay: 4.2, ease: 'easeInOut' }}
-            style={{ transformOrigin: '44px 38px' }}
+            transition={{ duration: 0.12, repeat: Infinity, repeatDelay: 4.8, ease: 'easeInOut' }}
+            style={{ transformOrigin: '48px 36px' }}
           >
-            <rect x="34.5" y="35.5" width="6.2" height="5.5" rx="2.5" fill="#E8C99A" />
-            <rect x="47.5" y="35.5" width="6.2" height="5.5" rx="2.5" fill="#E8C99A" />
+            <ellipse cx="39" cy="36" rx="3.8" ry="3.5" fill="url(#skin)" />
+            <ellipse cx="57" cy="36" rx="3.8" ry="3.5" fill="url(#skin)" />
           </motion.g>
 
-          {/* ── Eyebrows ─────────────────────── */}
-          <path d="M34 33.5 Q37.5 31.5 41 33" stroke="#8B6B1A" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-          <path d="M47 33 Q50.5 31.5 54 33.5" stroke="#8B6B1A" strokeWidth="1.3" strokeLinecap="round" fill="none" />
+          {/* ── Eyebrows — strong, distinguished ── */}
+          <path d="M34.5 30 Q39 27.5 43.5 30" stroke="#6B4A18" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+          <path d="M52.5 30 Q57 27.5 61.5 30" stroke="#6B4A18" strokeWidth="1.6" strokeLinecap="round" fill="none" />
 
-          {/* ── Nose ─────────────────────────── */}
-          <path d="M44 39 L42.5 44.5 Q44 45.5 45.5 44.5 Z" fill="rgba(12,12,14,0.08)" />
-          <ellipse cx="42.5" cy="44.5" rx="1.2" ry="0.8" fill="rgba(12,12,14,0.1)" />
-          <ellipse cx="45.5" cy="44.5" rx="1.2" ry="0.8" fill="rgba(12,12,14,0.1)" />
+          {/* ── Nose — defined bridge ──────────── */}
+          <path d="M48 37 L46 44 Q48 46 50 44 L48 37 Z" fill="rgba(0,0,0,0.05)" />
+          <path d="M46 44.5 Q44.5 46 45.5 46.8" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+          <path d="M50 44.5 Q51.5 46 50.5 46.8" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" fill="none" strokeLinecap="round" />
 
-          {/* ── Moustache ─────────────────────── */}
-          <path d="M37 47 Q40 45 44 46.5 Q48 45 51 47" fill="#7A5A10" opacity="0.85" />
-          <path d="M37 47 Q40 45.5 44 47 Q48 45.5 51 47 Q48 48.5 44 47.5 Q40 48.5 37 47 Z" fill="#8B6B1A" opacity="0.7" />
+          {/* ── Moustache — distinguished grey ─── */}
+          <path d="M40 48.5 Q44 46.5 48 48 Q52 46.5 56 48.5" fill="#8B7355" opacity="0.8" />
+          <path d="M40 48.5 Q44 47 48 48.5 Q52 47 56 48.5 Q52 50 48 49.2 Q44 50 40 48.5 Z" fill="#7A6245" opacity="0.65" />
+          {/* Grey streaks in moustache */}
+          <path d="M43 47.5 Q44.5 47 46 47.5" stroke="#C0B090" strokeWidth="0.6" fill="none" opacity="0.5" />
+          <path d="M50 47.5 Q51.5 47 53 47.5" stroke="#C0B090" strokeWidth="0.6" fill="none" opacity="0.5" />
 
-          {/* ── Mouth ─────────────────────────── */}
-          <path d="M40 49.5 Q44 51.5 48 49.5" stroke="#8B6B1A" strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.6" />
+          {/* ── Mouth — composed smile ─────────── */}
+          <path d="M43 51 Q48 53.5 53 51" stroke="#8B6B1A" strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.5" />
 
-          {/* ── Ear details ─────────────────── */}
-          <ellipse cx="29.5" cy="40" rx="2.5" ry="3.5" fill="#DCAF80" />
-          <ellipse cx="29.8" cy="40" rx="1.3" ry="2" fill="#E8C99A" />
-          <ellipse cx="58.5" cy="40" rx="2.5" ry="3.5" fill="#DCAF80" />
-          <ellipse cx="58.2" cy="40" rx="1.3" ry="2" fill="#E8C99A" />
+          {/* ── Ears ───────────────────────────── */}
+          <ellipse cx="31" cy="38" rx="3" ry="4.5" fill="#DBA070" />
+          <ellipse cx="31.4" cy="38" rx="1.6" ry="2.8" fill="url(#skin)" />
+          <path d="M30 36.5 Q32 38 30 39.5" stroke="rgba(0,0,0,0.08)" strokeWidth="0.5" fill="none" />
+          <ellipse cx="65" cy="38" rx="3" ry="4.5" fill="#DBA070" />
+          <ellipse cx="64.6" cy="38" rx="1.6" ry="2.8" fill="url(#skin)" />
 
-          {/* ── Captain's hat ─────────────────── */}
+          {/* ── Sideburns / temples — grey ─────── */}
+          <path d="M31.5 30 Q32.5 26 35 24" stroke="#A09080" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.45" />
+          <path d="M64.5 30 Q63.5 26 61 24" stroke="#A09080" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.45" />
+
+          {/* ── Captain's hat ──────────────────── */}
           {/* Hat brim */}
-          <rect x="25" y="25" width="38" height="5" rx="2" fill="#163450" />
-          {/* Brim highlight */}
-          <rect x="25" y="25" width="38" height="1.5" rx="1" fill="rgba(255,255,255,0.08)" />
+          <rect x="27" y="20" width="42" height="5.5" rx="2.5" fill="#0F2840" />
+          <rect x="27" y="20" width="42" height="1.5" rx="1" fill="rgba(255,255,255,0.07)" />
           {/* Hat body */}
-          <rect x="30" y="10" width="28" height="16" rx="3" fill="#163450" />
-          {/* Hat crown line */}
-          <rect x="30" y="10" width="28" height="2" rx="2" fill="rgba(255,255,255,0.05)" />
+          <rect x="32" y="4"  width="32" height="17" rx="3.5" fill="#163450" />
+          {/* Hat body shadow on left */}
+          <rect x="32" y="4"  width="7"  height="17" rx="0" fill="rgba(0,0,0,0.12)" />
+          {/* Hat crown crease */}
+          <rect x="32" y="4"  width="32" height="2.5" rx="2.5" fill="rgba(255,255,255,0.05)" />
           {/* Gold band */}
-          <rect x="30" y="22" width="28" height="3" rx="0" fill="#C9A96E" />
-          {/* Band sheen */}
-          <rect x="30" y="22" width="28" height="1" fill="rgba(255,255,255,0.2)" />
-          {/* Hat emblem */}
-          <g transform="translate(37, 12)">
-            {/* Anchor */}
-            <circle cx="7" cy="4" r="2.5" stroke="#C9A96E" strokeWidth="1" fill="none" />
-            <line x1="7" y1="6.5" x2="7" y2="12" stroke="#C9A96E" strokeWidth="1" />
-            <line x1="4" y1="9" x2="10" y2="9" stroke="#C9A96E" strokeWidth="1" />
-            <path d="M4 12 Q7 11 10 12" stroke="#C9A96E" strokeWidth="1" fill="none" strokeLinecap="round" />
-            {/* Wreath */}
-            <path d="M2 7 Q0 5 2 3" stroke="#C9A96E" strokeWidth="0.7" fill="none" opacity="0.6" />
-            <path d="M12 7 Q14 5 12 3" stroke="#C9A96E" strokeWidth="0.7" fill="none" opacity="0.6" />
+          <rect x="32" y="18" width="32" height="3.5" rx="0" fill="url(#gold)" />
+          <rect x="32" y="18" width="32" height="1.2" fill="rgba(255,255,255,0.22)" />
+
+          {/* Emblem — anchor in wreath */}
+          <g transform="translate(39, 6)">
+            <circle cx="9" cy="5.5" r="3.2" stroke="#C9A96E" strokeWidth="1.1" fill="none" />
+            <line x1="9" y1="8.7"  x2="9"  y2="15"  stroke="#C9A96E" strokeWidth="1.1" />
+            <line x1="5.5" y1="12" x2="12.5" y2="12" stroke="#C9A96E" strokeWidth="1.1" />
+            <path d="M5.5 15 Q9 13.5 12.5 15" stroke="#C9A96E" strokeWidth="1.1" fill="none" strokeLinecap="round" />
+            {/* Laurel sprigs */}
+            <path d="M3.5 9 Q1 7.5 3 5.5" stroke="#C9A96E" strokeWidth="0.8" fill="none" opacity="0.65" />
+            <path d="M14.5 9 Q17 7.5 15 5.5" stroke="#C9A96E" strokeWidth="0.8" fill="none" opacity="0.65" />
+            <path d="M2.5 7 Q0.5 5.5 2 4" stroke="#C9A96E" strokeWidth="0.7" fill="none" opacity="0.45" />
+            <path d="M15.5 7 Q17.5 5.5 16 4" stroke="#C9A96E" strokeWidth="0.7" fill="none" opacity="0.45" />
           </g>
-          {/* Hat side shadow */}
-          <rect x="30" y="10" width="6" height="16" rx="0" fill="rgba(12,12,14,0.1)" />
         </motion.g>
       </svg>
     </motion.div>

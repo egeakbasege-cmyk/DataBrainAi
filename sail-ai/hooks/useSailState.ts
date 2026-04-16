@@ -118,7 +118,7 @@ export function useSailState() {
         body.fileContent = attachment.content
       }
 
-      const res = await fetch('/api/chat', {
+      const res = await fetch('/api/downwind', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(body),

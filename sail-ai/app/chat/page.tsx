@@ -18,7 +18,9 @@ import { VoiceInput }                    from '@/components/VoiceInput'
 import { ExportModal }                   from '@/components/ExportModal'
 import { AgentStatusBar }                from '@/components/AgentStatusBar'
 import { useAetherisSubmit }             from '@/hooks/useAetherisSubmit'
+import { useSailState }                  from '@/hooks/useSailState'
 import type { ConvMessage }              from '@/hooks/useSailState'
+import { AnswerCard }                    from '@/components/AnswerCard'
 import { useLanguage }                   from '@/lib/i18n/LanguageContext'
 import { useSubscription }               from '@/hooks/useSubscription'
 import { useBusinessContext }            from '@/lib/context/BusinessContext'
@@ -149,8 +151,20 @@ export default function ChatPage() {
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+
+  // ── Upwind: single-shot Aetheris (ExecutiveResponse JSON) ────────────────────
   const { state, response, error, submit, reset } = useAetherisSubmit()
+
+  // ── Downwind: guided captain coaching (chatMessage / StrategyResult) ─────────
+  const {
+    state:  coachState,
+    streamText,
+    result: coachResult,
+    error:  coachError,
+    submit: coachSubmit,
+    reset:  coachReset,
+  } = useSailState()
   const { isPro, usedToday, canAnalyse, showPaywall, recordUsage, triggerPaywall, closePaywall, activatePro } = useSubscription()
   const { buildContext, addSession, profile } = useBusinessContext()
 
@@ -233,21 +247,48 @@ export default function ChatPage() {
     if (e.target.value.length <= MAX) setInput(e.target.value)
   }
 
+  // ── Update conversation history when captain returns a coaching turn ─────────
+  useEffect(() => {
+    if (!coachResult || !('chatMessage' in coachResult)) return
+    setConvHistory(prev => [
+      ...prev,
+      { role: 'assistant' as const, content: coachResult.chatMessage },
+    ])
+    setInput('')
+  }, [coachResult])
+
   async function handleSubmit() {
-    const t = input.trim()
-    if (!t || state === 'THINKING') return
-    if (!canAnalyse) { triggerPaywall(); return }
+    const txt = input.trim()
+    if (!txt || isActive) return
+    if (!canAnalyse && !isConversing) { triggerPaywall(); return }
 
     const context = profile.diagnosticPrompt
       ? (isPro ? buildContext() : profile.diagnosticPrompt + '\n\n')
       : (isPro ? buildContext() : '')
 
-    await submit(t, {
-      context:      context || undefined,
-      attachment:   attachment ?? undefined,
-      analysisMode: mode,
-      apiKey:       apiKey || undefined,
-    })
+    if (isDownwind) {
+      const updatedHistory: ConvMessage[] = [
+        ...convHistory,
+        { role: 'user', content: txt },
+      ]
+      setConvHistory(updatedHistory)
+      await coachSubmit(
+        txt,
+        context || undefined,
+        apiKey || undefined,
+        attachment ?? undefined,
+        'downwind',
+        updatedHistory,
+        agentMode as any,
+      )
+    } else {
+      await submit(txt, {
+        context:      context || undefined,
+        attachment:   attachment ?? undefined,
+        analysisMode: mode,
+        apiKey:       apiKey || undefined,
+      })
+    }
   }
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -272,6 +313,7 @@ export default function ChatPage() {
 
   function handleReset() {
     reset()
+    coachReset()
     setInput('')
     setAttachment(null)
     setFileError('')
@@ -286,12 +328,21 @@ export default function ChatPage() {
     setShowKeyPanel(false)
   }
 
-  const isActive     = state === 'THINKING'
-  const isComplete   = state === 'COMPLETE' || state === 'ERROR'
-  const isConversing = false  // Aetheris uses single-turn JSON responses
+  // ── Mode-conditional derived state ───────────────────────────────────────────
+  const isDownwind   = mode === 'downwind'
+  const isActive     = isDownwind
+    ? coachState === 'THINKING' || coachState === 'STREAMING'
+    : state === 'THINKING'
+  const isComplete   = isDownwind
+    ? coachState === 'COMPLETE' || coachState === 'ERROR'
+    : state === 'COMPLETE' || state === 'ERROR'
+  const isConversing = isDownwind && coachState === 'CONVERSING'
+  const currentError = isDownwind ? coachError : error
 
-  // Map AetherisSubmitState → SailState for legacy components (HelmButton, SailboatAnimation)
-  const sailState = (state === 'ERROR' ? 'COMPLETE' : state) as import('@/hooks/useSailState').SailState
+  // SailState for HelmButton + SailboatAnimation
+  const sailState = isDownwind
+    ? coachState
+    : (state === 'ERROR' ? 'COMPLETE' : state) as import('@/hooks/useSailState').SailState
   const charsLeft  = MAX - input.length
   const warn       = charsLeft < 200
   const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
@@ -493,7 +544,7 @@ export default function ChatPage() {
                   value={input}
                   onChange={handleChange}
                   onKeyDown={e => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSubmit() }
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void handleSubmit() }
                   }}
                   placeholder={PLACEHOLDERS[phIdx]}
                   disabled={isActive}
@@ -585,7 +636,7 @@ export default function ChatPage() {
                       </motion.span>
                     )}
                   </div>
-                  <HelmButton state={sailState} onClick={handleSubmit} disabled={isActive || !input.trim()} />
+                  <HelmButton state={sailState} onClick={() => void handleSubmit()} disabled={isActive || !input.trim()} />
                 </div>
               </div>
 
@@ -649,7 +700,7 @@ export default function ChatPage() {
 
         {/* ── Error ── */}
         <AnimatePresence>
-          {error && (
+          {currentError && (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -666,11 +717,11 @@ export default function ChatPage() {
             >
               <span style={{ color: '#991B1B', lineHeight: 1.5, flexShrink: 0, fontSize: '0.85rem' }}>⚠</span>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.6, color: '#991B1B', margin: 0 }}>
-                {error === 'RATE_LIMIT'
+                {currentError === 'RATE_LIMIT'
                   ? 'Request limit reached. Please wait a moment before trying again.'
-                  : error.toLowerCase().includes('sign in') || error.toLowerCase().includes('unauthorized')
+                  : (currentError ?? '').toLowerCase().includes('sign in') || (currentError ?? '').toLowerCase().includes('unauthorized')
                   ? <span>Session expired. <a href="/login" style={{ color: '#991B1B', textDecoration: 'underline' }}>Sign in again →</a></span>
-                  : error}
+                  : currentError}
               </p>
             </motion.div>
           )}
@@ -754,7 +805,26 @@ export default function ChatPage() {
 
         {/* ── Result ── */}
         <AnimatePresence>
-          {(state === 'THINKING' || isComplete) && (
+          {/* Downwind: captain coaching card */}
+          {isDownwind && (coachState === 'THINKING' || coachState === 'STREAMING' || coachState === 'COMPLETE' || coachState === 'CONVERSING') && (
+            <motion.div
+              key="coach"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+            >
+              <AnswerCard
+                result={coachResult}
+                streamText={streamText}
+                isStreaming={coachState === 'THINKING' || coachState === 'STREAMING'}
+                agentMode={agentMode as any}
+              />
+            </motion.div>
+          )}
+
+          {/* Upwind: executive response card */}
+          {!isDownwind && (state === 'THINKING' || isComplete) && (
             <motion.div
               key="answer"
               initial={{ opacity: 0, y: 10 }}

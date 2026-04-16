@@ -7,115 +7,175 @@ import type { SailState } from '@/hooks/useSailState'
 const INK   = '#0C0C0E'
 const NAVY  = '#163450'
 const GOLD  = '#C9A96E'
-const LIGHT = 'rgba(12,12,14,0.14)'
-const WAKE  = 'rgba(12,12,14,0.06)'
+const SAIL1 = 'rgba(12,12,14,0.11)'
+const SAIL2 = 'rgba(12,12,14,0.06)'
+const FOAM  = 'rgba(255,255,255,0.55)'
 
 interface Props { state: SailState }
 
 export function SailboatAnimation({ state }: Props) {
   const boatCtrl   = useAnimation()
   const sailCtrl   = useAnimation()
-  const marinaCtrl = useAnimation()
+  const jibCtrl    = useAnimation()
   const wakeCtrl   = useAnimation()
   const flagCtrl   = useAnimation()
+  const marinaCtrl = useAnimation()
 
   useEffect(() => {
     if (state === 'IDLE') {
       boatCtrl.stop()
       sailCtrl.stop()
-      boatCtrl.set({ x: 0, rotate: 0 })
-      sailCtrl.start({ scaleY: 0.22, transition: { duration: 0.5 } })
-      marinaCtrl.start({ opacity: 0, transition: { duration: 0.3 } })
-      wakeCtrl.start({ opacity: 0, scaleX: 0, transition: { duration: 0.3 } })
+      jibCtrl.stop()
+      boatCtrl.set({ x: 0, rotate: 0, y: 0 })
+      sailCtrl.start({
+        d: SAIL_FLAT,
+        transition: { duration: 0.5 },
+      })
+      jibCtrl.start({
+        d: JIB_FLAT,
+        transition: { duration: 0.5 },
+      })
+      wakeCtrl.start({ opacity: 0, scaleX: 0, transition: { duration: 0.4 } })
       flagCtrl.start({ rotate: 0, transition: { duration: 0.3 } })
+      marinaCtrl.start({ opacity: 0, transition: { duration: 0.3 } })
       return
     }
 
     if (state === 'THINKING') {
-      sailCtrl.start({ scaleY: 1, transition: { duration: 0.7, ease: [0.34, 1.56, 0.64, 1] } })
+      // Sail raises and gently fills — boat bobs in place
+      sailCtrl.start({
+        d: SAIL_FULL,
+        transition: { duration: 0.8, ease: [0.34, 1.56, 0.64, 1] },
+      })
+      jibCtrl.start({
+        d: JIB_FULL,
+        transition: { duration: 0.8, ease: [0.34, 1.56, 0.64, 1] },
+      })
       boatCtrl.start({
-        rotate: [0, 2.5, -2.5, 2, -1.5, 0],
-        transition: { duration: 2.4, ease: 'easeInOut', repeat: Infinity },
+        rotate: [0, 1.8, -1.8, 1.4, -1.2, 0.8, -0.6, 0],
+        y:      [0, -2, 1, -2.5, 1.5, -1.5, 0.8, 0],
+        transition: { duration: 3.6, ease: 'easeInOut', repeat: Infinity },
       })
       flagCtrl.start({
-        rotate: [0, 15, -8, 12, 0],
-        transition: { duration: 1.8, ease: 'easeInOut', repeat: Infinity },
+        rotate: [0, 12, -6, 10, -4, 8, 0],
+        transition: { duration: 2.2, ease: 'easeInOut', repeat: Infinity },
       })
-      marinaCtrl.start({ opacity: 0, transition: { duration: 0.2 } })
       wakeCtrl.start({ opacity: 0, transition: { duration: 0.2 } })
+      marinaCtrl.start({ opacity: 0, transition: { duration: 0.2 } })
       return
     }
 
     if (state === 'STREAMING') {
-      sailCtrl.start({ scaleY: 1, transition: { duration: 0.2 } })
+      // Full sail, boat surges across, wake fans out behind
+      sailCtrl.start({
+        d: [SAIL_FULL, SAIL_GUST, SAIL_FULL, SAIL_EASE, SAIL_FULL],
+        transition: { duration: 2.8, ease: 'easeInOut', repeat: Infinity },
+      })
+      jibCtrl.start({
+        d: [JIB_FULL, JIB_GUST, JIB_FULL, JIB_EASE, JIB_FULL],
+        transition: { duration: 2.8, ease: 'easeInOut', repeat: Infinity },
+      })
       boatCtrl.start({
-        x:      [0, 178, 0],
-        rotate: [0, 1.5, -1, 1.2, -0.8, 0],
+        x:      [0, 184, 0],
+        y:      [0, -3, 2, -2, 1, -1, 0],
+        rotate: [0, -1.5, 1.2, -1.8, 1.0, -0.8, 0],
         transition: {
-          x:      { duration: 4.8, ease: 'easeInOut', repeat: Infinity },
-          rotate: { duration: 2.4, ease: 'easeInOut', repeat: Infinity },
+          x:      { duration: 5.2, ease: 'easeInOut', repeat: Infinity },
+          y:      { duration: 2.6, ease: 'easeInOut', repeat: Infinity },
+          rotate: { duration: 2.6, ease: 'easeInOut', repeat: Infinity },
         },
       })
       flagCtrl.start({
-        rotate: [0, 20, -5, 18, -3, 20],
-        transition: { duration: 1.2, ease: 'easeInOut', repeat: Infinity },
+        rotate: [0, 22, -4, 18, -6, 20, 0],
+        transition: { duration: 1.4, ease: 'easeInOut', repeat: Infinity },
       })
       wakeCtrl.start({
-        opacity: [0, 0.7, 0],
-        scaleX:  [0.2, 1, 0.2],
-        transition: { duration: 2.4, ease: 'easeInOut', repeat: Infinity },
+        opacity: [0, 0.85, 0.6, 0.85, 0],
+        scaleX:  [0.1, 1, 0.9, 1, 0.1],
+        transition: { duration: 2.6, ease: 'easeInOut', repeat: Infinity },
       })
+      marinaCtrl.start({ opacity: 0, transition: { duration: 0.2 } })
       return
     }
 
-    if (state === 'COMPLETE') {
-      boatCtrl.start({ x: 162, rotate: 0, transition: { duration: 1.0, ease: 'easeOut' } })
-      sailCtrl.start({ scaleY: 0.28, transition: { duration: 0.55, delay: 0.5 } })
-      flagCtrl.start({ rotate: 0, transition: { duration: 0.4, delay: 0.5 } })
-      wakeCtrl.start({ opacity: 0, transition: { duration: 0.4 } })
-      marinaCtrl.start({ opacity: 1, transition: { duration: 0.7, delay: 0.7 } })
+    if (state === 'COMPLETE' || state === 'CONVERSING') {
+      boatCtrl.start({ x: 165, rotate: 0, y: 0, transition: { duration: 1.0, ease: 'easeOut' } })
+      sailCtrl.start({ d: SAIL_FLAT, transition: { duration: 0.7, delay: 0.4 } })
+      jibCtrl.start({  d: JIB_FLAT,  transition: { duration: 0.7, delay: 0.4 } })
+      flagCtrl.start({ rotate: 0, transition: { duration: 0.4, delay: 0.4 } })
+      wakeCtrl.start({ opacity: 0, scaleX: 0, transition: { duration: 0.4 } })
+      marinaCtrl.start({ opacity: 1, transition: { duration: 0.8, delay: 0.8 } })
     }
-  }, [state, boatCtrl, sailCtrl, marinaCtrl, wakeCtrl, flagCtrl])
+  }, [state, boatCtrl, sailCtrl, jibCtrl, wakeCtrl, flagCtrl, marinaCtrl])
 
   return (
     <div
       className="relative w-full overflow-hidden flex items-end justify-start"
-      style={{ height: 120 }}
+      style={{ height: 128 }}
     >
       <SeaBackground state={state} />
 
+      {/* Marina dock */}
       <motion.div
         animate={marinaCtrl}
         initial={{ opacity: 0 }}
-        className="absolute right-3 bottom-6"
+        className="absolute right-3 bottom-5"
       >
         <MarinaIcon />
       </motion.div>
 
-      {/* Wake trail */}
-      <motion.div
+      {/* Wake — rendered behind boat */}
+      <motion.svg
         animate={wakeCtrl}
         initial={{ opacity: 0, scaleX: 0 }}
+        width="72" height="14"
+        viewBox="0 0 72 14"
         style={{
-          position:     'absolute',
-          bottom:       28,
-          left:         18,
-          width:        60,
-          height:       6,
-          background:   `linear-gradient(90deg, transparent, ${WAKE} 40%, ${WAKE})`,
-          borderRadius: '50%',
-          transformOrigin: 'left center',
+          position:        'absolute',
+          bottom:          26,
+          left:            10,
+          transformOrigin: 'right center',
         }}
-      />
+      >
+        <path
+          d="M72 7 Q54 2 36 7 Q18 12 0 7"
+          stroke={FOAM}
+          strokeWidth="2.5"
+          fill="none"
+          strokeLinecap="round"
+          opacity="0.6"
+        />
+        <path
+          d="M60 7 Q48 3.5 36 7 Q24 10.5 12 7"
+          stroke={FOAM}
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+          opacity="0.35"
+        />
+        <path
+          d="M50 5 Q40 2 30 5"
+          stroke={FOAM}
+          strokeWidth="1"
+          fill="none"
+          strokeLinecap="round"
+          opacity="0.2"
+        />
+      </motion.svg>
 
-      {/* Boat */}
+      {/* Boat group */}
       <motion.div
         animate={boatCtrl}
-        initial={{ x: 0, rotate: 0 }}
-        className="absolute bottom-6 left-4"
-        style={{ originX: 0.5, originY: 1 }}
+        initial={{ x: 0, rotate: 0, y: 0 }}
+        className="absolute left-5"
+        style={{ originX: 0.5, originY: 0.85, bottom: 22 }}
       >
-        <BoatSVG sailCtrl={sailCtrl} flagCtrl={flagCtrl} state={state} />
+        <BoatSVG
+          sailCtrl={sailCtrl}
+          jibCtrl={jibCtrl}
+          flagCtrl={flagCtrl}
+          state={state}
+        />
       </motion.div>
 
       {/* State label */}
@@ -124,22 +184,22 @@ export function SailboatAnimation({ state }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           style={{
-            position:      'absolute',
-            top:            8,
-            right:          8,
-            fontFamily:     'Inter, sans-serif',
-            fontSize:       '0.58rem',
-            letterSpacing:  '0.1em',
-            textTransform:  'uppercase',
-            color:          GOLD,
-            display:        'flex',
-            alignItems:     'center',
-            gap:            '0.35rem',
+            position:     'absolute',
+            top:           8,
+            right:         10,
+            fontFamily:    'Inter, sans-serif',
+            fontSize:      '0.58rem',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color:         GOLD,
+            display:       'flex',
+            alignItems:    'center',
+            gap:           '0.35rem',
           }}
         >
           <motion.span
-            animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 1.2, repeat: Infinity }}
+            animate={{ opacity: [1, 0.25, 1] }}
+            transition={{ duration: 1.4, repeat: Infinity }}
             style={{
               display:      'inline-block',
               width:         5,
@@ -148,7 +208,7 @@ export function SailboatAnimation({ state }: Props) {
               background:   GOLD,
             }}
           />
-          {state === 'THINKING' ? 'Retrieving benchmarks'
+          {state === 'THINKING'   ? 'Retrieving benchmarks'
             : state === 'STREAMING' ? 'Charting course'
             : 'Arrived'}
         </motion.div>
@@ -157,138 +217,320 @@ export function SailboatAnimation({ state }: Props) {
   )
 }
 
-/* ─── Sea background ─────────────────────────────── */
-function SeaBackground({ state }: { state: SailState }) {
-  const moving = state === 'STREAMING'
-  return (
-    <svg className="absolute bottom-0 w-full" height="44" viewBox="0 0 480 44" preserveAspectRatio="none">
-      <motion.path
-        fill="rgba(12,12,14,0.04)"
-        animate={moving ? {
-          d: [
-            'M0 22 Q60 10 120 22 Q180 34 240 22 Q300 10 360 22 Q420 34 480 22 L480 44 L0 44 Z',
-            'M0 22 Q60 34 120 22 Q180 10 240 22 Q300 34 360 22 Q420 10 480 22 L480 44 L0 44 Z',
-          ],
-        } : { d: 'M0 22 Q60 10 120 22 Q180 34 240 22 Q300 10 360 22 Q420 34 480 22 L480 44 L0 44 Z' }}
-        transition={moving ? { duration: 3.5, repeat: Infinity, ease: 'easeInOut' } : {}}
-      />
-      <motion.path
-        fill="rgba(12,12,14,0.07)"
-        stroke="rgba(12,12,14,0.1)"
-        strokeWidth="0.8"
-        animate={moving ? {
-          d: [
-            'M0 28 Q60 18 120 28 Q180 38 240 28 Q300 18 360 28 Q420 38 480 28 L480 44 L0 44 Z',
-            'M0 28 Q60 38 120 28 Q180 18 240 28 Q300 38 360 28 Q420 18 480 28 L480 44 L0 44 Z',
-          ],
-        } : { d: 'M0 28 Q60 18 120 28 Q180 38 240 28 Q300 18 360 28 Q420 38 480 28 L480 44 L0 44 Z' }}
-        transition={moving ? { duration: 2.6, repeat: Infinity, ease: 'easeInOut' } : {}}
-      />
-    </svg>
-  )
-}
+/* ─── Sail path keyframes ───────────────────────────────────────────────────
+   Main sail: mast at x=46, head at y=6, clew at ~(78,46), tack at (46,46)
+   Flat   = sail furled / no belly
+   Full   = sail filled with moderate wind belly
+   Gust   = sail deeply bellied (gust)
+   Ease   = sail slightly spilled
+*/
+const SAIL_FLAT = 'M46 8 L46 46 L46 46 Z'
+const SAIL_FULL = 'M46 8 C62 16 76 32 78 46 L46 46 Z'
+const SAIL_GUST = 'M46 8 C68 14 84 30 82 46 L46 46 Z'
+const SAIL_EASE = 'M46 8 C56 18 70 36 74 46 L46 46 Z'
 
-/* ─── Boat SVG ───────────────────────────────────── */
+/* ─── Jib path keyframes ────────────────────────────────────────────────────
+   Jib: head at (46,10), tack at (46,46), clew at ~(16,44)
+*/
+const JIB_FLAT = 'M46 10 L46 46 L46 46 Z'
+const JIB_FULL = 'M46 10 C36 22 20 36 16 44 L46 46 Z'
+const JIB_GUST = 'M46 10 C32 20 14 34 12 44 L46 46 Z'
+const JIB_EASE = 'M46 10 C38 24 22 38 18 44 L46 46 Z'
+
+/* ─── Boat SVG ──────────────────────────────────────────────────────────────*/
 function BoatSVG({
   sailCtrl,
+  jibCtrl,
   flagCtrl,
   state,
 }: {
   sailCtrl: ReturnType<typeof useAnimation>
+  jibCtrl:  ReturnType<typeof useAnimation>
   flagCtrl: ReturnType<typeof useAnimation>
   state:    SailState
 }) {
   return (
-    <svg width="88" height="68" viewBox="0 0 88 68" fill="none">
+    <svg width="96" height="72" viewBox="0 0 96 72" fill="none">
+      <defs>
+        {/* Main sail gradient — light hits from upper-right */}
+        <linearGradient id="sailGrad" x1="46" y1="8" x2="80" y2="46" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="rgba(255,255,255,0.18)" />
+          <stop offset="60%"  stopColor="rgba(12,12,14,0.09)" />
+          <stop offset="100%" stopColor="rgba(12,12,14,0.16)" />
+        </linearGradient>
+        {/* Jib gradient */}
+        <linearGradient id="jibGrad" x1="46" y1="10" x2="14" y2="44" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="rgba(255,255,255,0.12)" />
+          <stop offset="100%" stopColor="rgba(12,12,14,0.12)" />
+        </linearGradient>
+        {/* Hull gradient — darker underside */}
+        <linearGradient id="hullGrad" x1="48" y1="40" x2="48" y2="64" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#1e4470" />
+          <stop offset="100%" stopColor="#0d2235" />
+        </linearGradient>
+        {/* Hull gloss */}
+        <linearGradient id="hullGloss" x1="20" y1="42" x2="76" y2="42" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="rgba(255,255,255,0)" />
+          <stop offset="35%"  stopColor="rgba(255,255,255,0.1)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+        </linearGradient>
+      </defs>
 
-      {/* Mast */}
-      <line x1="44" y1="5" x2="44" y2="46" stroke={INK} strokeWidth="2" strokeLinecap="round" />
+      {/* ── Rigging lines (behind sails) ── */}
+      <line x1="46" y1="7"  x2="14" y2="44" stroke={INK} strokeWidth="0.7" opacity="0.15" />
+      <line x1="46" y1="7"  x2="78" y2="40" stroke={INK} strokeWidth="0.7" opacity="0.12" />
+      <line x1="46" y1="20" x2="22" y2="42" stroke={INK} strokeWidth="0.4" opacity="0.09" />
+      {/* Stay wire fore */}
+      <line x1="46" y1="7"  x2="16" y2="46" stroke={INK} strokeWidth="0.5" opacity="0.10" />
 
-      {/* Sails */}
-      <motion.g
-        animate={sailCtrl}
-        initial={{ scaleY: 0.22 }}
-        style={{ transformBox: 'fill-box', transformOrigin: 'bottom center' }}
-      >
-        {/* Main sail */}
-        <path d="M44 7 L74 43 L44 46 Z" fill={LIGHT} stroke={INK} strokeWidth="1.4" strokeLinejoin="round" />
-        {[13, 20, 28, 36].map((y, i) => {
-          const t  = (y - 7) / (43 - 7)
-          const x2 = 44 + t * (74 - 44) - 1
-          return (
-            <line key={y} x1={46} y1={y} x2={x2} y2={y + 0.5}
-              stroke={INK} strokeWidth="0.45" opacity={0.18 + i * 0.06} />
-          )
-        })}
-        {/* Foresail */}
-        <path d="M44 9 L16 43 L44 46 Z" fill={WAKE} stroke={INK} strokeWidth="1" strokeLinejoin="round" />
-        {[17, 26, 35].map((y, i) => {
-          const t  = (y - 9) / (43 - 9)
-          const x1 = 44 - t * (44 - 16) + 1
-          return <line key={y} x1={x1} y1={y} x2={42} y2={y}
-            stroke={INK} strokeWidth="0.35" opacity={0.12 + i * 0.05} />
-        })}
-      </motion.g>
-
-      {/* Animated flag */}
+      {/* ── Main sail ── */}
       <motion.path
-        animate={flagCtrl}
-        d="M44 2 L54 5.5 L44 9 Z"
-        fill={GOLD}
-        opacity="0.9"
-        style={{ transformOrigin: '44px 5.5px' }}
+        animate={sailCtrl}
+        initial={{ d: SAIL_FLAT }}
+        fill="url(#sailGrad)"
+        stroke={INK}
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      {/* Batten lines on main sail — subtle horizontal seams */}
+      {[14, 22, 30, 38].map((y, i) => {
+        const t  = (y - 8) / (46 - 8)
+        const x2 = 46 + t * (78 - 46)
+        return (
+          <line
+            key={y}
+            x1={47} y1={y}
+            x2={x2 - 1} y2={y + 0.5}
+            stroke={INK}
+            strokeWidth="0.4"
+            opacity={0.10 + i * 0.04}
+          />
+        )
+      })}
+
+      {/* ── Jib / foresail ── */}
+      <motion.path
+        animate={jibCtrl}
+        initial={{ d: JIB_FLAT }}
+        fill="url(#jibGrad)"
+        stroke={INK}
+        strokeWidth="0.9"
+        strokeLinejoin="round"
       />
 
-      {/* Rigging */}
-      <line x1="44" y1="6"  x2="16" y2="44" stroke={INK} strokeWidth="0.6" opacity="0.18" />
-      <line x1="44" y1="6"  x2="72" y2="40" stroke={INK} strokeWidth="0.6" opacity="0.14" />
-      <line x1="44" y1="18" x2="22" y2="40" stroke={INK} strokeWidth="0.4" opacity="0.1"  />
+      {/* ── Mast ── */}
+      <line x1="46" y1="4" x2="46" y2="48" stroke={INK} strokeWidth="2.2" strokeLinecap="round" />
+      {/* Mast cap */}
+      <circle cx="46" cy="5" r="1.8" fill={GOLD} opacity="0.7" />
 
-      {/* Hull */}
-      <path d="M10 45 Q44 56 78 45 L74 41 Q44 51 14 41 Z" fill={NAVY} />
-      <path d="M14 41 Q44 49 74 41 L72 39 Q44 47 16 39 Z" fill="rgba(255,255,255,0.06)" />
-      <path d="M12 47 Q44 57 76 47 L74 46 Q44 55 14 46 Z" fill={GOLD} opacity="0.35" />
-      <path d="M44 50 L40 58 L48 58 Z" fill={NAVY} opacity="0.6" />
+      {/* ── Boom ── */}
+      <line x1="46" y1="46" x2="78" y2="46" stroke={INK} strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+
+      {/* ── Flag ── */}
+      <motion.path
+        animate={flagCtrl}
+        d="M46 2 L57 5.5 L46 9 Z"
+        fill={GOLD}
+        opacity="0.92"
+        style={{ transformOrigin: '46px 5.5px' }}
+      />
+
+      {/* ── Hull — main body ── */}
+      {/* Deck */}
+      <path
+        d="M18 44 Q46 50 76 44 L72 42 Q46 48 22 42 Z"
+        fill="rgba(255,255,255,0.07)"
+      />
+      {/* Hull sides */}
+      <path
+        d="M14 44 Q46 60 82 44 L78 48 Q46 64 18 48 Z"
+        fill="url(#hullGrad)"
+      />
+      {/* Hull gloss stripe */}
+      <path
+        d="M20 44 Q46 58 76 44 L76 46 Q46 60 20 46 Z"
+        fill="url(#hullGloss)"
+      />
+      {/* Gold waterline stripe */}
+      <path
+        d="M16 47 Q46 62 80 47 L80 48.5 Q46 63.5 16 48.5 Z"
+        fill={GOLD}
+        opacity="0.40"
+      />
+      {/* Keel shadow in water */}
+      <ellipse cx="48" cy="62" rx="20" ry="3.5" fill={INK} opacity="0.08" />
 
       {/* Portholes */}
-      <circle cx="54" cy="44" r="2.2" stroke={INK} strokeWidth="0.7" fill="none" opacity="0.4" />
-      <circle cx="54" cy="44" r="0.9" fill="rgba(201,169,110,0.25)" />
-      <circle cx="62" cy="44" r="2"   stroke={INK} strokeWidth="0.6" fill="none" opacity="0.3" />
+      <circle cx="56" cy="46" r="2.4" stroke={INK} strokeWidth="0.8" fill="rgba(201,169,110,0.15)" opacity="0.55" />
+      <circle cx="64" cy="46" r="2.1" stroke={INK} strokeWidth="0.7" fill="none" opacity="0.40" />
+      <circle cx="72" cy="45" r="1.8" stroke={INK} strokeWidth="0.6" fill="none" opacity="0.30" />
 
-      {/* Captain on deck (shown when active) */}
+      {/* ── Cockpit ── */}
+      <ellipse cx="34" cy="44" rx="7" ry="2" fill={NAVY} opacity="0.7" />
+
+      {/* ── Tiny captain silhouette on deck ── */}
       {state !== 'IDLE' && (
-        <g transform="translate(38, 30)" opacity="0.85">
-          <path d="M4 10 Q5 7.5 6 10 L7 14 L3 14 Z" fill={NAVY} />
-          <ellipse cx="5" cy="7.5" rx="2.2" ry="2.5" fill="#E8C99A" />
-          <rect x="3" y="3.5" width="4" height="2.5" rx="0.5" fill={NAVY} />
-          <rect x="2.5" y="5.8" width="5" height="0.8" rx="0.3" fill={NAVY} />
-          <rect x="3" y="5.8" width="4" height="0.6" rx="0" fill={GOLD} opacity="0.8" />
+        <g transform="translate(28, 28)" opacity="0.90">
+          {/* Body */}
+          <path d="M4 12 C3.5 9 4 7 5 12 L6.5 16 L2.5 16 Z" fill={NAVY} />
+          {/* Head */}
+          <ellipse cx="5" cy="8.5" rx="2.4" ry="2.7" fill="#E8C99A" />
+          {/* Captain hat */}
+          <rect x="2.8" y="4.5" width="4.4" height="2.8" rx="0.6" fill={NAVY} />
+          <rect x="2.3" y="7.0" width="5.4" height="0.9" rx="0.4" fill={NAVY} />
+          <rect x="2.8" y="7.0" width="4.4" height="0.7" fill={GOLD} opacity="0.85" />
+          {/* Arm gesture */}
+          <line x1="6.5" y1="13" x2="9.5" y2="11" stroke={NAVY} strokeWidth="1.2" strokeLinecap="round" />
         </g>
       )}
     </svg>
   )
 }
 
-/* ─── Marina icon ────────────────────────────────── */
+/* ─── Sea background ────────────────────────────────────────────────────────
+   Three wave layers at different depths/speeds for parallax effect.
+*/
+function SeaBackground({ state }: { state: SailState }) {
+  const moving = state === 'STREAMING'
+  const active = state !== 'IDLE'
+
+  return (
+    <svg
+      className="absolute bottom-0 w-full"
+      height="52"
+      viewBox="0 0 480 52"
+      preserveAspectRatio="none"
+    >
+      <defs>
+        {/* Deep water gradient */}
+        <linearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="rgba(12,12,14,0.00)" />
+          <stop offset="40%"  stopColor="rgba(12,12,14,0.04)" />
+          <stop offset="100%" stopColor="rgba(12,12,14,0.09)" />
+        </linearGradient>
+      </defs>
+
+      {/* Deep ocean fill */}
+      <rect x="0" y="28" width="480" height="24" fill="url(#seaGrad)" />
+
+      {/* Layer 1 — far background swells, slow */}
+      <motion.path
+        fill="rgba(12,12,14,0.03)"
+        animate={active ? {
+          d: [
+            'M0 34 Q80 26 160 34 Q240 42 320 34 Q400 26 480 34 L480 52 L0 52 Z',
+            'M0 34 Q80 42 160 34 Q240 26 320 34 Q400 42 480 34 L480 52 L0 52 Z',
+          ],
+        } : { d: 'M0 34 Q80 26 160 34 Q240 42 320 34 Q400 26 480 34 L480 52 L0 52 Z' }}
+        transition={active ? { duration: 4.2, repeat: Infinity, ease: 'easeInOut' } : {}}
+      />
+
+      {/* Layer 2 — mid swells */}
+      <motion.path
+        fill="rgba(12,12,14,0.05)"
+        stroke="rgba(255,255,255,0.04)"
+        strokeWidth="0.6"
+        animate={active ? {
+          d: [
+            'M0 36 Q60 28 120 36 Q180 44 240 36 Q300 28 360 36 Q420 44 480 36 L480 52 L0 52 Z',
+            'M0 36 Q60 44 120 36 Q180 28 240 36 Q300 44 360 36 Q420 28 480 36 L480 52 L0 52 Z',
+          ],
+        } : { d: 'M0 36 Q60 28 120 36 Q180 44 240 36 Q300 28 360 36 Q420 44 480 36 L480 52 L0 52 Z' }}
+        transition={active ? { duration: 3.0, repeat: Infinity, ease: 'easeInOut' } : {}}
+      />
+
+      {/* Layer 3 — surface chop, fastest */}
+      <motion.path
+        fill="rgba(12,12,14,0.08)"
+        stroke="rgba(255,255,255,0.06)"
+        strokeWidth="0.8"
+        animate={active ? {
+          d: [
+            'M0 40 Q40 34 80 40 Q120 46 160 40 Q200 34 240 40 Q280 46 320 40 Q360 34 400 40 Q440 46 480 40 L480 52 L0 52 Z',
+            'M0 40 Q40 46 80 40 Q120 34 160 40 Q200 46 240 40 Q280 34 320 40 Q360 46 400 40 Q440 34 480 40 L480 52 L0 52 Z',
+          ],
+        } : { d: 'M0 40 Q40 34 80 40 Q120 46 160 40 Q200 34 240 40 Q280 46 320 40 Q360 34 400 40 Q440 46 480 40 L480 52 L0 52 Z' }}
+        transition={active ? { duration: 1.9, repeat: Infinity, ease: 'easeInOut' } : {}}
+      />
+
+      {/* Foam crests — only when moving */}
+      {moving && (
+        <>
+          <motion.path
+            fill="none"
+            stroke="rgba(255,255,255,0.18)"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            animate={{
+              d: [
+                'M60 38 Q80 34 100 38',
+                'M60 38 Q80 42 100 38',
+              ],
+              opacity: [0.18, 0.32, 0.18],
+            }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.path
+            fill="none"
+            stroke="rgba(255,255,255,0.14)"
+            strokeWidth="0.9"
+            strokeLinecap="round"
+            animate={{
+              d: [
+                'M200 36 Q220 32 240 36',
+                'M200 36 Q220 40 240 36',
+              ],
+              opacity: [0.14, 0.26, 0.14],
+            }}
+            transition={{ duration: 2.3, repeat: Infinity, ease: 'easeInOut', delay: 0.7 }}
+          />
+          <motion.path
+            fill="none"
+            stroke="rgba(255,255,255,0.12)"
+            strokeWidth="0.8"
+            strokeLinecap="round"
+            animate={{
+              d: [
+                'M340 39 Q360 35 380 39',
+                'M340 39 Q360 43 380 39',
+              ],
+              opacity: [0.12, 0.22, 0.12],
+            }}
+            transition={{ duration: 2.7, repeat: Infinity, ease: 'easeInOut', delay: 1.4 }}
+          />
+        </>
+      )}
+    </svg>
+  )
+}
+
+/* ─── Marina icon ───────────────────────────────────────────────────────────*/
 function MarinaIcon() {
   return (
-    <svg width="58" height="50" viewBox="0 0 58 50" fill="none">
-      <rect x="2"  y="35" width="54" height="5"   rx="2"   fill={LIGHT} stroke="rgba(12,12,14,0.1)" strokeWidth="0.8" />
-      <rect x="4"  y="30" width="4.5" height="13" rx="1.2" fill={LIGHT} />
-      <rect x="27" y="30" width="4.5" height="13" rx="1.2" fill={LIGHT} />
-      <rect x="50" y="30" width="4.5" height="13" rx="1.2" fill={LIGHT} />
-      <rect x="3.5"  y="28.5" width="5.5" height="2" rx="1" fill={GOLD} opacity="0.55" />
-      <rect x="26.5" y="28.5" width="5.5" height="2" rx="1" fill={GOLD} opacity="0.55" />
-      <rect x="49.5" y="28.5" width="5.5" height="2" rx="1" fill={GOLD} opacity="0.55" />
-      <rect x="19" y="8"  width="16" height="24" rx="3.5" fill={LIGHT} stroke="rgba(12,12,14,0.1)" strokeWidth="0.8" />
-      <path d="M16 8 L27 1 L38 8 Z" fill={LIGHT} stroke="rgba(12,12,14,0.08)" strokeWidth="0.7" />
-      <circle cx="27" cy="5" r="3.5" fill={GOLD} opacity="0.5" />
-      <circle cx="27" cy="5" r="2"   fill={GOLD} opacity="0.7" />
-      <circle cx="27" cy="5" r="5.5" fill={GOLD} opacity="0.1" />
-      <rect x="19" y="16" width="16" height="3"  rx="0.5" fill="rgba(12,12,14,0.06)" />
-      <rect x="19" y="23" width="16" height="3"  rx="0.5" fill="rgba(12,12,14,0.06)" />
-      <rect x="24" y="26" width="6"  height="6"  rx="1.5" fill="rgba(12,12,14,0.07)" />
-      <rect x="24" y="11" width="6"  height="4"  rx="1"   fill="rgba(201,169,110,0.2)" stroke="rgba(12,12,14,0.1)" strokeWidth="0.5" />
+    <svg width="58" height="52" viewBox="0 0 58 52" fill="none">
+      {/* Pier platform */}
+      <rect x="2"  y="36" width="54" height="5"   rx="2"    fill="rgba(12,12,14,0.1)"  stroke="rgba(12,12,14,0.1)" strokeWidth="0.8" />
+      {/* Mooring posts */}
+      <rect x="4"  y="31" width="4.5" height="13" rx="1.2"  fill="rgba(12,12,14,0.10)" />
+      <rect x="27" y="31" width="4.5" height="13" rx="1.2"  fill="rgba(12,12,14,0.10)" />
+      <rect x="50" y="31" width="4.5" height="13" rx="1.2"  fill="rgba(12,12,14,0.10)" />
+      {/* Post caps */}
+      <rect x="3.5"  y="29.5" width="5.5" height="2" rx="1" fill={GOLD} opacity="0.55" />
+      <rect x="26.5" y="29.5" width="5.5" height="2" rx="1" fill={GOLD} opacity="0.55" />
+      <rect x="49.5" y="29.5" width="5.5" height="2" rx="1" fill={GOLD} opacity="0.55" />
+      {/* Harbour building */}
+      <rect x="19" y="9"  width="16" height="24" rx="3.5"   fill="rgba(12,12,14,0.09)" stroke="rgba(12,12,14,0.09)" strokeWidth="0.8" />
+      {/* Roof */}
+      <path d="M16 9 L27 2 L38 9 Z"                         fill="rgba(12,12,14,0.09)" stroke="rgba(12,12,14,0.07)" strokeWidth="0.7" />
+      {/* Lighthouse beacon */}
+      <circle cx="27" cy="5.5" r="3.5" fill={GOLD} opacity="0.50" />
+      <circle cx="27" cy="5.5" r="2"   fill={GOLD} opacity="0.75" />
+      <circle cx="27" cy="5.5" r="5.5" fill={GOLD} opacity="0.08" />
+      {/* Windows */}
+      <rect x="19" y="17" width="16" height="3"  rx="0.5" fill="rgba(12,12,14,0.06)" />
+      <rect x="19" y="24" width="16" height="3"  rx="0.5" fill="rgba(12,12,14,0.06)" />
+      <rect x="24" y="27" width="6"  height="6"  rx="1.5" fill="rgba(12,12,14,0.07)" />
+      <rect x="24" y="12" width="6"  height="4"  rx="1"   fill="rgba(201,169,110,0.2)" stroke="rgba(12,12,14,0.1)" strokeWidth="0.5" />
     </svg>
   )
 }
