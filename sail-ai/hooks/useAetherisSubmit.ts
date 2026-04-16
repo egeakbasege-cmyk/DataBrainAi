@@ -35,9 +35,15 @@ export type AetherisSubmitState = 'IDLE' | 'THINKING' | 'COMPLETE' | 'ERROR'
 export interface AetherisSubmitOptions {
   context?:      string
   attachment?:   Attachment
-  analysisMode?: 'upwind' | 'downwind'
+  analysisMode?: 'upwind' | 'downwind' | 'sail'
   /** BYOK — forwarded to the Edge proxy for Groq fallback calls. */
   apiKey?:       string
+  /** SAIL mode callback for streaming chunks */
+  onSailChunk?: (chunk: string) => void
+  /** SAIL mode callback for intent detection */
+  onSailIntent?: (intent: 'creative' | 'technical' | 'analytic') => void
+  /** SAIL mode callback for stream completion */
+  onSailComplete?: (fullContent: string) => void
 }
 
 export function useAetherisSubmit() {
@@ -127,7 +133,62 @@ export function useAetherisSubmit() {
         )
       }
 
-      // The Aetheris endpoint returns JSON — no stream reader needed
+      // SAIL mode uses streaming — handle SSE response
+      if (opts?.analysisMode === 'sail' && res.headers.get('content-type')?.includes('text/event-stream')) {
+        // Extract intent from headers
+        const intentHeader = res.headers.get('X-Sail-Intent') as 'creative' | 'technical' | 'analytic' | null
+        if (intentHeader && opts.onSailIntent) {
+          opts.onSailIntent(intentHeader)
+        }
+
+        // Parse SSE stream
+        if (!res.body) throw new Error('No response body')
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let fullContent = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (trimmed.startsWith('data:')) {
+              const data = trimmed.slice(5).trim()
+              if (data === '[DONE]') continue
+              try {
+                const parsed = JSON.parse(data)
+                // Handle AI SDK UI message format
+                if (parsed.type === 'text-delta' && parsed.delta) {
+                  fullContent += parsed.delta
+                  if (opts.onSailChunk) opts.onSailChunk(parsed.delta)
+                }
+              } catch {
+                // Skip invalid JSON chunks
+              }
+            }
+          }
+        }
+
+        // Call completion callback
+        if (opts.onSailComplete) opts.onSailComplete(fullContent)
+
+        // Create a minimal ExecutiveResponse for SAIL mode
+        setResponse({
+          insight: fullContent,
+          matrixOptions: [],
+          executionHorizons: { thirtyDays: [], sixtyDays: [], ninetyDays: [] }
+        })
+        setState('COMPLETE')
+        return
+      }
+
+      // The Aetheris endpoint returns JSON — no stream reader needed (Upwind/Downwind)
       const raw = await res.json()
 
       // Client-side schema enforcement (last line of defence)

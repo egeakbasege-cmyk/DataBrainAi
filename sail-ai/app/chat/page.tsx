@@ -13,7 +13,8 @@ import { FeedbackModal }                 from '@/components/FeedbackModal'
 import { FileAttachmentPill }            from '@/components/FileAttachmentPill'
 import type { Attachment }               from '@/components/FileAttachmentPill'
 import { ModeSelector }                  from '@/components/ModeSelector'
-import type { AnalysisMode }             from '@/components/ModeSelector'
+import { SailAdapter }                   from '@/components/SailAdapter'
+import type { AnalysisMode, SailIntentCategory } from '@/types/chat'
 import { VoiceInput }                    from '@/components/VoiceInput'
 import { ExportModal }                   from '@/components/ExportModal'
 import { AgentStatusBar }                from '@/components/AgentStatusBar'
@@ -140,6 +141,10 @@ export default function ChatPage() {
   const [mode,         setMode]         = useState<AnalysisMode>('upwind')
   // Downwind multi-turn conversation history
   const [convHistory,  setConvHistory]  = useState<ConvMessage[]>([])
+  // SAIL v2.1 streaming state
+  const [sailContent,   setSailContent]   = useState('')
+  const [sailIntent,    setSailIntent]    = useState<SailIntentCategory | null>(null)
+  const [sailStreaming, setSailStreaming] = useState(false)
 
   // Aetheris store — agent mode + drift alerts (filter locally for stable refs)
   const agentMode    = useAetherisStore(selectAgentMode)
@@ -234,19 +239,36 @@ export default function ChatPage() {
   }
 
   async function handleSubmit() {
-    const t = input.trim()
-    if (!t || state === 'THINKING') return
+    const trimmedInput = input.trim()
+    if (!trimmedInput || state === 'THINKING') return
     if (!canAnalyse) { triggerPaywall(); return }
 
     const context = profile.diagnosticPrompt
       ? (isPro ? buildContext() : profile.diagnosticPrompt + '\n\n')
       : (isPro ? buildContext() : '')
 
-    await submit(t, {
+    // Reset SAIL state for new submission
+    if (mode === 'sail') {
+      setSailContent('')
+      setSailIntent(null)
+      setSailStreaming(true)
+    }
+
+    await submit(trimmedInput, {
       context:      context || undefined,
       attachment:   attachment ?? undefined,
       analysisMode: mode,
       apiKey:       apiKey || undefined,
+      // SAIL mode streaming callbacks
+      onSailChunk: (chunk) => {
+        setSailContent(prev => prev + chunk)
+      },
+      onSailIntent: (intent) => {
+        setSailIntent(intent)
+      },
+      onSailComplete: () => {
+        setSailStreaming(false)
+      },
     })
   }
 
@@ -276,6 +298,10 @@ export default function ChatPage() {
     setAttachment(null)
     setFileError('')
     setConvHistory([])
+    // Reset SAIL state
+    setSailContent('')
+    setSailIntent(null)
+    setSailStreaming(false)
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
 
@@ -762,11 +788,63 @@ export default function ChatPage() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.35 }}
             >
-              <ExecutiveResponseCard
-                response={response}
-                isStreaming={state === 'THINKING'}
-                variant="light"
-              />
+              {/* SAIL Mode: Use SailAdapter for intent-based rendering */}
+              {mode === 'sail' && sailIntent ? (
+                <div
+                  style={{
+                    background:   '#FFFFFF',
+                    border:       '1px solid rgba(124,58,237,0.2)',
+                    borderRadius: '12px',
+                    overflow:     'hidden',
+                    boxShadow:    '0 2px 8px rgba(124,58,237,0.06)',
+                  }}
+                >
+                  <SailAdapter
+                    intent={sailIntent}
+                    content={sailContent}
+                    isStreaming={sailStreaming}
+                  />
+                </div>
+              ) : mode === 'sail' && state === 'THINKING' ? (
+                <div
+                  style={{
+                    background:   '#FFFFFF',
+                    border:       '1px solid rgba(124,58,237,0.2)',
+                    borderRadius: '12px',
+                    padding:      '1.5rem',
+                    display:      'flex',
+                    alignItems:   'center',
+                    gap:          '0.75rem',
+                  }}
+                >
+                  <motion.span
+                    animate={{ opacity: [1, 0.3, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    style={{
+                      display:      'inline-block',
+                      width:         8,
+                      height:        8,
+                      borderRadius: '50%',
+                      background:   '#7C3AED',
+                      flexShrink:   0,
+                    }}
+                  />
+                  <span style={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize:   '0.8rem',
+                    color:      '#7C3AED',
+                  }}>
+                    {t('sail.detecting')}
+                  </span>
+                </div>
+              ) : (
+                /* Upwind/Downwind: Use ExecutiveResponseCard */
+                <ExecutiveResponseCard
+                  response={response}
+                  isStreaming={state === 'THINKING'}
+                  variant="light"
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>

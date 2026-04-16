@@ -1,25 +1,29 @@
 /**
- * Aetheris Edge Proxy — with Groq fallback
+ * Aetheris Edge Proxy — with Groq fallback & SAIL v2.1 Intent Routing
  *
  * Priority:
- *   1. Forward to Railway backend (RAILWAY_BACKEND_URL)
- *   2. Fall back to Groq direct API (GROQ_API_KEY or body.apiKey)
+ *   1. SAIL mode: Intent-classified streaming via AI SDK
+ *   2. Upwind/Downwind: Forward to Railway backend (RAILWAY_BACKEND_URL)
+ *   3. Fall back to Groq direct API (GROQ_API_KEY or body.apiKey)
  *
- * Always returns ExecutiveResponse JSON.
+ * SAIL returns streaming UI messages; Upwind/Downwind return ExecutiveResponse JSON.
  */
 
 import { type NextRequest } from 'next/server'
 import { getToken }         from 'next-auth/jwt'
+import { streamText, consumeStream } from 'ai'
 import type { AetherisPayload } from '@/types/architecture'
 import { cognitiveLoadDirective } from '@/types/architecture'
+import { classifyIntent, getIntentDirective } from '@/lib/intent'
+import type { SailIntentResult } from '@/types/chat'
 
-export const runtime = 'edge'
+export const maxDuration = 60
 
 const UPSTREAM_URL = process.env.RAILWAY_BACKEND_URL
 const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODEL   = 'llama-3.3-70b-versatile'
 
-// ── Groq system prompt ────────────────────────────────────────────────────────
+// ── Groq system prompt (Upwind/Downwind) ──────────────────────────────────────
 
 function buildSystemPrompt(cognitiveLoad = 0, language = 'en'): string {
   const verbosity = cognitiveLoadDirective(cognitiveLoad)
@@ -58,6 +62,37 @@ RULES:
 - Return ONLY the JSON object — no explanation text outside the JSON.`
 }
 
+// ── SAIL System Prompt Builder ────────────────────────────────────────────────
+
+function buildSailSystemPrompt(
+  intent: SailIntentResult,
+  cognitiveLoad = 0
+): string {
+  const verbosity = cognitiveLoadDirective(cognitiveLoad)
+  const intentDirective = getIntentDirective(intent)
+  const langNote = intent.language !== 'en'
+    ? `LANGUAGE: Respond in the user's language (locale: ${intent.language}).\n\n`
+    : ''
+
+  return `${verbosity}${langNote}${intentDirective}You are Aetheris, an elite business strategy AI built by Sail AI. You provide data-referenced, benchmark-driven strategic analysis for business operators.
+
+You are operating in SAIL Adaptive Mode. Your response format adapts based on detected user intent.
+
+DETECTED INTENT: ${intent.intent.toUpperCase()}
+CONFIDENCE: ${Math.round(intent.confidence * 100)}%
+KEYWORDS: ${intent.keywords.join(', ')}
+${intent.mrrTier ? `MRR TIER: ${intent.mrrTier.toUpperCase()}` : ''}
+
+CORE PRINCIPLES:
+- Be direct and actionable — no filler content
+- Use data and benchmarks when available
+- Format responses for maximum readability
+- Use markdown formatting appropriately
+- For technical content, use fenced code blocks with language identifiers
+- For data/metrics, use markdown tables
+- Structure complex responses with clear headings (## and ###)`
+}
+
 // ── User message builder ──────────────────────────────────────────────────────
 
 function buildUserMessage(body: AetherisPayload): string {
@@ -88,10 +123,70 @@ function buildUserMessage(body: AetherisPayload): string {
   return parts.join('\n\n')
 }
 
+// ── SAIL Streaming Handler ────────────────────────────────────────────────────
+
+async function handleSailMode(
+  body: AetherisPayload,
+  userEmail: string,
+  abortSignal: AbortSignal
+): Promise<Response> {
+  // Classify intent from user message
+  const intent = classifyIntent(body.message)
+  const cognitiveLoad = (body.state as { cognitiveLoadIndex?: number } | undefined)?.cognitiveLoadIndex ?? 0
+
+  // Build conversation history for multi-turn
+  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = []
+  
+  // Add prior messages if in conversational mode
+  if (body.messages && body.messages.length > 0) {
+    for (const msg of body.messages) {
+      messages.push({
+        role: msg.role,
+        content: msg.content
+      })
+    }
+  }
+
+  // Add current message
+  messages.push({
+    role: 'user',
+    content: buildUserMessage(body)
+  })
+
+  // Stream response using AI SDK
+  const result = streamText({
+    model: 'groq/llama-3.3-70b-versatile',
+    system: buildSailSystemPrompt(intent, cognitiveLoad),
+    messages,
+    abortSignal,
+    maxTokens: 4096,
+    temperature: 0.4,
+  })
+
+  // Return streaming response with intent metadata in headers
+  const response = result.toUIMessageStreamResponse({
+    consumeSseStream: consumeStream,
+  })
+
+  // Add custom headers for intent metadata
+  const headers = new Headers(response.headers)
+  headers.set('X-Sail-Intent', intent.intent)
+  headers.set('X-Sail-Confidence', String(intent.confidence))
+  headers.set('X-Sail-Language', intent.language)
+  if (intent.mrrTier) {
+    headers.set('X-Sail-MrrTier', intent.mrrTier)
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    headers,
+  })
+}
+
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // 1. Session guard — Edge-compatible JWT verification
+  // 1. Session guard — JWT verification
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
@@ -116,7 +211,12 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Message is required.' }, { status: 422 })
   }
 
-  // 3. Railway backend (primary path)
+  // 3. SAIL Mode — Intent-based streaming (new v2.1 path)
+  if (body.analysisMode === 'sail') {
+    return handleSailMode(body, token.email as string, req.signal)
+  }
+
+  // 4. Railway backend (primary path for Upwind/Downwind)
   if (UPSTREAM_URL) {
     let upstream: Response
     try {
@@ -145,7 +245,7 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // 4. Groq fallback (when Railway is not configured)
+  // 5. Groq fallback (when Railway is not configured)
   const groqKey = process.env.GROQ_API_KEY ?? (body as AetherisPayload & { apiKey?: string }).apiKey
 
   if (!groqKey) {
@@ -190,7 +290,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 5. Parse Groq response and extract JSON content
+  // 6. Parse Groq response and extract JSON content
   let groqData: { choices?: Array<{ message?: { content?: string } }> }
   try {
     groqData = await groqRes.json()

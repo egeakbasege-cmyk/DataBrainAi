@@ -13,7 +13,20 @@ export type AgentMode =
   | 'execution'  // Action plans, next steps, implementation workflows
   | 'review'     // Quality checks, risk assessment, consistency validation
 
-export type AnalysisMode = 'upwind' | 'downwind'
+export type AnalysisMode = 'upwind' | 'downwind' | 'sail'
+
+/** SAIL v2.1 Intent Classification Categories */
+export type SailIntentCategory = 'creative' | 'technical' | 'analytic'
+
+/** Result from the SAIL intent classifier */
+export interface SailIntentResult {
+  intent: SailIntentCategory
+  confidence: number
+  language: 'tr' | 'en'
+  keywords: string[]
+  /** MRR tier for analytic routing decisions */
+  mrrTier?: 'seed' | 'growth' | 'scale' | 'enterprise'
+}
 
 export interface Message {
   role:    'user' | 'assistant'
@@ -53,4 +66,30 @@ export interface ResponseMetadata {
 export interface PreviewState {
   activePresetId: string | null
   agentMode:      AgentMode
+}
+
+/** SAIL v2.1 Response Structure for dynamic rendering */
+export interface SailResponse {
+  content: string
+  intent: SailIntentResult
+  /** Structured data for analytic intent (charts, tables) */
+  chartData?: {
+    type: 'line' | 'bar' | 'area' | 'pie'
+    data: Array<Record<string, unknown>>
+    xKey: string
+    yKeys: string[]
+    title?: string
+  }
+  /** Code blocks for technical intent */
+  codeBlocks?: Array<{
+    language: string
+    code: string
+    filename?: string
+  }>
+  /** Executive summary sections for creative intent */
+  sections?: Array<{
+    title: string
+    content: string
+    priority: 'high' | 'medium' | 'low'
+  }>
 }

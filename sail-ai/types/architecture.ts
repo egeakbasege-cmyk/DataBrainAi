@@ -6,7 +6,7 @@
  * history but the *strategic trajectory* of the session.
  */
 
-import type { AnalysisMode } from './chat'
+import type { AnalysisMode, SailIntentCategory, SailIntentResult } from './chat'
 
 // ── Language & Mode enumerations ───────────────────────────────────────────────
 
@@ -168,6 +168,49 @@ export interface AetherisPayload {
   context?: string
   /** BYOK — user-supplied Groq API key (stored client-side, never persisted server-side). */
   apiKey?: string
+}
+
+// ── SAIL v2.1 Routing Configuration ───────────────────────────────────────────
+
+/**
+ * Configuration for SAIL intent-based routing.
+ * Determines how the adaptive interface responds to different intent types.
+ */
+export interface SailRoutingConfig {
+  /** The classified intent from user input */
+  intent: SailIntentCategory
+  /** Confidence threshold for auto-routing (0-1) */
+  confidenceThreshold: number
+  /** Fallback intent when confidence is below threshold */
+  fallbackIntent: SailIntentCategory
+  /** Whether to show intent detection UI feedback */
+  showIntentFeedback: boolean
+}
+
+/**
+ * MRR tier thresholds for analytic intent routing.
+ * Used to customize response depth and benchmark comparisons.
+ */
+export interface MrrTierConfig {
+  tier: 'seed' | 'growth' | 'scale' | 'enterprise'
+  minMrr: number
+  maxMrr: number
+  benchmarkSectors: string[]
+  suggestedMetrics: string[]
+}
+
+/**
+ * SAIL response rendering configuration.
+ * Controls how different intent types are visually presented.
+ */
+export interface SailRenderConfig {
+  intent: SailIntentCategory
+  /** Component to use for rendering */
+  renderer: 'executive-summary' | 'code-block' | 'data-viz'
+  /** Layout mode for the response */
+  layout: 'full-width' | 'card' | 'split'
+  /** Whether to enable streaming for this intent type */
+  enableStreaming: boolean
 }
 
 // ── Cognitive Load computation ────────────────────────────────────────────────
