@@ -149,6 +149,7 @@ export default function ChatPage() {
   const [sailText,     setSailText]     = useState('')
   const [sailIntent,   setSailIntent]   = useState<SailIntent>('analytic')
   const [sailPhase,    setSailPhase]    = useState<'idle' | 'streaming' | 'complete'>('idle')
+  const [sailError,    setSailError]    = useState<string | null>(null)
   const sailAbortRef                   = useRef<AbortController | null>(null)
 
   // Aetheris store — agent mode + drift alerts (filter locally for stable refs)
@@ -326,6 +327,7 @@ export default function ChatPage() {
     sailAbortRef.current?.abort()
     setSailText('')
     setSailPhase('idle')
+    setSailError(null)
     reset()
     coachReset()
     setInput('')
@@ -342,12 +344,13 @@ export default function ChatPage() {
     setShowKeyPanel(false)
   }
 
-  // ── SAIL submit (Gemini streaming via /api/chat) ─────────────────────────────
+  // ── SAIL submit (Groq streaming via /api/chat) ───────────────────────────────
   async function handleSailSubmit(txt: string) {
     sailAbortRef.current?.abort()
     sailAbortRef.current = new AbortController()
     setSailText('')
     setSailIntent('analytic')
+    setSailError(null)
     setSailPhase('streaming')
 
     const storeState = useAetherisStore.getState()
@@ -403,6 +406,7 @@ export default function ChatPage() {
       recordUsage()
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
+      setSailError(err instanceof Error ? err.message : 'SAIL request failed. Please try again.')
       setSailPhase('idle')
     }
   }
@@ -421,7 +425,7 @@ export default function ChatPage() {
     ? coachState === 'COMPLETE' || coachState === 'ERROR'
     : state === 'COMPLETE' || state === 'ERROR'
   const isConversing = isDownwind && coachState === 'CONVERSING'
-  const currentError = isDownwind ? coachError : error
+  const currentError = isSail ? sailError : isDownwind ? coachError : error
 
   // SailState for HelmButton + SailboatAnimation
   const sailState = isDownwind
