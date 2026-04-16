@@ -25,6 +25,8 @@ import { useLanguage }                   from '@/lib/i18n/LanguageContext'
 import { useSubscription }               from '@/hooks/useSubscription'
 import { useBusinessContext }            from '@/lib/context/BusinessContext'
 import { useAetherisStore, selectAgentMode, selectActiveAlerts } from '@/lib/aetherisStore'
+import { SailAdapter }                    from '@/components/SailAdapter'
+import type { SailIntent }                from '@/lib/intent'
 
 // Placeholders are derived from translations — built inside the component
 const PLACEHOLDER_KEYS = [
@@ -143,6 +145,11 @@ export default function ChatPage() {
   const [mode,         setMode]         = useState<AnalysisMode>('upwind')
   // Downwind multi-turn conversation history
   const [convHistory,  setConvHistory]  = useState<ConvMessage[]>([])
+  // SAIL auto-intent streaming state
+  const [sailText,     setSailText]     = useState('')
+  const [sailIntent,   setSailIntent]   = useState<SailIntent>('analytic')
+  const [sailPhase,    setSailPhase]    = useState<'idle' | 'streaming' | 'complete'>('idle')
+  const sailAbortRef                   = useRef<AbortController | null>(null)
 
   // Aetheris store — agent mode + drift alerts (filter locally for stable refs)
   const agentMode    = useAetherisStore(selectAgentMode)
@@ -268,7 +275,9 @@ export default function ChatPage() {
       ? (isPro ? buildContext() : profile.diagnosticPrompt + '\n\n')
       : (isPro ? buildContext() : '')
 
-    if (isDownwind) {
+    if (isSail) {
+      await handleSailSubmit(txt)
+    } else if (isDownwind) {
       const updatedHistory: ConvMessage[] = [
         ...convHistory,
         { role: 'user', content: txt },
@@ -314,6 +323,9 @@ export default function ChatPage() {
   }
 
   function handleReset() {
+    sailAbortRef.current?.abort()
+    setSailText('')
+    setSailPhase('idle')
     reset()
     coachReset()
     setInput('')
@@ -330,12 +342,82 @@ export default function ChatPage() {
     setShowKeyPanel(false)
   }
 
+  // ── SAIL submit (Gemini streaming via /api/chat) ─────────────────────────────
+  async function handleSailSubmit(txt: string) {
+    sailAbortRef.current?.abort()
+    sailAbortRef.current = new AbortController()
+    setSailText('')
+    setSailIntent('analytic')
+    setSailPhase('streaming')
+
+    const storeState = useAetherisStore.getState()
+    const language   = storeState.language ?? 'en'
+
+    try {
+      const res = await fetch('/api/chat', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message:      txt,
+          analysisMode: 'sail',
+          sessionId:    storeState.sessionId || 'sail-init',
+          userId:       storeState.userId    || 'anonymous',
+          language,
+          agentMode:    agentMode,
+          context:      profile.diagnosticPrompt || undefined,
+        }),
+        signal: sailAbortRef.current.signal,
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Request failed.' }))
+        throw new Error(err.error ?? 'SAIL request failed.')
+      }
+
+      const reader  = res.body!.getReader()
+      const decoder = new TextDecoder()
+      let buffer    = ''
+      let metaParsed = false
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+
+        // First chunk contains metadata JSON line
+        if (!metaParsed && buffer.includes('\n')) {
+          const firstLine = buffer.slice(0, buffer.indexOf('\n'))
+          try {
+            const meta = JSON.parse(firstLine)
+            if (meta.__sailMeta) {
+              setSailIntent(meta.__sailMeta.intent as SailIntent)
+              buffer = buffer.slice(buffer.indexOf('\n') + 1)
+              metaParsed = true
+            }
+          } catch { metaParsed = true }
+        }
+
+        setSailText(buffer)
+      }
+      setSailPhase('complete')
+      recordUsage()
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      setSailPhase('idle')
+    }
+  }
+
   // ── Mode-conditional derived state ───────────────────────────────────────────
+  const isSail       = mode === 'sail'
   const isDownwind   = mode === 'downwind'
-  const isActive     = isDownwind
+  const isActive     = isSail
+    ? sailPhase === 'streaming'
+    : isDownwind
     ? coachState === 'THINKING' || coachState === 'STREAMING'
     : state === 'THINKING'
-  const isComplete   = isDownwind
+  const isComplete   = isSail
+    ? sailPhase === 'complete'
+    : isDownwind
     ? coachState === 'COMPLETE' || coachState === 'ERROR'
     : state === 'COMPLETE' || state === 'ERROR'
   const isConversing = isDownwind && coachState === 'CONVERSING'
@@ -344,6 +426,8 @@ export default function ChatPage() {
   // SailState for HelmButton + SailboatAnimation
   const sailState = isDownwind
     ? coachState
+    : isSail
+    ? (sailPhase === 'streaming' ? 'STREAMING' : sailPhase === 'complete' ? 'COMPLETE' : 'IDLE') as import('@/hooks/useSailState').SailState
     : (state === 'ERROR' ? 'COMPLETE' : state) as import('@/hooks/useSailState').SailState
   const charsLeft  = MAX - input.length
   const warn       = charsLeft < 200
@@ -497,8 +581,8 @@ export default function ChatPage() {
                 )}
               </AnimatePresence>
 
-              {/* Mode selector + Agent mode — hidden mid-conversation */}
-              {state === 'IDLE' && (
+              {/* Mode selector — hidden while any mode is active */}
+              {state === 'IDLE' && sailPhase === 'idle' && (
                 <div style={{ marginBottom: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                   <ModeSelector mode={mode} onChange={setMode} />
                 </div>
@@ -805,6 +889,30 @@ export default function ChatPage() {
 
         {/* ── Result ── */}
         <AnimatePresence>
+          {/* SAIL: adaptive streaming renderer */}
+          {isSail && (sailPhase === 'streaming' || sailPhase === 'complete') && (
+            <motion.div
+              key="sail"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+              style={{
+                background:   '#FFFFFF',
+                border:       '1px solid rgba(0,0,0,0.08)',
+                borderRadius: '12px',
+                padding:      '1.25rem 1.25rem 1.5rem',
+                boxShadow:    '0 1px 6px rgba(0,0,0,0.04)',
+              }}
+            >
+              <SailAdapter
+                text={sailText}
+                intent={sailIntent}
+                streaming={sailPhase === 'streaming'}
+              />
+            </motion.div>
+          )}
+
           {/* Downwind: captain coaching card */}
           {isDownwind && (coachState === 'THINKING' || coachState === 'STREAMING' || coachState === 'COMPLETE' || coachState === 'CONVERSING') && (
             <motion.div
@@ -824,7 +932,7 @@ export default function ChatPage() {
           )}
 
           {/* Upwind: executive response card */}
-          {!isDownwind && (state === 'THINKING' || isComplete) && (
+          {!isDownwind && !isSail && (state === 'THINKING' || isComplete) && (
             <motion.div
               key="answer"
               initial={{ opacity: 0, y: 10 }}

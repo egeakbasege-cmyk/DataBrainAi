@@ -1,11 +1,13 @@
 /**
- * Aetheris Edge Proxy — with Groq fallback
+ * Aetheris Edge Proxy — with Groq fallback + SAIL Gemini mode
  *
  * Priority:
- *   1. Forward to Railway backend (RAILWAY_BACKEND_URL)
- *   2. Fall back to Groq direct API (GROQ_API_KEY or body.apiKey)
+ *   1. SAIL mode  → Gemini 2.0 Flash via REST (streaming, intent-driven)
+ *   2. Railway    → Forward to Railway backend (RAILWAY_BACKEND_URL)
+ *   3. Groq       → Fall back to Groq direct API (GROQ_API_KEY or body.apiKey)
  *
- * Always returns ExecutiveResponse JSON.
+ * Upwind/Downwind: returns ExecutiveResponse JSON.
+ * SAIL:            returns plain streaming markdown text.
  */
 
 import { type NextRequest } from 'next/server'
@@ -13,15 +15,115 @@ import NextAuth                  from 'next-auth'
 import { authConfig }            from '@/auth.config'
 import type { AetherisPayload }  from '@/types/architecture'
 import { cognitiveLoadDirective } from '@/types/architecture'
+import { classifyIntent, buildSailSystemPrompt } from '@/lib/intent'
 
 export const runtime = 'edge'
 
 // Edge-compatible auth — uses the same config as middleware (no Prisma/Node.js APIs)
 const { auth } = NextAuth(authConfig)
 
-const UPSTREAM_URL = process.env.RAILWAY_BACKEND_URL
-const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL   = 'llama-3.3-70b-versatile'
+const UPSTREAM_URL  = process.env.RAILWAY_BACKEND_URL
+const GROQ_URL      = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_MODEL    = 'llama-3.3-70b-versatile'
+const GEMINI_MODEL  = 'gemini-2.0-flash'
+const GEMINI_BASE   = 'https://generativelanguage.googleapis.com/v1beta/models'
+
+// ── SAIL mode: Gemini streaming via REST (Edge-compatible) ────────────────────
+
+async function handleSailMode(body: AetherisPayload): Promise<Response> {
+  const geminiKey = process.env.GEMINI_API_KEY
+  if (!geminiKey) {
+    return Response.json(
+      { error: 'SAIL mode requires a GEMINI_API_KEY environment variable.' },
+      { status: 503 },
+    )
+  }
+
+  const language   = body.language ?? 'en'
+  const intentResult = classifyIntent(body.message)
+  const systemText   = buildSailSystemPrompt(intentResult.intent, language)
+  const userText     = [
+    body.context?.trim() ? `CONTEXT\n${body.context.trim()}` : null,
+    body.message.trim(),
+    body.fileContent?.trim() ? `DATA\n${body.fileContent.slice(0, 8000)}` : null,
+  ].filter(Boolean).join('\n\n')
+
+  const geminiUrl = `${GEMINI_BASE}/${GEMINI_MODEL}:streamGenerateContent?key=${geminiKey}&alt=sse`
+
+  let geminiRes: Response
+  try {
+    geminiRes = await fetch(geminiUrl, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemText }] },
+        contents: [{ role: 'user', parts: [{ text: userText }] }],
+        generationConfig: {
+          temperature:     0.72,
+          maxOutputTokens: 2048,
+        },
+      }),
+    })
+  } catch {
+    return Response.json({ error: 'Unable to reach Gemini API.' }, { status: 502 })
+  }
+
+  if (!geminiRes.ok) {
+    const errText = await geminiRes.text().catch(() => '')
+    return Response.json(
+      { error: `Gemini error ${geminiRes.status}: ${errText.slice(0, 200)}` },
+      { status: geminiRes.status === 429 ? 429 : 502 },
+    )
+  }
+
+  // Transform Gemini SSE → plain text stream consumed by the client
+  // Gemini SSE emits: data: {"candidates":[{"content":{"parts":[{"text":"..."}]}}]}
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>()
+  const writer  = writable.getWriter()
+  const encoder = new TextEncoder()
+  const decoder = new TextDecoder()
+
+  // Attach intent metadata as the very first chunk (JSON line)
+  const metaLine = JSON.stringify({ __sailMeta: { intent: intentResult.intent, confidence: intentResult.confidence } })
+  writer.write(encoder.encode(metaLine + '\n')).catch(() => {})
+
+  // Pipe Gemini body through, extracting text chunks
+  ;(async () => {
+    try {
+      const reader = geminiRes.body!.getReader()
+      let buffer = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const jsonStr = line.slice(6).trim()
+          if (!jsonStr || jsonStr === '[DONE]') continue
+          try {
+            const chunk   = JSON.parse(jsonStr)
+            const text    = chunk?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+            if (text) await writer.write(encoder.encode(text))
+          } catch { /* skip malformed chunk */ }
+        }
+      }
+    } finally {
+      writer.close().catch(() => {})
+    }
+  })()
+
+  return new Response(readable, {
+    status:  200,
+    headers: {
+      'Content-Type':      'text/plain; charset=utf-8',
+      'Cache-Control':     'no-store',
+      'X-Accel-Buffering': 'no',
+      'X-Sail-Intent':     intentResult.intent,
+    },
+  })
+}
 
 // ── Groq system prompt ────────────────────────────────────────────────────────
 
@@ -117,7 +219,12 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Message is required.' }, { status: 422 })
   }
 
-  // 3. Railway backend (primary path)
+  // 3. SAIL auto-intent mode → Gemini streaming (bypasses Railway/Groq)
+  if (body.analysisMode === 'sail') {
+    return handleSailMode(body)
+  }
+
+  // 4. Railway backend (primary path for upwind/downwind)
   if (UPSTREAM_URL) {
     let upstream: Response
     try {
@@ -146,7 +253,7 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // 4. Groq fallback (when Railway is not configured)
+  // 5. Groq fallback (when Railway is not configured)
   const groqKey = process.env.GROQ_API_KEY ?? (body as AetherisPayload & { apiKey?: string }).apiKey
 
   if (!groqKey) {

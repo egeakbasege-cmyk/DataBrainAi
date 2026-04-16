@@ -327,6 +327,11 @@ const translations = {
     'export.sprint90':      '90-Day Horizon',
     'export.blockInsight':  'EXECUTIVE INSIGHT',
     'export.noteBlock':     'NOTE',
+
+    // ── SAIL auto-intent mode ────────────────────────────────────────────────
+    'mode.sail':     'SAIL',
+    'mode.sailDesc': 'Auto-intent — adapts depth and format to your query',
+    'sail.streaming': 'SAIL is composing your analysis…',
   },
 
   tr: {
@@ -618,6 +623,11 @@ const translations = {
     'export.sprint90':      '90 Günlük Ufuk',
     'export.blockInsight':  'YÖNETİCİ İÇGÖRÜSÜ',
     'export.noteBlock':     'NOT',
+
+    // ── SAIL otomatik niyet modu ─────────────────────────────────────────────
+    'mode.sail':     'SAIL',
+    'mode.sailDesc': 'Otomatik niyet — derinliği ve formatı sorgunuza göre uyarlar',
+    'sail.streaming': 'SAIL analizinizi hazırlıyor…',
   },
 
   es: {
@@ -909,6 +919,11 @@ const translations = {
     'export.sprint90':      'Horizonte de 90 días',
     'export.blockInsight':  'PERSPECTIVA EJECUTIVA',
     'export.noteBlock':     'NOTA',
+
+    // ── Modo SAIL de intención automática ────────────────────────────────────
+    'mode.sail':     'SAIL',
+    'mode.sailDesc': 'Intención automática — adapta la profundidad y el formato a tu consulta',
+    'sail.streaming': 'SAIL está redactando tu análisis…',
   },
 
   de: {
@@ -1200,6 +1215,11 @@ const translations = {
     'export.sprint90':      '90-Tage-Horizont',
     'export.blockInsight':  'FÜHRUNGSEINBLICK',
     'export.noteBlock':     'ANMERKUNG',
+
+    // ── SAIL Auto-Intent-Modus ───────────────────────────────────────────────
+    'mode.sail':     'SAIL',
+    'mode.sailDesc': 'Auto-Intent — passt Tiefe und Format an Ihre Anfrage an',
+    'sail.streaming': 'SAIL erstellt Ihre Analyse…',
   },
 
   fr: {
@@ -1491,6 +1511,11 @@ const translations = {
     'export.sprint90':      'Horizon 90 jours',
     'export.blockInsight':  'ANALYSE EXECUTIVE',
     'export.noteBlock':     'NOTE',
+
+    // ── Mode SAIL à intention automatique ────────────────────────────────────
+    'mode.sail':     'SAIL',
+    'mode.sailDesc': 'Intention automatique — adapte la profondeur et le format à votre requête',
+    'sail.streaming': 'SAIL rédige votre analyse…',
   },
 
   zh: {
@@ -1782,6 +1807,11 @@ const translations = {
     'export.sprint90':      '90天展望',
     'export.blockInsight':  '高层洞察',
     'export.noteBlock':     '备注',
+
+    // ── SAIL 自动意图模式 ─────────────────────────────────────────────────────
+    'mode.sail':     'SAIL',
+    'mode.sailDesc': '自动意图 — 根据您的查询自动调整深度和格式',
+    'sail.streaming': 'SAIL 正在为您生成分析…',
   },
 } as const
 
