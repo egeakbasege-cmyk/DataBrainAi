@@ -189,7 +189,7 @@ export default function TrimMode() {
             </div>
             <p className="text-xs text-slate-500">
               {useDataMode 
-                ? 'Health rapor ve test sonuçlarına dayalı analiz' 
+                ? 'İşletme metrikleri ve sektör verilerine dayalı analiz' 
                 : 'AI bilgisiyle bağımsız strateji yanıtları'}
             </p>
           </div>
