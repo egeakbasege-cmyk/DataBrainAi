@@ -28,6 +28,7 @@ import { useAetherisStore, selectAgentMode, selectActiveAlerts } from '@/lib/aet
 import { SailAdapter }                    from '@/components/SailAdapter'
 import type { SailIntent }                from '@/lib/intent'
 import SailAITimeTravel                   from '@/components/SailAITimeTravel'
+import TrimMode                           from '@/components/TrimMode'
 
 // Placeholders are derived from translations — built inside the component
 const PLACEHOLDER_KEYS = [
@@ -441,9 +442,9 @@ export default function ChatPage() {
 
   return (
     <>
-    {/* Trim Mode: 3D Time Travel Experience */}
+    {/* Trim Mode: Minimal Chart Course Interface */}
     {isTrim && (
-      <SailAITimeTravel />
+      <TrimMode />
     )}
     
     {/* Standard UI for other modes */}
