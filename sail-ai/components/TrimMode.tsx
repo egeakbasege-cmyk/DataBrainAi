@@ -2,9 +2,9 @@
 import { useChat } from 'ai/react';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Paperclip, Mic, Compass, Anchor, Wind, Navigation } from 'lucide-react';
+import { Send, Paperclip, Mic, Compass } from 'lucide-react';
 
-// Minimal yelken ikonları
+// Minimal yelken ikonu
 const SailIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
     <path d="M12 2v20M12 2l8 6-8 6-8-6 8-6z" />
@@ -12,13 +12,12 @@ const SailIcon = () => (
 );
 
 export default function TrimMode() {
-  const [timeState, setTimeState] = useState<'past' | 'present' | 'future'>('present');
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat',
-    body: { analysisMode: 'trim', timeState },
+    body: { analysisMode: 'trim' },
   });
 
   // Auto-scroll to bottom
@@ -26,22 +25,16 @@ export default function TrimMode() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const timeStates = [
-    { key: 'past' as const, label: 'Geçmiş', icon: Anchor, color: 'text-amber-600' },
-    { key: 'present' as const, label: 'Şimdi', icon: Compass, color: 'text-blue-600' },
-    { key: 'future' as const, label: 'Gelecek', icon: Navigation, color: 'text-purple-600' },
-  ];
-
   const quickPrompts = [
-    'Geçmiş performansımı analiz et',
-    'Gelecek stratejim için öneriler',
+    'Performansımı analiz et',
+    'Strateji önerileri al',
     'Riskleri değerlendir',
     'Fırsatları belirle',
   ];
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      {/* Sol Sidebar - Navigasyon */}
+      {/* Sol Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
         {/* Logo */}
         <div className="p-6 border-b border-slate-100">
@@ -56,39 +49,12 @@ export default function TrimMode() {
           </div>
         </div>
 
-        {/* Zaman Durumları */}
-        <div className="p-4">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">Zaman Çizelgesi</p>
-          <div className="space-y-2">
-            {timeStates.map((state) => (
-              <button
-                key={state.key}
-                onClick={() => setTimeState(state.key)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  timeState === state.key
-                    ? 'bg-slate-900 text-white shadow-lg'
-                    : 'hover:bg-slate-100 text-slate-600'
-                }`}
-              >
-                <state.icon size={18} className={timeState === state.key ? 'text-white' : state.color} />
-                <span className="font-medium">{state.label}</span>
-                {timeState === state.key && (
-                  <motion.div
-                    layoutId="activeIndicator"
-                    className="ml-auto w-2 h-2 rounded-full bg-white"
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Bilgi Kartı */}
         <div className="mt-auto p-4">
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-4 text-white">
-            <Wind size={20} className="mb-3 opacity-60" />
-            <p className="text-sm font-medium mb-1">Rüzgar Durumu</p>
-            <p className="text-xs opacity-70">{timeState === 'past' ? 'Dönüşüm analizi' : timeState === 'present' ? 'Gerçek zamanlı' : 'Tahmin modu'}</p>
+            <Compass size={20} className="mb-3 opacity-60" />
+            <p className="text-sm font-medium mb-1">Rota Belirleme</p>
+            <p className="text-xs opacity-70">Stratejik analiz modu aktif</p>
           </div>
         </div>
       </aside>
@@ -123,7 +89,7 @@ export default function TrimMode() {
                   Rotanızı Belirleyin
                 </h2>
                 <p className="text-slate-500 mb-8 max-w-md mx-auto">
-                  Geçmiş, şimdi veya gelecek zaman diliminde stratejik analiz için bir soru sorun.
+                  Stratejik analiz için bir soru sorun. Sail AI size yol göstersin.
                 </p>
                 
                 {/* Hızlı Promptlar */}
@@ -200,7 +166,7 @@ export default function TrimMode() {
                 <input
                   value={input}
                   onChange={handleInputChange}
-                  placeholder={`${timeStates.find(s => s.key === timeState)?.label} zaman diliminde ne öğrenmek istersiniz?`}
+                  placeholder="Stratejik analiz için bir soru sorun..."
                   className="flex-1 bg-transparent outline-none text-slate-800 placeholder:text-slate-400"
                 />
                 
@@ -224,7 +190,7 @@ export default function TrimMode() {
             </form>
             
             <p className="text-center text-xs text-slate-400 mt-3">
-              Sail AI yapay zeka tarafından desteklenmektedir. Yanıtlar bilgilendirme amaçlıdır.
+              Sail AI yapay zeka tarafından desteklenmektedir.
             </p>
           </div>
         </div>
