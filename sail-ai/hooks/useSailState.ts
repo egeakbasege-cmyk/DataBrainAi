@@ -6,7 +6,7 @@ import type { AgentMode } from '@/types/chat'
 import { useAetherisStore } from '@/lib/aetherisStore'
 
 // 'CONVERSING' = Downwind coach returned a chatMessage; input stays open
-export type SailState = 'IDLE' | 'THINKING' | 'STREAMING' | 'COMPLETE' | 'CONVERSING'
+export type SailState = 'IDLE' | 'THINKING' | 'STREAMING' | 'COMPLETE' | 'CONVERSING' | 'ERROR'
 
 export interface Tactic {
   step:      number
@@ -165,7 +165,7 @@ export function useSailState() {
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
-      setState('IDLE')
+      setState('ERROR')
     }
   }, [state])
 
