@@ -1,9 +1,88 @@
 'use client';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars, Float, Text } from '@react-three/drei';
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, Suspense } from 'react';
 import { useChat } from 'ai/react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Loading component for 3D scene
+function SceneLoader() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-[#020202]">
+      <div className="text-center">
+        <div className="w-12 h-12 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-blue-400 text-sm font-mono tracking-widest">ZAMAN TÜNELİ YÜKLENİYOR...</p>
+      </div>
+    </div>
+  );
+}
+
+// Optimized 3D Data Particles
+function DataStream() {
+  const points = useMemo(() => {
+    // Reduced from 50 to 20 for better performance
+    return Array.from({ length: 20 }).map(() => ({
+      pos: [Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 10 - 20],
+      size: Math.random() * 0.05 + 0.02
+    }));
+  }, []);
+
+  return (
+    <>
+      {points.map((p, i) => (
+        <Float 
+          speed={1.5} 
+          rotationIntensity={0.5} 
+          floatIntensity={1} 
+          key={i}
+        >
+          <mesh position={p.pos as any}>
+            <sphereGeometry args={[p.size, 8, 8]} />
+            <meshBasicMaterial color="#3b82f6" transparent opacity={0.3} />
+          </mesh>
+        </Float>
+      ))}
+    </>
+  );
+}
+
+// Optimized 3D Scene
+function TimeTravelScene({ timeState }: { timeState: string }) {
+  return (
+    <>
+      <color attach="background" args={['#020202']} />
+      <ambientLight intensity={0.3} />
+      <Stars 
+        radius={80} 
+        depth={30} 
+        count={2000} 
+        factor={3} 
+        saturation={0} 
+        fade 
+        speed={0.5} 
+      />
+      <DataStream />
+      
+      <Float speed={1} rotationIntensity={0.3} floatIntensity={0.3}>
+        <Text
+          fontSize={0.5}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+        >
+          {timeState === 'FUTURE' ? 'TIMELINE: 2045' : timeState === 'PAST' ? 'TIMELINE: 2020' : 'SAIL AI CORE'}
+        </Text>
+      </Float>
+      
+      <OrbitControls 
+        enableZoom={false} 
+        autoRotate 
+        autoRotateSpeed={0.3}
+        enablePan={false}
+      />
+    </>
+  );
+}
 
 // SVG Icon Components
 const SendIcon = () => (
@@ -64,33 +143,22 @@ const FileTextIcon = () => (
   </svg>
 );
 
-// 3D Veri Kureleri (Zaman Tuneli Parcaciklari)
-function DataStream() {
-  const points = useMemo(() => {
-    return Array.from({ length: 50 }).map(() => ({
-      pos: [Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 10 - 20],
-      size: Math.random() * 0.05
-    }));
-  }, []);
-
-  return points.map((p, i) => (
-    <Float speed={2} rotationIntensity={1} floatIntensity={2} key={i}>
-      <mesh position={p.pos as any}>
-        <sphereGeometry args={[p.size, 16, 16]} />
-        <meshBasicMaterial color="#3b82f6" transparent opacity={0.4} />
-      </mesh>
-    </Float>
-  ));
-}
-
 export default function SailAITimeTravel() {
-  const [timeState, setTimeState] = useState('PRESENT'); // PRESENT, FUTURE, PAST
+  const [timeState, setTimeState] = useState('PRESENT');
   const [isRecording, setIsRecording] = useState(false);
+  const [isSceneReady, setIsSceneReady] = useState(false);
+  
   const { messages, input, handleInputChange, handleSubmit, setInput, isLoading } = useChat({
     api: '/api/chat',
     body: {
       analysisMode: 'trim',
     },
+  });
+
+  // Delay scene rendering for better UX
+  useState(() => {
+    const timer = setTimeout(() => setIsSceneReady(true), 100);
+    return () => clearTimeout(timer);
   });
 
   const quickCommands = [
@@ -128,26 +196,18 @@ export default function SailAITimeTravel() {
 
   return (
     <div className="relative h-screen w-screen bg-[#020202] overflow-hidden">
-      {/* 3D Render Layer (Zaman Tuneli) */}
+      {/* 3D Render Layer with Suspense */}
       <div className="absolute inset-0 z-0">
-        <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
-          <color attach="background" args={['#020202']} />
-          <ambientLight intensity={0.5} />
-          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-          <DataStream />
-          
-          <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
-            <Text
-              fontSize={0.5}
-              color="white"
-              font="/fonts/GeistMono-Light.woff"
-            >
-              {timeState === 'FUTURE' ? 'TIMELINE: 2045' : timeState === 'PAST' ? 'TIMELINE: 2020' : 'SAIL AI CORE'}
-            </Text>
-          </Float>
-          
-          <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
-        </Canvas>
+        <Suspense fallback={<SceneLoader />}>
+          <Canvas 
+            camera={{ position: [0, 0, 5], fov: 75 }}
+            dpr={[1, 1.5]} // Optimize for performance
+            gl={{ antialias: false, alpha: false }}
+            onCreated={() => setIsSceneReady(true)}
+          >
+            <TimeTravelScene timeState={timeState} />
+          </Canvas>
+        </Suspense>
       </div>
 
       {/* Downwind UI: Glassmorphism Overlay */}
@@ -156,6 +216,7 @@ export default function SailAITimeTravel() {
         <motion.div 
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
           className="w-1/4 p-8 flex flex-col justify-between pointer-events-auto bg-black/20 backdrop-blur-md border-r border-white/5"
         >
           <div>
@@ -178,6 +239,7 @@ export default function SailAITimeTravel() {
                   key={i} 
                   initial={{ height: 0 }} 
                   animate={{ height: `${h}%` }} 
+                  transition={{ delay: 0.5 + i * 0.1 }}
                   className="flex-1 bg-blue-500/30 rounded-t-sm" 
                 />
               ))}
@@ -192,6 +254,7 @@ export default function SailAITimeTravel() {
         <motion.aside 
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
           className="w-1/3 p-8 flex flex-col pointer-events-auto bg-gradient-to-l from-black via-black/80 to-transparent"
         >
           <div className="flex-1 overflow-y-auto space-y-6 pr-4 scrollbar-hide">
@@ -238,7 +301,7 @@ export default function SailAITimeTravel() {
                   key={cmd.label}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
+                  transition={{ delay: 0.4 + idx * 0.05 }}
                   onClick={cmd.action}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-full text-[10px] text-zinc-400 hover:text-white transition-all"
                 >
@@ -288,7 +351,7 @@ export default function SailAITimeTravel() {
                 {/* Gonder Butonu */}
                 <button
                   type="submit"
-                  disabled={!input.trim()}
+                  disabled={!input?.trim() || isLoading}
                   className="p-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white rounded-xl transition-all"
                   title="Gonder"
                 >
