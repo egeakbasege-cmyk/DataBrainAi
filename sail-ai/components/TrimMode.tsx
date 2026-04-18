@@ -2,7 +2,7 @@
 import { useChat } from 'ai/react';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Paperclip, Mic, Compass } from 'lucide-react';
+import { Send, Paperclip, Mic, Compass, TrendingUp, BarChart3, AlertTriangle, Target } from 'lucide-react';
 
 // Minimal yelken ikonu
 const SailIcon = () => (
@@ -11,16 +11,78 @@ const SailIcon = () => (
   </svg>
 );
 
+// Data kartı bileşeni
+function DataCard({ title, value, benchmark, status }: { title: string; value: string; benchmark?: string; status?: 'good' | 'warning' | 'bad' }) {
+  const statusColors = {
+    good: 'bg-green-50 border-green-200 text-green-700',
+    warning: 'bg-amber-50 border-amber-200 text-amber-700',
+    bad: 'bg-red-50 border-red-200 text-red-700',
+  };
+  
+  return (
+    <div className={`p-4 rounded-xl border ${status ? statusColors[status] : 'bg-slate-50 border-slate-200'}`}>
+      <p className="text-xs text-slate-500 mb-1">{title}</p>
+      <p className="text-lg font-semibold">{value}</p>
+      {benchmark && (
+        <p className="text-xs mt-1 opacity-70">Sektör: {benchmark}</p>
+      )}
+    </div㸮
+  );
+}
+
+// Basit bar grafik
+function BarChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+  const max = Math.max(...data.map(d => d.value));
+  
+  return (
+    <div className="space-y-3">
+      {data.map((item, i) => (
+        <div key={i} className="flex items-center gap-3">
+          <span className="text-xs text-slate-500 w-20">{item.label}</span>
+          <div className="flex-1 h-6 bg-slate-100 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${(item.value / max) * 100}%` }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="h-full rounded-full"
+              style={{ backgroundColor: item.color }}
+            />
+          </div>
+          <span className="text-xs font-medium w-12 text-right">%{item.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// AI yanıtını parse et
+function parseAIResponse(content: string) {
+  try {
+    const parsed = JSON.parse(content);
+    return {
+      text: parsed.chatMessage || parsed.analysis || content,
+      metrics: parsed.metrics || null,
+      chart: parsed.chart || null,
+      recommendation: parsed.recommendation || null,
+      risk: parsed.risk || null,
+    };
+  } catch {
+    return { text: content, metrics: null, chart: null, recommendation: null, risk: null };
+  }
+}
+
 export default function TrimMode() {
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat',
-    body: { analysisMode: 'trim' },
+    body: { 
+      analysisMode: 'trim',
+      includeData: true,
+    },
   });
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -36,7 +98,6 @@ export default function TrimMode() {
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       {/* Sol Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
-        {/* Logo */}
         <div className="p-6 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white">
@@ -49,19 +110,38 @@ export default function TrimMode() {
           </div>
         </div>
 
-        {/* Bilgi Kartı */}
+        <div className="p-4 space-y-3">
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Özellikler</p>
+          
+          <div className="flex items-center gap-3 text-sm text-slate-600">
+            <TrendingUp size={16} className="text-blue-500" />
+            <span>Sektör Kıyaslama</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm text-slate-600">
+            <BarChart3 size={16} className="text-green-500" />
+            <span>Performans Analizi</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm text-slate-600">
+            <Target size={16} className="text-purple-500" />
+            <span>Strateji Önerileri</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm text-slate-600">
+            <AlertTriangle size={16} className="text-amber-500" />
+            <span>Risk Değerlendirme</span>
+          </div>
+        </div>
+
         <div className="mt-auto p-4">
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-4 text-white">
             <Compass size={20} className="mb-3 opacity-60" />
             <p className="text-sm font-medium mb-1">Rota Belirleme</p>
-            <p className="text-xs opacity-70">Stratejik analiz modu aktif</p>
+            <p className="text-xs opacity-70">Veri destekli stratejik analiz</p>
           </div>
         </div>
       </aside>
 
       {/* Ana Chat Alanı */}
       <main className="flex-1 flex flex-col">
-        {/* Header */}
         <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-slate-600">TRIM Mod</span>
@@ -69,11 +149,10 @@ export default function TrimMode() {
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            Sistem Aktif
+            Veri Destekli Analiz
           </div>
         </header>
 
-        {/* Mesajlar */}
         <div className="flex-1 overflow-y-auto px-6 py-8">
           <AnimatePresence>
             {messages.length === 0 ? (
@@ -86,13 +165,12 @@ export default function TrimMode() {
                   <Compass size={32} className="text-slate-400" />
                 </div>
                 <h2 className="text-2xl font-semibold text-slate-900 mb-3">
-                  Rotanızı Belirleyin
+                  Veri Destekli Analiz
                 </h2>
                 <p className="text-slate-500 mb-8 max-w-md mx-auto">
-                  Stratejik analiz için bir soru sorun. Sail AI size yol göstersin.
+                  Sektör kıyaslamaları ve performans metrikleriyle desteklenmiş stratejik analiz için soru sorun.
                 </p>
                 
-                {/* Hızlı Promptlar */}
                 <div className="flex flex-wrap justify-center gap-3">
                   {quickPrompts.map((prompt, i) => (
                     <button
@@ -106,29 +184,86 @@ export default function TrimMode() {
                 </div>
               </motion.div>
             ) : (
-              <div className="max-w-3xl mx-auto space-y-6">
-                {messages.map((m, i) => (
-                  <motion.div
-                    key={m.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] px-5 py-4 rounded-2xl ${
-                        m.role === 'user'
-                          ? 'bg-slate-900 text-white'
-                          : 'bg-white border border-slate-200 text-slate-800 shadow-sm'
-                      }`}
+              <div className="max-w-4xl mx-auto space-y-6">
+                {messages.map((m, i) => {
+                  const parsed = m.role === 'assistant' ? parseAIResponse(m.content) : null;
+                  
+                  return (
+                    <motion.div
+                      key={m.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p className="text-sm leading-relaxed">{m.content}</p>
-                      <span className="text-[10px] opacity-50 mt-2 block">
-                        {m.role === 'user' ? 'Siz' : 'Sail AI'}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
+                      {m.role === 'user' ? (
+                        <div className="max-w-[80%] px-5 py-4 rounded-2xl bg-slate-900 text-white">
+                          <p className="text-sm leading-relaxed">{m.content}</p>
+                        </div>
+                      ) : (
+                        <div className="w-full space-y-4">
+                          {/* Ana Metin */}
+                          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                            <div className="flex items-center gap-2 mb-3">
+                              <BarChart3 size={16} className="text-blue-500" />
+                              <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">Analiz</span>
+                            </div>
+                            <p className="text-sm leading-relaxed text-slate-700">{parsed?.text || m.content}</p>
+                          </div>
+                          
+                          {/* Metrik Kartları */}
+                          {parsed?.metrics && (
+                            <div className="grid grid-cols-3 gap-3">
+                              {Object.entries(parsed.metrics).map(([key, data]: [string, any], idx) => (
+                                <DataCard
+                                  key={idx}
+                                  title={data.label || key}
+                                  value={data.value}
+                                  benchmark={data.benchmark}
+                                  status={data.status}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Grafik */}
+                          {parsed?.chart && (
+                            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                              <div className="flex items-center gap-2 mb-4">
+                                <TrendingUp size={16} className="text-green-500" />
+                                <span className="text-xs font-medium text-green-600 uppercase tracking-wider">Performans Kıyaslama</span>
+                              </div>
+                              <BarChart data={parsed.chart.data} />
+                            </div>
+                          )}
+                          
+                          {/* Öneri */}
+                          {parsed?.recommendation && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Target size={16} className="text-blue-600" />
+                                <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">Öneri</span>
+                              </div>
+                              <p className="text-sm text-blue-800">{parsed.recommendation}</p>
+                            </div>
+                          )}
+                          
+                          {/* Risk */}
+                          {parsed?.risk && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                              <div className="flex items-center gap-2 mb-2">
+                                <AlertTriangle size={16} className="text-amber-600" />
+                                <span className="text-xs font-medium text-amber-600 uppercase tracking-wider">Risk</span>
+                              </div>
+                              <p className="text-sm text-amber-800">{parsed.risk}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })}
+                
                 {isLoading && (
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -136,10 +271,13 @@ export default function TrimMode() {
                     className="flex justify-start"
                   >
                     <div className="bg-white border border-slate-200 px-5 py-4 rounded-2xl shadow-sm">
-                      <div className="flex gap-1.5">
-                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div className="flex items-center gap-3">
+                        <div className="flex gap-1.5">
+                          <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                        <span className="text-sm text-slate-500">Veriler analiz ediliyor...</span>
                       </div>
                     </div>
                   </motion.div>
@@ -152,7 +290,7 @@ export default function TrimMode() {
 
         {/* Input Alanı */}
         <div className="p-6 bg-white border-t border-slate-200">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <form onSubmit={handleSubmit} className="relative">
               <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus-within:border-slate-400 focus-within:bg-white transition-all">
                 <button
@@ -166,7 +304,7 @@ export default function TrimMode() {
                 <input
                   value={input}
                   onChange={handleInputChange}
-                  placeholder="Stratejik analiz için bir soru sorun..."
+                  placeholder="Veri destekli analiz için soru sorun..."
                   className="flex-1 bg-transparent outline-none text-slate-800 placeholder:text-slate-400"
                 />
                 
@@ -190,7 +328,7 @@ export default function TrimMode() {
             </form>
             
             <p className="text-center text-xs text-slate-400 mt-3">
-              Sail AI yapay zeka tarafından desteklenmektedir.
+              Sail AI veri destekli stratejik analiz sunar. Yanıtlar yapay zeka tarafından üretilir.
             </p>
           </div>
         </div>

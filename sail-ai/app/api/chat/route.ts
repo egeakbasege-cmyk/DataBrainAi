@@ -126,6 +126,92 @@ async function handleSailMode(body: AetherisPayload): Promise<Response> {
   })
 }
 
+// ── TRIM mode handler ─────────────────────────────────────────────────────────
+
+async function handleTrimMode(body: AetherisPayload, session: any): Promise<Response> {
+  const groqKey = process.env.GROQ_API_KEY ?? (body as any).apiKey
+  if (!groqKey) {
+    return Response.json(
+      { error: 'AI provider not configured. Add a Groq API key in settings.' },
+      { status: 503 },
+    )
+  }
+
+  const language = body.language ?? 'en'
+  
+  const TRIM_SYSTEM_PROMPT = `You are Sail AI TRIM mode - a data-driven strategic advisor.
+
+RESPONSE FORMAT - Valid JSON only:
+{
+  "chatMessage": "Main analysis text with insights",
+  "metrics": {
+    "metricKey": {
+      "label": "Display Name",
+      "value": "Current value",
+      "benchmark": "Industry benchmark",
+      "status": "good|warning|bad"
+    }
+  },
+  "chart": {
+    "data": [
+      {"label": "Your Business", "value": 85, "color": "#3b82f6"},
+      {"label": "Industry Avg", "value": 72, "color": "#94a3b8"}
+    ]
+  },
+  "recommendation": "Specific actionable recommendation",
+  "risk": "Key risk to consider"
+}
+
+GUIDELINES:
+- Always include metrics with benchmarks when relevant
+- Provide data-driven comparisons
+- Give specific, measurable recommendations
+- Cite industry standards`;
+
+  const userMessage = [
+    body.context?.trim() ? `CONTEXT: ${body.context.trim()}` : null,
+    `QUERY: ${body.message.trim()}`,
+    body.fileContent?.trim() ? `DATA: ${body.fileContent.slice(0, 5000)}` : null,
+  ].filter(Boolean).join('\n\n')
+
+  try {
+    const groqRes = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          { role: 'system', content: TRIM_SYSTEM_PROMPT },
+          { role: 'user', content: userMessage },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
+        max_tokens: 1500,
+      }),
+    })
+
+    if (!groqRes.ok) {
+      const status = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
+      return Response.json(
+        { error: status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : 'AI error' },
+        { status },
+      )
+    }
+
+    const data = await groqRes.json()
+    const content = data?.choices?.[0]?.message?.content ?? ''
+
+    return new Response(content, {
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch {
+    return Response.json({ error: 'Unable to reach AI provider.' }, { status: 502 })
+  }
+}
+
 // ── Groq system prompt ────────────────────────────────────────────────────────
 
 function buildSystemPrompt(cognitiveLoad = 0, language = 'en'): string {
@@ -223,6 +309,11 @@ export async function POST(req: NextRequest) {
   // 3. SAIL auto-intent mode → Gemini streaming (bypasses Railway/Groq)
   if (body.analysisMode === 'sail') {
     return handleSailMode(body)
+  }
+
+  // 3.5 TRIM mode → Data-driven strategic analysis
+  if (body.analysisMode === 'trim') {
+    return handleTrimMode(body, session)
   }
 
   // 4. Railway backend (primary path for upwind/downwind)
