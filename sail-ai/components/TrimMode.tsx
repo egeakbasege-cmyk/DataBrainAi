@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Paperclip, Mic, Compass, TrendingUp, BarChart3, AlertTriangle, Target } from 'lucide-react';
+import { Send, Paperclip, Mic, Compass, TrendingUp, BarChart3, AlertTriangle, Target, Database, Brain } from 'lucide-react';
 
 const SailIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -78,6 +78,7 @@ export default function TrimMode() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [useDataMode, setUseDataMode] = useState(true); // Toggle: true = data-driven, false = independent
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -106,6 +107,7 @@ export default function TrimMode() {
           message: userMessage.content,
           analysisMode: 'trim',
           language: 'tr',
+          useData: useDataMode, // Toggle durumuna göre data kullanımı
         }),
       });
 
@@ -160,6 +162,38 @@ export default function TrimMode() {
         <div className="p-4 space-y-3">
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Özellikler</p>
           
+          {/* Data Mode Toggle */}
+          <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {useDataMode ? (
+                  <Database size={16} className="text-blue-500" />
+                ) : (
+                  <Brain size={16} className="text-purple-500" />
+                )}
+                <span className="text-sm font-medium text-slate-700">
+                  {useDataMode ? 'Veri Modu' : 'Bağımsız Mod'}
+                </span>
+              </div>
+              <button
+                onClick={() => setUseDataMode(!useDataMode)}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  useDataMode ? 'bg-blue-500' : 'bg-purple-500'
+                }`}
+              >
+                <motion.div
+                  animate={{ x: useDataMode ? 24 : 2 }}
+                  className="absolute top-1 w-4 h-4 bg-white rounded-full"
+                />
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              {useDataMode 
+                ? 'Health rapor ve test sonuçlarına dayalı analiz' 
+                : 'AI bilgisiyle bağımsız strateji yanıtları'}
+            </p>
+          </div>
+
           {[
             { icon: TrendingUp, text: 'Sektör Kıyaslama', color: 'text-blue-500' },
             { icon: BarChart3, text: 'Performans Analizi', color: 'text-green-500' },

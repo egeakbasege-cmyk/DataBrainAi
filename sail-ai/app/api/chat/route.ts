@@ -138,12 +138,14 @@ async function handleTrimMode(body: AetherisPayload, session: any): Promise<Resp
   }
 
   const language = body.language ?? 'en'
+  const useData = (body as any).useData !== false // Default true
   
-  const TRIM_SYSTEM_PROMPT = `You are Sail AI TRIM mode - a data-driven strategic advisor.
+  const TRIM_SYSTEM_PROMPT = useData 
+    ? `You are Sail AI TRIM mode - a data-driven strategic advisor using health reports and test results.
 
 RESPONSE FORMAT - Valid JSON only:
 {
-  "chatMessage": "Main analysis text with insights",
+  "chatMessage": "Main analysis with data references",
   "metrics": {
     "metricKey": {
       "label": "Display Name",
@@ -163,10 +165,26 @@ RESPONSE FORMAT - Valid JSON only:
 }
 
 GUIDELINES:
-- Always include metrics with benchmarks when relevant
+- Always reference health report data and test results
+- Include metrics with benchmarks
 - Provide data-driven comparisons
-- Give specific, measurable recommendations
-- Cite industry standards`;
+- Cite specific data sources`
+    : `You are Sail AI TRIM mode - an independent strategic advisor.
+
+RESPONSE FORMAT - Valid JSON only:
+{
+  "chatMessage": "Strategic analysis and insights",
+  "metrics": null,
+  "chart": null,
+  "recommendation": "Strategic recommendation based on AI knowledge",
+  "risk": "Potential risks to consider"
+}
+
+GUIDELINES:
+- Provide strategic advice based on general AI knowledge
+- No health report data required
+- Focus on strategic frameworks and best practices
+- Give actionable business advice`;
 
   const userMessage = [
     body.context?.trim() ? `CONTEXT: ${body.context.trim()}` : null,
