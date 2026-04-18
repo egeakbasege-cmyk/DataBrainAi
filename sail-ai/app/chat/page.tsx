@@ -27,6 +27,7 @@ import { useBusinessContext }            from '@/lib/context/BusinessContext'
 import { useAetherisStore, selectAgentMode, selectActiveAlerts } from '@/lib/aetherisStore'
 import { SailAdapter }                    from '@/components/SailAdapter'
 import type { SailIntent }                from '@/lib/intent'
+import { SailAITimeTravel }               from '@/components/SailAITimeTravel'
 
 // Placeholders are derived from translations — built inside the component
 const PLACEHOLDER_KEYS = [
@@ -278,7 +279,7 @@ export default function ChatPage() {
 
     if (isSail) {
       await handleSailSubmit(txt)
-    } else if (isDownwind) {
+    } else if (isDownwind || isTrim) {
       const updatedHistory: ConvMessage[] = [
         ...convHistory,
         { role: 'user', content: txt },
@@ -289,7 +290,7 @@ export default function ChatPage() {
         context || undefined,
         apiKey || undefined,
         attachment ?? undefined,
-        'downwind',
+        isTrim ? 'trim' : 'downwind',
         updatedHistory,
         agentMode as any,
       )
@@ -414,18 +415,19 @@ export default function ChatPage() {
   // ── Mode-conditional derived state ───────────────────────────────────────────
   const isSail       = mode === 'sail'
   const isDownwind   = mode === 'downwind'
+  const isTrim       = mode === 'trim'
   const isActive     = isSail
     ? sailPhase === 'streaming'
-    : isDownwind
+    : isDownwind || isTrim
     ? coachState === 'THINKING' || coachState === 'STREAMING'
     : state === 'THINKING'
   const isComplete   = isSail
     ? sailPhase === 'complete'
-    : isDownwind
+    : isDownwind || isTrim
     ? coachState === 'COMPLETE' || coachState === 'ERROR'
     : state === 'COMPLETE' || state === 'ERROR'
-  const isConversing = isDownwind && coachState === 'CONVERSING'
-  const currentError = isSail ? sailError : isDownwind ? coachError : error
+  const isConversing = (isDownwind || isTrim) && coachState === 'CONVERSING'
+  const currentError = isSail ? sailError : (isDownwind || isTrim) ? coachError : error
 
   // SailState for HelmButton + SailboatAnimation
   const sailState = isDownwind
@@ -438,6 +440,14 @@ export default function ChatPage() {
   const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
 
   return (
+    <>
+    {/* Trim Mode: 3D Time Travel Experience */}
+    {isTrim && (
+      <SailAITimeTravel />
+    )}
+    
+    {/* Standard UI for other modes */}
+    {!isTrim && (
     <>
     {/* Aetheris agent status bar — fixed top-right */}
     <div style={{ position: 'fixed', top: '1px', right: 0, zIndex: 50, padding: '6px 16px' }}>
@@ -917,8 +927,8 @@ export default function ChatPage() {
             </motion.div>
           )}
 
-          {/* Downwind: captain coaching card */}
-          {isDownwind && (coachState === 'THINKING' || coachState === 'STREAMING' || coachState === 'COMPLETE' || coachState === 'CONVERSING') && (
+          {/* Downwind/Trim: captain coaching card */}
+          {(isDownwind || isTrim) && (coachState === 'THINKING' || coachState === 'STREAMING' || coachState === 'COMPLETE' || coachState === 'CONVERSING') && (
             <motion.div
               key="coach"
               initial={{ opacity: 0, y: 10 }}
@@ -936,7 +946,7 @@ export default function ChatPage() {
           )}
 
           {/* Upwind: executive response card */}
-          {!isDownwind && !isSail && (state === 'THINKING' || isComplete) && (
+          {!isDownwind && !isTrim && !isSail && (state === 'THINKING' || isComplete) && (
             <motion.div
               key="answer"
               initial={{ opacity: 0, y: 10 }}
@@ -1126,6 +1136,8 @@ export default function ChatPage() {
         </>
       )}
     </div>
+    </>
+    )}
     </>
   )
 }

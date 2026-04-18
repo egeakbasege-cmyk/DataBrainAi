@@ -331,6 +331,9 @@ const translations = {
     // ── SAIL auto-intent mode ────────────────────────────────────────────────
     'mode.sail':     'SAIL',
     'mode.sailDesc': 'Auto-intent — adapts depth and format to your query',
+    // ── TRIM optimization mode ───────────────────────────────────────────────
+    'mode.trim':     'TRIM',
+    'mode.trimDesc': 'Chart course — 3D timeline visualization with strategic optimization',
     'sail.streaming': 'SAIL is composing your analysis…',
   },
 
@@ -627,6 +630,9 @@ const translations = {
     // ── SAIL otomatik niyet modu ─────────────────────────────────────────────
     'mode.sail':     'SAIL',
     'mode.sailDesc': 'Otomatik niyet — derinliği ve formatı sorgunuza göre uyarlar',
+    // ── TRIM optimizasyon modu ───────────────────────────────────────────────
+    'mode.trim':     'TRIM',
+    'mode.trimDesc': 'Rota çiz — 3D zaman tüneli görselleştirme ile stratejik optimizasyon',
     'sail.streaming': 'SAIL analizinizi hazırlıyor…',
   },
 

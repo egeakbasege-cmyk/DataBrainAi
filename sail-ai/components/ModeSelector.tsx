@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
-export type AnalysisMode = 'upwind' | 'downwind' | 'sail'
+export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim'
 
 interface Props {
   mode: AnalysisMode
@@ -62,34 +62,58 @@ function SailAutoIcon({ color }: { color: string }) {
   )
 }
 
+function TrimIcon({ color }: { color: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Optimized sail with trim lines */}
+      <path d="M12 3 C17 5 20 10 19 18 L12 18 Z" fill={color} opacity="0.9"/>
+      {/* Trim adjustment lines */}
+      <line x1="12" y1="5" x2="17" y2="7" stroke={color} strokeWidth="0.8" strokeDasharray="2 1" opacity="0.7"/>
+      <line x1="12" y1="8" x2="18" y2="11" stroke={color} strokeWidth="0.8" strokeDasharray="2 1" opacity="0.7"/>
+      <line x1="12" y1="11" x2="18.5" y2="15" stroke={color} strokeWidth="0.8" strokeDasharray="2 1" opacity="0.7"/>
+      {/* Mast */}
+      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+      {/* Hull */}
+      <path d="M5 20 Q12 23 19 20" stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+      {/* Optimization indicator */}
+      <circle cx="20" cy="5" r="2" stroke={color} strokeWidth="1" fill="none" opacity="0.8"/>
+      <circle cx="20" cy="5" r="0.8" fill={color} opacity="0.8"/>
+    </svg>
+  )
+}
+
 const MODES: { id: AnalysisMode; activeColor: string; activeBg: string; activeBorder: string }[] = [
   { id: 'upwind',   activeColor: '#1A5276', activeBg: 'rgba(26,82,118,0.08)',   activeBorder: 'rgba(26,82,118,0.6)'  },
   { id: 'downwind', activeColor: '#00695C', activeBg: 'rgba(0,150,136,0.07)',   activeBorder: 'rgba(0,150,136,0.6)'  },
   { id: 'sail',     activeColor: '#92400E', activeBg: 'rgba(201,169,110,0.10)', activeBorder: 'rgba(201,169,110,0.7)' },
+  { id: 'trim',     activeColor: '#7C3AED', activeBg: 'rgba(124,58,237,0.08)',  activeBorder: 'rgba(124,58,237,0.6)'  },
 ]
 
 function ModeIcon({ id, color }: { id: AnalysisMode; color: string }) {
   if (id === 'upwind')   return <UpwindIcon   color={color} />
   if (id === 'downwind') return <DownwindIcon color={color} />
+  if (id === 'trim')     return <TrimIcon     color={color} />
   return <SailAutoIcon color={color} />
 }
 
 export function ModeSelector({ mode, onChange }: Props) {
   const { t } = useLanguage()
 
-  const labelKey: Record<AnalysisMode, 'mode.upwind' | 'mode.downwind' | 'mode.sail'> = {
+  const labelKey: Record<AnalysisMode, string> = {
     upwind:   'mode.upwind',
     downwind: 'mode.downwind',
     sail:     'mode.sail',
+    trim:     'mode.trim',
   }
-  const descKey: Record<AnalysisMode, 'mode.upwindDesc' | 'mode.downwindDesc' | 'mode.sailDesc'> = {
+  const descKey: Record<AnalysisMode, string> = {
     upwind:   'mode.upwindDesc',
     downwind: 'mode.downwindDesc',
     sail:     'mode.sailDesc',
+    trim:     'mode.trimDesc',
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
       {MODES.map(({ id, activeColor, activeBg, activeBorder }) => {
         const active    = mode === id
         const iconColor = active ? activeColor : '#71717A'
@@ -100,7 +124,7 @@ export function ModeSelector({ mode, onChange }: Props) {
             onClick={() => onChange(id)}
             whileTap={{ scale: 0.98 }}
             style={{
-              padding:      '0.875rem 0.75rem',
+              padding:      '0.875rem 0.5rem',
               border:       `1px solid ${active ? activeBorder : 'rgba(12,12,14,0.1)'}`,
               background:    active ? activeBg : '#FFFFFF',
               cursor:       'pointer',
@@ -110,7 +134,7 @@ export function ModeSelector({ mode, onChange }: Props) {
               position:     'relative',
             }}
           >
-            {id === 'sail' && (
+            {(id === 'trim') && (
               <span style={{
                 position:      'absolute',
                 top:           '-7px',
@@ -122,35 +146,35 @@ export function ModeSelector({ mode, onChange }: Props) {
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 color:         '#FFFFFF',
-                background:    '#C9A96E',
+                background:    '#7C3AED',
                 padding:       '1px 6px',
                 borderRadius:  '2px',
                 whiteSpace:    'nowrap',
               }}>
-                NEW
+                BETA
               </span>
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
               <ModeIcon id={id} color={iconColor} />
               <span style={{
                 fontFamily:    'Inter, sans-serif',
-                fontSize:      '0.68rem',
+                fontSize:      '0.65rem',
                 fontWeight:    700,
-                letterSpacing: '0.08em',
+                letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 color:         active ? activeColor : '#0C0C0E',
               }}>
-                {t(labelKey[id])}
+                {t(labelKey[id] as any)}
               </span>
             </div>
             <p style={{
               fontFamily: 'Inter, sans-serif',
-              fontSize:   '0.68rem',
+              fontSize:   '0.62rem',
               color:      active ? activeColor : '#71717A',
               lineHeight: 1.4,
               margin:     0,
             }}>
-              {t(descKey[id])}
+              {t(descKey[id] as any)}
             </p>
           </motion.button>
         )
