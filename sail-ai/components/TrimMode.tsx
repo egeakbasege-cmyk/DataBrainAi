@@ -1,17 +1,21 @@
 'use client';
-import { useChat } from 'ai/react';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Paperclip, Mic, Compass, TrendingUp, BarChart3, AlertTriangle, Target } from 'lucide-react';
 
-// Minimal yelken ikonu
 const SailIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
     <path d="M12 2v20M12 2l8 6-8 6-8-6 8-6z" />
   </svg>
 );
 
-// Data kartı bileşeni
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  parsed?: any;
+}
+
 function DataCard({ title, value, benchmark, status }: { title: string; value: string; benchmark?: string; status?: 'good' | 'warning' | 'bad' }) {
   const statusColors = {
     good: 'bg-green-50 border-green-200 text-green-700',
@@ -30,7 +34,6 @@ function DataCard({ title, value, benchmark, status }: { title: string; value: s
   );
 }
 
-// Basit bar grafik
 function BarChart({ data }: { data: { label: string; value: number; color: string }[] }) {
   const max = Math.max(...data.map(d => d.value));
   
@@ -38,7 +41,7 @@ function BarChart({ data }: { data: { label: string; value: number; color: strin
     <div className="space-y-3">
       {data.map((item, i) => (
         <div key={i} className="flex items-center gap-3">
-          <span className="text-xs text-slate-500 w-20">{item.label}</span>
+          <span className="text-xs text-slate-500 w-24">{item.label}</span>
           <div className="flex-1 h-6 bg-slate-100 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
@@ -55,7 +58,6 @@ function BarChart({ data }: { data: { label: string; value: number; color: strin
   );
 }
 
-// AI yanıtını parse et
 function parseAIResponse(content: string) {
   try {
     const parsed = JSON.parse(content);
@@ -72,20 +74,66 @@ function parseAIResponse(content: string) {
 }
 
 export default function TrimMode() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: '/api/chat',
-    body: { 
-      analysisMode: 'trim',
-      includeData: true,
-    },
-  });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input.trim(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage.content,
+          analysisMode: 'trim',
+          language: 'tr',
+        }),
+      });
+
+      const data = await response.json();
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: JSON.stringify(data),
+        parsed: parseAIResponse(JSON.stringify(data)),
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: JSON.stringify({
+          chatMessage: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
+          error: true,
+        }),
+        parsed: { text: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.', error: true },
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const quickPrompts = [
     'Sektör kıyaslamamı göster',
@@ -96,7 +144,6 @@ export default function TrimMode() {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      {/* Sol Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
         <div className="p-6 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -113,22 +160,17 @@ export default function TrimMode() {
         <div className="p-4 space-y-3">
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Özellikler</p>
           
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <TrendingUp size={16} className="text-blue-500" />
-            <span>Sektör Kıyaslama</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <BarChart3 size={16} className="text-green-500" />
-            <span>Performans Analizi</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <Target size={16} className="text-purple-500" />
-            <span>Strateji Önerileri</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <AlertTriangle size={16} className="text-amber-500" />
-            <span>Risk Değerlendirme</span>
-          </div>
+          {[
+            { icon: TrendingUp, text: 'Sektör Kıyaslama', color: 'text-blue-500' },
+            { icon: BarChart3, text: 'Performans Analizi', color: 'text-green-500' },
+            { icon: Target, text: 'Strateji Önerileri', color: 'text-purple-500' },
+            { icon: AlertTriangle, text: 'Risk Değerlendirme', color: 'text-amber-500' },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-3 text-sm text-slate-600">
+              <item.icon size={16} className={item.color} />
+              <span>{item.text}</span>
+            </div>
+          ))}
         </div>
 
         <div className="mt-auto p-4">
@@ -140,7 +182,6 @@ export default function TrimMode() {
         </div>
       </aside>
 
-      {/* Ana Chat Alanı */}
       <main className="flex-1 flex flex-col">
         <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
@@ -164,9 +205,7 @@ export default function TrimMode() {
                 <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Compass size={32} className="text-slate-400" />
                 </div>
-                <h2 className="text-2xl font-semibold text-slate-900 mb-3">
-                  Veri Destekli Analiz
-                </h2>
+                <h2 className="text-2xl font-semibold text-slate-900 mb-3">Veri Destekli Analiz</h2>
                 <p className="text-slate-500 mb-8 max-w-md mx-auto">
                   Sektör kıyaslamaları ve performans metrikleriyle desteklenmiş stratejik analiz için soru sorun.
                 </p>
@@ -175,7 +214,7 @@ export default function TrimMode() {
                   {quickPrompts.map((prompt, i) => (
                     <button
                       key={i}
-                      onClick={() => handleInputChange({ target: { value: prompt } } as any)}
+                      onClick={() => setInput(prompt)}
                       className="px-4 py-2 bg-white border border-slate-200 rounded-full text-sm text-slate-600 hover:border-slate-400 hover:text-slate-900 transition-all"
                     >
                       {prompt}
@@ -186,7 +225,7 @@ export default function TrimMode() {
             ) : (
               <div className="max-w-4xl mx-auto space-y-6">
                 {messages.map((m, i) => {
-                  const parsed = m.role === 'assistant' ? parseAIResponse(m.content) : null;
+                  const parsed = m.role === 'assistant' ? m.parsed : null;
                   
                   return (
                     <motion.div
@@ -200,18 +239,20 @@ export default function TrimMode() {
                         <div className="max-w-[80%] px-5 py-4 rounded-2xl bg-slate-900 text-white">
                           <p className="text-sm leading-relaxed">{m.content}</p>
                         </div>
+                      ) : parsed?.error ? (
+                        <div className="w-full bg-red-50 border border-red-200 rounded-2xl p-5">
+                          <p className="text-sm text-red-700">{parsed.text}</p>
+                        </div>
                       ) : (
                         <div className="w-full space-y-4">
-                          {/* Ana Metin */}
                           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                             <div className="flex items-center gap-2 mb-3">
                               <BarChart3 size={16} className="text-blue-500" />
                               <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">Analiz</span>
                             </div>
-                            <p className="text-sm leading-relaxed text-slate-700">{parsed?.text || m.content}</p>
+                            <p className="text-sm leading-relaxed text-slate-700">{parsed?.text || 'Analiz yükleniyor...'}</p>
                           </div>
                           
-                          {/* Metrik Kartları */}
                           {parsed?.metrics && (
                             <div className="grid grid-cols-3 gap-3">
                               {Object.entries(parsed.metrics).map(([key, data]: [string, any], idx) => (
@@ -226,7 +267,6 @@ export default function TrimMode() {
                             </div>
                           )}
                           
-                          {/* Grafik */}
                           {parsed?.chart && (
                             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                               <div className="flex items-center gap-2 mb-4">
@@ -237,7 +277,6 @@ export default function TrimMode() {
                             </div>
                           )}
                           
-                          {/* Öneri */}
                           {parsed?.recommendation && (
                             <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
                               <div className="flex items-center gap-2 mb-2">
@@ -248,7 +287,6 @@ export default function TrimMode() {
                             </div>
                           )}
                           
-                          {/* Risk */}
                           {parsed?.risk && (
                             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
                               <div className="flex items-center gap-2 mb-2">
@@ -288,7 +326,6 @@ export default function TrimMode() {
           </AnimatePresence>
         </div>
 
-        {/* Input Alanı */}
         <div className="p-6 bg-white border-t border-slate-200">
           <div className="max-w-4xl mx-auto">
             <form onSubmit={handleSubmit} className="relative">
@@ -303,7 +340,7 @@ export default function TrimMode() {
                 
                 <input
                   value={input}
-                  onChange={handleInputChange}
+                  onChange={(e) => setInput(e.target.value)}
                   placeholder="Veri destekli analiz için soru sorun..."
                   className="flex-1 bg-transparent outline-none text-slate-800 placeholder:text-slate-400"
                 />
@@ -328,7 +365,7 @@ export default function TrimMode() {
             </form>
             
             <p className="text-center text-xs text-slate-400 mt-3">
-              Sail AI veri destekli stratejik analiz sunar. Yanıtlar yapay zeka tarafından üretilir.
+              Sail AI veri destekli stratejik analiz sunar.
             </p>
           </div>
         </div>
