@@ -86,7 +86,12 @@ function DataStream() {
 export default function SailAITimeTravel() {
   const [timeState, setTimeState] = useState('PRESENT'); // PRESENT, FUTURE, PAST
   const [isRecording, setIsRecording] = useState(false);
-  const { messages, input, handleInputChange, handleSubmit, setInput } = useChat();
+  const { messages, input, handleInputChange, handleSubmit, setInput, isLoading } = useChat({
+    api: '/api/chat',
+    body: {
+      analysisMode: 'trim',
+    },
+  });
 
   const quickCommands = [
     { label: 'Gelecegi Analiz Et', icon: ArrowRightIcon, action: () => setInput('Gelecekteki pazar trendlerini analiz et') },
