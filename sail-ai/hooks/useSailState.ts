@@ -93,7 +93,7 @@ export function useSailState() {
     context?:    string,
     apiKey?:     string,
     attachment?: Attachment,
-    mode?:       'upwind' | 'downwind',
+    mode?:       'upwind' | 'downwind' | 'trim',
     messages?:   ConvMessage[],
     agentMode?:  AgentMode,
   ) => {
