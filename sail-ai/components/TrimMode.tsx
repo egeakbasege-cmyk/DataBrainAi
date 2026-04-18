@@ -26,10 +26,10 @@ export default function TrimMode() {
   }, [messages]);
 
   const quickPrompts = [
-    'Performansımı analiz et',
+    'Sektör kıyaslamamı göster',
+    'Performans metriklerimi analiz et',
     'Strateji önerileri al',
     'Riskleri değerlendir',
-    'Fırsatları belirle',
   ];
 
   return (
