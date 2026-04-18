@@ -27,7 +27,7 @@ import { useBusinessContext }            from '@/lib/context/BusinessContext'
 import { useAetherisStore, selectAgentMode, selectActiveAlerts } from '@/lib/aetherisStore'
 import { SailAdapter }                    from '@/components/SailAdapter'
 import type { SailIntent }                from '@/lib/intent'
-import { SailAITimeTravel }               from '@/components/SailAITimeTravel'
+import SailAITimeTravel                   from '@/components/SailAITimeTravel'
 
 // Placeholders are derived from translations — built inside the component
 const PLACEHOLDER_KEYS = [
