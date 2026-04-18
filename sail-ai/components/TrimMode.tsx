@@ -26,7 +26,7 @@ function DataCard({ title, value, benchmark, status }: { title: string; value: s
       {benchmark && (
         <p className="text-xs mt-1 opacity-70">Sektör: {benchmark}</p>
       )}
-    </div㸮
+    </div>
   );
 }
 
