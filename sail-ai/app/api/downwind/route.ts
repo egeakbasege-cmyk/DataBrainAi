@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     const userMessage = langNote + buildUserMessage(message.trim(), context, fileContent, 'downwind')
 
     // Build conversation history from prior turns
-    const history = messages.map(m => ({
+    const history: { role: 'user' | 'assistant'; content: string }[] = messages.map(m => ({
       role: m.role === 'user' ? 'user' : 'assistant',
       content: m.content,
     }))
