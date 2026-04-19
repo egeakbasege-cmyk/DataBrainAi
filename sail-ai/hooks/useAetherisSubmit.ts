@@ -33,11 +33,12 @@ import {
 export type AetherisSubmitState = 'IDLE' | 'THINKING' | 'COMPLETE' | 'ERROR'
 
 export interface AetherisSubmitOptions {
-  context?:      string
-  attachment?:   Attachment
-  analysisMode?: 'upwind' | 'downwind'
+  context?:           string
+  attachment?:        Attachment
+  analysisMode?:      'upwind' | 'downwind' | 'sail'
   /** BYOK — forwarded to the Edge proxy for Groq fallback calls. */
-  apiKey?:       string
+  apiKey?:            string
+  primaryConstraint?: string
 }
 
 export function useAetherisSubmit() {
@@ -97,8 +98,9 @@ export function useAetherisSubmit() {
         analysisMode: opts?.analysisMode ?? 'upwind',
       }
 
-      if (opts?.context)                  body.context       = opts.context
-      if (opts?.apiKey?.trim())           body.apiKey        = opts.apiKey.trim()
+      if (opts?.context)                  body.context             = opts.context
+      if (opts?.apiKey?.trim())           body.apiKey              = opts.apiKey.trim()
+      if (opts?.primaryConstraint)        body.primaryConstraint   = opts.primaryConstraint
       if (opts?.attachment?.isImage) {
         body.imageBase64   = opts.attachment.content
         body.imageMimeType = opts.attachment.mimeType
