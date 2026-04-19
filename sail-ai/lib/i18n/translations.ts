@@ -1818,6 +1818,43 @@ const translations = {
     'mode.sail':     'SAIL',
     'mode.sailDesc': '自动意图 — 根据您的查询自动调整深度和格式',
     'sail.streaming': 'SAIL 正在为您生成分析…',
+
+    // ── Home Page Content ─────────────────────────────────────────────────────
+    'home.case1.sector': '电商',
+    'home.case1.headline': '优化结账流程，缩小0.8个百分点的转化差距',
+    'home.case1.detail': '行业中位数转化率：2.3% · 客户起点：1.5% · 90天目标',
+    'home.case1.outcome': '+0.8pp 转化率',
+    
+    'home.case2.sector': 'B2B SaaS',
+    'home.case2.headline': '重新设计用户引导流程，将首月流失率从12%降至8%以下',
+    'home.case2.detail': 'OpenView低于200万美元ARR基准：月流失率7–9% · 60天实施周期',
+    'home.case2.outcome': '−4pp 流失率',
+    
+    'home.case3.sector': '专业服务',
+    'home.case3.headline': '实施推荐计划，目标20%新客户来自现有客户',
+    'home.case3.detail': '行业平均推荐率：新业务的18–22% · 标准回收期：<45天',
+    'home.case3.outcome': '+20% 新客户',
+    
+    'home.how1.title': '描述您的情况',
+    'home.how1.body': '提供您的行业、一两个关键指标，以及您面临的主要限制。 plain language即可。',
+    
+    'home.how2.title': '接收基准分析',
+    'home.how2.body': '系统检索相关行业基准，比较您的位置，并识别对您而言杠杆最高的行动。',
+    
+    'home.how3.title': '清晰、可执行的计划',
+    'home.how3.body': '三个具有明确时间框架的具体行动，一个现实的30天目标，以及最可能破坏执行的单一风险。',
+    
+    'home.preset.ecom.label': '电商转化率',
+    'home.preset.ecom.problem': '结账放弃率使转化率低于行业中位数。',
+    'home.preset.ecom.insight': '将结账简化为3步并添加一封恢复邮件序列，可在90天内缩小7.8个百分点的放弃差距。',
+    
+    'home.preset.saas.label': 'B2B SaaS流失率',
+    'home.preset.saas.problem': '首月流失率正在加剧ARR侵蚀，超出OpenView基准。',
+    'home.preset.saas.insight': '将用户引导激活率提高至7–9%的基准，从12%恢复，每100用户每月可挽回约1400英镑ARR。',
+    
+    'home.preset.agency.label': '代理管道',
+    'home.preset.agency.problem': '收入集中在2–3个客户身上，造成严重的管道风险。',
+    'home.preset.agency.insight': '有结构的季度业务评审可将非自愿流失率降低18–22%。对于6个客户的组合，每年可挽回1–2个长期客户。',
   },
 } as const
 
