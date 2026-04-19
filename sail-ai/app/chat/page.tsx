@@ -29,8 +29,6 @@ import { useBusinessContext }            from '@/lib/context/BusinessContext'
 import { useAetherisStore, selectAgentMode, selectActiveAlerts } from '@/lib/aetherisStore'
 import { SailAdapter }                    from '@/components/SailAdapter'
 import type { SailIntent }                from '@/lib/intent'
-import SailAITimeTravel                   from '@/components/SailAITimeTravel'
-import TrimMode                           from '@/components/TrimMode'
 
 // Placeholders are derived from translations — built inside the component
 const PLACEHOLDER_KEYS = [
@@ -463,14 +461,6 @@ export default function ChatPage() {
   const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
 
   return (
-    <>
-    {/* Trim Mode: Minimal Chart Course Interface */}
-    {isTrim && (
-      <TrimMode />
-    )}
-    
-    {/* Standard UI for other modes */}
-    {!isTrim && (
     <>
     {/* Aetheris agent status bar — fixed top-right */}
     <div style={{ position: 'fixed', top: '1px', right: 0, zIndex: 50, padding: '6px 16px' }}>
@@ -1185,8 +1175,6 @@ export default function ChatPage() {
         </>
       )}
     </div>
-    </>
-    )}
     </>
   )
 }
