@@ -13,9 +13,12 @@
  */
 
 import { type NextRequest } from 'next/server'
-import { getToken }         from 'next-auth/jwt'
+import NextAuth              from 'next-auth'
+import { authConfig }        from '@/auth.config'
 import type { AetherisPayload } from '@/types/architecture'
 import { cognitiveLoadDirective } from '@/types/architecture'
+
+const { auth } = NextAuth(authConfig)
 
 export const runtime = 'edge'
 
@@ -176,13 +179,10 @@ function buildUserMessage(body: ExtendedPayload): string {
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // 1. Session guard — Edge-compatible JWT verification
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-  })
+  // 1. Session guard — NextAuth v5 Edge-compatible check
+  const session = await auth()
 
-  if (!token?.email) {
+  if (!session?.user?.email) {
     return Response.json(
       { error: 'Authentication required. Please sign in.' },
       { status: 401 },
@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
         headers: {
           'Content-Type':      'application/json',
           'Authorization':     `Bearer ${process.env.INTERNAL_API_KEY ?? ''}`,
-          'X-User-Email':       token.email as string,
+          'X-User-Email':       session.user.email,
           'X-Client-Language':  req.headers.get('X-Client-Language')  ?? body.language ?? 'en',
           'X-Aetheris-Session': req.headers.get('X-Aetheris-Session') ?? body.sessionId ?? 'init',
         },
