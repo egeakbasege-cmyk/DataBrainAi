@@ -96,7 +96,16 @@ function buildSailSystemPrompt(language = 'en', primaryConstraint?: string): str
     ? `PRIORITY CONSTRAINT: The user has identified "${primaryConstraint}" as their primary business bottleneck.\nEvery strategy recommendation must address or account for this constraint first.\n\n`
     : ''
 
-  return `${constraintBlock}${langNote}You are Aetheris SAIL — an elite adaptive business intelligence system. Before responding, determine if the query is data-driven (apply analytic logic with benchmarks) or exploratory (apply coaching logic with questions). State your detected mode in italics on the very first line (e.g. *Mode: Data Analysis* or *Mode: Exploratory Coaching*).
+  return `${constraintBlock}${langNote}You are Aetheris SAIL — an elite adaptive business intelligence system. Before responding, detect the query type: data-driven (analytic) or exploratory/advisory (coaching).
+
+YOUR ABSOLUTE FIRST OUTPUT must be exactly one of these two tokens on a line by itself — nothing before it, nothing after it on that line:
+[INTENT:analytic]
+[INTENT:coaching]
+
+Choose [INTENT:analytic] for queries involving metrics, benchmarks, numbers, or performance data.
+Choose [INTENT:coaching] for strategic, exploratory, or advisory queries without hard numbers.
+
+Then continue your full response on the next line.
 
 TONE: Direct, authoritative, zero hedging. Never use "I think", "maybe", or "could be." State conclusions as facts: "Data indicates X. Recommended action: Y." Challenge irrational goals: if a target has >70% failure probability, state it explicitly.
 
@@ -291,24 +300,24 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'SAIL request failed.' }, { status: 502 })
     }
 
-    const intent = 'analytic'
-    const metaLine = JSON.stringify({ __sailMeta: { intent } }) + '\n'
-
     const { readable, writable } = new TransformStream()
-    const writer = writable.getWriter()
+    const writer  = writable.getWriter()
     const encoder = new TextEncoder()
 
     ;(async () => {
-      await writer.write(encoder.encode(metaLine))
-      const reader  = sailRes.body!.getReader()
-      const decoder = new TextDecoder()
-      let   buffer  = ''
+      const reader        = sailRes.body!.getReader()
+      const decoder       = new TextDecoder()
+      let   sseBuffer     = ''   // raw SSE framing buffer
+      let   contentBuffer = ''   // accumulated content for intent detection
+      let   intentEmitted = false
+
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
+        sseBuffer += decoder.decode(value, { stream: true })
+        const lines = sseBuffer.split('\n')
+        sseBuffer = lines.pop() ?? ''
+
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
           const raw = line.slice(6).trim()
@@ -316,10 +325,44 @@ export async function POST(req: NextRequest) {
           try {
             const chunk = JSON.parse(raw)
             const delta = chunk.choices?.[0]?.delta?.content ?? ''
-            if (delta) await writer.write(encoder.encode(delta))
+            if (!delta) continue
+
+            if (!intentEmitted) {
+              contentBuffer += delta
+              const nl = contentBuffer.indexOf('\n')
+              if (nl !== -1) {
+                // Found end of first line — extract intent token
+                const firstLine = contentBuffer.slice(0, nl).trim()
+                const match     = firstLine.match(/\[INTENT:(analytic|coaching)\]/)
+                const intent    = match ? (match[1] as 'analytic' | 'coaching') : 'analytic'
+                await writer.write(encoder.encode(JSON.stringify({ __sailMeta: { intent } }) + '\n'))
+                // Stream the rest (skip the intent line itself)
+                const rest = contentBuffer.slice(nl + 1)
+                if (rest) await writer.write(encoder.encode(rest))
+                contentBuffer = ''
+                intentEmitted = true
+              } else if (contentBuffer.length > 120) {
+                // No newline found — default to analytic and flush
+                await writer.write(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic' } }) + '\n'))
+                await writer.write(encoder.encode(contentBuffer))
+                contentBuffer = ''
+                intentEmitted = true
+              }
+            } else {
+              await writer.write(encoder.encode(delta))
+            }
           } catch { /* ignore parse errors */ }
         }
       }
+
+      // Flush any remaining content after stream ends
+      if (!intentEmitted) {
+        await writer.write(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic' } }) + '\n'))
+        if (contentBuffer) await writer.write(encoder.encode(contentBuffer))
+      } else if (contentBuffer) {
+        await writer.write(encoder.encode(contentBuffer))
+      }
+
       await writer.close()
     })()
 

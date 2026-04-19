@@ -491,6 +491,52 @@ export default function ChatPage() {
     setShowKeyPanel(false)
   }
 
+  function exportSailText(text: string) {
+    const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `sail-analysis-${new Date().toISOString().slice(0, 10)}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportTrimResponse(data: TrimResponse) {
+    const lines: string[] = [
+      `# ${data.trimTitle ?? 'TRIM Strategic Plan'}`,
+      '',
+      data.summary ?? '',
+      '',
+      `**Confidence:** ${Math.round((data.confidenceIndex?.score ?? 0) * 100)}%`,
+      '',
+      '## Diagnostic',
+      `- **Primary Metric:** ${data.diagnostic?.primaryMetric ?? ''}`,
+      `- **Trend:** ${data.diagnostic?.calculatedTrend ?? ''}`,
+      `- **Root Cause:** ${data.diagnostic?.rootCause ?? ''}`,
+      `- **Cost of Delay:** ${data.diagnostic?.costOfDelay ?? ''}`,
+      '',
+      '## Phases',
+    ]
+    for (const phase of data.phases ?? []) {
+      lines.push(`### ${phase.phase} — ${phase.timeframe}`)
+      lines.push(`**Target:** ${phase.metric} | **Delta:** ${phase.deltaTarget}`)
+      for (const action of phase.actions ?? []) lines.push(`- ${action}`)
+      lines.push('')
+    }
+    if (data.successIndicator) {
+      lines.push('## Success Indicator')
+      lines.push(`**Target:** ${data.successIndicator.target}`)
+      lines.push(`**Projection:** ${data.successIndicator.projection}`)
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `trim-plan-${new Date().toISOString().slice(0, 10)}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const isActive = mode === 'sail'
     ? sailPhase === 'streaming'
     : mode === 'trim'
@@ -1187,6 +1233,60 @@ export default function ChatPage() {
                     <path d="M4 4h16v2H4z"/><path d="M4 10h10"/><path d="M4 16h7"/><path d="M15 14l5 5m0-5l-5 5"/>
                   </svg>
                   {t('chat.export')}
+                </button>
+              )}
+              {mode === 'sail' && sailText && (
+                <button
+                  onClick={() => exportSailText(sailText)}
+                  style={{
+                    display:      'flex',
+                    alignItems:   'center',
+                    gap:          '0.4rem',
+                    padding:      '0.5rem 1rem',
+                    background:   'transparent',
+                    border:       '1px solid rgba(148,163,184,0.45)',
+                    borderRadius: '8px',
+                    cursor:       'pointer',
+                    fontFamily:   'Inter, sans-serif',
+                    fontSize:     '0.72rem',
+                    fontWeight:   600,
+                    letterSpacing:'0.06em',
+                    textTransform:'uppercase',
+                    color:        '#94A3B8',
+                    transition:   'all 0.15s',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 15V3m0 12l-4-4m4 4l4-4"/><path d="M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"/>
+                  </svg>
+                  Export .md
+                </button>
+              )}
+              {mode === 'trim' && trimResponse && (
+                <button
+                  onClick={() => exportTrimResponse(trimResponse)}
+                  style={{
+                    display:      'flex',
+                    alignItems:   'center',
+                    gap:          '0.4rem',
+                    padding:      '0.5rem 1rem',
+                    background:   'transparent',
+                    border:       '1px solid rgba(201,169,110,0.4)',
+                    borderRadius: '8px',
+                    cursor:       'pointer',
+                    fontFamily:   'Inter, sans-serif',
+                    fontSize:     '0.72rem',
+                    fontWeight:   600,
+                    letterSpacing:'0.06em',
+                    textTransform:'uppercase',
+                    color:        '#C9A96E',
+                    transition:   'all 0.15s',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 15V3m0 12l-4-4m4 4l4-4"/><path d="M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"/>
+                  </svg>
+                  Export .md
                 </button>
               )}
             </motion.div>
