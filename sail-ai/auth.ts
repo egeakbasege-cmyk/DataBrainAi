@@ -46,12 +46,18 @@ function buildProviders() {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  trustHost: true,
   secret:   process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   adapter:  PrismaAdapter(prisma),
   session:  { strategy: 'jwt' },
   providers: buildProviders(),
   callbacks: {
     ...authConfig.callbacks,
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith('/')) return url
+      try { if (new URL(url).origin === new URL(baseUrl).origin) return url } catch {}
+      return '/chat'
+    },
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id    = user.id
