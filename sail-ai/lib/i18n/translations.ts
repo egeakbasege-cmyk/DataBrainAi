@@ -337,8 +337,6 @@ const translations = {
     'export.sprint90':      '90-Day Horizon',
     'export.blockInsight':  'EXECUTIVE INSIGHT',
     'export.noteBlock':     'NOTE',
-
-    'sail.streaming': 'SAIL is composing your analysis…',
   },
 
   tr: {
@@ -640,8 +638,6 @@ const translations = {
     'export.sprint90':      '90 Günlük Ufuk',
     'export.blockInsight':  'YÖNETİCİ İÇGÖRÜSÜ',
     'export.noteBlock':     'NOT',
-
-    'sail.streaming': 'SAIL analizinizi hazırlıyor…',
   },
 
   es: {
@@ -943,8 +939,6 @@ const translations = {
     'export.sprint90':      'Horizonte de 90 días',
     'export.blockInsight':  'PERSPECTIVA EJECUTIVA',
     'export.noteBlock':     'NOTA',
-
-    'sail.streaming': 'SAIL está redactando tu análisis…',
   },
 
   de: {
