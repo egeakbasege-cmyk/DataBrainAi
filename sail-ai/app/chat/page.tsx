@@ -423,7 +423,7 @@ export default function ChatPage() {
         attachment ?? undefined,
         'downwind',
         convHistory.length > 0 ? convHistory : undefined,
-        agentMode,
+        undefined,
         primaryConstraint,
       )
       return
