@@ -13,224 +13,15 @@
  */
 
 import { type NextRequest } from 'next/server'
-import NextAuth                  from 'next-auth'
-import { authConfig }            from '@/auth.config'
-import type { AetherisPayload }  from '@/types/architecture'
+import { getToken }         from 'next-auth/jwt'
+import type { AetherisPayload } from '@/types/architecture'
 import { cognitiveLoadDirective } from '@/types/architecture'
-import { classifyIntent, buildSailSystemPrompt } from '@/lib/intent'
 
 export const runtime = 'edge'
 
-// Edge-compatible auth — uses the same config as middleware (no Prisma/Node.js APIs)
-const { auth } = NextAuth(authConfig)
-
-const UPSTREAM_URL  = process.env.RAILWAY_BACKEND_URL
-const GROQ_URL      = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL    = 'llama-3.3-70b-versatile'
-
-// ── SAIL mode: Groq streaming (intent-driven markdown) ────────────────────────
-
-async function handleSailMode(body: AetherisPayload): Promise<Response> {
-  const groqKey = process.env.GROQ_API_KEY ?? (body as AetherisPayload & { apiKey?: string }).apiKey
-  if (!groqKey) {
-    return Response.json(
-      { error: 'AI provider not configured. Add a Groq API key in settings to continue.' },
-      { status: 503 },
-    )
-  }
-
-  const language     = body.language ?? 'en'
-  const intentResult = classifyIntent(body.message)
-  const systemText   = buildSailSystemPrompt(intentResult.intent, language)
-  const userText     = [
-    body.context?.trim() ? `CONTEXT\n${body.context.trim()}` : null,
-    body.message.trim(),
-    body.fileContent?.trim() ? `DATA\n${body.fileContent.slice(0, 8000)}` : null,
-  ].filter(Boolean).join('\n\n')
-
-  let groqRes: Response
-  try {
-    groqRes = await fetch(GROQ_URL, {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${groqKey}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({
-        model:       GROQ_MODEL,
-        messages: [
-          { role: 'system', content: systemText },
-          { role: 'user',   content: userText   },
-        ],
-        stream:      true,
-        temperature: 0.72,
-        max_tokens:  2048,
-      }),
-    })
-  } catch {
-    return Response.json({ error: 'Unable to reach Groq API.' }, { status: 502 })
-  }
-
-  if (!groqRes.ok) {
-    const status = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
-    return Response.json(
-      { error: status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : `Groq error: ${groqRes.status}` },
-      { status },
-    )
-  }
-
-  // Transform Groq SSE → plain text stream consumed by the client
-  // Groq SSE: data: {"choices":[{"delta":{"content":"..."}}]}
-  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>()
-  const writer  = writable.getWriter()
-  const encoder = new TextEncoder()
-  const decoder = new TextDecoder()
-
-  // First chunk: intent metadata JSON line (parsed by client to set intent badge)
-  const metaLine = JSON.stringify({ __sailMeta: { intent: intentResult.intent, confidence: intentResult.confidence } })
-  writer.write(encoder.encode(metaLine + '\n')).catch(() => {})
-
-  // Pipe Groq SSE body, extracting text deltas
-  ;(async () => {
-    try {
-      const reader = groqRes.body!.getReader()
-      let buffer   = ''
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          const jsonStr = line.slice(6).trim()
-          if (!jsonStr || jsonStr === '[DONE]') continue
-          try {
-            const chunk = JSON.parse(jsonStr)
-            const text  = chunk?.choices?.[0]?.delta?.content ?? ''
-            if (text) await writer.write(encoder.encode(text))
-          } catch { /* skip malformed chunk */ }
-        }
-      }
-    } finally {
-      writer.close().catch(() => {})
-    }
-  })()
-
-  return new Response(readable, {
-    status:  200,
-    headers: {
-      'Content-Type':      'text/plain; charset=utf-8',
-      'Cache-Control':     'no-store',
-      'X-Accel-Buffering': 'no',
-      'X-Sail-Intent':     intentResult.intent,
-    },
-  })
-}
-
-// ── TRIM mode handler ─────────────────────────────────────────────────────────
-
-async function handleTrimMode(body: AetherisPayload, session: any): Promise<Response> {
-  const groqKey = process.env.GROQ_API_KEY ?? (body as any).apiKey
-  if (!groqKey) {
-    return Response.json(
-      { error: 'AI provider not configured. Add a Groq API key in settings.' },
-      { status: 503 },
-    )
-  }
-
-  const language = body.language ?? 'en'
-  const useData = (body as any).useData !== false // Default true
-  
-  const TRIM_SYSTEM_PROMPT = useData 
-    ? `You are Sail AI TRIM mode - a data-driven strategic advisor using business metrics and sector data.
-
-RESPONSE FORMAT - Valid JSON only:
-{
-  "chatMessage": "Main analysis with business data references",
-  "metrics": {
-    "metricKey": {
-      "label": "Display Name", 
-      "value": "Current value",
-      "benchmark": "Industry benchmark",
-      "status": "good|warning|bad"
-    }
-  },
-  "chart": {
-    "data": [
-      {"label": "Your Business", "value": 85, "color": "#3b82f6"},
-      {"label": "Industry Avg", "value": 72, "color": "#94a3b8"}
-    ]
-  },
-  "recommendation": "Specific actionable recommendation",
-  "risk": "Key risk to consider"
-}
-
-GUIDELINES:
-- Always reference business metrics and sector benchmarks
-- Include performance metrics with industry comparisons
-- Provide data-driven strategic analysis
-- Cite specific business data sources`
-    : `You are Sail AI TRIM mode - an independent strategic advisor.
-
-RESPONSE FORMAT - Valid JSON only:
-{
-  "chatMessage": "Strategic analysis and insights",
-  "metrics": null,
-  "chart": null,
-  "recommendation": "Strategic recommendation based on AI knowledge", 
-  "risk": "Potential risks to consider"
-}
-
-GUIDELINES:
-- Provide strategic advice based on general AI knowledge
-- No business data required
-- Focus on strategic frameworks and best practices
-- Give actionable business advice`;
-
-  const userMessage = [
-    body.context?.trim() ? `CONTEXT: ${body.context.trim()}` : null,
-    `QUERY: ${body.message.trim()}`,
-    body.fileContent?.trim() ? `DATA: ${body.fileContent.slice(0, 5000)}` : null,
-  ].filter(Boolean).join('\n\n')
-
-  try {
-    const groqRes = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${groqKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages: [
-          { role: 'system', content: TRIM_SYSTEM_PROMPT },
-          { role: 'user', content: userMessage },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.3,
-        max_tokens: 1500,
-      }),
-    })
-
-    if (!groqRes.ok) {
-      const status = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
-      return Response.json(
-        { error: status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : 'AI error' },
-        { status },
-      )
-    }
-
-    const data = await groqRes.json()
-    const content = data?.choices?.[0]?.message?.content ?? ''
-
-    return new Response(content, {
-      headers: { 'Content-Type': 'application/json' },
-    })
-  } catch {
-    return Response.json({ error: 'Unable to reach AI provider.' }, { status: 502 })
-  }
-}
+const UPSTREAM_URL = process.env.RAILWAY_BACKEND_URL
+const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_MODEL   = 'llama-3.3-70b-versatile'
 
 type ExtendedPayload = AetherisPayload & {
   apiKey?:             string
@@ -385,10 +176,13 @@ function buildUserMessage(body: ExtendedPayload): string {
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // 1. Session guard — NextAuth v5 Edge-compatible check
-  const session = await auth()
+  // 1. Session guard — Edge-compatible JWT verification
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  })
 
-  if (!session?.user?.email) {
+  if (!token?.email) {
     return Response.json(
       { error: 'Authentication required. Please sign in.' },
       { status: 401 },
@@ -418,7 +212,7 @@ export async function POST(req: NextRequest) {
         headers: {
           'Content-Type':      'application/json',
           'Authorization':     `Bearer ${process.env.INTERNAL_API_KEY ?? ''}`,
-          'X-User-Email':       session.user.email,
+          'X-User-Email':       token.email as string,
           'X-Client-Language':  req.headers.get('X-Client-Language')  ?? body.language ?? 'en',
           'X-Aetheris-Session': req.headers.get('X-Aetheris-Session') ?? body.sessionId ?? 'init',
         },
