@@ -334,7 +334,7 @@ export default function ChatPage() {
         const { done, value } = await reader.read()
         if (done) break
         buf += decoder.decode(value, { stream: true })
-        if (!metaDone) { const nl = buf.indexOf('\n'); if (nl !== -1) { buf = buf.slice(nl + 1); metaDone = true } }
+        if (!metaDone) { const nl = buf.indexOf('\n'); if (nl !== -1) { try { const m = JSON.parse(buf.slice(0, nl)); if (m.__sailMeta?.intent) setSailIntent(m.__sailMeta.intent) } catch {} buf = buf.slice(nl + 1); metaDone = true } }
         setSailText(buf)
       }
       setSailPhase('complete')
@@ -953,19 +953,17 @@ export default function ChatPage() {
         <AnimatePresence>
           {mode === 'sail' && (sailPhase === 'streaming' || sailPhase === 'complete') && (
             <motion.div key="sail-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(201,169,110,0.25)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(0,0,0,0.05)' }}>
-                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(201,169,110,0.15)', background: 'rgba(201,169,110,0.04)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ background: '#FFFFFF', border: '1px solid rgba(124,58,237,0.18)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(124,58,237,0.06)' }}>
+                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(124,58,237,0.1)', background: 'rgba(124,58,237,0.03)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {sailPhase === 'streaming' && (
-                    <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#C9A96E', flexShrink: 0 }} />
+                    <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#7C3AED', flexShrink: 0 }} />
                   )}
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#92400E' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7C3AED', fontWeight: 700 }}>
                     SAIL · Adaptive Intelligence
                   </span>
                 </div>
-                <div style={{ padding: '1.25rem', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.75, color: '#0C0C0E', whiteSpace: 'pre-wrap', wordBreak: 'break-word', minHeight: '3rem' }}>
-                  {sailText || (sailPhase === 'streaming'
-                    ? <span style={{ color: '#A1A1AA' }}>{t('sail.streaming')}</span>
-                    : null)}
+                <div style={{ padding: '1.5rem 1.25rem' }}>
+                  <SailAdapter text={sailText} intent={sailIntent} streaming={sailPhase === 'streaming'} />
                 </div>
               </div>
             </motion.div>
