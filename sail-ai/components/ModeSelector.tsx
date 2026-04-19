@@ -11,72 +11,19 @@ interface Props {
   onChange: (m: AnalysisMode) => void
 }
 
-function UpwindIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 3 L12 19 L4 19 Z" fill={color} opacity="0.9" />
-      <path d="M12 3 L12 19 L20 12 Z" fill={color} opacity="0.45" />
-      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
-      <path d="M5 19 Q12 22 19 19" stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-      <path d="M2 8 L2 5 L5 5" stroke={color} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6"/>
-      <path d="M2 5 L5 8" stroke={color} strokeWidth="1.1" strokeLinecap="round" opacity="0.6"/>
-    </svg>
-  )
-}
-
-function DownwindIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 4 C6 6 3 12 5 19 L12 19 Z" fill={color} opacity="0.9"/>
-      <path d="M12 4 C18 6 21 12 19 19 L12 19 Z" fill={color} opacity="0.55"/>
-      <line x1="12" y1="3" x2="12" y2="20" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
-      <path d="M5 19 Q12 22 19 19" stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-      <path d="M19 8 L22 8 L22 11" stroke={color} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6"/>
-      <path d="M22 8 L19 11" stroke={color} strokeWidth="1.1" strokeLinecap="round" opacity="0.6"/>
-    </svg>
-  )
-}
-
-function SailAutoIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 3 C18 5 22 11 20 19 L12 19 Z" fill={color} opacity="0.9"/>
-      <path d="M12 8 C16 9 18 14 17 19 L12 19 Z" fill={color} opacity="0.45"/>
-      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
-      <path d="M5 19 Q12 22 19 19" stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-      <circle cx="5" cy="6" r="1.5" fill={color} opacity="0.7"/>
-      <circle cx="5" cy="6" r="0.6" fill={color}/>
-    </svg>
-  )
-}
-
-function TrimIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <line x1="6" y1="4" x2="6" y2="20" stroke={color} strokeWidth="1.3" strokeLinecap="round" opacity="0.4"/>
-      <circle cx="6" cy="6"  r="2" fill={color} opacity="0.9"/>
-      <circle cx="6" cy="12" r="2" fill={color} opacity="0.7"/>
-      <circle cx="6" cy="18" r="2" fill={color} opacity="0.5"/>
-      <rect x="10" y="5"  width="10" height="2" rx="1" fill={color} opacity="0.8"/>
-      <rect x="10" y="11" width="8"  height="2" rx="1" fill={color} opacity="0.65"/>
-      <rect x="10" y="17" width="6"  height="2" rx="1" fill={color} opacity="0.5"/>
-    </svg>
-  )
-}
-
-const MODES: { id: AnalysisMode; activeColor: string; activeBg: string; activeBorder: string; badge?: string }[] = [
-  { id: 'upwind',   activeColor: '#1A5276', activeBg: 'rgba(26,82,118,0.08)',   activeBorder: 'rgba(26,82,118,0.6)'  },
-  { id: 'downwind', activeColor: '#00695C', activeBg: 'rgba(0,150,136,0.07)',   activeBorder: 'rgba(0,150,136,0.6)'  },
-  { id: 'sail',     activeColor: '#92400E', activeBg: 'rgba(201,169,110,0.10)', activeBorder: 'rgba(201,169,110,0.7)', badge: 'NEW' },
-  { id: 'trim',     activeColor: '#5B21B6', activeBg: 'rgba(91,33,182,0.07)',   activeBorder: 'rgba(91,33,182,0.55)', badge: 'NEW' },
+const MODES: {
+  id: AnalysisMode
+  color: string
+  bg: string
+  border: string
+  glow: string
+  badge?: string
+}[] = [
+  { id: 'upwind',   color: '#1A5276', bg: 'rgba(26,82,118,0.07)',   border: 'rgba(26,82,118,0.5)',   glow: 'rgba(26,82,118,0.12)'  },
+  { id: 'downwind', color: '#00695C', bg: 'rgba(0,105,92,0.07)',    border: 'rgba(0,105,92,0.5)',    glow: 'rgba(0,105,92,0.12)'   },
+  { id: 'sail',     color: '#7C3AED', bg: 'rgba(124,58,237,0.07)',  border: 'rgba(124,58,237,0.5)',  glow: 'rgba(124,58,237,0.12)', badge: 'AI' },
+  { id: 'trim',     color: '#B45309', bg: 'rgba(180,83,9,0.07)',    border: 'rgba(201,169,110,0.6)', glow: 'rgba(201,169,110,0.12)', badge: 'NEW' },
 ]
-
-function ModeIcon({ id, color }: { id: AnalysisMode; color: string }) {
-  if (id === 'upwind')   return <UpwindIcon   color={color} />
-  if (id === 'downwind') return <DownwindIcon color={color} />
-  if (id === 'trim')     return <TrimIcon     color={color} />
-  return <SailAutoIcon color={color} />
-}
 
 const LABEL_KEYS: Record<AnalysisMode, TranslationKey> = {
   upwind:   'mode.upwind',
@@ -91,70 +38,126 @@ const DESC_KEYS: Record<AnalysisMode, TranslationKey> = {
   trim:     'mode.trimDesc',
 }
 
+function UpwindIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M12 3L12 19L4 19Z" fill={color} opacity="0.85"/>
+      <path d="M12 3L12 19L20 12Z" fill={color} opacity="0.35"/>
+      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M5 19Q12 22 19 19" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    </svg>
+  )
+}
+
+function DownwindIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M12 4C6 6 3 12 5 19L12 19Z" fill={color} opacity="0.85"/>
+      <path d="M12 4C18 6 21 12 19 19L12 19Z" fill={color} opacity="0.4"/>
+      <line x1="12" y1="3" x2="12" y2="20" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M5 19Q12 22 19 19" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    </svg>
+  )
+}
+
+function SailIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M12 3C18 5 22 11 20 19L12 19Z" fill={color} opacity="0.85"/>
+      <path d="M12 8C16 9 18 14 17 19L12 19Z" fill={color} opacity="0.4"/>
+      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M5 19Q12 22 19 19" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <circle cx="5" cy="6" r="1.8" fill={color} opacity="0.6"/>
+    </svg>
+  )
+}
+
+function TrimIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <line x1="6" y1="4" x2="6" y2="20" stroke={color} strokeWidth="1.3" strokeLinecap="round" opacity="0.35"/>
+      <circle cx="6" cy="6"  r="2.2" fill={color} opacity="0.9"/>
+      <circle cx="6" cy="12" r="2.2" fill={color} opacity="0.65"/>
+      <circle cx="6" cy="18" r="2.2" fill={color} opacity="0.4"/>
+      <rect x="11" y="5"  width="9"  height="2" rx="1" fill={color} opacity="0.85"/>
+      <rect x="11" y="11" width="7"  height="2" rx="1" fill={color} opacity="0.65"/>
+      <rect x="11" y="17" width="5"  height="2" rx="1" fill={color} opacity="0.45"/>
+    </svg>
+  )
+}
+
+function ModeIcon({ id, color }: { id: AnalysisMode; color: string }) {
+  if (id === 'upwind')   return <UpwindIcon   color={color} />
+  if (id === 'downwind') return <DownwindIcon color={color} />
+  if (id === 'sail')     return <SailIcon     color={color} />
+  return <TrimIcon color={color} />
+}
+
 export function ModeSelector({ mode, onChange }: Props) {
   const { t } = useLanguage()
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', width: '100%' }}>
-      {MODES.map(({ id, activeColor, activeBg, activeBorder, badge }) => {
-        const active    = mode === id
-        const iconColor = active ? activeColor : '#71717A'
+      {MODES.map(({ id, color, bg, border, glow, badge }) => {
+        const active = mode === id
         return (
           <motion.button
             key={id}
             type="button"
             onClick={() => onChange(id)}
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.97 }}
             style={{
-              padding:      '0.75rem 0.75rem',
-              border:       `1px solid ${active ? activeBorder : 'rgba(12,12,14,0.1)'}`,
-              background:    active ? activeBg : '#FFFFFF',
+              position:     'relative',
+              padding:      '0.875rem 0.875rem 0.75rem',
+              border:       `1px solid ${active ? border : 'rgba(255,255,255,0.08)'}`,
+              background:   active ? bg : 'rgba(255,255,255,0.04)',
               cursor:       'pointer',
               textAlign:    'left',
-              transition:   'all 0.18s',
-              borderRadius: '4px',
-              position:     'relative',
+              borderRadius: '10px',
+              boxShadow:    active ? `0 0 0 3px ${glow}, 0 4px 16px rgba(0,0,0,0.3)` : '0 2px 8px rgba(0,0,0,0.2)',
+              transition:   'all 0.18s ease',
             }}
           >
             {badge && (
               <span style={{
                 position:      'absolute',
                 top:           '-7px',
-                left:          '50%',
-                transform:     'translateX(-50%)',
+                right:         '10px',
                 fontFamily:    'Inter, sans-serif',
-                fontSize:      '0.52rem',
+                fontSize:      '0.5rem',
                 fontWeight:    700,
-                letterSpacing: '0.08em',
+                letterSpacing: '0.1em',
                 textTransform: 'uppercase',
                 color:         '#FFFFFF',
-                background:    active ? activeColor : '#C9A96E',
-                padding:       '1px 6px',
-                borderRadius:  '2px',
-                whiteSpace:    'nowrap',
+                background:    active ? color : '#C9A96E',
+                padding:       '2px 7px',
+                borderRadius:  '3px',
               }}>
                 {badge}
               </span>
             )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <ModeIcon id={id} color={iconColor} />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+              <ModeIcon id={id} color={active ? color : '#9CA3AF'} />
               <span style={{
                 fontFamily:    'Inter, sans-serif',
-                fontSize:      '0.65rem',
+                fontSize:      '0.68rem',
                 fontWeight:    700,
-                letterSpacing: '0.06em',
+                letterSpacing: '0.07em',
                 textTransform: 'uppercase',
-                color:         active ? activeColor : '#0C0C0E',
+                color:         active ? color : 'rgba(255,255,255,0.65)',
               }}>
                 {t(LABEL_KEYS[id])}
               </span>
             </div>
+
             <p style={{
               fontFamily: 'Inter, sans-serif',
-              fontSize:   '0.65rem',
-              color:      active ? activeColor : '#71717A',
-              lineHeight: 1.4,
+              fontSize:   '0.68rem',
+              lineHeight: 1.45,
+              color:      active ? color : 'rgba(255,255,255,0.3)',
               margin:     0,
+              opacity:    active ? 0.9 : 1,
             }}>
               {t(DESC_KEYS[id])}
             </p>
