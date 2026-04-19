@@ -181,10 +181,11 @@ Instructions: Be specific and benchmark-referenced. Cite their actual metrics wh
 }
 
 export const EMPTY_DIAGNOSTIC: DiagnosticInput = {
-  industry:     '',
-  teamSize:     '',
-  revenue:      '',
-  margin:       10,
-  cashReserves: 3,
-  obstacle:     '',
+  industry:       '',
+  customIndustry: '',
+  teamSize:       '',
+  revenue:        '',
+  margin:         10,
+  cashReserves:   3,
+  obstacle:       '',
 }
