@@ -20,7 +20,7 @@ const INDUSTRIES = [
   'Hospitality', 'Professional Services', 'Healthcare', 'Other',
 ]
 const TEAM_SIZES    = ['Solo', '2–5', '6–20', '21–50', '50+']
-const REVENUE_RANGES = ['Under £50K', '£50K–£200K', '£200K–£1M', '£1M–£5M', 'Over £5M']
+const REVENUE_RANGES = ['Under £25k', '£25k – £100k', '£100k – £500k', '£500k – £1M', 'Over £1M']
 const OBSTACLES     = [
   'Lead Generation', 'Cash Flow', 'Operational Efficiency',
   'Customer Retention', 'Team & Talent', 'Product Quality',
@@ -175,6 +175,27 @@ function StepIndustry({ data, update, tFn }: { data: DiagnosticInput; update: (k
           <Tile key={ind} label={ind} selected={data.industry === ind} onClick={() => update('industry', ind)} />
         ))}
       </div>
+      {data.industry === 'Other' && (
+        <input
+          type="text"
+          value={data.customIndustry}
+          onChange={e => update('customIndustry', e.target.value)}
+          placeholder={tFn('diag.otherPlaceholder')}
+          style={{
+            marginTop:   '0.875rem',
+            width:       '100%',
+            boxSizing:   'border-box',
+            padding:     '0.75rem 1rem',
+            fontFamily:  'Inter, sans-serif',
+            fontSize:    '0.875rem',
+            color:       '#0C0C0E',
+            background:  '#FFFFFF',
+            border:      '1px solid rgba(201,169,110,0.5)',
+            outline:     'none',
+          }}
+          autoFocus
+        />
+      )}
     </div>
   )
 }
@@ -452,7 +473,7 @@ function InsightBox({ icon, text }: { icon: 'margin' | 'cash'; text: string }) {
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
 
 const SCREENS = [
-  { key: 'industry',  canProceed: (d: DiagnosticInput) => !!d.industry },
+  { key: 'industry',  canProceed: (d: DiagnosticInput) => !!d.industry && (d.industry !== 'Other' || (d.customIndustry?.trim().length ?? 0) >= 3) },
   { key: 'teamSize',  canProceed: (d: DiagnosticInput) => !!d.teamSize },
   { key: 'financials',canProceed: (d: DiagnosticInput) => !!d.revenue },
   { key: 'cash',      canProceed: () => true },

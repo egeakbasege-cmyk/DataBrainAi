@@ -17,6 +17,8 @@ import type { AnalysisMode }             from '@/components/ModeSelector'
 import { VoiceInput }                    from '@/components/VoiceInput'
 import { ExportModal }                   from '@/components/ExportModal'
 import { AgentStatusBar }                from '@/components/AgentStatusBar'
+import { TrimTimelineCard }              from '@/components/TrimTimelineCard'
+import type { TrimResponse }             from '@/components/TrimTimelineCard'
 import { useAetherisSubmit }             from '@/hooks/useAetherisSubmit'
 import { useSailState }                  from '@/hooks/useSailState'
 import type { ConvMessage }              from '@/hooks/useSailState'
@@ -38,9 +40,10 @@ const PLACEHOLDER_KEYS = [
   'chat.placeholder.3',
 ] as const
 
-const MAX            = 2000
-const API_KEY_STORE  = 'sail_groq_key'
-const MAX_FILE_BYTES = 5 * 1024 * 1024  // 5 MB
+const MAX               = 2000
+const API_KEY_STORE     = 'sail_groq_key'
+const MAX_FILE_BYTES    = 5 * 1024 * 1024
+const CONTEXT_TOGGLE_KEY = 'sail_use_profile_context'
 
 /* ── Client-side file → Attachment ──────────────────────────── */
 async function parseFile(file: File): Promise<Attachment> {
@@ -154,9 +157,27 @@ export default function ChatPage() {
   const [sailError,    setSailError]    = useState<string | null>(null)
   const sailAbortRef                   = useRef<AbortController | null>(null)
 
+  // SAIL streaming state
+  const [sailText,          setSailText]         = useState('')
+  const [sailPhase,         setSailPhase]        = useState<'idle'|'streaming'|'complete'>('idle')
+  const [sailError,         setSailError]        = useState<string|null>(null)
+  const sailAbortRef = useRef<AbortController|null>(null)
+
+  // TRIM state
+  const [trimResponse,      setTrimResponse]     = useState<TrimResponse|null>(null)
+  const [trimPhase,         setTrimPhase]        = useState<'idle'|'loading'|'complete'>('idle')
+  const [trimError,         setTrimError]        = useState<string|null>(null)
+
+  // Context toggle + inline paywall
+  const [useProfileCtx,     setUseProfileCtx]    = useState(true)
+  const [showInlinePaywall, setShowInlinePaywall] = useState(false)
+
   // Aetheris store — agent mode + drift alerts (filter locally for stable refs)
   const agentMode    = useAetherisStore(selectAgentMode)
   const setAgentMode = useAetherisStore((s) => s.setAgentMode)
+  const language     = useAetherisStore((s) => s.language)
+  const sessionId    = useAetherisStore((s) => s.sessionId)
+  const userId       = useAetherisStore((s) => s.userId)
   const allAlerts    = useAetherisStore(selectActiveAlerts)
   const activeAlerts = allAlerts.filter((a) => !a.isResolved)
   const textareaRef  = useRef<HTMLTextAreaElement>(null)
@@ -180,6 +201,11 @@ export default function ChatPage() {
   const { isPro, usedToday, canAnalyse, showPaywall, recordUsage, triggerPaywall, closePaywall, activatePro } = useSubscription()
   const { buildContext, addSession, profile } = useBusinessContext()
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const primaryConstraint: string | undefined = useProfileCtx
+    ? ((profile.diagnostic as any)?.obstacle || undefined)
+    : undefined
+
   useEffect(() => { setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent)) }, [])
   useEffect(() => {
     const iv = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 4000)
@@ -192,12 +218,16 @@ export default function ChatPage() {
     ta.style.height = `${Math.min(ta.scrollHeight, 220)}px`
   }, [input])
 
-  // Load API key from localStorage + handle URL params
+  // Load API key, context toggle + handle URL params
   useEffect(() => {
     try {
       const stored = localStorage.getItem(API_KEY_STORE) ?? ''
       setApiKey(stored)
       setApiKeyInput(stored)
+    } catch { /* ignore */ }
+    try {
+      const ctxStored = localStorage.getItem(CONTEXT_TOGGLE_KEY)
+      if (ctxStored !== null) setUseProfileCtx(ctxStored === 'true')
     } catch { /* ignore */ }
 
     const params = new URLSearchParams(window.location.search)
@@ -248,61 +278,127 @@ export default function ChatPage() {
 
   // Show key panel on any AI failure that could be fixed with BYOK
   useEffect(() => {
-    if (!error) return
-    const isAiError = error.includes('quota') || error.includes('aistudio') ||
-      error.includes('API key') || error.includes('Unable to reach') ||
-      error.includes('AI_') || error.includes('exhausted') || error.includes('unavailable')
+    const e = error ?? sailError ?? trimError
+    if (!e) return
+    const isAiError = e.includes('quota') || e.includes('aistudio') ||
+      e.includes('API key') || e.includes('Unable to reach') ||
+      e.includes('AI_') || e.includes('exhausted') || e.includes('unavailable')
     if (isAiError) setShowKeyPanel(true)
-  }, [error])
+  }, [error, sailError, trimError])
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     if (e.target.value.length <= MAX) setInput(e.target.value)
   }
 
-  // ── Update conversation history when captain returns a coaching turn ─────────
-  useEffect(() => {
-    if (!coachResult || !('chatMessage' in coachResult)) return
-    setConvHistory(prev => [
-      ...prev,
-      { role: 'assistant' as const, content: coachResult.chatMessage },
-    ])
-    setInput('')
-  }, [coachResult])
-
-  async function handleSubmit() {
-    const txt = input.trim()
-    if (!txt || isActive) return
-    if (!canAnalyse && !isConversing) { triggerPaywall(); return }
-
-    const context = profile.diagnosticPrompt
+  function getContext(): string {
+    if (!useProfileCtx) return ''
+    return profile.diagnosticPrompt
       ? (isPro ? buildContext() : profile.diagnosticPrompt + '\n\n')
       : (isPro ? buildContext() : '')
+  }
 
-    if (isSail) {
-      await handleSailSubmit(txt)
-    } else if (isDownwind || isTrim) {
-      const updatedHistory: ConvMessage[] = [
-        ...convHistory,
-        { role: 'user', content: txt },
-      ]
-      setConvHistory(updatedHistory)
-      await coachSubmit(
-        txt,
-        context || undefined,
-        apiKey || undefined,
-        attachment ?? undefined,
-        isTrim ? 'trim' : 'downwind',
-        updatedHistory,
-        agentMode as any,
-      )
-    } else {
-      await submit(txt, {
-        context:      context || undefined,
-        attachment:   attachment ?? undefined,
-        analysisMode: mode,
-        apiKey:       apiKey || undefined,
-      })
+  function saveAnalysis(prompt: string, headline: string) {
+    addSession(prompt, headline)
+    recordUsage()
+    try {
+      const prev: unknown[] = JSON.parse(localStorage.getItem('sail_analysis_history') ?? '[]')
+      prev.push({ id: crypto.randomUUID(), prompt: prompt.slice(0, 120), headline: headline.slice(0, 120), createdAt: new Date().toISOString() })
+      localStorage.setItem('sail_analysis_history', JSON.stringify(prev.slice(-100)))
+    } catch { /* ignore */ }
+  }
+
+  function buildModeBody(text: string, analysisMode: string): Record<string, unknown> {
+    const body: Record<string, unknown> = {
+      message: text, sessionId: sessionId || 'init', userId: userId || 'anonymous',
+      language, agentMode, analysisMode,
     }
+    const ctx = getContext()
+    if (ctx)               body.context           = ctx
+    if (apiKey)            body.apiKey            = apiKey
+    if (primaryConstraint) body.primaryConstraint = primaryConstraint
+    if (attachment?.isImage) { body.imageBase64 = attachment.content; body.imageMimeType = attachment.mimeType }
+    else if (attachment?.content) body.fileContent = attachment.content
+    return body
+  }
+
+  async function handleSailSubmit(text: string) {
+    setSailError(null); setSailText(''); setSailPhase('streaming')
+    sailAbortRef.current = new AbortController()
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body: JSON.stringify(buildModeBody(text, 'sail')),
+        signal: sailAbortRef.current.signal,
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error((d as Record<string,unknown>).error as string ?? 'SAIL request failed.')
+      }
+      const reader = res.body!.getReader()
+      const decoder = new TextDecoder()
+      let buf = '', metaDone = false
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        if (!metaDone) { const nl = buf.indexOf('\n'); if (nl !== -1) { buf = buf.slice(nl + 1); metaDone = true } }
+        setSailText(buf)
+      }
+      setSailPhase('complete')
+      saveAnalysis(text, buf.slice(0, 120))
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      setSailError(err instanceof Error ? err.message : 'SAIL request failed.')
+      setSailPhase('idle')
+    }
+  }
+
+  async function handleTrimSubmit(text: string) {
+    setTrimError(null); setTrimResponse(null); setTrimPhase('loading')
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body: JSON.stringify(buildModeBody(text, 'trim')),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error((d as Record<string,unknown>).error as string ?? 'TRIM request failed.')
+      }
+      const data = await res.json() as TrimResponse
+      setTrimResponse(data)
+      setTrimPhase('complete')
+      saveAnalysis(text, data.summary?.slice(0, 120) ?? data.trimTitle ?? 'TRIM Plan')
+    } catch (err: unknown) {
+      setTrimError(err instanceof Error ? err.message : 'TRIM request failed.')
+      setTrimPhase('idle')
+    }
+  }
+
+  async function handleSubmit() {
+    const text = input.trim()
+    if (!text) return
+    if (!canAnalyse) { setShowInlinePaywall(true); return }
+    setShowInlinePaywall(false)
+
+    if (mode === 'sail') { if (sailPhase !== 'streaming') await handleSailSubmit(text); return }
+    if (mode === 'trim') { if (trimPhase !== 'loading')   await handleTrimSubmit(text); return }
+
+    if (state === 'THINKING') return
+    await submit(text, {
+      context:            getContext() || undefined,
+      attachment:         attachment ?? undefined,
+      analysisMode:       mode,
+      apiKey:             apiKey || undefined,
+      primaryConstraint,
+    })
+  }
+
+  function toggleProfileCtx() {
+    const next = !useProfileCtx
+    setUseProfileCtx(next)
+    try { localStorage.setItem(CONTEXT_TOGGLE_KEY, String(next)) } catch { /* ignore */ }
   }
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -331,11 +427,14 @@ export default function ChatPage() {
     setSailPhase('idle')
     setSailError(null)
     reset()
-    coachReset()
+    sailAbortRef.current?.abort()
     setInput('')
     setAttachment(null)
     setFileError('')
     setConvHistory([])
+    setSailText(''); setSailPhase('idle'); setSailError(null)
+    setTrimResponse(null); setTrimPhase('idle'); setTrimError(null)
+    setShowInlinePaywall(false)
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
 
@@ -346,96 +445,25 @@ export default function ChatPage() {
     setShowKeyPanel(false)
   }
 
-  // ── SAIL submit (Groq streaming via /api/chat) ───────────────────────────────
-  async function handleSailSubmit(txt: string) {
-    sailAbortRef.current?.abort()
-    sailAbortRef.current = new AbortController()
-    setSailText('')
-    setSailIntent('analytic')
-    setSailError(null)
-    setSailPhase('streaming')
-
-    const storeState = useAetherisStore.getState()
-    const language   = storeState.language ?? 'en'
-
-    try {
-      const res = await fetch('/api/chat', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message:      txt,
-          analysisMode: 'sail',
-          sessionId:    storeState.sessionId || 'sail-init',
-          userId:       storeState.userId    || 'anonymous',
-          language,
-          agentMode:    agentMode,
-          context:      profile.diagnosticPrompt || undefined,
-        }),
-        signal: sailAbortRef.current.signal,
-      })
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Request failed.' }))
-        throw new Error(err.error ?? 'SAIL request failed.')
-      }
-
-      const reader  = res.body!.getReader()
-      const decoder = new TextDecoder()
-      let buffer    = ''
-      let metaParsed = false
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buffer += decoder.decode(value, { stream: true })
-
-        // First chunk contains metadata JSON line
-        if (!metaParsed && buffer.includes('\n')) {
-          const firstLine = buffer.slice(0, buffer.indexOf('\n'))
-          try {
-            const meta = JSON.parse(firstLine)
-            if (meta.__sailMeta) {
-              setSailIntent(meta.__sailMeta.intent as SailIntent)
-              buffer = buffer.slice(buffer.indexOf('\n') + 1)
-              metaParsed = true
-            }
-          } catch { metaParsed = true }
-        }
-
-        setSailText(buffer)
-      }
-      setSailPhase('complete')
-      recordUsage()
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name === 'AbortError') return
-      setSailError(err instanceof Error ? err.message : 'SAIL request failed. Please try again.')
-      setSailPhase('idle')
-    }
-  }
-
-  // ── Mode-conditional derived state ───────────────────────────────────────────
-  const isSail       = mode === 'sail'
-  const isDownwind   = mode === 'downwind'
-  const isTrim       = mode === 'trim'
-  const isActive     = isSail
+  const isActive = mode === 'sail'
     ? sailPhase === 'streaming'
-    : isDownwind || isTrim
-    ? coachState === 'THINKING' || coachState === 'STREAMING'
+    : mode === 'trim'
+    ? trimPhase === 'loading'
     : state === 'THINKING'
-  const isComplete   = isSail
-    ? sailPhase === 'complete'
-    : isDownwind || isTrim
-    ? coachState === 'COMPLETE' || coachState === 'ERROR'
-    : state === 'COMPLETE' || state === 'ERROR'
-  const isConversing = (isDownwind || isTrim) && coachState === 'CONVERSING'
-  const currentError = isSail ? sailError : (isDownwind || isTrim) ? coachError : error
 
-  // SailState for HelmButton + SailboatAnimation
-  const sailState = isDownwind
-    ? coachState
-    : isSail
-    ? (sailPhase === 'streaming' ? 'STREAMING' : sailPhase === 'complete' ? 'COMPLETE' : 'IDLE') as import('@/hooks/useSailState').SailState
-    : (state === 'ERROR' ? 'COMPLETE' : state) as import('@/hooks/useSailState').SailState
+  const isComplete = mode === 'sail'
+    ? sailPhase === 'complete'
+    : mode === 'trim'
+    ? trimPhase === 'complete'
+    : state === 'COMPLETE' || state === 'ERROR'
+
+  const isConversing = false
+
+  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : error
+
+  const sailState = (
+    isActive ? 'THINKING' : isComplete ? 'COMPLETE' : 'IDLE'
+  ) as import('@/hooks/useSailState').SailState
   const charsLeft  = MAX - input.length
   const warn       = charsLeft < 200
   const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
@@ -489,7 +517,7 @@ export default function ChatPage() {
           >
             {/* Context badge */}
             {hasContext ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', flex: 1 }}>
                 <span style={{ color: '#C9A96E', fontSize: '0.55rem' }}>◆</span>
                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A' }}>
                   {profile.diagnostic
@@ -508,6 +536,17 @@ export default function ChatPage() {
                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.63rem', fontWeight: 500 }}>History</span>
                   </button>
                 )}
+                {/* Context toggle */}
+                <button
+                  onClick={toggleProfileCtx}
+                  title={useProfileCtx ? 'Profile context active — click to disable' : 'Profile context disabled — click to enable'}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.5rem', cursor: 'pointer', background: useProfileCtx ? 'rgba(26,82,118,0.08)' : 'rgba(0,0,0,0.04)', border: `1px solid ${useProfileCtx ? 'rgba(26,82,118,0.3)' : 'rgba(0,0,0,0.1)'}`, borderRadius: '5px', transition: 'all 0.15s' }}
+                >
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: useProfileCtx ? '#1A5276' : '#D1D5DB', transition: 'background 0.15s' }} />
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.63rem', fontWeight: 500, color: useProfileCtx ? '#1A5276' : '#71717A' }}>
+                    {t('chat.useProfileContext')}
+                  </span>
+                </button>
               </div>
             ) : (
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#A1A1AA', letterSpacing: '0.03em' }}>
@@ -519,7 +558,7 @@ export default function ChatPage() {
         </div>
 
         {/* ── API key indicator (compact) ── */}
-        {apiKey && state === 'IDLE' && (
+        {apiKey && !isActive && !isComplete && (
           <motion.div
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
@@ -553,7 +592,7 @@ export default function ChatPage() {
 
         {/* ── Input area ── */}
         <AnimatePresence mode="wait">
-          {(!isComplete || isConversing) && (
+          {(!isComplete || isConversing || state === 'ERROR') && (
             <motion.div
               key="input"
               initial={{ opacity: 0, y: 8 }}
@@ -590,14 +629,14 @@ export default function ChatPage() {
                       }}
                     />
                     <span className="label-caps" style={{ color: '#71717A' }}>
-                      {t('chat.thinking')}
+                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : t('chat.thinking')}
                     </span>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Mode selector — hidden while any mode is active */}
-              {state === 'IDLE' && sailPhase === 'idle' && (
+              {/* Mode selector — hidden while active */}
+              {!isActive && (
                 <div style={{ marginBottom: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                   <ModeSelector mode={mode} onChange={setMode} />
                 </div>
@@ -756,7 +795,7 @@ export default function ChatPage() {
               </AnimatePresence>
 
               {/* Quick picks */}
-              {state === 'IDLE' && input.length === 0 && (
+              {!isActive && input.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -797,9 +836,33 @@ export default function ChatPage() {
           )}
         </AnimatePresence>
 
+        {/* ── Inline Paywall ── */}
+        <AnimatePresence>
+          {showInlinePaywall && (
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              style={{ padding: '1rem 1.25rem', background: 'rgba(201,169,110,0.06)', border: '1px solid rgba(201,169,110,0.35)', borderRadius: '10px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
+                <div>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: '#92400E', margin: '0 0 0.375rem' }}>
+                    {t('paywall.inlineTitle')}
+                  </p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', margin: 0, lineHeight: 1.5 }}>
+                    {t('paywall.inlineCta')}
+                  </p>
+                </div>
+                <button onClick={() => { setShowInlinePaywall(false); triggerPaywall() }}
+                  style={{ padding: '0.45rem 1rem', background: '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', cursor: 'pointer', flexShrink: 0 }}>
+                  Upgrade →
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── Error ── */}
         <AnimatePresence>
-          {currentError && (
+          {activeError && (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -816,11 +879,11 @@ export default function ChatPage() {
             >
               <span style={{ color: '#991B1B', lineHeight: 1.5, flexShrink: 0, fontSize: '0.85rem' }}>⚠</span>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.6, color: '#991B1B', margin: 0 }}>
-                {currentError === 'RATE_LIMIT'
+                {activeError === 'RATE_LIMIT'
                   ? 'Request limit reached. Please wait a moment before trying again.'
-                  : (currentError ?? '').toLowerCase().includes('sign in') || (currentError ?? '').toLowerCase().includes('unauthorized')
-                  ? <span>Session expired. <a href="/login" style={{ color: '#991B1B', textDecoration: 'underline' }}>Sign in again →</a></span>
-                  : currentError}
+                  : activeError.toLowerCase().includes('sign in') || activeError.toLowerCase().includes('unauthorized')
+                  ? <span>Session expired. <a href="/login?callbackUrl=%2Fchat" style={{ color: '#991B1B', textDecoration: 'underline' }}>Sign in again →</a></span>
+                  : activeError}
               </p>
             </motion.div>
           )}
@@ -902,52 +965,43 @@ export default function ChatPage() {
           )}
         </AnimatePresence>
 
-        {/* ── Result ── */}
+        {/* ── SAIL streaming result ── */}
         <AnimatePresence>
-          {/* SAIL: adaptive streaming renderer */}
-          {isSail && (sailPhase === 'streaming' || sailPhase === 'complete') && (
-            <motion.div
-              key="sail"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.35 }}
-              style={{
-                background:   '#FFFFFF',
-                border:       '1px solid rgba(0,0,0,0.08)',
-                borderRadius: '12px',
-                padding:      '1.25rem 1.25rem 1.5rem',
-                boxShadow:    '0 1px 6px rgba(0,0,0,0.04)',
-              }}
-            >
-              <SailAdapter
-                text={sailText}
-                intent={sailIntent}
-                streaming={sailPhase === 'streaming'}
-              />
+          {mode === 'sail' && (sailPhase === 'streaming' || sailPhase === 'complete') && (
+            <motion.div key="sail-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+              <div style={{ background: '#FFFFFF', border: '1px solid rgba(201,169,110,0.25)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(0,0,0,0.05)' }}>
+                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(201,169,110,0.15)', background: 'rgba(201,169,110,0.04)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {sailPhase === 'streaming' && (
+                    <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#C9A96E', flexShrink: 0 }} />
+                  )}
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#92400E' }}>
+                    SAIL · Adaptive Intelligence
+                  </span>
+                </div>
+                <div style={{ padding: '1.25rem', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.75, color: '#0C0C0E', whiteSpace: 'pre-wrap', wordBreak: 'break-word', minHeight: '3rem' }}>
+                  {sailText || (sailPhase === 'streaming'
+                    ? <span style={{ color: '#A1A1AA' }}>{t('sail.streaming')}</span>
+                    : null)}
+                </div>
+              </div>
             </motion.div>
           )}
+        </AnimatePresence>
 
-          {/* Downwind/Trim: captain coaching card */}
-          {(isDownwind || isTrim) && (coachState === 'THINKING' || coachState === 'STREAMING' || coachState === 'COMPLETE' || coachState === 'CONVERSING') && (
-            <motion.div
-              key="coach"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.35 }}
-            >
-              <AnswerCard
-                result={coachResult}
-                streamText={streamText}
-                isStreaming={coachState === 'THINKING' || coachState === 'STREAMING'}
-                agentMode={agentMode as any}
-              />
+        {/* ── TRIM timeline result ── */}
+        <AnimatePresence>
+          {mode === 'trim' && (trimPhase === 'loading' || trimPhase === 'complete') && (
+            <motion.div key="trim-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+              <div style={{ background: '#FFFFFF', border: '1px solid rgba(91,33,182,0.18)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(0,0,0,0.05)', padding: '1.5rem' }}>
+                <TrimTimelineCard response={trimResponse} isLoading={trimPhase === 'loading'} />
+              </div>
             </motion.div>
           )}
+        </AnimatePresence>
 
-          {/* Upwind: executive response card */}
-          {!isDownwind && !isTrim && !isSail && (state === 'THINKING' || isComplete) && (
+        {/* ── Upwind / Downwind executive result ── */}
+        <AnimatePresence>
+          {mode !== 'sail' && mode !== 'trim' && (state === 'THINKING' || state === 'COMPLETE') && (
             <motion.div
               key="answer"
               initial={{ opacity: 0, y: 10 }}
@@ -966,7 +1020,7 @@ export default function ChatPage() {
 
         {/* ── New analysis CTA + Export ── */}
         <AnimatePresence>
-          {isComplete && (
+          {isComplete && state !== 'ERROR' && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -976,7 +1030,7 @@ export default function ChatPage() {
               <button onClick={handleReset} className="btn-ghost flex items-center gap-2.5">
                 <HelmSVG /> {t('chat.newAnalysis')}
               </button>
-              {response && (
+              {response && mode !== 'sail' && mode !== 'trim' && (
                 <button
                   onClick={() => setShowExport(true)}
                   style={{
@@ -1049,7 +1103,7 @@ export default function ChatPage() {
 
       <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
 
-      {response && (
+      {response && mode !== 'sail' && mode !== 'trim' && (
         <ExportModal
           open={showExport}
           onClose={() => setShowExport(false)}

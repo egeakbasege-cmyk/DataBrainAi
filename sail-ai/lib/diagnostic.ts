@@ -11,7 +11,7 @@ export type Industry =
   | 'Other'
 
 export type TeamSize   = 'Solo' | '2–5' | '6–20' | '21–50' | '50+'
-export type RevenueRange = 'Under £50K' | '£50K–£200K' | '£200K–£1M' | '£1M–£5M' | 'Over £5M'
+export type RevenueRange = 'Under £25k' | '£25k – £100k' | '£100k – £500k' | '£500k – £1M' | 'Over £1M'
 export type Obstacle  =
   | 'Lead Generation'
   | 'Cash Flow'
@@ -21,12 +21,13 @@ export type Obstacle  =
   | 'Product Quality'
 
 export interface DiagnosticInput {
-  industry:     Industry     | ''
-  teamSize:     TeamSize     | ''
-  revenue:      RevenueRange | ''
-  margin:       number   // 0–50 (50 = 50%+)
-  cashReserves: number   // 0–12 (12 = 12+ months)
-  obstacle:     Obstacle     | ''
+  industry:       Industry     | ''
+  customIndustry: string       // populated when industry === 'Other'
+  teamSize:       TeamSize     | ''
+  revenue:        RevenueRange | ''
+  margin:         number   // 0–50 (50 = 50%+)
+  cashReserves:   number   // 0–12 (12 = 12+ months)
+  obstacle:       Obstacle     | ''
 }
 
 export interface DiagnosticResult {
@@ -58,11 +59,11 @@ export const INDUSTRY_BENCHMARKS: Record<string, { low: number; high: number; la
 }
 
 const REVENUE_SCORES: Record<string, number> = {
-  'Under £50K':  8,
-  '£50K–£200K': 14,
-  '£200K–£1M':  19,
-  '£1M–£5M':    23,
-  'Over £5M':   25,
+  'Under £25k':     7,
+  '£25k – £100k':  13,
+  '£100k – £500k': 18,
+  '£500k – £1M':   22,
+  'Over £1M':      25,
 }
 
 const TEAM_RESILIENCE: Record<string, number> = {
@@ -158,8 +159,14 @@ function buildSystemPrompt(
       ? 'Cash runway is moderate — note this when advising on investment or expansion decisions.'
       : 'The business has solid liquidity headroom.'
 
-  return `[DIAGNOSTIC PROFILE — Business Health Assessment]
-Industry: ${data.industry}
+  const industryDisplay = data.industry === 'Other' && data.customIndustry?.trim()
+    ? data.customIndustry.trim()
+    : data.industry
+
+  const constraintBlock = `PRIORITY CONSTRAINT: The user has identified "${data.obstacle}" as their primary business bottleneck.\nEvery strategy recommendation must address or account for this constraint first.\n\n`
+
+  return `${constraintBlock}[DIAGNOSTIC PROFILE — Business Health Assessment]
+Industry: ${industryDisplay}
 Team size: ${data.teamSize}
 Annual revenue: ${data.revenue}
 Net profit margin: ${data.margin}%
@@ -167,17 +174,18 @@ Cash reserves: ${reservesLabel} of operating expenses
 Primary bottleneck: ${data.obstacle}
 Business Health Score: ${score}/100 (${grade})
 
-Context: You are advising a ${data.teamSize}-person ${data.industry} business. Their net margin of ${data.margin}% should be benchmarked against the ${bench.label} of ${bench.low}–${bench.high}% when relevant. ${liquidityNote} Their declared primary bottleneck is "${data.obstacle}" — prioritise this in all strategy recommendations.
+Context: You are advising a ${data.teamSize}-person ${industryDisplay} business. Their net margin of ${data.margin}% should be benchmarked against the ${bench.label} of ${bench.low}–${bench.high}% when relevant. ${liquidityNote} Their declared primary bottleneck is "${data.obstacle}" — prioritise this in all strategy recommendations.
 
 Instructions: Be specific and benchmark-referenced. Cite their actual metrics when making comparisons. Frame all tactics in the context of their stated bottleneck and industry norms. Avoid generic advice.
 [END DIAGNOSTIC PROFILE]`
 }
 
 export const EMPTY_DIAGNOSTIC: DiagnosticInput = {
-  industry:     '',
-  teamSize:     '',
-  revenue:      '',
-  margin:       10,
-  cashReserves: 3,
-  obstacle:     '',
+  industry:       '',
+  customIndustry: '',
+  teamSize:       '',
+  revenue:        '',
+  margin:         10,
+  cashReserves:   3,
+  obstacle:       '',
 }
