@@ -554,7 +554,7 @@ export default function ChatPage() {
 
         {/* ── Input area ── */}
         <AnimatePresence mode="wait">
-          {(!isComplete || isConversing) && (
+          {(!isComplete || isConversing || state === 'ERROR') && (
             <motion.div
               key="input"
               initial={{ opacity: 0, y: 8 }}
@@ -965,7 +965,7 @@ export default function ChatPage() {
 
         {/* ── Upwind / Downwind executive result ── */}
         <AnimatePresence>
-          {mode !== 'sail' && mode !== 'trim' && (state === 'THINKING' || isComplete) && (
+          {mode !== 'sail' && mode !== 'trim' && (state === 'THINKING' || state === 'COMPLETE') && (
             <motion.div
               key="answer"
               initial={{ opacity: 0, y: 10 }}
@@ -984,7 +984,7 @@ export default function ChatPage() {
 
         {/* ── New analysis CTA + Export ── */}
         <AnimatePresence>
-          {isComplete && (
+          {isComplete && state !== 'ERROR' && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
