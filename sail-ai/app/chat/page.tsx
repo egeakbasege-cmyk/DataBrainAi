@@ -150,18 +150,12 @@ export default function ChatPage() {
   const [mode,         setMode]         = useState<AnalysisMode>('upwind')
   // Downwind multi-turn conversation history
   const [convHistory,  setConvHistory]  = useState<ConvMessage[]>([])
-  // SAIL auto-intent streaming state
-  const [sailText,     setSailText]     = useState('')
-  const [sailIntent,   setSailIntent]   = useState<SailIntent>('analytic')
-  const [sailPhase,    setSailPhase]    = useState<'idle' | 'streaming' | 'complete'>('idle')
-  const [sailError,    setSailError]    = useState<string | null>(null)
-  const sailAbortRef                   = useRef<AbortController | null>(null)
-
   // SAIL streaming state
-  const [sailText,          setSailText]         = useState('')
-  const [sailPhase,         setSailPhase]        = useState<'idle'|'streaming'|'complete'>('idle')
-  const [sailError,         setSailError]        = useState<string|null>(null)
-  const sailAbortRef = useRef<AbortController|null>(null)
+  const [sailText,     setSailText]   = useState('')
+  const [sailIntent,   setSailIntent] = useState<SailIntent>('analytic')
+  const [sailPhase,    setSailPhase]  = useState<'idle'|'streaming'|'complete'>('idle')
+  const [sailError,    setSailError]  = useState<string|null>(null)
+  const sailAbortRef                 = useRef<AbortController|null>(null)
 
   // TRIM state
   const [trimResponse,      setTrimResponse]     = useState<TrimResponse|null>(null)
