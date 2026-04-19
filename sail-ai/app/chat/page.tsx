@@ -846,7 +846,7 @@ export default function ChatPage() {
                 {activeError === 'RATE_LIMIT'
                   ? 'Request limit reached. Please wait a moment before trying again.'
                   : activeError.toLowerCase().includes('sign in') || activeError.toLowerCase().includes('unauthorized')
-                  ? <span>Session expired. <a href="/login" style={{ color: '#991B1B', textDecoration: 'underline' }}>Sign in again →</a></span>
+                  ? <span>Session expired. <a href="/login?callbackUrl=%2Fchat" style={{ color: '#991B1B', textDecoration: 'underline' }}>Sign in again →</a></span>
                   : activeError}
               </p>
             </motion.div>
