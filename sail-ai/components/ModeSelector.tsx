@@ -136,27 +136,6 @@ export function ModeSelector({ mode, onChange }: Props) {
                 {badge}
               </span>
             )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
-              <ModeIcon id={id} color={iconColor} />
-              <span style={{
-                position:      'absolute',
-                top:           '-7px',
-                left:          '50%',
-                transform:     'translateX(-50%)',
-                fontFamily:    'Inter, sans-serif',
-                fontSize:      '0.68rem',
-                fontWeight:    700,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color:         '#FFFFFF',
-                background:    '#7C3AED',
-                padding:       '1px 6px',
-                borderRadius:  '2px',
-                whiteSpace:    'nowrap',
-              }}>
-                BETA
-              </span>
-            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
               <ModeIcon id={id} color={iconColor} />
               <span style={{
