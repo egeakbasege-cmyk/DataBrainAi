@@ -109,12 +109,12 @@ export function ModeSelector({ mode, onChange }: Props) {
             style={{
               position:     'relative',
               padding:      '0.875rem 0.875rem 0.75rem',
-              border:       `1px solid ${active ? border : 'rgba(255,255,255,0.08)'}`,
-              background:   active ? bg : 'rgba(255,255,255,0.04)',
+              border:       `1px solid ${active ? border : 'rgba(0,0,0,0.08)'}`,
+              background:   active ? bg : '#FFFFFF',
               cursor:       'pointer',
               textAlign:    'left',
               borderRadius: '10px',
-              boxShadow:    active ? `0 0 0 3px ${glow}, 0 4px 16px rgba(0,0,0,0.3)` : '0 2px 8px rgba(0,0,0,0.2)',
+              boxShadow:    active ? `0 0 0 3px ${glow}, 0 2px 8px rgba(0,0,0,0.05)` : '0 1px 4px rgba(0,0,0,0.04)',
               transition:   'all 0.18s ease',
             }}
           >
@@ -145,7 +145,7 @@ export function ModeSelector({ mode, onChange }: Props) {
                 fontWeight:    700,
                 letterSpacing: '0.07em',
                 textTransform: 'uppercase',
-                color:         active ? color : 'rgba(255,255,255,0.65)',
+                color:         active ? color : '#374151',
               }}>
                 {t(LABEL_KEYS[id])}
               </span>
@@ -155,7 +155,7 @@ export function ModeSelector({ mode, onChange }: Props) {
               fontFamily: 'Inter, sans-serif',
               fontSize:   '0.68rem',
               lineHeight: 1.45,
-              color:      active ? color : 'rgba(255,255,255,0.3)',
+              color:      active ? color : '#9CA3AF',
               margin:     0,
               opacity:    active ? 0.9 : 1,
             }}>
