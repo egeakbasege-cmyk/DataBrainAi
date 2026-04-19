@@ -50,14 +50,31 @@ export function Nav() {
         {/* Brand */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
           <Logo size={26} />
-          <span style={{
-            fontFamily:    'Cormorant Garamond, Georgia, serif',
-            fontSize:      '1rem',
-            fontWeight:    600,
-            color:         '#0C0C0E',
-            letterSpacing: '0.07em',
-          }}>
-            SAIL AI
+          <span style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+            <span style={{
+              fontFamily:    'Cormorant Garamond, Georgia, serif',
+              fontSize:      '1rem',
+              fontWeight:    600,
+              color:         '#0C0C0E',
+              letterSpacing: '0.07em',
+            }}>
+              SAIL
+            </span>
+            <span style={{
+              fontFamily:    'Inter, sans-serif',
+              fontSize:      '0.55rem',
+              fontWeight:    700,
+              letterSpacing: '0.06em',
+              color:         '#1E293B',
+              background:    'rgba(148,163,184,0.85)',
+              padding:       '1px 5px',
+              borderRadius:  '3px',
+              filter:        'drop-shadow(0 0 4px rgba(148,163,184,0.5))',
+              lineHeight:    1,
+              alignSelf:     'center',
+            }}>
+              AI+
+            </span>
           </span>
         </Link>
 

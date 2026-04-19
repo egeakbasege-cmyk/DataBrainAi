@@ -172,8 +172,10 @@ export default function ChatPage() {
   const userId       = useAetherisStore((s) => s.userId)
   const allAlerts    = useAetherisStore(selectActiveAlerts)
   const activeAlerts = allAlerts.filter((a) => !a.isResolved)
-  const textareaRef  = useRef<HTMLTextAreaElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef          = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef         = useRef<HTMLInputElement>(null)
+  const lastDownwindInput    = useRef('')
+  const processedCoachResult = useRef<import('@/hooks/useSailState').AIResponse | null>(null)
 
   const { t } = useLanguage()
   const PLACEHOLDERS = PLACEHOLDER_KEYS.map(k => t(k as import('@/lib/i18n/translations').TranslationKey))
@@ -267,6 +269,39 @@ export default function ChatPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, response])
+
+  // Accumulate downwind conversation history on each completed coach turn
+  useEffect(() => {
+    if (mode !== 'downwind') return
+    if (coachState !== 'COMPLETE' && coachState !== 'CONVERSING') return
+    if (!coachResult) return
+    if (coachResult === processedCoachResult.current) return
+    processedCoachResult.current = coachResult
+
+    const assistantContent = 'chatMessage' in coachResult
+      ? coachResult.chatMessage + (coachResult.followUpQuestion ? `\n\n${coachResult.followUpQuestion}` : '')
+      : 'headline' in coachResult ? coachResult.headline
+      : 'question' in coachResult ? coachResult.question
+      : 'freeText' in coachResult ? coachResult.freeText
+      : ''
+
+    setConvHistory(prev => [
+      ...prev,
+      { role: 'user' as const,      content: lastDownwindInput.current },
+      { role: 'assistant' as const,  content: assistantContent },
+    ])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coachState, coachResult])
+
+  // Clear downwind history when leaving downwind mode
+  useEffect(() => {
+    if (mode !== 'downwind') {
+      setConvHistory([])
+      processedCoachResult.current = null
+      coachReset()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode])
 
   // Show key panel on any AI failure that could be fixed with BYOK
   useEffect(() => {
@@ -377,6 +412,23 @@ export default function ChatPage() {
     if (mode === 'sail') { if (sailPhase !== 'streaming') await handleSailSubmit(text); return }
     if (mode === 'trim') { if (trimPhase !== 'loading')   await handleTrimSubmit(text); return }
 
+    if (mode === 'downwind') {
+      if (coachState === 'THINKING' || coachState === 'STREAMING') return
+      lastDownwindInput.current = text
+      setInput('')
+      await coachSubmit(
+        text,
+        getContext() || undefined,
+        apiKey || undefined,
+        attachment ?? undefined,
+        'downwind',
+        convHistory.length > 0 ? convHistory : undefined,
+        agentMode,
+        primaryConstraint,
+      )
+      return
+    }
+
     if (state === 'THINKING') return
     await submit(text, {
       context:            getContext() || undefined,
@@ -419,6 +471,8 @@ export default function ChatPage() {
     setSailPhase('idle')
     setSailError(null)
     reset()
+    coachReset()
+    processedCoachResult.current = null
     sailAbortRef.current?.abort()
     setInput('')
     setAttachment(null)
@@ -441,20 +495,24 @@ export default function ChatPage() {
     ? sailPhase === 'streaming'
     : mode === 'trim'
     ? trimPhase === 'loading'
+    : mode === 'downwind'
+    ? coachState === 'THINKING' || coachState === 'STREAMING'
     : state === 'THINKING'
 
   const isComplete = mode === 'sail'
     ? sailPhase === 'complete'
     : mode === 'trim'
     ? trimPhase === 'complete'
+    : mode === 'downwind'
+    ? coachState === 'COMPLETE'
     : state === 'COMPLETE' || state === 'ERROR'
 
-  const isConversing = false
+  const isConversing = mode === 'downwind' && coachState === 'CONVERSING'
 
-  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : error
+  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'downwind' ? coachError : error
 
   const sailState = (
-    isActive ? 'THINKING' : isComplete ? 'COMPLETE' : 'IDLE'
+    isActive ? 'THINKING' : isConversing ? 'CONVERSING' : isComplete ? 'COMPLETE' : 'IDLE'
   ) as import('@/hooks/useSailState').SailState
   const charsLeft  = MAX - input.length
   const warn       = charsLeft < 200
@@ -610,7 +668,7 @@ export default function ChatPage() {
                       }}
                     />
                     <span className="label-caps" style={{ color: '#71717A' }}>
-                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : t('chat.thinking')}
+                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
                     </span>
                   </motion.div>
                 )}
@@ -978,9 +1036,9 @@ export default function ChatPage() {
           )}
         </AnimatePresence>
 
-        {/* ── Upwind / Downwind executive result ── */}
+        {/* ── Upwind executive result ── */}
         <AnimatePresence>
-          {mode !== 'sail' && mode !== 'trim' && (state === 'THINKING' || state === 'COMPLETE') && (
+          {mode === 'upwind' && (state === 'THINKING' || state === 'COMPLETE') && (
             <motion.div
               key="answer"
               initial={{ opacity: 0, y: 10 }}
@@ -993,6 +1051,88 @@ export default function ChatPage() {
                 isStreaming={state === 'THINKING'}
                 variant="light"
               />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Downwind momentum result ── */}
+        <AnimatePresence>
+          {mode === 'downwind' && coachState !== 'IDLE' && coachState !== 'ERROR' && (
+            <motion.div key="downwind-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+              <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '14px' }}>
+                {/* Silver shimmer while computing */}
+                <AnimatePresence>
+                  {(coachState === 'THINKING' || coachState === 'STREAMING') && (
+                    <motion.div
+                      key="shimmer"
+                      initial={{ x: '-100%' }}
+                      animate={{ x: '150%' }}
+                      transition={{ duration: 1.6, repeat: Infinity, ease: 'linear' }}
+                      style={{
+                        position: 'absolute', top: 0, left: 0, bottom: 0, width: '60%', zIndex: 2, pointerEvents: 'none',
+                        background: 'linear-gradient(90deg, transparent, rgba(192,192,192,0.12), transparent)',
+                      }}
+                    />
+                  )}
+                </AnimatePresence>
+
+                <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,105,92,0.15)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,105,92,0.06)' }}>
+                  {/* Header */}
+                  <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(0,105,92,0.08)', background: 'rgba(0,105,92,0.025)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {(coachState === 'THINKING' || coachState === 'STREAMING') && (
+                      <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#00695C', flexShrink: 0 }} />
+                    )}
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#00695C', fontWeight: 700 }}>
+                      Downwind · Momentum Engine
+                    </span>
+                    {convHistory.length > 0 && (
+                      <span style={{ marginLeft: 'auto', fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(0,105,92,0.5)', letterSpacing: '0.05em' }}>
+                        {Math.floor(convHistory.length / 2)} turn{convHistory.length > 2 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Body */}
+                  <div style={{ padding: '1.25rem 1.25rem' }}>
+                    {(coachState === 'THINKING' || coachState === 'STREAMING') && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.4, repeat: Infinity }} style={{ width: 28, height: 3, borderRadius: 2, background: 'rgba(0,105,92,0.25)' }} />
+                        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.2 }} style={{ width: 20, height: 3, borderRadius: 2, background: 'rgba(0,105,92,0.2)' }} />
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', marginLeft: 4 }}>Analyzing strategic drift…</span>
+                      </div>
+                    )}
+
+                    {(coachState === 'CONVERSING' || coachState === 'COMPLETE') && coachResult && (
+                      <>
+                        {'chatMessage' in coachResult && (
+                          <div>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.75, color: '#0C0C0E', margin: 0 }}>
+                              {coachResult.chatMessage}
+                            </p>
+                            {coachResult.followUpQuestion && (
+                              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', lineHeight: 1.65, color: '#00695C', margin: '0.875rem 0 0', fontStyle: 'italic', paddingLeft: '0.75rem', borderLeft: '2px solid rgba(0,105,92,0.3)' }}>
+                                {coachResult.followUpQuestion}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        {'headline' in coachResult && (
+                          <div>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.5rem', lineHeight: 1.5 }}>{coachResult.headline}</p>
+                            {'signal' in coachResult && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#71717A', margin: 0, lineHeight: 1.6 }}>{coachResult.signal}</p>}
+                          </div>
+                        )}
+                        {'question' in coachResult && (
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: '#00695C', margin: 0, fontStyle: 'italic', lineHeight: 1.7 }}>{coachResult.question}</p>
+                        )}
+                        {'freeText' in coachResult && (
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.75, color: '#0C0C0E', margin: 0 }}>{coachResult.freeText}</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

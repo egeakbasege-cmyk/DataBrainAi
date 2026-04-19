@@ -21,7 +21,7 @@ const MODES: {
 }[] = [
   { id: 'upwind',   color: '#1A5276', bg: 'rgba(26,82,118,0.07)',   border: 'rgba(26,82,118,0.5)',   glow: 'rgba(26,82,118,0.12)'  },
   { id: 'downwind', color: '#00695C', bg: 'rgba(0,105,92,0.07)',    border: 'rgba(0,105,92,0.5)',    glow: 'rgba(0,105,92,0.12)'   },
-  { id: 'sail',     color: '#7C3AED', bg: 'rgba(124,58,237,0.07)',  border: 'rgba(124,58,237,0.5)',  glow: 'rgba(124,58,237,0.12)', badge: 'AI' },
+  { id: 'sail',     color: '#7C3AED', bg: 'rgba(124,58,237,0.07)',  border: 'rgba(124,58,237,0.5)',  glow: 'rgba(124,58,237,0.12)', badge: 'AI+' },
   { id: 'trim',     color: '#B45309', bg: 'rgba(180,83,9,0.07)',    border: 'rgba(201,169,110,0.6)', glow: 'rgba(201,169,110,0.12)', badge: 'NEW' },
 ]
 
@@ -126,12 +126,15 @@ export function ModeSelector({ mode, onChange }: Props) {
                 fontFamily:    'Inter, sans-serif',
                 fontSize:      '0.5rem',
                 fontWeight:    700,
-                letterSpacing: '0.1em',
+                letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color:         '#FFFFFF',
-                background:    active ? color : '#C9A96E',
+                color:         badge === 'AI+' ? '#1E293B' : '#FFFFFF',
+                background:    badge === 'AI+'
+                  ? (active ? '#94A3B8' : 'rgba(148,163,184,0.85)')
+                  : (active ? color : '#C9A96E'),
                 padding:       '2px 7px',
                 borderRadius:  '3px',
+                filter:        badge === 'AI+' ? 'drop-shadow(0 0 5px rgba(148,163,184,0.55))' : 'none',
               }}>
                 {badge}
               </span>
