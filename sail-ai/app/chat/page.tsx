@@ -597,8 +597,8 @@ export default function ChatPage() {
                 )}
               </AnimatePresence>
 
-              {/* Mode selector + Agent mode — hidden mid-conversation */}
-              {state === 'IDLE' && (
+              {/* Mode selector — hidden while active */}
+              {!isActive && (
                 <div style={{ marginBottom: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                   <ModeSelector mode={mode} onChange={setMode} />
                 </div>
@@ -757,7 +757,7 @@ export default function ChatPage() {
               </AnimatePresence>
 
               {/* Quick picks */}
-              {state === 'IDLE' && input.length === 0 && (
+              {!isActive && input.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
