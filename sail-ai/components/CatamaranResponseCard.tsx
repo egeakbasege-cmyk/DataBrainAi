@@ -49,7 +49,7 @@ export function CatamaranResponseCard({ response, isStreaming = false }: Catamar
   const unifiedStrategy = response?.unifiedStrategy || ''
   const thirtyDayTarget = response?.thirtyDayTarget || ''
   const greatestRisk = response?.greatestRisk || ''
-  const confidenceIndex = response?.confidenceIndex ?? 0
+  const confidenceIndex = typeof response?.confidenceIndex === 'number' ? response.confidenceIndex : 0
 
   return (
     <div style={{
