@@ -481,7 +481,9 @@ export async function POST(req: NextRequest) {
     }
 
     const catData: { choices?: Array<{ message?: { content?: string } }> } = await catRes.json().catch(() => ({}))
+    console.log('[CATAMARAN] Response data:', JSON.stringify(catData).slice(0, 500))
     const catContent = catData?.choices?.[0]?.message?.content ?? '{}'
+    console.log('[CATAMARAN] Content:', catContent.slice(0, 200))
 
     try {
       const parsed = JSON.parse(catContent)
