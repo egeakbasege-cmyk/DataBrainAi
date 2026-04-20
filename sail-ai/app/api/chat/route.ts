@@ -29,7 +29,7 @@ const GROQ_MODEL   = 'llama-3.3-70b-versatile'
 type ExtendedPayload = AetherisPayload & {
   apiKey?:             string
   primaryConstraint?:  string
-  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim'
+  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran'
 }
 
 // ── Groq system prompts ────────────────────────────────────────────────────────
