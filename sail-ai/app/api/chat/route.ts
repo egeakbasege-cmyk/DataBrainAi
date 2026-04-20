@@ -454,6 +454,7 @@ export async function POST(req: NextRequest) {
   if (analysisMode === 'catamaran') {
     let catRes: Response
     try {
+      console.log('[CATAMARAN] Starting request with Groq key:', groqKey ? 'Present' : 'Missing')
       catRes = await fetch(GROQ_URL, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
@@ -468,8 +469,10 @@ export async function POST(req: NextRequest) {
           temperature:     0.35,
         }),
       })
-    } catch {
-      return Response.json({ error: 'CATAMARAN request failed.' }, { status: 502 })
+      console.log('[CATAMARAN] Response status:', catRes.status)
+    } catch (err) {
+      console.error('[CATAMARAN] Fetch error:', err)
+      return Response.json({ error: 'CATAMARAN request failed.', details: String(err) }, { status: 502 })
     }
 
     if (!catRes.ok) {
