@@ -41,15 +41,15 @@ export function CatamaranResponseCard({ response, isStreaming = false }: Catamar
 
   const goldColor = '#D4AF37'
   
-  // Safe access
-  const title = response?.catamaranTitle || 'System Overhaul Plan'
-  const summary = response?.executiveSummary || ''
+  // Safe access - tüm değerleri string/number olarak güvenli hale getir
+  const title = String(response?.catamaranTitle || 'System Overhaul Plan')
+  const summary = String(response?.executiveSummary || '')
   const marketGrowth = response?.marketGrowth || { trackTitle: '', actions: [], target: '' }
   const customerExperience = response?.customerExperience || { trackTitle: '', actions: [], target: '' }
-  const unifiedStrategy = response?.unifiedStrategy || ''
-  const thirtyDayTarget = response?.thirtyDayTarget || ''
-  const greatestRisk = response?.greatestRisk || ''
-  const confidenceIndex = typeof response?.confidenceIndex === 'number' ? response.confidenceIndex : 0
+  const unifiedStrategy = String(response?.unifiedStrategy || '')
+  const thirtyDayTarget = String(response?.thirtyDayTarget || '')
+  const greatestRisk = String(response?.greatestRisk || '')
+  const confidenceIndex = Number(response?.confidenceIndex) || 0
 
   return (
     <div style={{
