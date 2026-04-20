@@ -525,7 +525,6 @@ export async function POST(req: NextRequest) {
       )
     }
   }
-  }
 
   // ── Upwind / Downwind: ExecutiveResponse JSON ─────────────────────────────
   const cognitiveLoad = (body.state as { cognitiveLoadIndex?: number } | undefined)?.cognitiveLoadIndex ?? 0
