@@ -487,8 +487,11 @@ export async function POST(req: NextRequest) {
 
     try {
       const parsed = JSON.parse(catContent)
+      console.log('[CATAMARAN] Parsed successfully:', Object.keys(parsed))
       return Response.json(parsed, { headers: { 'Cache-Control': 'no-store' } })
-    } catch {
+    } catch (parseErr) {
+      console.error('[CATAMARAN] Parse error:', parseErr)
+      console.error('[CATAMARAN] Raw content that failed:', catContent.slice(0, 500))
       return Response.json(
         { 
           catamaranTitle: 'System Overhaul Plan',
