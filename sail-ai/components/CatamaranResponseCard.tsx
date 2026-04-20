@@ -136,10 +136,10 @@ export function CatamaranResponseCard({ response, isStreaming = false }: Catamar
               marginBottom: 8,
             }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: '#1a1a1a', margin: '0 0 4px' }}>
-                {action?.action || 'Action'}
+                {String(action?.action || 'Action')}
               </p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#666', margin: 0 }}>
-                {action?.impact || ''}
+                {String(action?.impact || '')}
               </p>
             </div>
           ))}
@@ -188,10 +188,10 @@ export function CatamaranResponseCard({ response, isStreaming = false }: Catamar
               marginBottom: 8,
             }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: '#1a1a1a', margin: '0 0 4px' }}>
-                {action?.action || 'Action'}
+                {String(action?.action || 'Action')}
               </p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#666', margin: 0 }}>
-                {action?.impact || ''}
+                {String(action?.impact || '')}
               </p>
             </div>
           ))}
