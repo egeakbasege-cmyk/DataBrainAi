@@ -49,6 +49,29 @@ export interface ResponseMetadata {
   confidence?:   number  // 0–1 float; omitted when not applicable
 }
 
+export interface CatamaranAction {
+  action: string
+  impact: string
+  owner: string
+}
+
+export interface CatamaranTrack {
+  trackTitle: string
+  actions: CatamaranAction[]
+  target: string
+}
+
+export interface CatamaranResponse {
+  catamaranTitle: string
+  executiveSummary: string
+  marketGrowth: CatamaranTrack
+  customerExperience: CatamaranTrack
+  unifiedStrategy: string
+  thirtyDayTarget: string
+  greatestRisk: string
+  confidenceIndex: number
+}
+
 /** Landing-page preview widget local state. */
 export interface PreviewState {
   activePresetId: string | null

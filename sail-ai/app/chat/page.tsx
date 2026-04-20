@@ -19,6 +19,8 @@ import { ExportModal }                   from '@/components/ExportModal'
 import { AgentStatusBar }                from '@/components/AgentStatusBar'
 import { TrimTimelineCard }              from '@/components/TrimTimelineCard'
 import type { TrimResponse }             from '@/components/TrimTimelineCard'
+import { CatamaranResponseCard }         from '@/components/CatamaranResponseCard'
+import type { CatamaranResponse }        from '@/types/chat'
 import { useAetherisSubmit }             from '@/hooks/useAetherisSubmit'
 import { useSailState }                  from '@/hooks/useSailState'
 import type { ConvMessage }              from '@/hooks/useSailState'
@@ -159,6 +161,11 @@ export default function ChatPage() {
   const [trimResponse,      setTrimResponse]     = useState<TrimResponse|null>(null)
   const [trimPhase,         setTrimPhase]        = useState<'idle'|'loading'|'complete'>('idle')
   const [trimError,         setTrimError]        = useState<string|null>(null)
+
+  // CATAMARAN state
+  const [catamaranResponse, setCatamaranResponse] = useState<import('@/types/chat').CatamaranResponse|null>(null)
+  const [catamaranPhase,    setCatamaranPhase]    = useState<'idle'|'loading'|'complete'>('idle')
+  const [catamaranError,    setCatamaranError]    = useState<string|null>(null)
 
   // Context toggle + inline paywall
   const [useProfileCtx,     setUseProfileCtx]    = useState(true)
@@ -403,6 +410,28 @@ export default function ChatPage() {
     }
   }
 
+  async function handleCatamaranSubmit(text: string) {
+    setCatamaranError(null); setCatamaranResponse(null); setCatamaranPhase('loading')
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body: JSON.stringify(buildModeBody(text, 'catamaran')),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error((d as Record<string,unknown>).error as string ?? 'CATAMARAN request failed.')
+      }
+      const data = await res.json() as CatamaranResponse
+      setCatamaranResponse(data)
+      setCatamaranPhase('complete')
+      saveAnalysis(text, data.catamaranTitle ?? 'CATAMARAN Plan')
+    } catch (err: unknown) {
+      setCatamaranError(err instanceof Error ? err.message : 'CATAMARAN request failed.')
+      setCatamaranPhase('idle')
+    }
+  }
+
   async function handleSubmit() {
     const text = input.trim()
     if (!text) return
@@ -411,6 +440,7 @@ export default function ChatPage() {
 
     if (mode === 'sail') { if (sailPhase !== 'streaming') await handleSailSubmit(text); return }
     if (mode === 'trim') { if (trimPhase !== 'loading')   await handleTrimSubmit(text); return }
+    if (mode === 'catamaran') { if (catamaranPhase !== 'loading') await handleCatamaranSubmit(text); return }
 
     if (mode === 'downwind') {
       if (coachState === 'THINKING' || coachState === 'STREAMING') return
@@ -480,6 +510,7 @@ export default function ChatPage() {
     setConvHistory([])
     setSailText(''); setSailPhase('idle'); setSailError(null)
     setTrimResponse(null); setTrimPhase('idle'); setTrimError(null)
+    setCatamaranResponse(null); setCatamaranPhase('idle'); setCatamaranError(null)
     setShowInlinePaywall(false)
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
@@ -495,6 +526,8 @@ export default function ChatPage() {
     ? sailPhase === 'streaming'
     : mode === 'trim'
     ? trimPhase === 'loading'
+    : mode === 'catamaran'
+    ? catamaranPhase === 'loading'
     : mode === 'downwind'
     ? coachState === 'THINKING' || coachState === 'STREAMING'
     : state === 'THINKING'
@@ -503,13 +536,15 @@ export default function ChatPage() {
     ? sailPhase === 'complete'
     : mode === 'trim'
     ? trimPhase === 'complete'
+    : mode === 'catamaran'
+    ? catamaranPhase === 'complete'
     : mode === 'downwind'
     ? coachState === 'COMPLETE'
     : state === 'COMPLETE' || state === 'ERROR'
 
   const isConversing = mode === 'downwind' && coachState === 'CONVERSING'
 
-  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'downwind' ? coachError : error
+  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'catamaran' ? catamaranError : mode === 'downwind' ? coachError : error
 
   const sailState = (
     isActive ? 'THINKING' : isConversing ? 'CONVERSING' : isComplete ? 'COMPLETE' : 'IDLE'
@@ -1032,6 +1067,18 @@ export default function ChatPage() {
               <div style={{ background: '#FFFFFF', border: '1px solid rgba(201,169,110,0.18)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(201,169,110,0.06), 0 1px 4px rgba(0,0,0,0.04)', padding: '1.5rem' }}>
                 <TrimTimelineCard response={trimResponse} isLoading={trimPhase === 'loading'} />
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── CATAMARAN dual-track result ── */}
+        <AnimatePresence>
+          {mode === 'catamaran' && (catamaranPhase === 'loading' || catamaranPhase === 'complete') && (
+            <motion.div key="catamaran-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+              <CatamaranResponseCard 
+                response={catamaranResponse} 
+                isStreaming={catamaranPhase === 'loading'} 
+              />
             </motion.div>
           )}
         </AnimatePresence>
