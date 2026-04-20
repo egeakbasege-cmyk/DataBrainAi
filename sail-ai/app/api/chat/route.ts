@@ -236,10 +236,7 @@ RESPONSE FORMAT: Return ONLY this JSON (no markdown, no extra keys):
   "unifiedStrategy": "How Market Growth and CX reinforce each other — 2–3 sentences",
   "thirtyDayTarget": "The single most important 30-day goal across both tracks",
   "greatestRisk": "The one risk most likely to derail execution — name it explicitly",
-  "confidenceIndex": {
-    "score": 0.0,
-    "rationale": "Brief explanation of data confidence"
-  }
+  "confidenceIndex": 85
 }
 
 RULES:
@@ -247,7 +244,7 @@ RULES:
 - All actions must have quantified expectedImpact with £/$ or %.
 - thirtyDayTarget must be specific and measurable.
 - greatestRisk: name ONE specific risk, not generic warnings.
-- confidenceIndex.score: 0.9+ = full data; 0.6–0.8 = estimates used; <0.6 = critical data missing.
+- confidenceIndex: 0–100 integer (90+ = full data; 60–89 = estimates used; <60 = critical data missing).
 - Return ONLY the JSON object.`
 }
 
