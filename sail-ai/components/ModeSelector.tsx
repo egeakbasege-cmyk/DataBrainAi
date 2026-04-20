@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import type { TranslationKey } from '@/lib/i18n/translations'
 
-export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim'
+export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran'
 
 interface Props {
   mode: AnalysisMode
@@ -23,6 +23,7 @@ const MODES: {
   { id: 'downwind', color: '#00695C', bg: 'rgba(0,105,92,0.07)',    border: 'rgba(0,105,92,0.5)',    glow: 'rgba(0,105,92,0.12)'   },
   { id: 'sail',     color: '#7C3AED', bg: 'rgba(124,58,237,0.07)',  border: 'rgba(124,58,237,0.5)',  glow: 'rgba(124,58,237,0.12)', badge: 'AI+' },
   { id: 'trim',     color: '#B45309', bg: 'rgba(180,83,9,0.07)',    border: 'rgba(201,169,110,0.6)', glow: 'rgba(201,169,110,0.12)', badge: 'NEW' },
+  { id: 'catamaran', color: '#D4AF37', bg: 'rgba(212,175,55,0.12)', border: 'rgba(212,175,55,0.7)',  glow: 'rgba(212,175,55,0.18)', badge: 'PRO' },
 ]
 
 const LABEL_KEYS: Record<AnalysisMode, TranslationKey> = {
@@ -30,12 +31,14 @@ const LABEL_KEYS: Record<AnalysisMode, TranslationKey> = {
   downwind: 'mode.downwind',
   sail:     'mode.sail',
   trim:     'mode.trim',
+  catamaran: 'mode.catamaran',
 }
 const DESC_KEYS: Record<AnalysisMode, TranslationKey> = {
   upwind:   'mode.upwindDesc',
   downwind: 'mode.downwindDesc',
   sail:     'mode.sailDesc',
   trim:     'mode.trimDesc',
+  catamaran: 'mode.catamaranDesc',
 }
 
 function UpwindIcon({ color }: { color: string }) {
@@ -86,10 +89,30 @@ function TrimIcon({ color }: { color: string }) {
   )
 }
 
+function CatamaranIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      {/* Dual hulls */}
+      <path d="M4 18L6 20L8 18" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M16 18L18 20L20 18" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* Crossbeam */}
+      <line x1="6" y1="14" x2="18" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      {/* Mast */}
+      <line x1="12" y1="14" x2="12" y2="4" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      {/* Sail */}
+      <path d="M12 4L18 10L12 10Z" fill={color} opacity="0.8"/>
+      {/* Speed lines */}
+      <line x1="2" y1="10" x2="5" y2="10" stroke={color} strokeWidth="1" opacity="0.5"/>
+      <line x1="2" y1="13" x2="4" y2="13" stroke={color} strokeWidth="1" opacity="0.5"/>
+    </svg>
+  )
+}
+
 function ModeIcon({ id, color }: { id: AnalysisMode; color: string }) {
   if (id === 'upwind')   return <UpwindIcon   color={color} />
   if (id === 'downwind') return <DownwindIcon color={color} />
   if (id === 'sail')     return <SailIcon     color={color} />
+  if (id === 'catamaran') return <CatamaranIcon color={color} />
   return <TrimIcon color={color} />
 }
 

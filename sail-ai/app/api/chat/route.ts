@@ -170,6 +170,87 @@ RULES:
 - Return ONLY the JSON object.`
 }
 
+function buildCatamaranSystemPrompt(language = 'en', primaryConstraint?: string): string {
+  const langNote = language !== 'en'
+    ? `[LANGUAGE: Respond in the user's language — locale: ${language}.]\n\n`
+    : ''
+  const constraintBlock = primaryConstraint
+    ? `PRIORITY CONSTRAINT: The user has identified "${primaryConstraint}" as their primary business bottleneck.\nBoth Market Growth and CX tracks must address this constraint.\n\n`
+    : ''
+
+  return `${constraintBlock}${langNote}You are Aetheris CATAMARAN — a dual-track strategic overhaul system. You simultaneously evaluate Market Growth and Customer Experience, synthesizing them into a unified high-performance strategy.
+
+PHILOSOPHY:
+- Dual-Track Processing: Market Growth and CX run in parallel, not sequence.
+- The Keel: If data is inconsistent, prioritize structural facts and hard benchmarks.
+- Speed: Reduce visual noise by 100%. Deliver 4-in-1 solutions with minimalist precision.
+
+TONE: Direct, authoritative, zero hedging. State facts, not possibilities. Challenge goals with >70% failure probability.
+
+RESPONSE FORMAT: Return ONLY this JSON (no markdown, no extra keys):
+{
+  "catamaranTitle": "System Overhaul Title (≤10 words)",
+  "executiveSummary": "One paragraph — the unified strategy in 3–4 sentences, data-dense",
+  "marketGrowth": {
+    "trackTitle": "Market Growth",
+    "actions": [
+      {
+        "action": "Specific action 1 (≤12 words)",
+        "timeframe": "e.g. Week 1–2",
+        "expectedImpact": "Quantified impact (e.g. '+15% lead volume')"
+      },
+      {
+        "action": "Specific action 2",
+        "timeframe": "e.g. Week 3–4", 
+        "expectedImpact": "Quantified impact"
+      },
+      {
+        "action": "Specific action 3",
+        "timeframe": "e.g. Week 5–8",
+        "expectedImpact": "Quantified impact"
+      }
+    ],
+    "thirtyDayTarget": "Specific measurable target (e.g. 'Generate 50 qualified leads')"
+  },
+  "customerExperience": {
+    "trackTitle": "Customer Experience",
+    "actions": [
+      {
+        "action": "Specific CX action 1",
+        "timeframe": "e.g. Week 1–2",
+        "expectedImpact": "Quantified impact (e.g. 'Reduce churn 2pp')"
+      },
+      {
+        "action": "Specific CX action 2",
+        "timeframe": "e.g. Week 3–4",
+        "expectedImpact": "Quantified impact"
+      },
+      {
+        "action": "Specific CX action 3", 
+        "timeframe": "e.g. Week 5–8",
+        "expectedImpact": "Quantified impact"
+      }
+    ],
+    "thirtyDayTarget": "Specific measurable CX target"
+  },
+  "unifiedStrategy": "How Market Growth and CX reinforce each other — 2–3 sentences",
+  "thirtyDayTarget": "The single most important 30-day goal across both tracks",
+  "greatestRisk": "The one risk most likely to derail execution — name it explicitly",
+  "confidenceIndex": {
+    "score": 0.0,
+    "rationale": "Brief explanation of data confidence"
+  }
+}
+
+RULES:
+- EXACTLY 3 actions per track (Market Growth and CX).
+- All actions must have quantified expectedImpact with £/$ or %.
+- thirtyDayTarget must be specific and measurable.
+- greatestRisk: name ONE specific risk, not generic warnings.
+- confidenceIndex.score: 0.9+ = full data; 0.6–0.8 = estimates used; <0.6 = critical data missing.
+- Return ONLY the JSON object.`
+}
+
 // ── User message builder ──────────────────────────────────────────────────────
 
 function buildUserMessage(body: ExtendedPayload): string {
@@ -367,6 +448,55 @@ export async function POST(req: NextRequest) {
         { headers: { 'Cache-Control': 'no-store' } },
       )
     }
+  }
+
+  // ── CATAMARAN mode: dual-track system overhaul ────────────────────────────
+  if (analysisMode === 'catamaran') {
+    let catRes: Response
+    try {
+      catRes = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model:           GROQ_MODEL,
+          messages: [
+            { role: 'system', content: buildCatamaranSystemPrompt(language, primaryConstraint) },
+            { role: 'user',   content: userMessage },
+          ],
+          response_format: { type: 'json_object' },
+          max_tokens:      1800,
+          temperature:     0.35,
+        }),
+      })
+    } catch {
+      return Response.json({ error: 'CATAMARAN request failed.' }, { status: 502 })
+    }
+
+    if (!catRes.ok) {
+      const status = catRes.status === 401 ? 401 : catRes.status === 429 ? 429 : 502
+      return Response.json({ error: 'CATAMARAN request failed.' }, { status })
+    }
+
+    const catData: { choices?: Array<{ message?: { content?: string } }> } = await catRes.json().catch(() => ({}))
+    const catContent = catData?.choices?.[0]?.message?.content ?? '{}'
+
+    try {
+      const parsed = JSON.parse(catContent)
+      return Response.json(parsed, { headers: { 'Cache-Control': 'no-store' } })
+    } catch {
+      return Response.json(
+        { 
+          catamaranTitle: 'System Overhaul Plan',
+          marketGrowth: { actions: [], target: '' },
+          customerExperience: { actions: [], target: '' },
+          unifiedStrategy: '',
+          thirtyDayTarget: '',
+          greatestRisk: ''
+        },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
+    }
+  }
   }
 
   // ── Upwind / Downwind: ExecutiveResponse JSON ─────────────────────────────
