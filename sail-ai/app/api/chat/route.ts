@@ -306,7 +306,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Message is required.' }, { status: 422 })
   }
 
-  const analysisMode = body.analysisMode ?? 'upwind'
+  const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' = body.analysisMode ?? 'upwind'
 
   // 3. Railway backend (primary path — handles all modes natively)
   if (UPSTREAM_URL) {
