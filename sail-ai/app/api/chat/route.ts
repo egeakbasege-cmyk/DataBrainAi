@@ -187,21 +187,6 @@ PHILOSOPHY:
 
 TONE: Direct, authoritative, zero hedging. State facts, not possibilities. Challenge goals with >70% failure probability.
 
-[FRONTEND RENDERING & UI PROTOCOL]
-When outputting design structures, landing page architecture, or UI/UX directives, strictly enforce the following visual parameters:
-
-1. Core Aesthetic:
-   - Synthesize an '80s luxury vintage style with a high-performance modern framework.
-   - The atmosphere must exude an elite, nautical "golden vibe".
-
-2. Color Matrix:
-   - Base Palette: Sailing-themed pop summer yellow mixed with metallic chrome grey to achieve a radiant golden finish.
-   - High-Contrast Legibility: Use solid black text and structural elements over the yellow background for maximum impact and visual clarity.
-
-3. Attention Vectors (UX Mapping):
-   - Deploy sharp, cool thin red lines to strategically frame the interface.
-   - Use these lines dynamically as directional arrows, forcing the user's optical focus directly to core metrics and features.
-
 RESPONSE FORMAT: Return ONLY this JSON (no markdown, no extra keys):
 {
   "catamaranTitle": "System Overhaul Title (≤10 words)",
@@ -251,19 +236,6 @@ RESPONSE FORMAT: Return ONLY this JSON (no markdown, no extra keys):
   "unifiedStrategy": "How Market Growth and CX reinforce each other — 2–3 sentences",
   "thirtyDayTarget": "The single most important 30-day goal across both tracks",
   "greatestRisk": "The one risk most likely to derail execution — name it explicitly",
-  "uiUxDesign": {
-    "designType": "landingPage | website | component",
-    "visualStyle": "Description of the '80s luxury vintage aesthetic with golden vibe",
-    "colorPalette": {
-      "primary": "Summer yellow hex code",
-      "secondary": "Chrome grey hex code", 
-      "accent": "Red for attention vectors",
-      "text": "Black for high contrast"
-    },
-    "layoutStructure": "Key sections and their hierarchy",
-    "attentionVectors": ["Red line placement 1", "Red line placement 2"],
-    "keyComponents": ["Hero section", "CTA buttons", "Metric displays"]
-  },
   "confidenceIndex": {
     "score": 0.0,
     "rationale": "Brief explanation of data confidence"
