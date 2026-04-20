@@ -63,6 +63,10 @@ interface TrackCardProps {
 }
 
 function TrackCard({ title, track, accentColor, delay = 0 }: TrackCardProps) {
+  // Güvenlik kontrolleri
+  const safeTrack = track || { trackTitle: '', actions: [], target: '' }
+  const safeActions = safeTrack.actions || []
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -95,13 +99,13 @@ function TrackCard({ title, track, accentColor, delay = 0 }: TrackCardProps) {
           margin: '6px 0 0',
           lineHeight: 1.3,
         }}>
-          {track.trackTitle}
+          {safeTrack.trackTitle || 'Track'}
         </h4>
       </div>
 
       {/* Actions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {track.actions.map((action, i) => (
+        {safeActions.length > 0 ? safeActions.map((action, i) => (
           <div key={i} style={{
             background: 'rgba(255,255,255,0.6)',
             border: `1px solid ${accentColor}15`,
@@ -117,7 +121,7 @@ function TrackCard({ title, track, accentColor, delay = 0 }: TrackCardProps) {
               margin: '0 0 4px',
               lineHeight: 1.4,
             }}>
-              {action.action}
+              {action?.action || 'Action'}
             </p>
             <p style={{
               fontFamily: 'Inter, sans-serif',
@@ -126,7 +130,7 @@ function TrackCard({ title, track, accentColor, delay = 0 }: TrackCardProps) {
               margin: '0 0 3px',
               lineHeight: 1.4,
             }}>
-              {action.impact}
+              {action?.impact || ''}
             </p>
             <p style={{
               fontFamily: 'Inter, sans-serif',
@@ -135,39 +139,45 @@ function TrackCard({ title, track, accentColor, delay = 0 }: TrackCardProps) {
               margin: 0,
               fontWeight: 500,
             }}>
-              {action.owner}
+              {action?.owner || ''}
             </p>
           </div>
-        ))}
+        )) : (
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#999', fontStyle: 'italic' }}>
+            No actions defined
+          </p>
+        )}
       </div>
 
       {/* Target */}
-      <div style={{
-        marginTop: 12,
-        padding: '8px 10px',
-        background: `${accentColor}10`,
-        borderRadius: 6,
-      }}>
-        <span style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: '0.6rem',
-          fontWeight: 600,
-          color: accentColor,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
+      {safeTrack.target && (
+        <div style={{
+          marginTop: 12,
+          padding: '8px 10px',
+          background: `${accentColor}10`,
+          borderRadius: 6,
         }}>
-          30-Day Target
-        </span>
-        <p style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: '0.75rem',
-          color: '#444',
-          margin: '4px 0 0',
-          lineHeight: 1.4,
-        }}>
-          {track.target}
-        </p>
-      </div>
+          <span style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.6rem',
+            fontWeight: 600,
+            color: accentColor,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+          }}>
+            30-Day Target
+          </span>
+          <p style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.75rem',
+            color: '#444',
+            margin: '4px 0 0',
+            lineHeight: 1.4,
+          }}>
+            {safeTrack.target}
+          </p>
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -253,164 +263,176 @@ export function CatamaranResponseCard({
           margin: 0,
           lineHeight: 1.3,
         }}>
-          {response.catamaranTitle}
+          {response?.catamaranTitle || 'System Overhaul Plan'}
         </h2>
       </div>
 
       {/* Executive Summary */}
-      <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(212,175,55,0.1)' }}>
-        <p style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: '0.85rem',
-          color: '#555',
-          lineHeight: 1.6,
-          margin: 0,
-        }}>
-          {response.executiveSummary}
-        </p>
-      </div>
+      {response?.executiveSummary && (
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(212,175,55,0.1)' }}>
+          <p style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.85rem',
+            color: '#555',
+            lineHeight: 1.6,
+            margin: 0,
+          }}>
+            {response.executiveSummary}
+          </p>
+        </div>
+      )}
 
       {/* Dual Tracks */}
       <div style={{ padding: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <TrackCard
           title="Market Growth"
-          track={response.marketGrowth}
+          track={response?.marketGrowth}
           accentColor={goldColor}
           delay={0.1}
         />
         <TrackCard
           title="Customer Experience"
-          track={response.customerExperience}
+          track={response?.customerExperience}
           accentColor="#00695C"
           delay={0.2}
         />
       </div>
 
       {/* Unified Strategy */}
-      <div style={{ padding: '0 24px 16px' }}>
-        <div style={{
-          background: 'rgba(212,175,55,0.06)',
-          border: '1px solid rgba(212,175,55,0.15)',
-          borderRadius: 8,
-          padding: 14,
-        }}>
-          <span style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.6rem',
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: goldDark,
+      {response?.unifiedStrategy && (
+        <div style={{ padding: '0 24px 16px' }}>
+          <div style={{
+            background: 'rgba(212,175,55,0.06)',
+            border: '1px solid rgba(212,175,55,0.15)',
+            borderRadius: 8,
+            padding: 14,
           }}>
-            Unified Strategy
-          </span>
-          <p style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.8rem',
-            color: '#444',
-            margin: '8px 0 0',
-            lineHeight: 1.5,
-          }}>
-            {response.unifiedStrategy}
-          </p>
+            <span style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '0.6rem',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: goldDark,
+            }}>
+              Unified Strategy
+            </span>
+            <p style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '0.8rem',
+              color: '#444',
+              margin: '8px 0 0',
+              lineHeight: 1.5,
+            }}>
+              {response.unifiedStrategy}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Bottom Row: 30-Day Target, Risk, Confidence */}
-      <div style={{
-        padding: '0 24px 20px',
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr auto',
-        gap: 12,
-      }}>
-        {/* 30-Day Target */}
+      {(response?.thirtyDayTarget || response?.greatestRisk || response?.confidenceIndex !== undefined) && (
         <div style={{
-          background: '#f8f8f8',
-          border: '1px solid rgba(0,0,0,0.06)',
-          borderRadius: 6,
-          padding: 12,
+          padding: '0 24px 20px',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr auto',
+          gap: 12,
         }}>
-          <span style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.58rem',
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#888',
-          }}>
-            30-Day Target
-          </span>
-          <p style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.75rem',
-            color: '#333',
-            margin: '6px 0 0',
-            lineHeight: 1.4,
-          }}>
-            {response.thirtyDayTarget}
-          </p>
-        </div>
+          {/* 30-Day Target */}
+          {response?.thirtyDayTarget && (
+            <div style={{
+              background: '#f8f8f8',
+              border: '1px solid rgba(0,0,0,0.06)',
+              borderRadius: 6,
+              padding: 12,
+            }}>
+              <span style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.58rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: '#888',
+              }}>
+                30-Day Target
+              </span>
+              <p style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.75rem',
+                color: '#333',
+                margin: '6px 0 0',
+                lineHeight: 1.4,
+              }}>
+                {response.thirtyDayTarget}
+              </p>
+            </div>
+          )}
 
-        {/* Greatest Risk */}
-        <div style={{
-          background: 'rgba(220,38,38,0.04)',
-          border: '1px solid rgba(220,38,38,0.12)',
-          borderRadius: 6,
-          padding: 12,
-        }}>
-          <span style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.58rem',
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#dc2626',
-          }}>
-            Greatest Risk
-          </span>
-          <p style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.75rem',
-            color: '#444',
-            margin: '6px 0 0',
-            lineHeight: 1.4,
-          }}>
-            {response.greatestRisk}
-          </p>
-        </div>
+          {/* Greatest Risk */}
+          {response?.greatestRisk && (
+            <div style={{
+              background: 'rgba(220,38,38,0.04)',
+              border: '1px solid rgba(220,38,38,0.12)',
+              borderRadius: 6,
+              padding: 12,
+            }}>
+              <span style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.58rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: '#dc2626',
+              }}>
+                Greatest Risk
+              </span>
+              <p style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.75rem',
+                color: '#444',
+                margin: '6px 0 0',
+                lineHeight: 1.4,
+              }}>
+                {response.greatestRisk}
+              </p>
+            </div>
+          )}
 
-        {/* Confidence Index */}
-        <div style={{
-          background: `linear-gradient(135deg, ${goldColor}15, ${goldColor}08)`,
-          border: `1px solid ${goldColor}30`,
-          borderRadius: 6,
-          padding: 12,
-          minWidth: 80,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <span style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.55rem',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: goldDark,
-          }}>
-            Confidence
-          </span>
-          <span style={{
-            fontFamily: 'Cormorant Garamond, Georgia, serif',
-            fontSize: '1.4rem',
-            fontWeight: 700,
-            color: goldColor,
-          }}>
-            {response.confidenceIndex}%
-          </span>
+          {/* Confidence Index */}
+          {response?.confidenceIndex !== undefined && (
+            <div style={{
+              background: `linear-gradient(135deg, ${goldColor}15, ${goldColor}08)`,
+              border: `1px solid ${goldColor}30`,
+              borderRadius: 6,
+              padding: 12,
+              minWidth: 80,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <span style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.55rem',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: goldDark,
+              }}>
+                Confidence
+              </span>
+              <span style={{
+                fontFamily: 'Cormorant Garamond, Georgia, serif',
+                fontSize: '1.4rem',
+                fontWeight: 700,
+                color: goldColor,
+              }}>
+                {response.confidenceIndex}%
+              </span>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </motion.div>
   )
 }
