@@ -4,19 +4,196 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: #09090b;
-    --gold-gradient: linear-gradient(135deg, #d4af37 0%, #f9e29d 50%, #b8860b 100%);
-  }
-  body {
-    background-color: var(--background);
-    color: #e2e8f0;
-    -webkit-font-smoothing: antialiased;
-  }
+/* ── Swiss Precision Design Tokens ─────────────────── */
+:root {
+  --ink:        #0C0C0E;
+  --charcoal:   #1C1C1E;
+  --steel:      #3A3A3C;
+  --slate:      #71717A;
+  --silver:     #A1A1AA;
+  --rule:       rgba(0,0,0,0.09);
+  --rule-strong:rgba(0,0,0,0.16);
+  --canvas:     #FAFAF8;
+  --surface:    #FFFFFF;
+  --champagne:  #C9A96E;
+  --champagne-d:#A8873E;
+  --champagne-x:rgba(201,169,110,0.12);
+  --error:      #991B1B;
+  --error-dim:  rgba(153,27,27,0.08);
+  --border:     rgba(0,0,0,0.09);
+  --border-mid: rgba(0,0,0,0.14);
+  
+  /* Landing Page Gold Gradient */
+  --background: #09090b;
+  --gold-gradient: linear-gradient(135deg, #d4af37 0%, #f9e29d 50%, #b8860b 100%);
 }
 
+/* ── Aetheris Terminal — Dark Mode Tokens ───────────── */
+.aetheris, [data-theme="aetheris"] {
+  --ae-bg:          #080810;
+  --ae-bg-raised:   #0E0E18;
+  --ae-bg-surface:  #141420;
+  --ae-bg-elevated: #1A1A2A;
+  --ae-bg-float:    #202030;
+  --ae-text:        #F0F0F4;
+  --ae-text-dim:    #9898B0;
+  --ae-text-muted:  #606078;
+  --ae-text-ghost:  rgba(240,240,244,0.25);
+  --ae-chrome:      #E2E2E8;
+  --ae-chrome-dim:  #B0B0BC;
+  --ae-chrome-rule: rgba(226,226,232,0.10);
+  --ae-chrome-wash: rgba(226,226,232,0.06);
+  --ae-gold:        #C9A96E;
+  --ae-gold-bright: #D4B980;
+  --ae-gold-dim:    #A8873E;
+  --ae-gold-rule:   rgba(201,169,110,0.18);
+  --ae-gold-wash:   rgba(201,169,110,0.08);
+  --ae-border:      rgba(226,226,232,0.08);
+  --ae-border-mid:  rgba(226,226,232,0.14);
+  --ae-border-strong: rgba(226,226,232,0.22);
+  --ae-velocity-pos: #4ADE80;
+  --ae-velocity-neg: #F87171;
+  --ae-velocity-neu: #9898B0;
+  --ae-drift:        #F87171;
+  --ae-drift-wash:   rgba(248,113,113,0.08);
+
+  color:      var(--ae-text);
+  background: var(--ae-bg);
+}
+
+/* ── Reset ─────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background:              var(--canvas);
+  color:                   var(--ink);
+  font-family:             'Inter', system-ui, sans-serif;
+  font-weight:             400;
+  font-size:               16px;
+  line-height:             1.6;
+  -webkit-font-smoothing:  antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ─────────────────────────────────────── */
+::-webkit-scrollbar       { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--silver); }
+
+/* ── Display headings ──────────────────────────────── */
+h1, h2, h3, .font-serif {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+/* ── Textarea ──────────────────────────────────────── */
+textarea {
+  resize:      none;
+  outline:     none;
+  font-family: 'Inter', sans-serif;
+}
+input { outline: none; font-family: 'Inter', sans-serif; }
+
 @layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  /* ── Label system ────────────────────────────────── */
+  .label-caps {
+    font-family:    'Inter', sans-serif;
+    font-size:      0.6875rem;
+    font-weight:    600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color:          var(--slate);
+  }
+
+  .label-gold {
+    font-family:    'Inter', sans-serif;
+    font-size:      0.6875rem;
+    font-weight:    600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color:          var(--champagne);
+  }
+
+  /* ── Primary button — solid black ───────────────── */
+  .btn-primary {
+    display:        inline-flex;
+    align-items:    center;
+    gap:            0.5rem;
+    padding:        0.8125rem 1.75rem;
+    background:     var(--ink);
+    color:          #FFFFFF;
+    font-family:    'Inter', sans-serif;
+    font-size:      0.75rem;
+    font-weight:    600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border:         1px solid var(--ink);
+    border-radius:  0;
+    cursor:         pointer;
+    transition:     background 0.18s, color 0.18s;
+  }
+  .btn-primary:hover  { background: var(--charcoal); }
+  .btn-primary:active { background: var(--steel); }
+
+  /* ── Ghost button — outline ─────────────────────── */
+  .btn-ghost {
+    display:        inline-flex;
+    align-items:    center;
+    gap:            0.5rem;
+    padding:        0.8125rem 1.75rem;
+    background:     transparent;
+    color:          var(--ink);
+    font-family:    'Inter', sans-serif;
+    font-size:      0.75rem;
+    font-weight:    600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border:         1px solid var(--rule-strong);
+    border-radius:  0;
+    cursor:         pointer;
+    transition:     background 0.18s, border-color 0.18s;
+  }
+  .btn-ghost:hover { background: rgba(0,0,0,0.04); }
+
+  /* ── Ghost white — for dark backgrounds ─────────── */
+  .btn-ghost-white {
+    display:        inline-flex;
+    align-items:    center;
+    gap:            0.5rem;
+    padding:        0.8125rem 1.75rem;
+    background:     transparent;
+    color:          #FFFFFF;
+    font-family:    'Inter', sans-serif;
+    font-size:      0.75rem;
+    font-weight:    600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border:         1px solid rgba(255,255,255,0.3);
+    border-radius:  0;
+    cursor:         pointer;
+    transition:     background 0.18s, border-color 0.18s;
+  }
+  .btn-ghost-white:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.5); }
+
+  /* ── Cards ───────────────────────────────────────── */
+  .card-white {
+    background: var(--surface);
+    border:     1px solid var(--border);
+  }
+
+  .card-canvas {
+    background: var(--canvas);
+    border:     1px solid var(--border);
+  }
+
+  .card-linen { background: var(--surface); border: 1px solid var(--border); }
+  .card-cream { background: var(--canvas);  border: 1px solid var(--border); }
+
+  .rule { height: 1px; background: var(--rule); }
+  
+  /* Landing Page Utilities */
   .glass-panel {
     background: rgba(24, 24, 27, 0.6);
     backdrop-filter: blur(16px);
@@ -40,4 +217,272 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
     pointer-events: none; z-index: 11;
   }
+}
+
+/* ── Streaming cursor ──────────────────────────────── */
+.stream-cursor::after {
+  content:     '|';
+  display:     inline-block;
+  animation:   blink 0.9s step-end infinite;
+  color:       var(--champagne);
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── Stripe accent — champagne gradient ────────────── */
+.stripe-accent {
+  background: linear-gradient(90deg,
+    var(--ink)       0%,
+    var(--steel)     40%,
+    var(--champagne) 100%
+  );
+  height: 2px;
+}
+
+/* ── Wave ornament ─────────────────────────────────── */
+.wave-rule {
+  height:     10px;
+  background: none;
+  overflow:   hidden;
+}
+
+/* ── Pulse animation ───────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* ── Swiss grid rule decorators ────────────────────── */
+.swiss-rule {
+  width:      100%;
+  height:     1px;
+  background: var(--rule);
+}
+
+/* ── Champagne glow (subtle highlight for dark cards) ─ */
+.champagne-glow {
+  box-shadow: inset 0 1px 0 rgba(201,169,110,0.2);
+}
+
+/* ════════════════════════════════════════════════════════
+   AETHERIS TERMINAL — Component Primitives
+   ════════════════════════════════════════════════════════ */
+
+/* ── Obsidian cards ─────────────────────────────────── */
+.ae-card {
+  background:  var(--ae-bg-surface);
+  border:      1px solid var(--ae-border);
+  box-shadow:  inset 0 1px 0 var(--ae-chrome-rule);
+}
+
+.ae-card-elevated {
+  background:  var(--ae-bg-elevated);
+  border:      1px solid var(--ae-border-mid);
+  box-shadow:  inset 0 1px 0 var(--ae-chrome-rule),
+               0 4px 16px rgba(0,0,0,0.6);
+}
+
+.ae-card-gold {
+  background:  var(--ae-bg-surface);
+  border:      1px solid var(--ae-gold-rule);
+  box-shadow:  inset 0 1px 0 var(--ae-gold-wash);
+}
+
+/* ── Hairline rules ─────────────────────────────────── */
+.ae-rule        { height: 1px; background: var(--ae-border); }
+.ae-rule-chrome { height: 1px; background: var(--ae-chrome-rule); }
+.ae-rule-gold   { height: 1px; background: var(--ae-gold-rule); }
+
+/* ── Labels — Swiss precision typography ────────────── */
+.ae-label {
+  font-family:    'Inter', sans-serif;
+  font-size:      0.625rem;
+  font-weight:    600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color:          var(--ae-text-muted);
+}
+.ae-label-chrome {
+  font-family:    'Inter', sans-serif;
+  font-size:      0.625rem;
+  font-weight:    600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color:          var(--ae-chrome-dim);
+}
+.ae-label-gold {
+  font-family:    'Inter', sans-serif;
+  font-size:      0.625rem;
+  font-weight:    600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color:          var(--ae-gold);
+}
+
+/* ── Agent mode badge — subtle, not a dropdown ──────── */
+.ae-mode-badge {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            5px;
+  padding:        3px 8px;
+  background:     var(--ae-chrome-wash);
+  border:         1px solid var(--ae-chrome-rule);
+  font-family:    'Inter', sans-serif;
+  font-size:      0.625rem;
+  font-weight:    600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color:          var(--ae-chrome-dim);
+  white-space:    nowrap;
+  cursor:         default;
+}
+.ae-mode-badge--active {
+  background: var(--ae-gold-wash);
+  border-color: var(--ae-gold-rule);
+  color: var(--ae-gold);
+}
+.ae-mode-badge__dot {
+  width:        4px;
+  height:       4px;
+  border-radius:50%;
+  background:   currentColor;
+  flex-shrink:  0;
+}
+
+/* ── Density score micro-bar ─────────────────────────── */
+.ae-density-bar {
+  position:   relative;
+  height:     2px;
+  background: var(--ae-border);
+  overflow:   hidden;
+}
+.ae-density-bar__fill {
+  position:   absolute;
+  inset-y:    0;
+  left:       0;
+  background: linear-gradient(90deg,
+    var(--ae-chrome-dim) 0%,
+    var(--ae-gold) 100%
+  );
+  transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* ── Velocity indicator ──────────────────────────────── */
+.ae-velocity-pos { color: var(--ae-velocity-pos); }
+.ae-velocity-neg { color: var(--ae-velocity-neg); }
+.ae-velocity-neu { color: var(--ae-velocity-neu); }
+
+/* ── Drift alert badge ───────────────────────────────── */
+.ae-drift-badge {
+  display:     inline-flex;
+  align-items: center;
+  gap:         5px;
+  padding:     3px 8px;
+  background:  var(--ae-drift-wash);
+  border:      1px solid rgba(248,113,113,0.25);
+  color:       var(--ae-drift);
+  font-size:   0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.ae-drift-badge__pulse {
+  width:      5px;
+  height:     5px;
+  border-radius: 50%;
+  background: var(--ae-drift);
+  animation:  drift-pulse 2s ease-in-out infinite;
+}
+@keyframes drift-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ── Matrix option card ──────────────────────────────── */
+.ae-matrix-card {
+  background:  var(--ae-bg-surface);
+  border:      1px solid var(--ae-border);
+  padding:     16px 20px;
+  transition:  border-color 0.18s, background 0.18s;
+  cursor:      pointer;
+}
+.ae-matrix-card:hover {
+  border-color: var(--ae-border-mid);
+  background:   var(--ae-bg-elevated);
+}
+.ae-matrix-card--selected {
+  border-color: var(--ae-gold-rule);
+  background:   var(--ae-bg-elevated);
+  box-shadow:   inset 0 1px 0 var(--ae-gold-wash);
+}
+
+/* ── Chrome top accent hairline ──────────────────────── */
+.ae-chrome-bar {
+  height:     1px;
+  background: linear-gradient(90deg,
+    transparent               0%,
+    var(--ae-chrome-rule)    15%,
+    rgba(226,226,232,0.22)   50%,
+    var(--ae-chrome-rule)    85%,
+    transparent              100%
+  );
+}
+
+/* ── Gold accent hairline ─────────────────────────────── */
+.ae-gold-bar {
+  height:     1px;
+  background: linear-gradient(90deg,
+    transparent            0%,
+    var(--ae-gold-rule)   20%,
+    rgba(201,169,110,0.4) 50%,
+    var(--ae-gold-rule)   80%,
+    transparent           100%
+  );
+}
+
+/* ── Cognitive load indicator ─────────────────────────── */
+.ae-cog-load {
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+}
+.ae-cog-load__track {
+  display:  flex;
+  gap:      2px;
+}
+.ae-cog-load__pip {
+  width:        3px;
+  height:       10px;
+  background:   var(--ae-border);
+  transition:   background 0.3s;
+}
+.ae-cog-load__pip--active-low    { background: var(--ae-velocity-pos); }
+.ae-cog-load__pip--active-mid    { background: var(--ae-gold); }
+.ae-cog-load__pip--active-high   { background: var(--ae-drift); }
+
+/* ── Scrollbar — minimal, dark ───────────────────────── */
+.aetheris ::-webkit-scrollbar       { width: 2px; }
+.aetheris ::-webkit-scrollbar-track { background: transparent; }
+.aetheris ::-webkit-scrollbar-thumb { background: var(--ae-border-mid); }
+
+/* ── Focus ring — chrome outline ─────────────────────── */
+.aetheris *:focus-visible {
+  outline:        1px solid var(--ae-chrome-rule);
+  outline-offset: 2px;
+}
+
+/* ── Grid overlay (dev utility, hidden in prod) ──────── */
+.ae-grid-debug {
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(201,169,110,0.04) 0px,
+    rgba(201,169,110,0.04) 1px,
+    transparent 1px,
+    transparent 100%
+  );
+  background-size: 64px 100%;
 }
