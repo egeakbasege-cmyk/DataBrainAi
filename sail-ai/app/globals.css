@@ -22,35 +22,43 @@
   --error-dim:  rgba(153,27,27,0.08);
   --border:     rgba(0,0,0,0.09);
   --border-mid: rgba(0,0,0,0.14);
-  
-  /* Landing Page Gold Gradient */
-  --background: #09090b;
-  --gold-gradient: linear-gradient(135deg, #d4af37 0%, #f9e29d 50%, #b8860b 100%);
 }
 
 /* ── Aetheris Terminal — Dark Mode Tokens ───────────── */
+/* Applied to .aetheris root and the chat terminal shell */
 .aetheris, [data-theme="aetheris"] {
+  /* Backgrounds — obsidian depth scale */
   --ae-bg:          #080810;
   --ae-bg-raised:   #0E0E18;
   --ae-bg-surface:  #141420;
   --ae-bg-elevated: #1A1A2A;
   --ae-bg-float:    #202030;
+
+  /* Text — high contrast white with warm cast */
   --ae-text:        #F0F0F4;
   --ae-text-dim:    #9898B0;
   --ae-text-muted:  #606078;
   --ae-text-ghost:  rgba(240,240,244,0.25);
+
+  /* Chrome — cool metallic accent */
   --ae-chrome:      #E2E2E8;
   --ae-chrome-dim:  #B0B0BC;
   --ae-chrome-rule: rgba(226,226,232,0.10);
   --ae-chrome-wash: rgba(226,226,232,0.06);
+
+  /* Gold — matte prestige */
   --ae-gold:        #C9A96E;
   --ae-gold-bright: #D4B980;
   --ae-gold-dim:    #A8873E;
   --ae-gold-rule:   rgba(201,169,110,0.18);
   --ae-gold-wash:   rgba(201,169,110,0.08);
+
+  /* Borders */
   --ae-border:      rgba(226,226,232,0.08);
   --ae-border-mid:  rgba(226,226,232,0.14);
   --ae-border-strong: rgba(226,226,232,0.22);
+
+  /* Semantic */
   --ae-velocity-pos: #4ADE80;
   --ae-velocity-neg: #F87171;
   --ae-velocity-neu: #9898B0;
@@ -188,35 +196,11 @@ input { outline: none; font-family: 'Inter', sans-serif; }
     border:     1px solid var(--border);
   }
 
+  /* Legacy aliases */
   .card-linen { background: var(--surface); border: 1px solid var(--border); }
   .card-cream { background: var(--canvas);  border: 1px solid var(--border); }
 
   .rule { height: 1px; background: var(--rule); }
-  
-  /* Landing Page Utilities */
-  .glass-panel {
-    background: rgba(24, 24, 27, 0.6);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  .text-gold-gradient {
-    background: var(--gold-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .bg-gold-gradient { background: var(--gold-gradient); }
-  
-  .maritime-vintage-filter {
-    position: absolute; inset: 0;
-    background-color: rgba(60, 40, 20, 0.15);
-    mix-blend-mode: multiply; pointer-events: none; z-index: 10;
-  }
-  
-  .noise-overlay {
-    position: absolute; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-    pointer-events: none; z-index: 11;
-  }
 }
 
 /* ── Streaming cursor ──────────────────────────────── */
@@ -270,6 +254,7 @@ input { outline: none; font-family: 'Inter', sans-serif; }
 
 /* ════════════════════════════════════════════════════════
    AETHERIS TERMINAL — Component Primitives
+   Applied inside .aetheris / [data-theme="aetheris"]
    ════════════════════════════════════════════════════════ */
 
 /* ── Obsidian cards ─────────────────────────────────── */
