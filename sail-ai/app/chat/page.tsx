@@ -13,7 +13,7 @@ import { useDataBrain } from '@/hooks/useDataBrain'
 import type { AgentMode } from '@/types/chat'
 import type { AnalysisMode } from '@/components/ModeSelector'
 
-export default function ChatPage() {
+export default function ChatPageWrapper() {
   const [agentMode, setAgentMode] = useState<AnalysisMode>('upwind')
   const { trackAgentMode } = useDataBrain({
     enableTracking: true,
