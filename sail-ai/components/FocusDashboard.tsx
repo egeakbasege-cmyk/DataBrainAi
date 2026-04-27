@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAetherisStore } from '@/lib/aetherisStore'
 import { useSimulation, type SimulationResult, type ModeComparison } from '@/lib/data-brain/simulation'
 import { useEventStream } from '@/lib/data-brain/event-stream'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 import type { AgentMode } from '@/types/chat'
 
 interface FocusDashboardProps {
@@ -22,6 +23,8 @@ interface FocusDashboardProps {
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function CognitiveLoadMeter({ value }: { value: number }) {
+  const { t } = useLanguage()
+  
   const getColor = () => {
     if (value < 40) return 'var(--ae-velocity-pos, #4ADE80)'
     if (value < 70) return 'var(--ae-gold, #C9A96E)'
@@ -29,15 +32,21 @@ function CognitiveLoadMeter({ value }: { value: number }) {
   }
 
   const getLabel = () => {
-    if (value < 40) return 'Optimal'
-    if (value < 70) return 'Elevated'
-    return 'High'
+    if (value < 40) return t('databrain.cognitiveLoad.optimal')
+    if (value < 70) return t('databrain.cognitiveLoad.elevated')
+    return t('databrain.cognitiveLoad.high')
+  }
+
+  const getVerbosityLabel = () => {
+    if (value >= 70) return t('databrain.cognitiveLoad.minimal')
+    if (value >= 40) return t('databrain.cognitiveLoad.balanced')
+    return t('databrain.cognitiveLoad.standard')
   }
 
   return (
     <div className="ae-card p-4">
       <div className="flex items-center justify-between mb-2">
-        <span className="ae-label">Cognitive Load</span>
+        <span className="ae-label">{t('databrain.cognitiveLoad.label')}</span>
         <span className="text-xs font-medium" style={{ color: getColor() }}>
           {getLabel()}
         </span>
@@ -54,7 +63,7 @@ function CognitiveLoadMeter({ value }: { value: number }) {
       <div className="flex justify-between mt-1">
         <span className="text-xs text-[var(--ae-text-muted)]">{value}/100</span>
         <span className="text-xs text-[var(--ae-text-muted)]">
-          {value >= 70 ? 'Minimal verbosity' : value >= 40 ? 'Balanced' : 'Full depth'}
+          {getVerbosityLabel()}
         </span>
       </div>
     </div>
@@ -147,18 +156,19 @@ function ModeComparisonView({
   onSelectMode?: (mode: AgentMode) => void
 }) {
   const [selectedMode, setSelectedMode] = useState<AgentMode | null>(null)
+  const { t } = useLanguage()
 
   return (
     <div className="space-y-4">
       <div className="ae-card-gold p-4">
         <div className="flex items-center gap-2 mb-2">
-          <span className="ae-label-gold">Recommendation</span>
+          <span className="ae-label-gold">{t('databrain.simulation.recommendation')}</span>
         </div>
         <p className="text-sm text-[var(--ae-text)]">{comparison.recommendation.reasoning}</p>
         
         {comparison.recommendation.secondary && (
           <div className="mt-2 flex items-center gap-2">
-            <span className="text-xs text-[var(--ae-text-muted)]">Secondary:</span>
+            <span className="text-xs text-[var(--ae-text-muted)]">{t('databrain.simulation.secondary')}:</span>
             <span className="ae-mode-badge ae-mode-badge--active">
               {comparison.recommendation.secondary}
             </span>
@@ -168,7 +178,7 @@ function ModeComparisonView({
 
       {comparison.combinedStrategy && (
         <div className="ae-card p-3">
-          <span className="ae-label mb-2 block">Combined Strategy</span>
+          <span className="ae-label mb-2 block">{t('databrain.simulation.combinedStrategy')}</span>
           <p className="text-sm text-[var(--ae-text-dim)]">{comparison.combinedStrategy}</p>
         </div>
       )}
@@ -196,6 +206,7 @@ export function FocusDashboard({ className = '', onModeSelect }: FocusDashboardP
   const store = useAetherisStore()
   const simulation = useSimulation()
   const eventStream = useEventStream()
+  const { t } = useLanguage()
   
   const [activeComparison, setActiveComparison] = useState<ModeComparison | null>(null)
   const [isSimulating, setIsSimulating] = useState(false)
@@ -250,14 +261,14 @@ export function FocusDashboard({ className = '', onModeSelect }: FocusDashboardP
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-[var(--ae-text)]">
-          Focus Strategy
+          {t('databrain.focusDashboard.title')}
         </h3>
         <button
           onClick={() => runQuickSimulation(['analysis', 'execution'])}
           disabled={isSimulating}
           className="ae-mode-badge hover:bg-[var(--ae-gold-wash)] transition-colors"
         >
-          {isSimulating ? 'Simulating...' : 'Run Simulation'}
+          {isSimulating ? t('databrain.simulation.running') : t('databrain.simulation.run')}
         </button>
       </div>
 
@@ -278,10 +289,10 @@ export function FocusDashboard({ className = '', onModeSelect }: FocusDashboardP
             <div className="flex items-center gap-2 mb-2">
               <div className="ae-drift-badge">
                 <span className="ae-drift-badge__pulse" />
-                Alert
+                {t('databrain.alert.title')}
               </div>
               <span className="text-xs text-[var(--ae-text-muted)]">
-                {store.predictiveDriftAlerts.filter(a => !a.isResolved).length} active
+                {store.predictiveDriftAlerts.filter(a => !a.isResolved).length} {t('databrain.alert.active')}
               </span>
             </div>
           </motion.div>
@@ -291,7 +302,7 @@ export function FocusDashboard({ className = '', onModeSelect }: FocusDashboardP
       {/* Strategic Vectors */}
       {topVectors.length > 0 && (
         <div className="space-y-2">
-          <span className="ae-label">Strategic Vectors</span>
+          <span className="ae-label">{t('databrain.strategicVectors.title')}</span>
           <div className="grid gap-2">
             {topVectors.map((vector) => (
               <FocusScoreCard
@@ -326,7 +337,7 @@ export function FocusDashboard({ className = '', onModeSelect }: FocusDashboardP
       {/* Verbosity Indicator */}
       <div className="ae-card p-3 mt-4">
         <div className="flex items-center justify-between">
-          <span className="ae-label">Response Style</span>
+          <span className="ae-label">{t('databrain.responseStyle.label')}</span>
           <span className="text-xs text-[var(--ae-text-dim)]">
             {store.verbosityTier()}
           </span>
