@@ -160,6 +160,7 @@ function ModeComparisonView({
 
   return (
     <div className="space-y-4">
+      {/* Recommendation Card */}
       <div className="ae-card-gold p-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="ae-label-gold">{t('databrain.simulation.recommendation')}</span>
@@ -176,6 +177,7 @@ function ModeComparisonView({
         )}
       </div>
 
+      {/* Combined Strategy */}
       {comparison.combinedStrategy && (
         <div className="ae-card p-3">
           <span className="ae-label mb-2 block">{t('databrain.simulation.combinedStrategy')}</span>
@@ -183,6 +185,7 @@ function ModeComparisonView({
         </div>
       )}
 
+      {/* Mode Results */}
       <div className="grid gap-2">
         {comparison.results.map((result) => (
           <SimulationPreview
@@ -195,6 +198,13 @@ function ModeComparisonView({
             }}
           />
         ))}
+      </div>
+
+      {/* Quick Action */}
+      <div className="pt-2 border-t border-[var(--ae-border)]">
+        <p className="text-xs text-[var(--ae-text-muted)] text-center">
+          Click a mode above to select it for your analysis
+        </p>
       </div>
     </div>
   )
@@ -216,31 +226,35 @@ export function FocusDashboard({ className = '', onModeSelect }: FocusDashboardP
     eventStream.track('focus_dashboard_opened', {})
   }, [])
 
-  const runQuickSimulation = async (modes: AgentMode[]) => {
+  const runQuickSimulation = async () => {
     setIsSimulating(true)
-    eventStream.track('simulation_started', { modes })
+    eventStream.track('simulation_started', { modes: ['strategy', 'execution'] })
 
     const startTime = Date.now()
     
     try {
-      const result = await simulation.simulateModes(modes, {
-        context: store.baselineMetrics 
-          ? JSON.stringify(store.baselineMetrics)
-          : '',
-        query: 'Current strategic position analysis',
+      // Use actual simulation with user context
+      const userContext = store.baselineMetrics 
+        ? JSON.stringify(store.baselineMetrics)
+        : 'B2B SaaS business looking to improve conversion and reduce churn'
+      
+      const result = await simulation.simulateModes(['strategy', 'execution'], {
+        context: userContext,
+        query: 'How to improve business performance and growth',
       })
 
       const duration = Date.now() - startTime
       eventStream.track('simulation_completed', { 
-        modes, 
+        modes: ['strategy', 'execution'], 
         duration,
         success: true 
       })
 
       setActiveComparison(result)
     } catch (error) {
+      console.error('Simulation error:', error)
       eventStream.track('simulation_failed', { 
-        modes, 
+        modes: ['strategy', 'execution'], 
         error: String(error) 
       })
     } finally {
@@ -264,7 +278,7 @@ export function FocusDashboard({ className = '', onModeSelect }: FocusDashboardP
           {t('databrain.focusDashboard.title')}
         </h3>
         <button
-          onClick={() => runQuickSimulation(['analysis', 'execution'])}
+          onClick={runQuickSimulation}
           disabled={isSimulating}
           className="ae-mode-badge hover:bg-[var(--ae-gold-wash)] transition-colors"
         >
