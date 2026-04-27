@@ -34,7 +34,7 @@ export default function ChatPageWrapper() {
 
       {/* Focus Dashboard Sidebar */}
       <aside 
-        className="hidden lg:block w-80 border-l overflow-y-auto"
+        className="aetheris hidden lg:block w-80 border-l overflow-y-auto"
         style={{ 
           background: 'linear-gradient(180deg, #0C0C0E 0%, #141420 100%)',
           borderLeft: '1px solid rgba(226,226,232,0.08)'
