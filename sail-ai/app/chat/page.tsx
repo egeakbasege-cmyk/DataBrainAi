@@ -22,6 +22,7 @@ import { AgentStatusBar }                from '@/components/AgentStatusBar'
 import { TrimTimelineCard }              from '@/components/TrimTimelineCard'
 import type { TrimResponse }             from '@/components/TrimTimelineCard'
 import { CatamaranResponseCard }         from '@/components/CatamaranResponseCard'
+import { SynergyResponseCard }           from '@/components/SynergyResponseCard'
 import type { CatamaranResponse }        from '@/types/chat'
 import { useAetherisSubmit }             from '@/hooks/useAetherisSubmit'
 import { useSailState }                  from '@/hooks/useSailState'
@@ -164,6 +165,8 @@ export default function ChatPage() {
   const [attachment,   setAttachment]   = useState<Attachment | null>(null)
   const [fileError,    setFileError]    = useState('')
   const [mode,         setMode]         = useState<AnalysisMode>('upwind')
+  // Synergy sub-mode selection (2–4 modes picked from the inline sub-selector)
+  const [synergyModes, setSynergyModes] = useState<AnalysisMode[]>(['upwind', 'sail'])
   // Downwind multi-turn conversation history
   const [convHistory,  setConvHistory]  = useState<ConvMessage[]>([])
   // SAIL streaming state
@@ -182,6 +185,13 @@ export default function ChatPage() {
   const [catamaranResponse, setCatamaranResponse] = useState<import('@/types/chat').CatamaranResponse|null>(null)
   const [catamaranPhase,    setCatamaranPhase]    = useState<'idle'|'loading'|'complete'>('idle')
   const [catamaranError,    setCatamaranError]    = useState<string|null>(null)
+
+  // SYNERGY state
+  const [synergyText,  setSynergyText]  = useState('')
+  const [synergyPhase, setSynergyPhase] = useState<'idle'|'streaming'|'complete'>('idle')
+  const [synergyError, setSynergyError] = useState<string|null>(null)
+  const [synergyMeta,  setSynergyMeta]  = useState<{ modes: string[]; companyName: string|null } | null>(null)
+  const synergyAbortRef = useRef<AbortController|null>(null)
 
   // Context toggle + inline paywall
   const [useProfileCtx,     setUseProfileCtx]    = useState(true)
@@ -448,15 +458,62 @@ export default function ChatPage() {
     }
   }
 
+  async function handleSynergySubmit(text: string) {
+    setSynergyError(null); setSynergyText(''); setSynergyMeta(null); setSynergyPhase('streaming')
+    synergyAbortRef.current = new AbortController()
+    try {
+      const body = buildModeBody(text, 'synergy')
+      body.synergyModes = synergyModes as unknown as Record<string, unknown>
+      body.synergyName  = brandConfig?.companyName ?? undefined as unknown as Record<string, unknown>
+      const res = await fetch('/api/chat', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body:    JSON.stringify(body),
+        signal:  synergyAbortRef.current.signal,
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error((d as Record<string,unknown>).error as string ?? 'SYNERGY request failed.')
+      }
+      const reader  = res.body!.getReader()
+      const decoder = new TextDecoder()
+      let buf = '', metaDone = false
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        if (!metaDone) {
+          const nl = buf.indexOf('\n')
+          if (nl !== -1) {
+            try {
+              const m = JSON.parse(buf.slice(0, nl))
+              if (m.__synMeta) setSynergyMeta(m.__synMeta)
+            } catch { /* ignore */ }
+            buf = buf.slice(nl + 1)
+            metaDone = true
+          }
+        }
+        setSynergyText(buf)
+      }
+      setSynergyPhase('complete')
+      saveAnalysis(text, buf.slice(0, 120))
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      setSynergyError(err instanceof Error ? err.message : 'SYNERGY request failed.')
+      setSynergyPhase('idle')
+    }
+  }
+
   async function handleSubmit() {
     const text = input.trim()
     if (!text) return
     if (!canAnalyse) { setShowInlinePaywall(true); return }
     setShowInlinePaywall(false)
 
-    if (mode === 'sail') { if (sailPhase !== 'streaming') await handleSailSubmit(text); return }
-    if (mode === 'trim') { if (trimPhase !== 'loading')   await handleTrimSubmit(text); return }
-    if (mode === 'catamaran') { if (catamaranPhase !== 'loading') await handleCatamaranSubmit(text); return }
+    if (mode === 'sail')     { if (sailPhase      !== 'streaming') await handleSailSubmit(text);      return }
+    if (mode === 'trim')     { if (trimPhase      !== 'loading')   await handleTrimSubmit(text);      return }
+    if (mode === 'catamaran'){ if (catamaranPhase !== 'loading')   await handleCatamaranSubmit(text); return }
+    if (mode === 'synergy')  { if (synergyPhase   !== 'streaming' && synergyModes.length >= 2) await handleSynergySubmit(text); return }
 
     if (mode === 'downwind') {
       if (coachState === 'THINKING' || coachState === 'STREAMING') return
@@ -527,6 +584,8 @@ export default function ChatPage() {
     setSailText(''); setSailPhase('idle'); setSailError(null)
     setTrimResponse(null); setTrimPhase('idle'); setTrimError(null)
     setCatamaranResponse(null); setCatamaranPhase('idle'); setCatamaranError(null)
+    synergyAbortRef.current?.abort()
+    setSynergyText(''); setSynergyPhase('idle'); setSynergyError(null); setSynergyMeta(null)
     setShowInlinePaywall(false)
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
@@ -544,6 +603,8 @@ export default function ChatPage() {
     ? trimPhase === 'loading'
     : mode === 'catamaran'
     ? catamaranPhase === 'loading'
+    : mode === 'synergy'
+    ? synergyPhase === 'streaming'
     : mode === 'downwind'
     ? coachState === 'THINKING' || coachState === 'STREAMING'
     : state === 'THINKING'
@@ -554,13 +615,15 @@ export default function ChatPage() {
     ? trimPhase === 'complete'
     : mode === 'catamaran'
     ? catamaranPhase === 'complete'
+    : mode === 'synergy'
+    ? synergyPhase === 'complete'
     : mode === 'downwind'
     ? coachState === 'COMPLETE'
     : state === 'COMPLETE' || state === 'ERROR'
 
   const isConversing = mode === 'downwind' && coachState === 'CONVERSING'
 
-  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'catamaran' ? catamaranError : mode === 'downwind' ? coachError : error
+  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'catamaran' ? catamaranError : mode === 'synergy' ? synergyError : mode === 'downwind' ? coachError : error
 
   const sailState = (
     isActive ? 'THINKING' : isConversing ? 'CONVERSING' : isComplete ? 'COMPLETE' : 'IDLE'
@@ -733,7 +796,7 @@ export default function ChatPage() {
                       }}
                     />
                     <span className="label-caps" style={{ color: '#71717A' }}>
-                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
+                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'synergy' ? `${brandConfig?.companyName ?? 'War Room'} assembling…` : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
                     </span>
                   </motion.div>
                 )}
@@ -742,7 +805,13 @@ export default function ChatPage() {
               {/* Mode selector — hidden while active */}
               {!isActive && (
                 <div style={{ marginBottom: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                  <ModeSelector mode={mode} onChange={setMode} />
+                  <ModeSelector
+                    mode={mode}
+                    onChange={setMode}
+                    synergyModes={synergyModes}
+                    onSynergyChange={setSynergyModes}
+                    brandName={brandConfig?.companyName}
+                  />
                 </div>
               )}
 
@@ -1108,6 +1177,20 @@ export default function ChatPage() {
               <CatamaranResponseCard 
                 response={catamaranResponse} 
                 isStreaming={catamaranPhase === 'loading'} 
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── SYNERGY war room result ── */}
+        <AnimatePresence>
+          {mode === 'synergy' && (synergyPhase === 'streaming' || synergyPhase === 'complete') && (
+            <motion.div key="synergy-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+              <SynergyResponseCard
+                text={synergyText}
+                streaming={synergyPhase === 'streaming'}
+                modes={synergyMeta?.modes ?? synergyModes as string[]}
+                companyName={synergyMeta?.companyName ?? brandConfig?.companyName ?? undefined}
               />
             </motion.div>
           )}

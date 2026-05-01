@@ -24,7 +24,8 @@ import {
   buildSailSystemPrompt as buildEnhancedSailPrompt,
   buildTrimSystemPrompt as buildEnhancedTrimPrompt,
   buildCatamaranSystemPrompt as buildEnhancedCatamaranPrompt,
-  buildOperatorSystemPrompt as buildEnhancedOperatorPrompt
+  buildOperatorSystemPrompt as buildEnhancedOperatorPrompt,
+  buildSynergySystemPrompt,
 } from '@/lib/prompts/enhanced-modes'
 
 const { auth } = NextAuth(authConfig)
@@ -38,7 +39,9 @@ const GROQ_MODEL   = 'llama-3.3-70b-versatile'
 type ExtendedPayload = AetherisPayload & {
   apiKey?:             string
   primaryConstraint?:  string
-  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator'
+  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy'
+  synergyModes?:       string[]
+  synergyName?:        string
 }
 
 // ── Groq system prompts ────────────────────────────────────────────────────────
@@ -321,7 +324,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Message is required.' }, { status: 422 })
   }
 
-  const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' = body.analysisMode ?? 'upwind'
+  const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' = body.analysisMode ?? 'upwind'
 
   // 3. Railway backend (primary path — handles all modes natively)
   if (UPSTREAM_URL) {
@@ -365,6 +368,69 @@ export async function POST(req: NextRequest) {
   const language           = body.language ?? 'en'
   const primaryConstraint  = body.primaryConstraint
   const userMessage        = buildUserMessage(body)
+
+  // ── SYNERGY mode: War Room Council — streaming markdown ──────────────────
+  if (analysisMode === 'synergy') {
+    const modes        = body.synergyModes ?? ['upwind', 'sail']
+    const synergyName  = body.synergyName
+    const synRes = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model:       GROQ_MODEL,
+        messages: [
+          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) },
+          { role: 'user',   content: userMessage },
+        ],
+        max_tokens:  2400,
+        temperature: 0.45,
+        stream:      true,
+      }),
+    }).catch(() => null)
+
+    if (!synRes?.ok) {
+      return Response.json({ error: 'SYNERGY request failed.' }, { status: 502 })
+    }
+
+    const { readable, writable } = new TransformStream()
+    const writer  = writable.getWriter()
+    const encoder = new TextEncoder()
+
+    // Emit metadata header on first chunk
+    const metaLine = JSON.stringify({ __synMeta: { modes, companyName: synergyName ?? null } }) + '\n'
+    await writer.write(encoder.encode(metaLine))
+
+    ;(async () => {
+      const reader    = synRes.body!.getReader()
+      const decoder   = new TextDecoder()
+      let   sseBuffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        sseBuffer += decoder.decode(value, { stream: true })
+        const lines = sseBuffer.split('\n')
+        sseBuffer = lines.pop() ?? ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const raw = line.slice(6).trim()
+          if (raw === '[DONE]') continue
+          try {
+            const chunk = JSON.parse(raw)
+            const delta = chunk.choices?.[0]?.delta?.content ?? ''
+            if (delta) await writer.write(encoder.encode(delta))
+          } catch { /* ignore */ }
+        }
+      }
+
+      await writer.close()
+    })()
+
+    return new Response(readable, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' },
+    })
+  }
 
   // ── SAIL mode: streaming markdown response ────────────────────────────────
   if (analysisMode === 'sail') {

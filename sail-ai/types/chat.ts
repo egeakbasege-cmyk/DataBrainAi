@@ -13,7 +13,7 @@ export type AgentMode =
   | 'execution'  // Action plans, next steps, implementation workflows
   | 'review'     // Quality checks, risk assessment, consistency validation
 
-export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator'
+export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy'
 
 export interface Message {
   role:    'user' | 'assistant'
@@ -32,6 +32,10 @@ export interface ChatPayload {
   agentMode?:     AgentMode
   /** Downwind multi-turn: prior exchanges, excluding the current message. */
   messages?:      Message[]
+  /** Synergy mode: the 2-4 sub-modes mixed by the War Room engine. */
+  synergyModes?:  AnalysisMode[]
+  /** Synergy mode: company name for personalised header. */
+  synergyName?:   string
 }
 
 /** A single verified data point cited in the response. */

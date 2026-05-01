@@ -159,7 +159,7 @@ export interface AetherisPayload {
   userId: string
   language: SupportedLanguage
   agentMode: AgentMode
-  analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator'
+  analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy'
   /** Partial snapshot used for trajectory-aware LLM context injection. */
   state?: Partial<AetherisState>
   imageBase64?: string

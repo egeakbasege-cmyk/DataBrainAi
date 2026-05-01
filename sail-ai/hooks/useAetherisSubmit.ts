@@ -35,7 +35,7 @@ export type AetherisSubmitState = 'IDLE' | 'THINKING' | 'COMPLETE' | 'ERROR'
 export interface AetherisSubmitOptions {
   context?:           string
   attachment?:        Attachment
-  analysisMode?:      'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator'
+  analysisMode?:      'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy'
   /** BYOK — forwarded to the Edge proxy for Groq fallback calls. */
   apiKey?:            string
   primaryConstraint?: string
