@@ -364,6 +364,23 @@ const translations = {
     'databrain.drift.resolved': 'Resolved',
     'databrain.drift.microPivot': 'Autonomous micro-pivot',
     'databrain.drift.markResolved': 'Mark resolved',
+
+    // ── Brand Setup ──────────────────────────────────────
+    'brand.setup.title':    'Personalise your AI',
+    'brand.setup.step1':    'Your company',
+    'brand.setup.step2':    'Choose your modes',
+    'brand.company.label':  'Company name',
+    'brand.aiName.label':   'AI name (optional)',
+    'brand.modes.hint':     'Select the capabilities you want active',
+    'brand.modes.min':      'Select at least 2 modes to continue',
+    'brand.continue':       'Continue →',
+    'brand.launch':         'Launch my AI →',
+
+    // ── Scenario mode ────────────────────────────────────
+    'scenario.mode.label':  'Scenario · Simulation',
+    'scenario.seed':        'Describe your what-if…',
+    'scenario.simulate':    'Run simulation →',
+    'scenario.result':      'Simulation complete',
   },
 
   tr: {
@@ -692,6 +709,23 @@ const translations = {
     'databrain.drift.resolved': 'Çözüldü',
     'databrain.drift.microPivot': 'Otonom mikro-pivot',
     'databrain.drift.markResolved': 'Çözüldü olarak işaretle',
+
+    // ── Marka Kurulumu ───────────────────────────────────
+    'brand.setup.title':    'AI\'nizi kişiselleştirin',
+    'brand.setup.step1':    'Şirketiniz',
+    'brand.setup.step2':    'Modlarınızı seçin',
+    'brand.company.label':  'Şirket adı',
+    'brand.aiName.label':   'AI adı (isteğe bağlı)',
+    'brand.modes.hint':     'Aktif olmasını istediğiniz özellikleri seçin',
+    'brand.modes.min':      'Devam etmek için en az 2 mod seçin',
+    'brand.continue':       'Devam et →',
+    'brand.launch':         'AI\'mı başlat →',
+
+    // ── Senaryo modu ─────────────────────────────────────
+    'scenario.mode.label':  'Senaryo · Simülasyon',
+    'scenario.seed':        '"Ya … olsaydı?" sorunuzu yazın…',
+    'scenario.simulate':    'Simülasyonu çalıştır →',
+    'scenario.result':      'Simülasyon tamamlandı',
   },
 
   es: {
@@ -732,6 +766,8 @@ const translations = {
     'mode.sailDesc':   'Intención automática — adapta la profundidad y el formato a tu consulta',
     'mode.trim':       'TRIM',
     'mode.trimDesc':   'Cronograma estratégico — hitos por fases con objetivos medibles',
+    'mode.catamaran':  'CATAMARÁN',
+    'mode.catamaranDesc': 'Reestructuración de doble vía — Crecimiento de mercado + integración CX',
     'mode.operator':   'OPERADOR',
     'mode.operatorDesc': 'Inteligencia universal — cualquier dominio, misma profundidad. Números, sin relleno.',
     'operator.streaming': 'El Operador está ejecutando los cálculos…',
@@ -1018,6 +1054,23 @@ const translations = {
     'databrain.drift.resolved': 'Resuelto',
     'databrain.drift.microPivot': 'Micro-pivot autónomo',
     'databrain.drift.markResolved': 'Marcar como resuelto',
+
+    // ── Configuración de marca ───────────────────────────
+    'brand.setup.title':    'Personaliza tu IA',
+    'brand.setup.step1':    'Tu empresa',
+    'brand.setup.step2':    'Elige tus modos',
+    'brand.company.label':  'Nombre de la empresa',
+    'brand.aiName.label':   'Nombre de la IA (opcional)',
+    'brand.modes.hint':     'Selecciona las funciones que deseas activar',
+    'brand.modes.min':      'Selecciona al menos 2 modos para continuar',
+    'brand.continue':       'Continuar →',
+    'brand.launch':         'Lanzar mi IA →',
+
+    // ── Modo escenario ───────────────────────────────────
+    'scenario.mode.label':  'Escenario · Simulación',
+    'scenario.seed':        'Describe tu "¿qué pasaría si…?"',
+    'scenario.simulate':    'Ejecutar simulación →',
+    'scenario.result':      'Simulación completada',
   },
 
   de: {
@@ -1058,6 +1111,8 @@ const translations = {
     'mode.sailDesc':   'Auto-Intent — passt Tiefe und Format an Ihre Anfrage an',
     'mode.trim':       'TRIM',
     'mode.trimDesc':   'Strategischer Zeitplan — Phasenmeilensteine mit messbaren Zielen',
+    'mode.catamaran':  'KATAMARAN',
+    'mode.catamaranDesc': 'Zweigleisige Systemerneuerung — Marktwachstum + CX-Integration',
     'mode.operator':   'OPERATOR',
     'mode.operatorDesc': 'Universelle Intelligenz — jede Domäne, gleiche Tiefe. Zahlen, kein Füllmaterial.',
     'operator.streaming': 'Operator führt die Berechnungen durch…',
@@ -1344,6 +1399,23 @@ const translations = {
     'databrain.drift.resolved': 'Gelöst',
     'databrain.drift.microPivot': 'Autonomer Mikro-Pivot',
     'databrain.drift.markResolved': 'Als gelöst markieren',
+
+    // ── Marken-Einrichtung ───────────────────────────────
+    'brand.setup.title':    'Ihre KI personalisieren',
+    'brand.setup.step1':    'Ihr Unternehmen',
+    'brand.setup.step2':    'Modi auswählen',
+    'brand.company.label':  'Unternehmensname',
+    'brand.aiName.label':   'KI-Name (optional)',
+    'brand.modes.hint':     'Wählen Sie die gewünschten Funktionen',
+    'brand.modes.min':      'Mindestens 2 Modi auswählen, um fortzufahren',
+    'brand.continue':       'Weiter →',
+    'brand.launch':         'Meine KI starten →',
+
+    // ── Szenario-Modus ───────────────────────────────────
+    'scenario.mode.label':  'Szenario · Simulation',
+    'scenario.seed':        'Beschreiben Sie Ihr „Was wäre wenn…"',
+    'scenario.simulate':    'Simulation starten →',
+    'scenario.result':      'Simulation abgeschlossen',
   },
 
   fr: {
@@ -1384,6 +1456,8 @@ const translations = {
     'mode.sailDesc':   'Intention automatique — adapte la profondeur et le format à votre requête',
     'mode.trim':       'TRIM',
     'mode.trimDesc':   'Calendrier stratégique — jalons phasés avec des objectifs mesurables',
+    'mode.catamaran':  'CATAMARAN',
+    'mode.catamaranDesc': 'Refonte bi-voie — Croissance marché + intégration CX',
     'mode.operator':   'OPÉRATEUR',
     'mode.operatorDesc': 'Intelligence universelle — tout domaine, même profondeur. Chiffres, pas de remplissage.',
     'operator.streaming': "L'Opérateur exécute les calculs…",
@@ -1670,6 +1744,23 @@ const translations = {
     'databrain.drift.resolved': 'Résolu',
     'databrain.drift.microPivot': 'Micro-pivot autonome',
     'databrain.drift.markResolved': 'Marquer comme résolu',
+
+    // ── Configuration de marque ──────────────────────────
+    'brand.setup.title':    'Personnalisez votre IA',
+    'brand.setup.step1':    'Votre entreprise',
+    'brand.setup.step2':    'Choisissez vos modes',
+    'brand.company.label':  "Nom de l'entreprise",
+    'brand.aiName.label':   "Nom de l'IA (optionnel)",
+    'brand.modes.hint':     'Sélectionnez les fonctionnalités à activer',
+    'brand.modes.min':      'Sélectionnez au moins 2 modes pour continuer',
+    'brand.continue':       'Continuer →',
+    'brand.launch':         'Lancer mon IA →',
+
+    // ── Mode scénario ────────────────────────────────────
+    'scenario.mode.label':  'Scénario · Simulation',
+    'scenario.seed':        'Décrivez votre « et si… »',
+    'scenario.simulate':    'Lancer la simulation →',
+    'scenario.result':      'Simulation terminée',
   },
 
   zh: {
@@ -1710,6 +1801,8 @@ const translations = {
     'mode.sailDesc':   '自动意图 — 根据您的查询自动调整深度和格式',
     'mode.trim':       'TRIM',
     'mode.trimDesc':   '战略时间轴 — 分阶段里程碑与可量化目标',
+    'mode.catamaran':  '双体帆船',
+    'mode.catamaranDesc': '双轨系统升级 — 市场增长 + CX整合',
     'mode.operator':   '运营官',
     'mode.operatorDesc': '全域智能 — 任何领域，同等深度。数据为王，无废话。',
     'operator.streaming': '运营官正在运行数据分析…',
@@ -2033,6 +2126,23 @@ const translations = {
     'home.preset.agency.label': '代理管道',
     'home.preset.agency.problem': '收入集中在2–3个客户身上，造成严重的管道风险。',
     'home.preset.agency.insight': '有结构的季度业务评审可将非自愿流失率降低18–22%。对于6个客户的组合，每年可挽回1–2个长期客户。',
+
+    // ── 品牌设置 ─────────────────────────────────────────
+    'brand.setup.title':    '个性化您的AI',
+    'brand.setup.step1':    '您的企业',
+    'brand.setup.step2':    '选择您的模式',
+    'brand.company.label':  '公司名称',
+    'brand.aiName.label':   'AI名称（可选）',
+    'brand.modes.hint':     '选择您希望启用的功能',
+    'brand.modes.min':      '请至少选择2个模式以继续',
+    'brand.continue':       '继续 →',
+    'brand.launch':         '启动我的AI →',
+
+    // ── 情景模拟模式 ──────────────────────────────────────
+    'scenario.mode.label':  '情景 · 模拟',
+    'scenario.seed':        '描述您的"如果……会怎样？"',
+    'scenario.simulate':    '运行模拟 →',
+    'scenario.result':      '模拟完成',
   },
 } as const
 
