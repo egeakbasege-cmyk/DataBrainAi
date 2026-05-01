@@ -1,5 +1,6 @@
 export type AgentMode    = 'auto' | 'strategy' | 'analysis' | 'execution' | 'review'
-export type AnalysisMode = 'upwind' | 'downwind'
+export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy'
+
 
 export interface Message {
   role:    'user' | 'assistant'

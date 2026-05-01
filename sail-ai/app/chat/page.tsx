@@ -464,7 +464,7 @@ export default function ChatPage() {
     try {
       const body = buildModeBody(text, 'synergy')
       body.synergyModes = synergyModes as unknown as Record<string, unknown>
-      body.synergyName  = brandConfig?.companyName ?? undefined as unknown as Record<string, unknown>
+      body.synergyName  = (brandConfig?.aiName ?? brandConfig?.companyName) as unknown as Record<string, unknown>
       const res = await fetch('/api/chat', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
@@ -796,7 +796,7 @@ export default function ChatPage() {
                       }}
                     />
                     <span className="label-caps" style={{ color: '#71717A' }}>
-                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'synergy' ? `${brandConfig?.companyName ?? 'War Room'} assembling…` : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
+                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'synergy' ? `${brandConfig?.aiName ?? brandConfig?.companyName ?? 'War Room'} assembling…` : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
                     </span>
                   </motion.div>
                 )}
@@ -810,7 +810,7 @@ export default function ChatPage() {
                     onChange={setMode}
                     synergyModes={synergyModes}
                     onSynergyChange={setSynergyModes}
-                    brandName={brandConfig?.companyName}
+                    brandName={brandConfig?.aiName ?? brandConfig?.companyName}
                   />
                 </div>
               )}
@@ -1190,7 +1190,7 @@ export default function ChatPage() {
                 text={synergyText}
                 streaming={synergyPhase === 'streaming'}
                 modes={synergyMeta?.modes ?? synergyModes as string[]}
-                companyName={synergyMeta?.companyName ?? brandConfig?.companyName ?? undefined}
+                companyName={synergyMeta?.companyName ?? brandConfig?.aiName ?? brandConfig?.companyName ?? undefined}
               />
             </motion.div>
           )}

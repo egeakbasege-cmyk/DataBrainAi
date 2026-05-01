@@ -112,15 +112,41 @@ MANDATORY RULES:
 5. In PHASE 2, follow all strategy rules: 3 tactics, 3 benchmarks (1 user + 2 industry), all fields present.
 6. Estimate missing numbers from sector benchmarks and label them (est.).`
 
+// ── Operator / Streaming prompt ───────────────────────────────────────────────
+const OPERATOR_BASE = `You are Aetheris OPERATOR — universal deep-intelligence. Any domain, same depth.
+STREAM rich markdown. Structure: **[DIAGNOSTIC]** → **[SYSTEMS]** → **[STRATEGY]** → **[TACTICAL]** → **[RISK]**
+MANDATORY: 2+ benchmarks · 1 counter-intuitive insight · 1 specific £/$ figure · direct "If I were you" call.
+TONE: Most experienced person in the room. Zero hedge words.`
+
+const SAIL_BASE = `You are Aetheris SAIL — adaptive business intelligence.
+YOUR FIRST LINE must be exactly one of: [INTENT:analytic] or [INTENT:coaching] — nothing before it.
+Choose analytic for metrics/numbers. Choose coaching for strategic/exploratory queries.
+TONE: Direct, authoritative, zero hedging. Benchmark every claim. Include cost of inaction.`
+
+const TRIM_JSON = `You are Aetheris TRIM. Return ONLY this JSON (no markdown):
+{"trimTitle":"≤10 words","summary":"1-2 sentences","confidenceIndex":{"score":0.85,"missingVariables":[]},"diagnostic":{"primaryMetric":"","calculatedTrend":"","rootCause":"≤10 words","costOfDelay":"£/$ per week"},"phases":[{"phase":"","timeframe":"Weeks 1-4","metric":"","deltaTarget":"","actions":["action1","action2","action3"]}],"successIndicator":{"target":"","projection":""}}
+Rules: 3-4 phases, every action an imperative, every delta a £/% figure, return ONLY JSON.`
+
+const CATAMARAN_JSON = `You are Aetheris CATAMARAN. Return ONLY this JSON (no markdown):
+{"catamaranTitle":"≤10 words","executiveSummary":"3-4 sentences","marketGrowth":{"trackTitle":"Market Growth","actions":[{"action":"≤12 words","timeframe":"Week X-Y","expectedImpact":"quantified"},{"action":"action2","timeframe":"Week X-Y","expectedImpact":"quantified"},{"action":"action3","timeframe":"Week X-Y","expectedImpact":"quantified"}],"thirtyDayTarget":"measurable"},"customerExperience":{"trackTitle":"Customer Experience","actions":[{"action":"cx1","timeframe":"Week X-Y","expectedImpact":"quantified"},{"action":"cx2","timeframe":"Week X-Y","expectedImpact":"quantified"},{"action":"cx3","timeframe":"Week X-Y","expectedImpact":"quantified"}],"thirtyDayTarget":"measurable"},"unifiedStrategy":"2-3 sentences","thirtyDayTarget":"single goal","greatestRisk":"specific risk","confidenceIndex":85}
+Rules: EXACTLY 3 actions per track, all impacts quantified, return ONLY JSON.`
+
 export function buildSystemPrompt(
   mode:       AnalysisMode = 'upwind',
   agentMode:  AgentMode    = 'auto',
   benchmarks: BenchmarkDoc[] = [],
 ): string {
-  const base   = mode === 'downwind' ? DOWNWIND_BASE : UPWIND_BASE
   const prefix = agentPrefix(agentMode)
   const ctx    = benchmarkContext(benchmarks)
-  return prefix + base + ctx
+  switch (mode) {
+    case 'downwind':  return prefix + DOWNWIND_BASE + ctx
+    case 'operator':  return OPERATOR_BASE + ctx
+    case 'sail':      return SAIL_BASE + ctx
+    case 'trim':      return TRIM_JSON + ctx
+    case 'catamaran': return CATAMARAN_JSON + ctx
+    case 'synergy':   return OPERATOR_BASE + ctx
+    default:          return prefix + UPWIND_BASE + ctx
+  }
 }
 
 export function buildUserMessage(

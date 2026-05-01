@@ -72,7 +72,7 @@ export interface AetherisPayload {
   userId: string
   language: SupportedLanguage
   agentMode: AgentMode
-  analysisMode: 'upwind' | 'downwind'
+  analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy'
   state?: Partial<AetherisState>
   imageBase64?: string
   imageMimeType?: string

@@ -86,84 +86,149 @@ executeRouter.post(
     const analysisMode  = payload.analysisMode  ?? 'upwind'
     const agentMode     = payload.agentMode     ?? 'Auto'
     const clientState   = payload.state         as Partial<AetherisState> | undefined
+    // Synergy extras (passed through from the Next.js frontend)
+    const synergyModes  = (req.body as Record<string, unknown>).synergyModes as string[] | undefined
+    const synergyName   = (req.body as Record<string, unknown>).synergyName  as string  | undefined
 
     if (!message && !imageBase64) {
       res.status(422).json({ error: 'Message is required.' })
       return
     }
 
+    // ── Streaming modes — pipe Anthropic stream directly ──────────────────
+    const isStreaming = analysisMode === 'operator' || analysisMode === 'sail' || analysisMode === 'synergy'
+    const isCustomJson = analysisMode === 'trim' || analysisMode === 'catamaran'
+
     try {
       // ── 2. Shadow Context hydration ──────────────────────────────────────
       const snapshot = await buildAetherisSnapshot(sessionId, userEmail, message)
-
-      // Merge client-side cognitive load index if provided
       const cognitiveLoad = clientState?.cognitiveLoadIndex ?? snapshot.cognitiveLoadIndex ?? 0
       const clDirective   = cognitiveLoadDirective(cognitiveLoad)
-
-      // Serialise active strategic vectors for prompt injection
-      const shadowBlock = serialiseShadowContext(snapshot.activeStrategicVectors ?? [])
+      const shadowBlock   = serialiseShadowContext(snapshot.activeStrategicVectors ?? [])
 
       // ── 3. Benchmark retrieval ────────────────────────────────────────────
       const benchmarks = await retrieveBenchmarks(message)
 
       // ── 4. Build system prompt ────────────────────────────────────────────
-      // Map Aetheris capitalised mode to lowercase API contract
       const apiAgentMode = agentMode.toLowerCase() as
         'auto' | 'strategy' | 'analysis' | 'execution' | 'review'
 
-      // Prepend: cognitive load directive + shadow context + agent prefix + base prompt
-      const baseSystem = buildSystemPrompt(analysisMode, apiAgentMode, benchmarks)
-      const system     = clDirective + shadowBlock + EXECUTIVE_SCHEMA_INSTRUCTION + baseSystem
+      const system = isStreaming || isCustomJson
+        ? buildSystemPrompt(analysisMode, apiAgentMode, benchmarks)
+        : clDirective + shadowBlock + EXECUTIVE_SCHEMA_INSTRUCTION + buildSystemPrompt(analysisMode, apiAgentMode, benchmarks)
 
       // ── 5. Build message thread ───────────────────────────────────────────
       const userContent = buildUserMessage(message, undefined, fileContent, analysisMode)
-
       type AnthropicMsg = Anthropic.Messages.MessageParam
+      const messages: AnthropicMsg[] = imageBase64 && imageMimeType
+        ? [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: imageMimeType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp', data: imageBase64 } }, { type: 'text', text: userContent }] }]
+        : [{ role: 'user', content: userContent }]
 
-      const messages: AnthropicMsg[] = []
+      // ── 6a. Streaming path (operator / sail / synergy) ────────────────────
+      if (isStreaming) {
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+        res.setHeader('Cache-Control', 'no-store')
+        res.setHeader('X-Accel-Buffering', 'no')
 
-      // Vision path
-      if (imageBase64 && imageMimeType) {
-        messages.push({
-          role: 'user',
-          content: [
-            {
-              type:   'image',
-              source: {
-                type:       'base64',
-                media_type: imageMimeType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-                data:       imageBase64,
-              },
-            },
-            { type: 'text', text: userContent },
-          ],
+        // Mode-specific metadata header (first line before content)
+        if (analysisMode === 'sail') {
+          res.write(JSON.stringify({ __sailMeta: { intent: 'analytic' } }) + '\n')
+        } else if (analysisMode === 'synergy') {
+          const modes = synergyModes ?? ['upwind', 'sail']
+          res.write(JSON.stringify({ __synMeta: { modes, companyName: synergyName ?? null } }) + '\n')
+        }
+
+        const stream = getAnthropic().messages.stream({
+          model:      MODEL(),
+          max_tokens: 2400,
+          system,
+          messages,
         })
-      } else {
-        messages.push({ role: 'user', content: userContent })
+
+        let sailIntentEmitted = analysisMode !== 'sail'
+        let sailBuffer = ''
+
+        stream.on('text', (text: string) => {
+          if (!sailIntentEmitted) {
+            sailBuffer += text
+            const nl = sailBuffer.indexOf('\n')
+            if (nl !== -1) {
+              const firstLine = sailBuffer.slice(0, nl).trim()
+              const match = firstLine.match(/\[INTENT:(analytic|coaching)\]/)
+              if (match) {
+                // Re-emit with correct intent
+                res.write(JSON.stringify({ __sailMeta: { intent: match[1] } }) + '\n')
+              }
+              const rest = sailBuffer.slice(nl + 1)
+              if (rest) res.write(rest)
+              sailBuffer = ''
+              sailIntentEmitted = true
+            } else if (sailBuffer.length > 120) {
+              res.write(sailBuffer)
+              sailBuffer = ''
+              sailIntentEmitted = true
+            }
+            return
+          }
+          res.write(text)
+        })
+
+        stream.on('error', (err: Error) => {
+          console.error('[execute] stream error:', err.message)
+          res.end()
+        })
+
+        stream.on('finalMessage', () => {
+          if (sailBuffer) res.write(sailBuffer)
+          res.end()
+        })
+        return
       }
 
-      // ── 6. Anthropic call — collect full response for schema validation ───
+      // ── 6b. Custom JSON path (trim / catamaran) ───────────────────────────
+      if (isCustomJson) {
+        const completion = await getAnthropic().messages.create({
+          model:      MODEL(),
+          max_tokens: 2048,
+          system,
+          messages,
+        })
+        const rawText = completion.content
+          .filter(b => b.type === 'text')
+          .map(b => (b as { type: 'text'; text: string }).text)
+          .join('')
+        const parsed = extractJsonFromLLMOutput(rawText)
+        if (parsed) {
+          res.status(200).json(parsed)
+        } else {
+          // Fallback if JSON extraction fails
+          if (analysisMode === 'trim') {
+            res.status(200).json({ trimTitle: 'Strategic Plan', summary: rawText.slice(0, 300), phases: [] })
+          } else {
+            res.status(200).json({ catamaranTitle: 'System Overhaul', executiveSummary: rawText.slice(0, 300), marketGrowth: { actions: [], thirtyDayTarget: '' }, customerExperience: { actions: [], thirtyDayTarget: '' }, unifiedStrategy: '', thirtyDayTarget: '', greatestRisk: '', confidenceIndex: 70 })
+          }
+        }
+        return
+      }
+
+      // ── 6c. Standard JSON path (upwind / downwind) ───────────────────────
       const completion = await getAnthropic().messages.create({
         model:      MODEL(),
         max_tokens: 2048,
         system,
         messages,
       })
-
       const rawText = completion.content
         .filter(b => b.type === 'text')
         .map(b => (b as { type: 'text'; text: string }).text)
         .join('')
-
-      // ── 7. Schema enforcement ─────────────────────────────────────────────
       const parsed   = extractJsonFromLLMOutput(rawText)
       const valid    = validateExecutiveResponse(parsed)
       const response = valid
         ? parsed
         : sanitiseExecutiveResponse(parsed ?? { insight: rawText.slice(0, 500) })
-
-      // ── 8. Respond ────────────────────────────────────────────────────────
       res.status(200).json(response)
+
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       console.error('[execute] error:', msg)
