@@ -162,7 +162,7 @@ export function ExecutiveResponseCard({
   // Token shortcuts
   const cardBg      = isDark ? '#0E0E18'  : '#FFFFFF'
   const cardBorder  = isDark ? 'rgba(226,226,232,0.08)' : 'rgba(0,0,0,0.09)'
-  const insightColor = isDark ? '#F0F0F4' : '#0C0C0E'
+  const insightColor = isDark ? '#F0F0F4' : '#C9A96E'
   const sectionLabel = isDark ? '#606078' : '#A1A1AA'
   const ruleColor   = isDark ? 'rgba(226,226,232,0.06)' : 'rgba(0,0,0,0.07)'
 

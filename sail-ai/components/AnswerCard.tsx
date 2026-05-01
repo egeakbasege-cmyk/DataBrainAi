@@ -103,7 +103,7 @@ function BenchmarkSection({ benchmarks }: { benchmarks: StrategyResult['benchmar
                         style={{ height: '100%', background: '#C9A96E' }}
                       />
                     </div>
-                    <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#0C0C0E', textAlign: 'right', lineHeight: 1 }}>
+                    <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#C9A96E', textAlign: 'right', lineHeight: 1 }}>
                       {u.value}
                     </span>
                   </div>
@@ -120,7 +120,7 @@ function BenchmarkSection({ benchmarks }: { benchmarks: StrategyResult['benchmar
                         style={{ height: '100%', background: 'rgba(0,0,0,0.2)' }}
                       />
                     </div>
-                    <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#71717A', textAlign: 'right', lineHeight: 1 }}>
+                    <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#D4B980', textAlign: 'right', lineHeight: 1 }}>
                       {ind.value}
                     </span>
                   </div>
@@ -132,7 +132,7 @@ function BenchmarkSection({ benchmarks }: { benchmarks: StrategyResult['benchmar
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.63rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#C9A96E', marginBottom: '0.2rem' }}>
                       {t('answer.yourData')}
                     </p>
-                    <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.3rem', fontWeight: 600, color: '#0C0C0E', lineHeight: 1 }}>
+                    <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.3rem', fontWeight: 600, color: '#C9A96E', lineHeight: 1 }}>
                       {u.value}
                     </p>
                   </div>
@@ -141,7 +141,7 @@ function BenchmarkSection({ benchmarks }: { benchmarks: StrategyResult['benchmar
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.63rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.2rem' }}>
                       {t('answer.industry')}
                     </p>
-                    <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.3rem', fontWeight: 600, color: '#71717A', lineHeight: 1 }}>
+                    <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.3rem', fontWeight: 600, color: '#D4B980', lineHeight: 1 }}>
                       {ind.value}
                     </p>
                   </div>
@@ -167,10 +167,10 @@ function BenchmarkSection({ benchmarks }: { benchmarks: StrategyResult['benchmar
             padding:      '0.75rem',
           }}
         >
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#71717A', lineHeight: 1.4, marginBottom: '0.375rem' }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#D4B980', lineHeight: 1.4, marginBottom: '0.375rem' }}>
             {b.label}
           </p>
-          <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#0C0C0E', lineHeight: 1 }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#C9A96E', lineHeight: 1 }}>
             {b.value}
           </p>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: b.type === 'user' ? '#C9A96E' : '#A1A1AA', marginTop: '0.25rem' }}>
@@ -279,12 +279,12 @@ function CaptainCard({ data }: { data: NeedsMetrics }) {
             >
               <div style={{ position: 'absolute', top: -1, left: -10, width: 0, height: 0, borderTop: '8px solid rgba(201,169,110,0.3)', borderLeft: '10px solid transparent' }} />
               <div style={{ position: 'absolute', top: 0,  left: -8,  width: 0, height: 0, borderTop: '7px solid #FFFFFF',              borderLeft: '9px solid transparent' }} />
-              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 2vw, 1.2rem)', color: '#0C0C0E', lineHeight: 1.55, margin: 0 }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 2vw, 1.2rem)', color: '#C9A96E', lineHeight: 1.55, margin: 0 }}>
                 &ldquo;{data.question}&rdquo;
               </p>
             </div>
 
-            <p style={{ marginTop: '0.875rem', fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', lineHeight: 1.5 }}>
+            <p style={{ marginTop: '0.875rem', fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#D4B980', lineHeight: 1.5 }}>
               {t('answer.addNumbers')}
             </p>
           </div>
@@ -332,20 +332,20 @@ function CoachCard({ data, agentMode }: { data: ChatMessage; agentMode: AgentMod
             >
               <div style={{ position: 'absolute', top: -1, left: -10, width: 0, height: 0, borderTop: '8px solid rgba(0,150,136,0.25)', borderLeft: '10px solid transparent' }} />
               <div style={{ position: 'absolute', top: 0,  left: -8,  width: 0, height: 0, borderTop: '7px solid #FFFFFF',             borderLeft: '9px solid transparent' }} />
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#0C0C0E', lineHeight: 1.7, margin: 0 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#C9A96E', lineHeight: 1.7, margin: 0 }}>
                 {data.chatMessage}
               </p>
             </div>
 
             {data.followUpQuestion && (
               <div style={{ background: 'rgba(0,150,136,0.05)', border: '1px solid rgba(0,150,136,0.2)', borderRadius: '8px', padding: '0.875rem 1rem' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 2vw, 1.15rem)', color: '#0C0C0E', lineHeight: 1.5, margin: 0 }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 2vw, 1.15rem)', color: '#C9A96E', lineHeight: 1.5, margin: 0 }}>
                   &ldquo;{data.followUpQuestion}&rdquo;
                 </p>
               </div>
             )}
 
-            <p style={{ marginTop: '0.75rem', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', lineHeight: 1.5 }}>
+            <p style={{ marginTop: '0.75rem', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#D4B980', lineHeight: 1.5 }}>
               {t('chat.typeAnswer')}
             </p>
           </div>
@@ -375,7 +375,7 @@ function StrategyCard({ data, agentMode }: { data: StrategyResult; agentMode: Ag
               fontStyle:     'italic',
               fontWeight:    600,
               fontSize:      'clamp(1.3rem, 2.5vw, 1.8rem)',
-              color:         '#0C0C0E',
+              color:         '#C9A96E',
               lineHeight:    1.3,
               letterSpacing: '-0.01em',
             }}
@@ -389,8 +389,8 @@ function StrategyCard({ data, agentMode }: { data: StrategyResult; agentMode: Ag
       {data.signal && (
         <motion.div {...up(0.07)} className="card-linen p-5">
           <span className="label-caps block mb-3" style={{ color: '#C9A96E' }}>{t('answer.keySignal')}</span>
-          <WaveRule color="#0C0C0E" opacity={0.2} />
-          <p style={{ marginTop: '0.75rem', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.7, color: '#71717A' }}>
+          <WaveRule color="#C9A96E" opacity={0.3} />
+          <p style={{ marginTop: '0.75rem', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.7, color: '#D4B980' }}>
             {data.signal}
           </p>
         </motion.div>
@@ -415,7 +415,7 @@ function StrategyCard({ data, agentMode }: { data: StrategyResult; agentMode: Ag
                 {tac.step}
               </div>
               <div className="flex-1">
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', fontWeight: 500, color: '#0C0C0E', lineHeight: 1.5, marginBottom: '0.5rem' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', fontWeight: 500, color: '#C9A96E', lineHeight: 1.5, marginBottom: '0.5rem' }}>
                   {tac.action}
                 </p>
                 <div className="flex flex-wrap gap-2">
