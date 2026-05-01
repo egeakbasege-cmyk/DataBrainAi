@@ -49,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="msapplication-TileColor" content="#0C0C0E" />
         <meta name="msapplication-tap-highlight" content="no" />
       </head>
-      <body>
+      <body className="safe-area-top safe-area-bottom">
         <AuthProvider>
           {/* AetherisProvider initialises the Zustand store with the
               authenticated user identity and a fresh session ID.

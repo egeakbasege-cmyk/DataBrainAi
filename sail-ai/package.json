@@ -14,7 +14,9 @@
     "db:studio": "prisma studio",
     "cap:sync": "npx cap sync",
     "cap:android": "npx cap open android",
-    "cap:ios": "npx cap open ios"
+    "cap:ios": "npx cap open ios",
+    "assets:generate": "bash scripts/generate-assets.sh",
+    "assets:install": "npm install -g @capacitor/assets"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
@@ -22,11 +24,13 @@
     "@capacitor/cli": "^8.3.1",
     "@capacitor/core": "^8.3.1",
     "@capacitor/ios": "^8.3.1",
+    "@capacitor/preferences": "^8.0.1",
     "@emailjs/browser": "^4.4.1",
     "@google/generative-ai": "^0.21.0",
     "@prisma/client": "^5.22.0",
     "@react-three/drei": "^9.105.0",
     "@react-three/fiber": "^8.16.0",
+    "@sentry/nextjs": "^10.51.0",
     "@stripe/stripe-js": "^4.4.0",
     "@types/papaparse": "^5.5.2",
     "ai": "^3.0.0",

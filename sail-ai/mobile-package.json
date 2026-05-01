@@ -1,0 +1,12 @@
+{
+  "name": "sail-ai-mobile",
+  "version": "1.0.0",
+  "description": "Sail AI Mobile App - Capacitor Asset Generation",
+  "scripts": {
+    "assets:generate": "npx capacitor-assets generate --android --ios",
+    "assets:android": "npx capacitor-assets generate --android",
+    "assets:ios": "npx capacitor-assets generate --ios",
+    "assets:splash": "npx capacitor-assets generate --splash-only",
+    "assets:icon": "npx capacitor-assets generate --icon-only"
+  }
+}
