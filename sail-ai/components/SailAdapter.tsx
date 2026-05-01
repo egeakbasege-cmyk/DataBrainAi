@@ -28,6 +28,7 @@ const MUTED  = '#71717A'
 const LIGHT  = '#F4F4F5'
 
 const INTENT_ACCENT: Record<SailIntent, string> = {
+  scenario:  '#00C9B1',   // teal — simulation/predictive
   creative:  '#7C3AED',   // violet
   technical: '#0369A1',   // ocean blue
   analytic:  GOLD,        // gold
@@ -403,6 +404,7 @@ function MrrChartSegment() {
 // ── Intent badge ──────────────────────────────────────────────────────────────
 
 const INTENT_LABELS: Record<SailIntent, string> = {
+  scenario:  'Scenario · Simulation',
   creative:  'Creative · Visionary',
   technical: 'Technical · Systems',
   analytic:  'Analytic · Data',

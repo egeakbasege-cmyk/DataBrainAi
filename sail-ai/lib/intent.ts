@@ -10,7 +10,7 @@
  * Used exclusively by the SAIL (auto-intent) analysis mode.
  */
 
-export type SailIntent = 'creative' | 'technical' | 'analytic'
+export type SailIntent = 'creative' | 'technical' | 'analytic' | 'scenario'
 
 export interface IntentResult {
   intent:     SailIntent
@@ -88,6 +88,40 @@ const TECHNICAL_PATTERNS: Pattern[] = [
   { re: /\bveritaban/i,         weight: 2, signal: 'veritabanı' },
 ]
 
+// ── Scenario / Predictive Simulation Patterns (Mirofish-inspired) ─────────────
+const SCENARIO_PATTERNS: Pattern[] = [
+  // English — what-if triggers
+  { re: /\bwhat\s+if\b/i,                weight: 5, signal: 'what-if' },
+  { re: /\bwhat\s+happens\s+if\b/i,      weight: 5, signal: 'what-happens-if' },
+  { re: /\bif\s+i\s+(raise|lower|cut|increase|decrease|add|remove|launch|enter|hire|fire)\b/i, weight: 5, signal: 'conditional-action' },
+  { re: /\bsimulat/i,                    weight: 4, signal: 'simulate' },
+  { re: /\bscenario\b/i,                 weight: 4, signal: 'scenario' },
+  { re: /\bpredict\b/i,                  weight: 4, signal: 'predict' },
+  { re: /\bforecast\b/i,                 weight: 4, signal: 'forecast' },
+  { re: /\bprojection\b/i,               weight: 3, signal: 'projection' },
+  { re: /\bimpact\s+of\b/i,              weight: 4, signal: 'impact-of' },
+  { re: /\beffect\s+of\b/i,              weight: 3, signal: 'effect-of' },
+  { re: /\bhypothetical\b/i,             weight: 3, signal: 'hypothetical' },
+  { re: /\bif\s+we\s+(did|changed|added|removed)\b/i, weight: 4, signal: 'counterfactual' },
+  { re: /\bmodel\s+the\b/i,              weight: 3, signal: 'model-the' },
+  { re: /\btest\s+the\s+(impact|effect)\b/i, weight: 4, signal: 'test-impact' },
+  // Turkish equivalents
+  { re: /\bne\s+olur\b/i,               weight: 5, signal: 'ne-olur' },
+  { re: /\bne\s+olurdu\b/i,             weight: 5, signal: 'ne-olurdu' },
+  { re: /\bsimüle\b/i,                  weight: 4, signal: 'simüle' },
+  { re: /\bsenaryo\b/i,                 weight: 4, signal: 'senaryo' },
+  { re: /\btahmin\s+et\b/i,             weight: 4, signal: 'tahmin-et' },
+  { re: /\böngör\b/i,                   weight: 4, signal: 'öngörü' },
+  { re: /\betkisi\s+ne\b/i,             weight: 4, signal: 'etkisi-ne' },
+  { re: /\bartırırsam\b/i,              weight: 5, signal: 'artırırsam' },
+  { re: /\bdüşürürsem\b/i,              weight: 5, signal: 'düşürürsem' },
+  { re: /\bgirsem\b/i,                  weight: 4, signal: 'girsem' },
+  { re: /\bçıkarsam\b/i,               weight: 4, signal: 'çıkarsam' },
+  { re: /\byaparsam\b/i,               weight: 3, signal: 'yaparsam' },
+  { re: /\bprojeksiyon\b/i,            weight: 3, signal: 'projeksiyon' },
+  { re: /\bmodelle\b/i,                weight: 3, signal: 'modelleme' },
+]
+
 const ANALYTIC_PATTERNS: Pattern[] = [
   // English
   { re: /\bmetric\b/i,          weight: 3, signal: 'metrics' },
@@ -158,18 +192,38 @@ function scorePatterns(text: string, patterns: Pattern[]): { score: number; sign
  * @param text  The raw user input (TR or EN).
  * @returns     IntentResult with intent, confidence (0–1), and matched signals.
  */
+/**
+ * Classify a user query into a SailIntent.
+ * v2 — adds 'scenario' intent for Mirofish-style predictive simulation routing.
+ *
+ * @param text  The raw user input (TR or EN).
+ * @returns     IntentResult with intent, confidence (0–1), and matched signals.
+ */
 export function classifyIntent(text: string): IntentResult {
+  const scenario  = scorePatterns(text, SCENARIO_PATTERNS)
   const creative  = scorePatterns(text, CREATIVE_PATTERNS)
   const technical = scorePatterns(text, TECHNICAL_PATTERNS)
   const analytic  = scorePatterns(text, ANALYTIC_PATTERNS)
 
+  // SCENARIO is highest priority — if strong signals, route immediately
+  // Threshold: 4+ points = definitive scenario request
+  if (scenario.score >= 4) {
+    const total = scenario.score + creative.score + technical.score + analytic.score
+    return {
+      intent:     'scenario',
+      confidence: Math.min(scenario.score / total, 1),
+      signals:    scenario.signals,
+    }
+  }
+
   const scores: Record<SailIntent, number> = {
+    scenario:  scenario.score,
     creative:  creative.score,
     technical: technical.score,
     analytic:  analytic.score,
   }
 
-  const total = creative.score + technical.score + analytic.score
+  const total = scenario.score + creative.score + technical.score + analytic.score
 
   // Fallback: numeric heavy input with revenue/% → analytic
   if (total === 0) {
@@ -189,6 +243,7 @@ export function classifyIntent(text: string): IntentResult {
   const confidence = Math.min(winner[1] / total, 1)
 
   const signalMap: Record<SailIntent, string[]> = {
+    scenario:  scenario.signals,
     creative:  creative.signals,
     technical: technical.signals,
     analytic:  analytic.signals,
@@ -204,16 +259,31 @@ export function buildSailSystemPrompt(intent: SailIntent, language = 'en'): stri
     ? `LANGUAGE: Respond entirely in the user's language (locale: ${language}).\n\n`
     : ''
 
-  const base = `${langNote}You are Aetheris SAIL — an elite adaptive business intelligence system. `
+  const base = `${langNote}You are Aetheris SAIL — an elite adaptive sovereign intelligence system. `
 
   switch (intent) {
+    case 'scenario':
+      return base + `Your role is predictive simulation engine and scenario analyst.
+
+STYLE: Analytical, committed, probability-weighted. No hedging — commit to predictions with confidence intervals.
+FORMAT: Use the SCENARIO RESULT CARD structure:
+  → PRIMARY PREDICTION (specific number/%)
+  → CONFIDENCE INTERVALS (best / likely / worst with triggers)
+  → KEY DRIVERS (ranked 1-3 by impact)
+  → RISK FLAGS (with specific triggers and mitigations)
+  → RECOMMENDED ACTION (verb-first, specific, time-bound)
+  → FOLLOW-UP SCENARIOS (2 related "what-if" questions)
+PIPELINE: seed → 5-agent simulation (market, customer, finance, ops, risk) → result card
+CONSTRAINT: Every output contains at least one specific number. All estimates labelled (est.). Show reasoning chain "Because X → Y → Z."`
+
     case 'creative':
       return base + `Your role is visionary strategist and narrative architect.
 
 STYLE: Expansive, inspiring, forward-looking. Use vivid language grounded in real precedent.
 FORMAT: Use markdown headings (##), short paragraphs, and bullet lists for distinct ideas.
 CONTENT: Lead with a bold strategic vision. Support with market-context. End with 3 concrete first moves.
-CONSTRAINT: Every claim must be achievable — no hand-waving. Cite real brands or case precedents where possible.`
+CONSTRAINT: Every claim must be achievable — no hand-waving. Cite real brands or case precedents where possible.
+SOVEREIGN LAYER: Before finalising, check second-order effects — what does this creative direction enable or foreclose 6 months from now?`
 
     case 'technical':
       return base + `Your role is technical architect and systems strategist.
@@ -222,7 +292,8 @@ STYLE: Precise, structured, implementation-ready.
 FORMAT: Use markdown headings (##), numbered steps, and fenced code blocks for any scripts, configs, or commands.
 CODE BLOCKS: Always wrap code with language tags (\`\`\`bash, \`\`\`typescript, etc.). Make code copy-paste ready.
 CONTENT: Lead with the technical decision, follow with implementation steps, end with verification commands.
-CONSTRAINT: Be specific about versions, tools, and commands. Avoid vague "use a framework" recommendations.`
+CONSTRAINT: Be specific about versions, tools, and commands. Avoid vague "use a framework" recommendations.
+SOVEREIGN LAYER: Flag any technical decision with irreversibility score > 7 — vendor lock-in, data schema changes, public API contracts.`
 
     case 'analytic':
       return base + `Your role is data analyst and benchmark strategist.
@@ -231,6 +302,7 @@ STYLE: Data-dense, benchmark-referenced, metric-precise.
 FORMAT: Use markdown headings (##) and tables for comparative data. Include numbers in every key sentence.
 TABLES: Use GitHub-flavoured markdown tables for benchmark comparisons.
 CONTENT: Lead with the key metric diagnosis. Follow with sector benchmarks. Close with a prioritised lever list.
-CONSTRAINT: Every recommendation must include a metric to measure success and a realistic timeline.`
+CONSTRAINT: Every recommendation must include a metric to measure success and a realistic timeline.
+SOVEREIGN LAYER: Surface the single most important data signal first, then the most counter-intuitive finding — what does the data say that the user probably didn't expect?`
   }
 }

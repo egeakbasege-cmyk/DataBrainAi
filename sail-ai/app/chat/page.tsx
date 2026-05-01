@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence }       from 'framer-motion'
 import { Nav }                           from '@/components/Nav'
+import { BrandSetupModal, BrandNameplate, useBrandConfig } from '@/components/BrandSetupModal'
+import type { BrandConfig }              from '@/components/BrandSetupModal'
 import { HelmButton }                    from '@/components/HelmButton'
 import { SailboatAnimation }             from '@/components/SailboatAnimation'
 import { ExecutiveResponseCard }         from '@/components/ExecutiveResponseCard'
@@ -143,6 +145,20 @@ export default function ChatPage() {
   const [showHistory,  setShowHistory]  = useState(false)
   const [showExport,   setShowExport]   = useState(false)
   const [expandedSession, setExpandedSession] = useState<string | null>(null)
+  // Brand customisation
+  const { config: brandConfig, ready: brandReady, save: saveBrand } = useBrandConfig()
+  const [showBrandSetup, setShowBrandSetup] = useState(false)
+
+  // Show modal on first visit (after localStorage is ready and no config found)
+  useEffect(() => {
+    if (brandReady && !brandConfig) setShowBrandSetup(true)
+  }, [brandReady, brandConfig])
+
+  const handleBrandComplete = (cfg: BrandConfig) => {
+    saveBrand(cfg)
+    setShowBrandSetup(false)
+  }
+
   const [apiKey,       setApiKey]       = useState('')
   const [apiKeyInput,  setApiKeyInput]  = useState('')
   const [attachment,   setAttachment]   = useState<Attachment | null>(null)
@@ -555,6 +571,13 @@ export default function ChatPage() {
 
   return (
     <>
+    {/* Brand Setup Modal — first visit only */}
+    <AnimatePresence>
+      {showBrandSetup && (
+        <BrandSetupModal onComplete={handleBrandComplete} />
+      )}
+    </AnimatePresence>
+
     {/* Aetheris agent status bar — fixed top-right */}
     <div style={{ position: 'fixed', top: '1px', right: 0, zIndex: 50, padding: '6px 16px' }}>
       <AgentStatusBar />
@@ -578,6 +601,13 @@ export default function ChatPage() {
           {/* Background photo */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/sail-horizontal.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.04, pointerEvents: 'none', userSelect: 'none', mixBlendMode: 'luminosity' }} />
+          {/* Brand nameplate — shown above animation when configured */}
+          {brandConfig && (
+            <BrandNameplate
+              config={brandConfig}
+              onEdit={() => setShowBrandSetup(true)}
+            />
+          )}
           <SailboatAnimation state={sailState} />
 
           {/* Context + counter bar */}

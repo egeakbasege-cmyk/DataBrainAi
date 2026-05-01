@@ -1,0 +1,26 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Sail AI — Next.js Frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "cwd": "/Users/hakanakbas/Documents/GitHub/DataBrainAi/sail-ai"
+    },
+    {
+      "name": "Aetheris — Express Backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 8080,
+      "cwd": "/Users/hakanakbas/Documents/GitHub/DataBrainAi/sail-ai/server"
+    },
+    {
+      "name": "Prisma Studio — DB GUI",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "db:studio"],
+      "port": 5555,
+      "cwd": "/Users/hakanakbas/Documents/GitHub/DataBrainAi/sail-ai"
+    }
+  ]
+}
