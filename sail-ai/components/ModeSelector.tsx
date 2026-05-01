@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import type { TranslationKey } from '@/lib/i18n/translations'
 
-export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran'
+export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator'
 
 interface Props {
   mode: AnalysisMode
@@ -18,27 +18,31 @@ const MODES: {
   border: string
   glow: string
   badge?: string
+  fullWidth?: boolean
 }[] = [
-  { id: 'upwind',   color: '#1A5276', bg: 'rgba(26,82,118,0.07)',   border: 'rgba(26,82,118,0.5)',   glow: 'rgba(26,82,118,0.12)'  },
-  { id: 'downwind', color: '#00695C', bg: 'rgba(0,105,92,0.07)',    border: 'rgba(0,105,92,0.5)',    glow: 'rgba(0,105,92,0.12)'   },
-  { id: 'sail',     color: '#7C3AED', bg: 'rgba(124,58,237,0.07)',  border: 'rgba(124,58,237,0.5)',  glow: 'rgba(124,58,237,0.12)', badge: 'AI+' },
-  { id: 'trim',     color: '#B45309', bg: 'rgba(180,83,9,0.07)',    border: 'rgba(201,169,110,0.6)', glow: 'rgba(201,169,110,0.12)', badge: 'NEW' },
-  { id: 'catamaran', color: '#D4AF37', bg: 'rgba(212,175,55,0.12)', border: 'rgba(212,175,55,0.7)',  glow: 'rgba(212,175,55,0.18)', badge: 'PRO' },
+  { id: 'upwind',    color: '#1A5276', bg: 'rgba(26,82,118,0.07)',   border: 'rgba(26,82,118,0.5)',   glow: 'rgba(26,82,118,0.12)'  },
+  { id: 'downwind',  color: '#00695C', bg: 'rgba(0,105,92,0.07)',    border: 'rgba(0,105,92,0.5)',    glow: 'rgba(0,105,92,0.12)'   },
+  { id: 'sail',      color: '#7C3AED', bg: 'rgba(124,58,237,0.07)',  border: 'rgba(124,58,237,0.5)',  glow: 'rgba(124,58,237,0.12)', badge: 'AI+' },
+  { id: 'trim',      color: '#B45309', bg: 'rgba(180,83,9,0.07)',    border: 'rgba(201,169,110,0.6)', glow: 'rgba(201,169,110,0.12)', badge: 'NEW' },
+  { id: 'catamaran', color: '#D4AF37', bg: 'rgba(212,175,55,0.12)',  border: 'rgba(212,175,55,0.7)',  glow: 'rgba(212,175,55,0.18)', badge: 'PRO' },
+  { id: 'operator',  color: '#CC2200', bg: 'rgba(204,34,0,0.07)',    border: 'rgba(204,34,0,0.55)',   glow: 'rgba(204,34,0,0.12)',   badge: 'OPR', fullWidth: true },
 ]
 
 const LABEL_KEYS: Record<AnalysisMode, TranslationKey> = {
-  upwind:   'mode.upwind',
-  downwind: 'mode.downwind',
-  sail:     'mode.sail',
-  trim:     'mode.trim',
+  upwind:    'mode.upwind',
+  downwind:  'mode.downwind',
+  sail:      'mode.sail',
+  trim:      'mode.trim',
   catamaran: 'mode.catamaran',
+  operator:  'mode.operator',
 }
 const DESC_KEYS: Record<AnalysisMode, TranslationKey> = {
-  upwind:   'mode.upwindDesc',
-  downwind: 'mode.downwindDesc',
-  sail:     'mode.sailDesc',
-  trim:     'mode.trimDesc',
+  upwind:    'mode.upwindDesc',
+  downwind:  'mode.downwindDesc',
+  sail:      'mode.sailDesc',
+  trim:      'mode.trimDesc',
   catamaran: 'mode.catamaranDesc',
+  operator:  'mode.operatorDesc',
 }
 
 function UpwindIcon({ color }: { color: string }) {
@@ -92,27 +96,37 @@ function TrimIcon({ color }: { color: string }) {
 function CatamaranIcon({ color }: { color: string }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      {/* Dual hulls */}
       <path d="M4 18L6 20L8 18" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M16 18L18 20L20 18" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      {/* Crossbeam */}
       <line x1="6" y1="14" x2="18" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-      {/* Mast */}
       <line x1="12" y1="14" x2="12" y2="4" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-      {/* Sail */}
       <path d="M12 4L18 10L12 10Z" fill={color} opacity="0.8"/>
-      {/* Speed lines */}
       <line x1="2" y1="10" x2="5" y2="10" stroke={color} strokeWidth="1" opacity="0.5"/>
       <line x1="2" y1="13" x2="4" y2="13" stroke={color} strokeWidth="1" opacity="0.5"/>
     </svg>
   )
 }
 
+function OperatorIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.3" opacity="0.45"/>
+      <circle cx="12" cy="12" r="4.5" stroke={color} strokeWidth="1.5" opacity="0.8"/>
+      <circle cx="12" cy="12" r="1.5" fill={color}/>
+      <line x1="12" y1="2"  x2="12" y2="7"  stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="12" y1="17" x2="12" y2="22" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="2"  y1="12" x2="7"  y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="17" y1="12" x2="22" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
 function ModeIcon({ id, color }: { id: AnalysisMode; color: string }) {
-  if (id === 'upwind')   return <UpwindIcon   color={color} />
-  if (id === 'downwind') return <DownwindIcon color={color} />
-  if (id === 'sail')     return <SailIcon     color={color} />
+  if (id === 'upwind')    return <UpwindIcon    color={color} />
+  if (id === 'downwind')  return <DownwindIcon  color={color} />
+  if (id === 'sail')      return <SailIcon      color={color} />
   if (id === 'catamaran') return <CatamaranIcon color={color} />
+  if (id === 'operator')  return <OperatorIcon  color={color} />
   return <TrimIcon color={color} />
 }
 
@@ -121,7 +135,7 @@ export function ModeSelector({ mode, onChange }: Props) {
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', width: '100%' }}>
-      {MODES.map(({ id, color, bg, border, glow, badge }) => {
+      {MODES.map(({ id, color, bg, border, glow, badge, fullWidth }) => {
         const active = mode === id
         return (
           <motion.button
@@ -132,13 +146,14 @@ export function ModeSelector({ mode, onChange }: Props) {
             style={{
               position:     'relative',
               padding:      '0.875rem 0.875rem 0.75rem',
-              border:       `1px solid ${active ? border : 'rgba(0,0,0,0.08)'}`,
-              background:   active ? bg : '#FFFFFF',
+              border:       `1px solid ${active ? border : 'rgba(255,255,255,0.07)'}`,
+              background:   active ? bg : 'rgba(14,14,22,0.7)',
               cursor:       'pointer',
               textAlign:    'left',
               borderRadius: '10px',
-              boxShadow:    active ? `0 0 0 3px ${glow}, 0 2px 8px rgba(0,0,0,0.05)` : '0 1px 4px rgba(0,0,0,0.04)',
+              boxShadow:    active ? `0 0 0 3px ${glow}, 0 2px 8px rgba(0,0,0,0.3)` : '0 1px 4px rgba(0,0,0,0.2)',
               transition:   'all 0.18s ease',
+              gridColumn:   fullWidth ? '1 / -1' : undefined,
             }}
           >
             {badge && (
@@ -171,7 +186,7 @@ export function ModeSelector({ mode, onChange }: Props) {
                 fontWeight:    700,
                 letterSpacing: '0.07em',
                 textTransform: 'uppercase',
-                color:         active ? color : '#374151',
+                color:         active ? color : '#A1A1AA',
               }}>
                 {t(LABEL_KEYS[id])}
               </span>
@@ -181,7 +196,7 @@ export function ModeSelector({ mode, onChange }: Props) {
               fontFamily: 'Inter, sans-serif',
               fontSize:   '0.68rem',
               lineHeight: 1.45,
-              color:      active ? color : '#9CA3AF',
+              color:      active ? color : '#6B6B8A',
               margin:     0,
               opacity:    active ? 0.9 : 1,
             }}>

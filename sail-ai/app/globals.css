@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -471,3 +471,169 @@ input { outline: none; font-family: 'Inter', sans-serif; }
   );
   background-size: 64px 100%;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SAIL AI+ — GOLDEN VIBE · 80s LUXURY VINTAGE THEME
+   Summer Sailing Yellow + Chrome Silver + Obsidian + Red Vectors
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --summer-yellow:    #F0C030;
+  --summer-yellow-d:  #D4A820;
+  --summer-yellow-dk: #A88010;
+  --chrome-silver:    #B8C4CC;
+  --chrome-light:     #E8EEF4;
+  --gold-accent:      #D4AF37;
+  --red-accent:       #CC2200;
+  --red-accent-dim:   rgba(204,34,0,0.55);
+  --vintage-bg:       #09090B;
+
+  --gold-grad: linear-gradient(135deg, #D4AF37 0%, #F9E29D 45%, #B8860B 100%);
+  --chrome-grad: linear-gradient(145deg, #8090A0 0%, #C8D4DC 40%, #E8EEF4 55%, #9098A8 100%);
+  --yellow-grad: linear-gradient(135deg, #F5D020 0%, #F0C030 50%, #D4A820 100%);
+}
+
+/* ── Playfair Display — luxury serif ──────────────────────── */
+.font-playfair {
+  font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+}
+
+/* ── Gold gradient text ───────────────────────────────────── */
+.text-gold-grad {
+  background:              var(--gold-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip:         text;
+}
+
+/* ── Chrome gradient text ─────────────────────────────────── */
+.text-chrome-grad {
+  background:              var(--chrome-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip:         text;
+}
+
+/* ── Yellow gradient text ─────────────────────────────────── */
+.text-yellow-grad {
+  background:              var(--yellow-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip:         text;
+}
+
+/* ── Glassmorphic dark panel ──────────────────────────────── */
+.glass-dark {
+  background:        rgba(9, 9, 11, 0.70);
+  backdrop-filter:   blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border:            1px solid rgba(255,255,255,0.06);
+}
+
+/* ── Glassmorphic mid panel ───────────────────────────────── */
+.glass-mid {
+  background:        rgba(24, 24, 27, 0.55);
+  backdrop-filter:   blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border:            1px solid rgba(255,255,255,0.08);
+}
+
+/* ── Vintage noise overlay ────────────────────────────────── */
+.vintage-noise::after {
+  content:          '';
+  position:         absolute;
+  inset:            0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.042'/%3E%3C/svg%3E");
+  pointer-events:   none;
+  z-index:          1;
+}
+
+/* ── Maritime colour tint ─────────────────────────────────── */
+.maritime-tint {
+  background:     rgba(48, 32, 8, 0.18);
+  mix-blend-mode: multiply;
+}
+
+/* ── Gold shimmer animation ───────────────────────────────── */
+@keyframes gold-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.gold-shimmer {
+  background:              linear-gradient(90deg, #A87800 0%, #F9E29D 30%, #D4AF37 50%, #F9E29D 70%, #A87800 100%);
+  background-size:         200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip:         text;
+  animation:               gold-shimmer 5s linear infinite;
+}
+
+/* ── Red attention pulse ──────────────────────────────────── */
+@keyframes red-attention {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1.00; }
+}
+.red-attention { animation: red-attention 3.5s ease-in-out infinite; }
+
+/* ── Black-on-yellow CTA button ───────────────────────────── */
+.btn-yellow {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            0.5rem;
+  padding:        0.875rem 2rem;
+  background:     var(--summer-yellow);
+  color:          #000000;
+  font-family:    'Inter', sans-serif;
+  font-size:      0.72rem;
+  font-weight:    700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border:         none;
+  cursor:         pointer;
+  text-decoration:none;
+  transition:     background 0.2s, transform 0.15s;
+}
+.btn-yellow:hover {
+  background:  var(--summer-yellow-d);
+  transform:   translateY(-1px);
+}
+
+/* ── Chrome ghost button ──────────────────────────────────── */
+.btn-chrome {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            0.5rem;
+  padding:        0.875rem 2rem;
+  background:     transparent;
+  color:          var(--chrome-light);
+  font-family:    'Inter', sans-serif;
+  font-size:      0.72rem;
+  font-weight:    600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border:         1px solid rgba(184,196,204,0.35);
+  cursor:         pointer;
+  text-decoration:none;
+  transition:     border-color 0.2s, color 0.2s;
+}
+.btn-chrome:hover {
+  border-color: rgba(184,196,204,0.65);
+  color:        #FFFFFF;
+}
+
+/* ── Catamaran dual-track card ────────────────────────────── */
+.catamaran-track {
+  border-top:  2px solid var(--red-accent);
+  padding-top: 1.25rem;
+}
+
+/* ── Red corner bracket decorator ────────────────────────── */
+.corner-bracket {
+  position: absolute;
+  width:    18px;
+  height:   18px;
+}
+.corner-bracket--tl { top:0; left:0;  border-top:  1px solid var(--red-accent); border-left: 1px solid var(--red-accent); }
+.corner-bracket--tr { top:0; right:0; border-top:  1px solid var(--red-accent); border-right:1px solid var(--red-accent); }
+.corner-bracket--bl { bottom:0; left:0;  border-bottom:1px solid var(--red-accent); border-left: 1px solid var(--red-accent); }
+.corner-bracket--br { bottom:0; right:0; border-bottom:1px solid var(--red-accent); border-right:1px solid var(--red-accent); }

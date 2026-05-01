@@ -167,6 +167,12 @@ export default function ChatPage() {
   const [catamaranPhase,    setCatamaranPhase]    = useState<'idle'|'loading'|'complete'>('idle')
   const [catamaranError,    setCatamaranError]    = useState<string|null>(null)
 
+  // OPERATOR streaming state
+  const [operatorText,      setOperatorText]      = useState('')
+  const [operatorPhase,     setOperatorPhase]     = useState<'idle'|'streaming'|'complete'>('idle')
+  const [operatorError,     setOperatorError]     = useState<string|null>(null)
+  const operatorAbortRef                          = useRef<AbortController|null>(null)
+
   // Context toggle + inline paywall
   const [useProfileCtx,     setUseProfileCtx]    = useState(true)
   const [showInlinePaywall, setShowInlinePaywall] = useState(false)
@@ -312,13 +318,13 @@ export default function ChatPage() {
 
   // Show key panel on any AI failure that could be fixed with BYOK
   useEffect(() => {
-    const e = error ?? sailError ?? trimError
+    const e = error ?? sailError ?? trimError ?? catamaranError ?? operatorError
     if (!e) return
     const isAiError = e.includes('quota') || e.includes('aistudio') ||
       e.includes('API key') || e.includes('Unable to reach') ||
       e.includes('AI_') || e.includes('exhausted') || e.includes('unavailable')
     if (isAiError) setShowKeyPanel(true)
-  }, [error, sailError, trimError])
+  }, [error, sailError, trimError, catamaranError, operatorError])
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     if (e.target.value.length <= MAX) setInput(e.target.value)
@@ -432,15 +438,48 @@ export default function ChatPage() {
     }
   }
 
+  async function handleOperatorSubmit(text: string) {
+    setOperatorError(null); setOperatorText(''); setOperatorPhase('streaming')
+    operatorAbortRef.current = new AbortController()
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body: JSON.stringify(buildModeBody(text, 'operator')),
+        signal: operatorAbortRef.current.signal,
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error((d as Record<string,unknown>).error as string ?? 'Operator request failed.')
+      }
+      const reader = res.body!.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        setOperatorText(buf)
+      }
+      setOperatorPhase('complete')
+      saveAnalysis(text, buf.slice(0, 120))
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      setOperatorError(err instanceof Error ? err.message : 'Operator request failed.')
+      setOperatorPhase('idle')
+    }
+  }
+
   async function handleSubmit() {
     const text = input.trim()
     if (!text) return
     if (!canAnalyse) { setShowInlinePaywall(true); return }
     setShowInlinePaywall(false)
 
-    if (mode === 'sail') { if (sailPhase !== 'streaming') await handleSailSubmit(text); return }
-    if (mode === 'trim') { if (trimPhase !== 'loading')   await handleTrimSubmit(text); return }
+    if (mode === 'sail')     { if (sailPhase !== 'streaming')     await handleSailSubmit(text);     return }
+    if (mode === 'trim')     { if (trimPhase !== 'loading')       await handleTrimSubmit(text);     return }
     if (mode === 'catamaran') { if (catamaranPhase !== 'loading') await handleCatamaranSubmit(text); return }
+    if (mode === 'operator') { if (operatorPhase !== 'streaming') await handleOperatorSubmit(text); return }
 
     if (mode === 'downwind') {
       if (coachState === 'THINKING' || coachState === 'STREAMING') return
@@ -511,6 +550,8 @@ export default function ChatPage() {
     setSailText(''); setSailPhase('idle'); setSailError(null)
     setTrimResponse(null); setTrimPhase('idle'); setTrimError(null)
     setCatamaranResponse(null); setCatamaranPhase('idle'); setCatamaranError(null)
+    operatorAbortRef.current?.abort()
+    setOperatorText(''); setOperatorPhase('idle'); setOperatorError(null)
     setShowInlinePaywall(false)
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
@@ -528,6 +569,8 @@ export default function ChatPage() {
     ? trimPhase === 'loading'
     : mode === 'catamaran'
     ? catamaranPhase === 'loading'
+    : mode === 'operator'
+    ? operatorPhase === 'streaming'
     : mode === 'downwind'
     ? coachState === 'THINKING' || coachState === 'STREAMING'
     : state === 'THINKING'
@@ -538,13 +581,15 @@ export default function ChatPage() {
     ? trimPhase === 'complete'
     : mode === 'catamaran'
     ? catamaranPhase === 'complete'
+    : mode === 'operator'
+    ? operatorPhase === 'complete'
     : mode === 'downwind'
     ? coachState === 'COMPLETE'
     : state === 'COMPLETE' || state === 'ERROR'
 
   const isConversing = mode === 'downwind' && coachState === 'CONVERSING'
 
-  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'catamaran' ? catamaranError : mode === 'downwind' ? coachError : error
+  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'catamaran' ? catamaranError : mode === 'operator' ? operatorError : mode === 'downwind' ? coachError : error
 
   const sailState = (
     isActive ? 'THINKING' : isConversing ? 'CONVERSING' : isComplete ? 'COMPLETE' : 'IDLE'
@@ -703,7 +748,7 @@ export default function ChatPage() {
                       }}
                     />
                     <span className="label-caps" style={{ color: '#71717A' }}>
-                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
+                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'operator' ? t('operator.streaming') : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
                     </span>
                   </motion.div>
                 )}
@@ -1075,10 +1120,31 @@ export default function ChatPage() {
         <AnimatePresence>
           {mode === 'catamaran' && (catamaranPhase === 'loading' || catamaranPhase === 'complete') && (
             <motion.div key="catamaran-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <CatamaranResponseCard 
-                response={catamaranResponse} 
-                isStreaming={catamaranPhase === 'loading'} 
+              <CatamaranResponseCard
+                response={catamaranResponse}
+                isStreaming={catamaranPhase === 'loading'}
               />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Operator streaming result ── */}
+        <AnimatePresence>
+          {mode === 'operator' && (operatorPhase === 'streaming' || operatorPhase === 'complete') && (
+            <motion.div key="operator-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+              <div style={{ background: 'rgba(14,14,22,0.95)', border: '1px solid rgba(204,34,0,0.3)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 32px rgba(204,34,0,0.1), 0 1px 4px rgba(0,0,0,0.4)' }}>
+                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(204,34,0,0.12)', background: 'rgba(204,34,0,0.06)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {operatorPhase === 'streaming' && (
+                    <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#CC2200', flexShrink: 0 }} />
+                  )}
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#CC2200', fontWeight: 700 }}>
+                    OPERATOR · Universal Intelligence
+                  </span>
+                </div>
+                <div style={{ padding: '1.5rem 1.25rem' }}>
+                  <SailAdapter text={operatorText} intent="analytic" streaming={operatorPhase === 'streaming'} />
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

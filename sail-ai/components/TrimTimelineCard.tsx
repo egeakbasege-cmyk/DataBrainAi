@@ -15,6 +15,7 @@ export interface TrimDiagnostic {
   primaryMetric:    string
   calculatedTrend:  string
   rootCause:        string
+  costOfDelay?:     string
 }
 
 export interface TrimSuccessIndicator {
@@ -23,10 +24,11 @@ export interface TrimSuccessIndicator {
 }
 
 export interface TrimResponse {
-  trimTitle:        string
-  summary:          string
-  diagnostic?:      TrimDiagnostic
-  phases:           TrimPhase[]
+  trimTitle:         string
+  summary:           string
+  confidenceIndex?:  { score: number; missingVariables?: string[] }
+  diagnostic?:       TrimDiagnostic
+  phases:            TrimPhase[]
   successIndicator?: TrimSuccessIndicator
 }
 
