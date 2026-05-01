@@ -18,6 +18,14 @@ import { authConfig }        from '@/auth.config'
 import type { AetherisPayload } from '@/types/architecture'
 import { cognitiveLoadDirective } from '@/types/architecture'
 import { buildOperatorSystemPrompt } from '@/lib/prompts/operator-mode'
+import {
+  buildUpwindSystemPrompt,
+  buildDownwindSystemPrompt,
+  buildSailSystemPrompt as buildEnhancedSailPrompt,
+  buildTrimSystemPrompt as buildEnhancedTrimPrompt,
+  buildCatamaranSystemPrompt as buildEnhancedCatamaranPrompt,
+  buildOperatorSystemPrompt as buildEnhancedOperatorPrompt
+} from '@/lib/prompts/enhanced-modes'
 
 const { auth } = NextAuth(authConfig)
 
@@ -366,7 +374,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildSailSystemPrompt(language, primaryConstraint) },
+          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -458,7 +466,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildOperatorSystemPrompt(language) },
+          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  2000,
@@ -517,7 +525,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: buildTrimSystemPrompt(language, primaryConstraint) },
+            { role: 'system', content: buildEnhancedTrimPrompt(language, primaryConstraint) },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -559,7 +567,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: buildCatamaranSystemPrompt(language, primaryConstraint) },
+            { role: 'system', content: buildEnhancedCatamaranPrompt(language, primaryConstraint) },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -615,7 +623,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:           GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildSystemPrompt(cognitiveLoad, language, primaryConstraint) },
+          { role: 'system', content: buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint) },
           { role: 'user',   content: userMessage },
         ],
         response_format: { type: 'json_object' },

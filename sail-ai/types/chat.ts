@@ -13,7 +13,7 @@ export type AgentMode =
   | 'execution'  // Action plans, next steps, implementation workflows
   | 'review'     // Quality checks, risk assessment, consistency validation
 
-export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran'
+export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator'
 
 export interface Message {
   role:    'user' | 'assistant'
