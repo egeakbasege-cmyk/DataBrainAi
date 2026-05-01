@@ -17,6 +17,7 @@ import NextAuth              from 'next-auth'
 import { authConfig }        from '@/auth.config'
 import type { AetherisPayload } from '@/types/architecture'
 import { cognitiveLoadDirective } from '@/types/architecture'
+import { buildOperatorSystemPrompt } from '@/lib/prompts/operator-mode'
 
 const { auth } = NextAuth(authConfig)
 
@@ -29,7 +30,7 @@ const GROQ_MODEL   = 'llama-3.3-70b-versatile'
 type ExtendedPayload = AetherisPayload & {
   apiKey?:             string
   primaryConstraint?:  string
-  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim'
+  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim' | 'operator'
 }
 
 // ── Groq system prompts ────────────────────────────────────────────────────────
@@ -361,6 +362,63 @@ export async function POST(req: NextRequest) {
         if (contentBuffer) await writer.write(encoder.encode(contentBuffer))
       } else if (contentBuffer) {
         await writer.write(encoder.encode(contentBuffer))
+      }
+
+      await writer.close()
+    })()
+
+    return new Response(readable, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' },
+    })
+  }
+
+  // ── Operator mode: universal deep-intelligence streaming ─────────────────
+  if (analysisMode === 'operator') {
+    const operatorRes = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model:       GROQ_MODEL,
+        messages: [
+          { role: 'system', content: buildOperatorSystemPrompt(language) },
+          { role: 'user',   content: userMessage },
+        ],
+        max_tokens:  2000,
+        temperature: 0.5,
+        stream:      true,
+      }),
+    }).catch(() => null)
+
+    if (!operatorRes?.ok) {
+      return Response.json({ error: 'Operator request failed.' }, { status: 502 })
+    }
+
+    const { readable, writable } = new TransformStream()
+    const writer  = writable.getWriter()
+    const encoder = new TextEncoder()
+
+    ;(async () => {
+      const reader     = operatorRes.body!.getReader()
+      const decoder    = new TextDecoder()
+      let   sseBuffer  = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        sseBuffer += decoder.decode(value, { stream: true })
+        const lines = sseBuffer.split('\n')
+        sseBuffer = lines.pop() ?? ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const raw = line.slice(6).trim()
+          if (raw === '[DONE]') continue
+          try {
+            const chunk = JSON.parse(raw)
+            const delta = chunk.choices?.[0]?.delta?.content ?? ''
+            if (delta) await writer.write(encoder.encode(delta))
+          } catch { /* ignore */ }
+        }
       }
 
       await writer.close()

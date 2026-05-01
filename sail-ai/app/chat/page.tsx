@@ -160,6 +160,12 @@ export default function ChatPage() {
   const [trimPhase,         setTrimPhase]        = useState<'idle'|'loading'|'complete'>('idle')
   const [trimError,         setTrimError]        = useState<string|null>(null)
 
+  // Operator streaming state
+  const [operatorText,      setOperatorText]     = useState('')
+  const [operatorPhase,     setOperatorPhase]    = useState<'idle'|'streaming'|'complete'>('idle')
+  const [operatorError,     setOperatorError]    = useState<string|null>(null)
+  const operatorAbortRef                         = useRef<AbortController|null>(null)
+
   // Context toggle + inline paywall
   const [useProfileCtx,     setUseProfileCtx]    = useState(true)
   const [showInlinePaywall, setShowInlinePaywall] = useState(false)
@@ -305,13 +311,13 @@ export default function ChatPage() {
 
   // Show key panel on any AI failure that could be fixed with BYOK
   useEffect(() => {
-    const e = error ?? sailError ?? trimError
+    const e = error ?? sailError ?? trimError ?? operatorError
     if (!e) return
     const isAiError = e.includes('quota') || e.includes('aistudio') ||
       e.includes('API key') || e.includes('Unable to reach') ||
       e.includes('AI_') || e.includes('exhausted') || e.includes('unavailable')
     if (isAiError) setShowKeyPanel(true)
-  }, [error, sailError, trimError])
+  }, [error, sailError, trimError, operatorError])
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     if (e.target.value.length <= MAX) setInput(e.target.value)
@@ -370,7 +376,7 @@ export default function ChatPage() {
         if (done) break
         buf += decoder.decode(value, { stream: true })
         if (!metaDone) { const nl = buf.indexOf('\n'); if (nl !== -1) { try { const m = JSON.parse(buf.slice(0, nl)); if (m.__sailMeta?.intent) setSailIntent(m.__sailMeta.intent) } catch {} buf = buf.slice(nl + 1); metaDone = true } }
-        setSailText(buf)
+        if (metaDone) setSailText(buf)
       }
       setSailPhase('complete')
       saveAnalysis(text, buf.slice(0, 120))
@@ -403,14 +409,47 @@ export default function ChatPage() {
     }
   }
 
+  async function handleOperatorSubmit(text: string) {
+    setOperatorError(null); setOperatorText(''); setOperatorPhase('streaming')
+    operatorAbortRef.current = new AbortController()
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body: JSON.stringify(buildModeBody(text, 'operator')),
+        signal: operatorAbortRef.current.signal,
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error((d as Record<string,unknown>).error as string ?? 'Operator request failed.')
+      }
+      const reader = res.body!.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        setOperatorText(buf)
+      }
+      setOperatorPhase('complete')
+      saveAnalysis(text, buf.slice(0, 120))
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      setOperatorError(err instanceof Error ? err.message : 'Operator request failed.')
+      setOperatorPhase('idle')
+    }
+  }
+
   async function handleSubmit() {
     const text = input.trim()
     if (!text) return
     if (!canAnalyse) { setShowInlinePaywall(true); return }
     setShowInlinePaywall(false)
 
-    if (mode === 'sail') { if (sailPhase !== 'streaming') await handleSailSubmit(text); return }
-    if (mode === 'trim') { if (trimPhase !== 'loading')   await handleTrimSubmit(text); return }
+    if (mode === 'sail')     { if (sailPhase !== 'streaming')     await handleSailSubmit(text);     return }
+    if (mode === 'trim')     { if (trimPhase !== 'loading')       await handleTrimSubmit(text);     return }
+    if (mode === 'operator') { if (operatorPhase !== 'streaming') await handleOperatorSubmit(text); return }
 
     if (mode === 'downwind') {
       if (coachState === 'THINKING' || coachState === 'STREAMING') return
@@ -467,19 +506,17 @@ export default function ChatPage() {
 
   function handleReset() {
     sailAbortRef.current?.abort()
-    setSailText('')
-    setSailPhase('idle')
-    setSailError(null)
+    operatorAbortRef.current?.abort()
+    setSailText(''); setSailPhase('idle'); setSailError(null)
+    setOperatorText(''); setOperatorPhase('idle'); setOperatorError(null)
+    setTrimResponse(null); setTrimPhase('idle'); setTrimError(null)
     reset()
     coachReset()
     processedCoachResult.current = null
-    sailAbortRef.current?.abort()
     setInput('')
     setAttachment(null)
     setFileError('')
     setConvHistory([])
-    setSailText(''); setSailPhase('idle'); setSailError(null)
-    setTrimResponse(null); setTrimPhase('idle'); setTrimError(null)
     setShowInlinePaywall(false)
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
@@ -541,6 +578,8 @@ export default function ChatPage() {
     ? sailPhase === 'streaming'
     : mode === 'trim'
     ? trimPhase === 'loading'
+    : mode === 'operator'
+    ? operatorPhase === 'streaming'
     : mode === 'downwind'
     ? coachState === 'THINKING' || coachState === 'STREAMING'
     : state === 'THINKING'
@@ -549,13 +588,15 @@ export default function ChatPage() {
     ? sailPhase === 'complete'
     : mode === 'trim'
     ? trimPhase === 'complete'
+    : mode === 'operator'
+    ? operatorPhase === 'complete'
     : mode === 'downwind'
     ? coachState === 'COMPLETE'
     : state === 'COMPLETE' || state === 'ERROR'
 
   const isConversing = mode === 'downwind' && coachState === 'CONVERSING'
 
-  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'downwind' ? coachError : error
+  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'operator' ? operatorError : mode === 'downwind' ? coachError : error
 
   const sailState = (
     isActive ? 'THINKING' : isConversing ? 'CONVERSING' : isComplete ? 'COMPLETE' : 'IDLE'
@@ -570,19 +611,19 @@ export default function ChatPage() {
     <div style={{ position: 'fixed', top: '1px', right: 0, zIndex: 50, padding: '6px 16px' }}>
       <AgentStatusBar />
     </div>
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(160deg, #F8F7F4 0%, #F2F1ED 50%, #F8F7F4 100%)', paddingBottom: '6rem' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #080810 0%, #0A0A14 50%, #080810 100%)', paddingBottom: '6rem' }}>
       <Nav />
 
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 flex flex-col gap-4">
 
         {/* ── Header: Boat animation + counter ── */}
         <div style={{
-          background:   'linear-gradient(135deg, #FFFFFF 0%, #FAFAF8 100%)',
-          border:       '1px solid rgba(201,169,110,0.18)',
+          background:   'rgba(14,14,22,0.92)',
+          border:       '1px solid rgba(212,175,55,0.22)',
           borderRadius: '16px',
           overflow:     'hidden',
           position:     'relative',
-          boxShadow:    '0 4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(201,169,110,0.12)',
+          boxShadow:    '0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.12)',
         }}>
           {/* Gold gradient accent line */}
           <div style={{ position: 'absolute', top: 0, left: '10%', right: '10%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.6), transparent)' }} />
@@ -598,14 +639,14 @@ export default function ChatPage() {
             justifyContent: 'space-between',
             padding:        '0.625rem 1.125rem',
             borderTop:      '1px solid rgba(201,169,110,0.1)',
-            background:     'rgba(201,169,110,0.03)',
+            background:     'rgba(212,175,55,0.04)',
             gap:            '0.75rem',
             flexWrap:       'wrap',
           }}>
             {hasContext ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', flex: 1 }}>
                 <span style={{ color: '#C9A96E', fontSize: '0.5rem' }}>◆</span>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#8B7355', letterSpacing: '0.02em' }}>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#B8935A', letterSpacing: '0.02em' }}>
                   {profile.diagnostic
                     ? `${profile.diagnostic.industry} · ${profile.diagnostic.teamSize} · ${t('chat.diagnosticLoaded')}`
                     : `${profile.sessions.length} ${t('chat.sessionMemory')}`}
@@ -634,7 +675,7 @@ export default function ChatPage() {
                 </button>
               </div>
             ) : (
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#C4C4CC', letterSpacing: '0.03em' }}>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#484870', letterSpacing: '0.03em' }}>
                 {t('chat.noContext')}
               </span>
             )}
@@ -714,7 +755,7 @@ export default function ChatPage() {
                       }}
                     />
                     <span className="label-caps" style={{ color: '#71717A' }}>
-                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
+                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'operator' ? t('operator.streaming') : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
                     </span>
                   </motion.div>
                 )}
@@ -743,11 +784,11 @@ export default function ChatPage() {
               {/* Input card */}
               <div
                 style={{
-                  background:   '#FFFFFF',
-                  border:       `1.5px solid ${isActive ? 'rgba(201,169,110,0.55)' : 'rgba(0,0,0,0.09)'}`,
+                  background:   'rgba(14,14,22,0.90)',
+                  border:       `1.5px solid ${isActive ? 'rgba(212,175,55,0.55)' : 'rgba(212,175,55,0.18)'}`,
                   borderRadius: '14px',
                   overflow:     'hidden',
-                  boxShadow:    isActive ? '0 0 0 3px rgba(201,169,110,0.08), 0 4px 16px rgba(0,0,0,0.06)' : '0 2px 8px rgba(0,0,0,0.04)',
+                  boxShadow:    isActive ? '0 0 0 3px rgba(212,175,55,0.08), 0 4px 24px rgba(0,0,0,0.4)' : '0 2px 16px rgba(0,0,0,0.35)',
                   transition:   'border-color 0.25s, box-shadow 0.25s',
                 }}
               >
@@ -777,8 +818,8 @@ export default function ChatPage() {
                   className="w-full bg-transparent disabled:opacity-40"
                   style={{
                     padding:    '1.125rem 1.25rem 0.875rem',
-                    color:      '#0C0C0E',
-                    caretColor: '#C9A96E',
+                    color:      '#E8E8F0',
+                    caretColor: '#F0C030',
                     fontFamily: 'Inter, sans-serif',
                     fontSize:   '0.9rem',
                     lineHeight: 1.7,
@@ -793,7 +834,7 @@ export default function ChatPage() {
                     alignItems:    'center',
                     justifyContent:'space-between',
                     padding:       '0.625rem 1.25rem 0.875rem',
-                    borderTop:     '1px solid rgba(0,0,0,0.06)',
+                    borderTop:     '1px solid rgba(255,255,255,0.06)',
                     gap:           '0.75rem',
                   }}
                 >
@@ -901,12 +942,12 @@ export default function ChatPage() {
                       }}
                       style={{
                         padding:       '0.3rem 0.75rem',
-                        border:        '1px solid rgba(0,0,0,0.09)',
+                        border:        '1px solid rgba(212,175,55,0.2)',
                         borderRadius:  '999px',
-                        background:    '#FFFFFF',
+                        background:    'rgba(212,175,55,0.06)',
                         fontFamily:    'Inter, sans-serif',
                         fontSize:      '0.72rem',
-                        color:         '#71717A',
+                        color:         '#9898B8',
                         cursor:        'pointer',
                         whiteSpace:    'nowrap',
                         transition:    'border-color 0.15s, color 0.15s',
@@ -957,8 +998,8 @@ export default function ChatPage() {
                 display:      'flex',
                 alignItems:   'flex-start',
                 gap:          '0.75rem',
-                background:   'rgba(153,27,27,0.04)',
-                border:       '1px solid rgba(153,27,27,0.15)',
+                background:   'rgba(153,27,27,0.12)',
+                border:       '1px solid rgba(204,34,0,0.35)',
                 borderRadius: '8px',
               }}
             >
@@ -983,10 +1024,10 @@ export default function ChatPage() {
               exit={{ opacity: 0 }}
               style={{
                 padding:      '1.25rem',
-                background:   '#FFFFFF',
-                border:       '1px solid rgba(0,0,0,0.09)',
+                background:   'rgba(14,14,22,0.97)',
+                border:       '1px solid rgba(212,175,55,0.2)',
                 borderRadius: '12px',
-                boxShadow:    '0 4px 20px rgba(0,0,0,0.07)',
+                boxShadow:    '0 4px 24px rgba(0,0,0,0.5)',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
@@ -1010,9 +1051,9 @@ export default function ChatPage() {
                   placeholder="gsk_…"
                   style={{
                     flex: 1, padding: '0.625rem 0.75rem',
-                    border: '1px solid rgba(0,0,0,0.12)', borderRadius: '6px',
-                    background: 'transparent', outline: 'none',
-                    fontFamily: 'Inter, monospace', fontSize: '0.8rem', color: '#0C0C0E',
+                    border: '1px solid rgba(212,175,55,0.25)', borderRadius: '6px',
+                    background: 'rgba(255,255,255,0.04)', outline: 'none',
+                    fontFamily: 'Inter, monospace', fontSize: '0.8rem', color: '#E8E8F0',
                   }}
                 />
                 <button onClick={saveApiKey} style={{
@@ -1054,8 +1095,8 @@ export default function ChatPage() {
         <AnimatePresence>
           {mode === 'sail' && (sailPhase === 'streaming' || sailPhase === 'complete') && (
             <motion.div key="sail-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(124,58,237,0.15)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(124,58,237,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
-                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(124,58,237,0.08)', background: 'rgba(124,58,237,0.025)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ background: 'rgba(14,14,22,0.95)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 32px rgba(124,58,237,0.1), 0 1px 4px rgba(0,0,0,0.4)' }}>
+                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(124,58,237,0.12)', background: 'rgba(124,58,237,0.06)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {sailPhase === 'streaming' && (
                     <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#7C3AED', flexShrink: 0 }} />
                   )}
@@ -1071,11 +1112,32 @@ export default function ChatPage() {
           )}
         </AnimatePresence>
 
+        {/* ── Operator streaming result ── */}
+        <AnimatePresence>
+          {mode === 'operator' && (operatorPhase === 'streaming' || operatorPhase === 'complete') && (
+            <motion.div key="operator-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+              <div style={{ background: 'rgba(14,14,22,0.95)', border: '1px solid rgba(204,34,0,0.3)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 32px rgba(204,34,0,0.1), 0 1px 4px rgba(0,0,0,0.4)' }}>
+                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(204,34,0,0.12)', background: 'rgba(204,34,0,0.06)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {operatorPhase === 'streaming' && (
+                    <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#CC2200', flexShrink: 0 }} />
+                  )}
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#CC2200', fontWeight: 700 }}>
+                    OPERATOR · Universal Intelligence
+                  </span>
+                </div>
+                <div style={{ padding: '1.5rem 1.25rem' }}>
+                  <SailAdapter text={operatorText} intent="analytic" streaming={operatorPhase === 'streaming'} />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── TRIM timeline result ── */}
         <AnimatePresence>
           {mode === 'trim' && (trimPhase === 'loading' || trimPhase === 'complete') && (
             <motion.div key="trim-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(201,169,110,0.18)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(201,169,110,0.06), 0 1px 4px rgba(0,0,0,0.04)', padding: '1.5rem' }}>
+              <div style={{ background: 'rgba(14,14,22,0.95)', border: '1px solid rgba(212,175,55,0.25)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 32px rgba(212,175,55,0.08), 0 1px 4px rgba(0,0,0,0.4)', padding: '1.5rem' }}>
                 <TrimTimelineCard response={trimResponse} isLoading={trimPhase === 'loading'} />
               </div>
             </motion.div>
@@ -1122,9 +1184,9 @@ export default function ChatPage() {
                   )}
                 </AnimatePresence>
 
-                <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,105,92,0.15)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,105,92,0.06)' }}>
+                <div style={{ background: 'rgba(14,14,22,0.95)', border: '1px solid rgba(0,150,136,0.25)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,150,136,0.08), 0 1px 4px rgba(0,0,0,0.4)' }}>
                   {/* Header */}
-                  <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(0,105,92,0.08)', background: 'rgba(0,105,92,0.025)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(0,105,92,0.12)', background: 'rgba(0,105,92,0.06)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {(coachState === 'THINKING' || coachState === 'STREAMING') && (
                       <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#00695C', flexShrink: 0 }} />
                     )}
@@ -1152,11 +1214,11 @@ export default function ChatPage() {
                       <>
                         {'chatMessage' in coachResult && (
                           <div>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.75, color: '#0C0C0E', margin: 0 }}>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.75, color: '#D4D4E4', margin: 0 }}>
                               {coachResult.chatMessage}
                             </p>
                             {coachResult.followUpQuestion && (
-                              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', lineHeight: 1.65, color: '#00695C', margin: '0.875rem 0 0', fontStyle: 'italic', paddingLeft: '0.75rem', borderLeft: '2px solid rgba(0,105,92,0.3)' }}>
+                              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', lineHeight: 1.65, color: '#4ADE80', margin: '0.875rem 0 0', fontStyle: 'italic', paddingLeft: '0.75rem', borderLeft: '2px solid rgba(74,222,128,0.4)' }}>
                                 {coachResult.followUpQuestion}
                               </p>
                             )}
@@ -1164,15 +1226,15 @@ export default function ChatPage() {
                         )}
                         {'headline' in coachResult && (
                           <div>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.5rem', lineHeight: 1.5 }}>{coachResult.headline}</p>
-                            {'signal' in coachResult && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#71717A', margin: 0, lineHeight: 1.6 }}>{coachResult.signal}</p>}
+                            <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '1.05rem', fontWeight: 600, color: '#F0C030', margin: '0 0 0.5rem', lineHeight: 1.5 }}>{coachResult.headline}</p>
+                            {'signal' in coachResult && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#9898B8', margin: 0, lineHeight: 1.6 }}>{coachResult.signal}</p>}
                           </div>
                         )}
                         {'question' in coachResult && (
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: '#00695C', margin: 0, fontStyle: 'italic', lineHeight: 1.7 }}>{coachResult.question}</p>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: '#4ADE80', margin: 0, fontStyle: 'italic', lineHeight: 1.7 }}>{coachResult.question}</p>
                         )}
                         {'freeText' in coachResult && (
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.75, color: '#0C0C0E', margin: 0 }}>{coachResult.freeText}</p>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.75, color: '#D4D4E4', margin: 0 }}>{coachResult.freeText}</p>
                         )}
                       </>
                     )}
@@ -1197,12 +1259,12 @@ export default function ChatPage() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
                   padding: '0.5rem 1.25rem',
-                  background: 'rgba(0,0,0,0.05)',
-                  border: '1px solid rgba(0,0,0,0.1)',
+                  background: 'rgba(212,175,55,0.08)',
+                  border: '1px solid rgba(212,175,55,0.25)',
                   borderRadius: '8px', cursor: 'pointer',
                   fontFamily: 'Inter, sans-serif', fontSize: '0.75rem',
                   fontWeight: 600, letterSpacing: '0.04em',
-                  color: '#374151',
+                  color: '#D4AF37',
                   transition: 'all 0.15s',
                 }}
               >
@@ -1289,6 +1351,33 @@ export default function ChatPage() {
                   Export .md
                 </button>
               )}
+              {mode === 'operator' && operatorText && (
+                <button
+                  onClick={() => exportSailText(operatorText)}
+                  style={{
+                    display:      'flex',
+                    alignItems:   'center',
+                    gap:          '0.4rem',
+                    padding:      '0.5rem 1rem',
+                    background:   'transparent',
+                    border:       '1px solid rgba(204,34,0,0.4)',
+                    borderRadius: '8px',
+                    cursor:       'pointer',
+                    fontFamily:   'Inter, sans-serif',
+                    fontSize:     '0.72rem',
+                    fontWeight:   600,
+                    letterSpacing:'0.06em',
+                    textTransform:'uppercase',
+                    color:        '#CC2200',
+                    transition:   'all 0.15s',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 15V3m0 12l-4-4m4 4l4-4"/><path d="M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"/>
+                  </svg>
+                  Export .md
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1354,8 +1443,9 @@ export default function ChatPage() {
             right:      0,
             bottom:     0,
             width:      'min(380px, 92vw)',
-            background: '#FAFAF8',
-            boxShadow:  '-8px 0 32px rgba(0,0,0,0.12)',
+            background: 'rgba(10,10,18,0.98)',
+            borderLeft: '1px solid rgba(212,175,55,0.2)',
+            boxShadow:  '-8px 0 40px rgba(0,0,0,0.6)',
             zIndex:     51,
             display:    'flex',
             flexDirection: 'column',
@@ -1364,8 +1454,8 @@ export default function ChatPage() {
             {/* Header */}
             <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 600, color: '#0C0C0E', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 600, color: '#F0C030', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#686898', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
               </div>
               <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: '#71717A', lineHeight: 1 }}>×</button>
             </div>
@@ -1385,15 +1475,15 @@ export default function ChatPage() {
                       style={{
                         padding:      '0.875rem 1rem',
                         marginBottom: '0.5rem',
-                        background:   expanded ? '#FFF9F0' : '#FFFFFF',
-                        border:       `1px solid ${expanded ? 'rgba(201,169,110,0.4)' : 'rgba(0,0,0,0.07)'}`,
+                        background:   expanded ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)',
+                        border:       `1px solid ${expanded ? 'rgba(212,175,55,0.35)' : 'rgba(255,255,255,0.06)'}`,
                         borderRadius: '8px',
                         cursor:       'pointer',
                         transition:   'background 0.15s, border-color 0.15s',
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#E8E8F0', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>
                           {s.prompt}
                         </p>
                         <span style={{ color: '#C9A96E', fontSize: '0.65rem', flexShrink: 0, marginTop: '2px' }}>{expanded ? '▲' : '▼'}</span>
