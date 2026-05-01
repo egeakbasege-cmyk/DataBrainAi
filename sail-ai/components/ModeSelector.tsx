@@ -14,7 +14,8 @@ interface Props {
   brandName?: string
 }
 
-// ── Base mode palette (6 core modes) ──────────────────────────────────────────
+// ── Base mode palette ─────────────────────────────────────────────────────────
+// Rows 1-3 are two-column; operator is rendered separately as full-width panel
 const MODES: {
   id: AnalysisMode
   color: string
@@ -22,15 +23,23 @@ const MODES: {
   border: string
   glow: string
   badge?: string
-  fullWidth?: boolean
 }[] = [
   { id: 'upwind',    color: '#1A5276', bg: 'rgba(26,82,118,0.07)',   border: 'rgba(26,82,118,0.5)',   glow: 'rgba(26,82,118,0.12)'  },
   { id: 'downwind',  color: '#00695C', bg: 'rgba(0,105,92,0.07)',    border: 'rgba(0,105,92,0.5)',    glow: 'rgba(0,105,92,0.12)'   },
   { id: 'sail',      color: '#7C3AED', bg: 'rgba(124,58,237,0.07)',  border: 'rgba(124,58,237,0.5)',  glow: 'rgba(124,58,237,0.12)', badge: 'AI+' },
   { id: 'trim',      color: '#B45309', bg: 'rgba(180,83,9,0.07)',    border: 'rgba(201,169,110,0.6)', glow: 'rgba(201,169,110,0.12)', badge: 'NEW' },
   { id: 'catamaran', color: '#D4AF37', bg: 'rgba(212,175,55,0.12)',  border: 'rgba(212,175,55,0.7)',  glow: 'rgba(212,175,55,0.18)', badge: 'PRO' },
-  { id: 'operator',  color: '#CC2200', bg: 'rgba(204,34,0,0.07)',    border: 'rgba(204,34,0,0.55)',   glow: 'rgba(204,34,0,0.12)',   badge: 'OPR', fullWidth: true },
 ]
+
+// Operator is always full-width — rendered separately below the synergy card
+const OPERATOR_META = {
+  id: 'operator' as AnalysisMode,
+  color: '#CC2200',
+  bg: 'rgba(204,34,0,0.07)',
+  border: 'rgba(204,34,0,0.55)',
+  glow: 'rgba(204,34,0,0.12)',
+  badge: 'OPR',
+}
 
 // Colour looked up by mode id for synergy chip rendering
 const MODE_COLOR: Record<string, string> = {
@@ -204,8 +213,8 @@ function SynergySubSelector({
           {tooFew ? '⚠ Select at least 2 modes' : `${selected.length} / 4 modes active — Council assembled`}
         </p>
 
-        {/* 3×2 mini mode grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem' }}>
+        {/* 2×3 mini mode grid — fits within a half-width card */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.35rem' }}>
           {SYNERGY_BASES.map(id => {
             const col   = MODE_COLOR[id]
             const on    = selected.includes(id)
@@ -308,8 +317,8 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', width: '100%' }}>
 
-      {/* ── 6 core mode cards ── */}
-      {MODES.map(({ id, color, bg, border, glow, badge, fullWidth }) => {
+      {/* ── Row 1: Upwind | Downwind · Row 2: SAIL | TRIM · Row 3 col-1: Catamaran ── */}
+      {MODES.map(({ id, color, bg, border, glow, badge }) => {
         const active = mode === id
         return (
           <motion.button
@@ -327,7 +336,6 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
               borderRadius: '10px',
               boxShadow:    active ? `0 0 0 3px ${glow}, 0 2px 8px rgba(0,0,0,0.3)` : '0 1px 4px rgba(0,0,0,0.2)',
               transition:   'all 0.18s ease',
-              gridColumn:   fullWidth ? '1 / -1' : undefined,
             }}
           >
             {badge && (
@@ -380,7 +388,7 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
         )
       })}
 
-      {/* ── 7th card: CUSTOM SYNERGY ── */}
+      {/* ── Row 3 col-2: CUSTOM SYNERGY (half-width, alongside Catamaran) ── */}
       <motion.button
         type="button"
         onClick={() => onChange('synergy')}
@@ -401,7 +409,6 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
             ? '0 0 0 3px rgba(201,169,110,0.1), 0 0 20px rgba(201,169,110,0.08), 0 2px 12px rgba(0,0,0,0.4)'
             : '0 1px 4px rgba(0,0,0,0.25)',
           transition:   'all 0.2s ease',
-          gridColumn:   '1 / -1',
           overflow:     'hidden',
         }}
       >
@@ -495,6 +502,83 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
           )}
         </AnimatePresence>
       </motion.button>
+
+      {/* ── Full-width bottom panel: OPERATOR ── */}
+      {(() => {
+        const { id, color, bg, border, glow, badge } = OPERATOR_META
+        const active = mode === id
+        return (
+          <motion.button
+            key={id}
+            type="button"
+            onClick={() => onChange(id)}
+            whileTap={{ scale: 0.985 }}
+            style={{
+              position:     'relative',
+              padding:      '0.875rem 1rem 0.75rem',
+              border:       `1px solid ${active ? border : 'rgba(204,34,0,0.18)'}`,
+              background:   active ? bg : 'rgba(14,14,22,0.7)',
+              cursor:       'pointer',
+              textAlign:    'left',
+              borderRadius: '10px',
+              boxShadow:    active ? `0 0 0 3px ${glow}, 0 2px 8px rgba(0,0,0,0.3)` : '0 1px 4px rgba(0,0,0,0.2)',
+              transition:   'all 0.18s ease',
+              gridColumn:   '1 / -1',
+              display:      'flex',
+              alignItems:   'center',
+              gap:          '1rem',
+            }}
+          >
+            {badge && (
+              <span style={{
+                position:      'absolute',
+                top:           '-7px',
+                right:         '10px',
+                fontFamily:    'Inter, sans-serif',
+                fontSize:      '0.5rem',
+                fontWeight:    700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color:         '#FFFFFF',
+                background:    active ? color : '#C9A96E',
+                padding:       '2px 7px',
+                borderRadius:  '3px',
+              }}>
+                {badge}
+              </span>
+            )}
+            {/* Icon + label row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+              <ModeIcon id={id} color={active ? color : '#9CA3AF'} />
+              <span style={{
+                fontFamily:    'Inter, sans-serif',
+                fontSize:      '0.68rem',
+                fontWeight:    700,
+                letterSpacing: '0.07em',
+                textTransform: 'uppercase',
+                color:         active ? color : '#A1A1AA',
+                whiteSpace:    'nowrap',
+              }}>
+                {t(LABEL_KEYS[id])}
+              </span>
+            </div>
+            {/* Divider */}
+            <div style={{ width: '1px', height: '28px', background: active ? `${color}44` : 'rgba(255,255,255,0.07)', flexShrink: 0 }} />
+            {/* Description spans remaining width */}
+            <p style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize:   '0.68rem',
+              lineHeight: 1.45,
+              color:      active ? color : '#6B6B8A',
+              margin:     0,
+              opacity:    active ? 0.9 : 1,
+              flex:       1,
+            }}>
+              {t(DESC_KEYS[id])}
+            </p>
+          </motion.button>
+        )
+      })()}
     </div>
   )
 }

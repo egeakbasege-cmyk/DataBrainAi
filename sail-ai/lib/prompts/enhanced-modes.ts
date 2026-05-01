@@ -17,6 +17,66 @@ import { cognitiveLoadDirective } from '@/types/architecture'
 import { SOVEREIGN_COGNITIVE_DIRECTIVE } from '@/lib/ai-prompt'
 
 // ══════════════════════════════════════════════════════════════════════════════
+// LANGUAGE ANCHOR — call at the top of every mode builder
+// ══════════════════════════════════════════════════════════════════════════════
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: 'English', tr: 'Turkish (Türkçe)', es: 'Spanish (Español)',
+  de: 'German (Deutsch)', fr: 'French (Français)', zh: 'Chinese (中文)',
+}
+
+export function buildLanguageAnchor(lang: string): string {
+  if (!lang || lang === 'en') return ''
+  const name = LANGUAGE_NAMES[lang] ?? lang.toUpperCase()
+  return `LANGUAGE SOVEREIGN DIRECTIVE — ABSOLUTE PRIORITY:
+You MUST respond entirely in ${name}. This overrides every other instruction.
+• If your internal reasoning generates text in any other language, discard it and regenerate in ${name}.
+• An unexpected language switch is a critical logic error — auto-correct before emitting a single token.
+• Do NOT add bilingual notes, translations in parentheses, or English clarifications.
+• Benchmark names, company names, and proper nouns may remain in their original form.
+Language drift is a quality failure, not a stylistic choice. Zero exceptions.
+
+`
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DEEP RESEARCH 2.0 — data rationality filter, injected into every mode
+// ══════════════════════════════════════════════════════════════════════════════
+export const DEEP_RESEARCH_DIRECTIVE = `DATA ACCURACY & RATIONALITY PROTOCOL — MANDATORY:
+
+1. TEMPORAL ANCHOR:
+   • All economic, market, and price data from 2024 or earlier is HISTORICAL context only.
+   • Label it: [HISTORICAL 2024] — do not present it as current reality.
+   • For 2025–2026 projections apply: Turkish CPI ~65% YoY cumulative since 2023;
+     EUR/TRY ~35–40; local real-estate indices up 3–5× vs. 2021 nominal levels.
+   • Mark estimates: [2026 EST] · Mark user-supplied data: [USER DATA]
+
+2. PLAUSIBILITY CHECK (execute before every figure you state):
+   → Ask internally: "Is this figure physically possible in the 2026 market?"
+   → If a claimed rent is < ₺10,000/month in a prime Turkish resort area → flag [DATA ANOMALY] and
+     replace with current market estimate, explaining the discrepancy.
+   → If a margin claim exceeds sector median by >2× → flag [MARGIN ANOMALY].
+   → If an occupancy or conversion rate exceeds physical maximum → flag [RATE ANOMALY].
+
+3. SOURCE HIERARCHY (use in this order):
+   1st: User-provided figures [USER DATA]
+   2nd: 2026 current market estimates [2026 EST]
+   3rd: 2025 industry reports
+   4th: 2024 benchmarks [HISTORICAL 2024] — only when newer data unavailable
+
+4. LOCAL MARKET INTELLIGENCE:
+   • Turkish real estate (Alaçatı, Bodrum, Kaş, İstanbul prime): Apply post-2023 boom multipliers.
+   • Sector-specific Turkish benchmarks must account for current inflation environment.
+   • Cross-reference business plan assumptions: payback periods, COGS, and opex must be
+     internally consistent with stated market, team size, and revenue model.
+
+5. NEVER:
+   • Present a pre-2024 price as a current market price without inflation adjustment.
+   • Accept a single user-stated figure as fact without a plausibility range check.
+   • Output a business plan that contains internally contradictory figures.
+
+`
+
+// ══════════════════════════════════════════════════════════════════════════════
 // SOVEREIGN COGNITIVE LAYER — prepended to every mode prompt
 // Principles: Autonomy · Ethical Reasoning · Adaptive Learning · Transparency
 // ══════════════════════════════════════════════════════════════════════════════
@@ -51,7 +111,7 @@ AUTONOMOUS REASONING CHAIN:
    → User appears overwhelmed → front-load the single most important action.
    → User appears analytical → go deeper on data, add calculation chain.
    → User appears stuck → reframe the question entirely before answering.
-   → Language: detect from input, respond in same language without exception.
+   → Language: respond ONLY in the user's specified language — see LANGUAGE SOVEREIGN DIRECTIVE above.
 
 [END INTERNAL PROTOCOL — begin mode-specific response]
 `.trim()
@@ -66,14 +126,12 @@ export function buildUpwindSystemPrompt(
   primaryConstraint?: string
 ): string {
   const verbosity = cognitiveLoadDirective(cognitiveLoad)
-  const langNote = language !== 'en'
-    ? `LANGUAGE: Respond in the user's language (locale: ${language}). Maintain all benchmark references in their original form.\n\n`
-    : ''
+  const langAnchor = buildLanguageAnchor(language)
   const constraintBlock = primaryConstraint
     ? `CRITICAL CONSTRAINT: "${primaryConstraint}" is the #1 bottleneck. Every recommendation MUST address this first. If a recommendation ignores this constraint, reject it internally and generate an alternative.\n\n`
     : ''
 
-  return `${constraintBlock}${verbosity}${langNote}You are Aetheris UPWIND — a precision strategic analysis engine. Your purpose: deliver rapid, data-dense strategic assessments with zero ambiguity.
+  return `${langAnchor}${DEEP_RESEARCH_DIRECTIVE}${constraintBlock}${verbosity}You are Aetheris UPWIND — a precision strategic analysis engine. Your purpose: deliver rapid, data-dense strategic assessments with zero ambiguity.
 
 CORE DIRECTIVE: You are NOT a conversationalist. You are a strategic calculator. Every output must contain actionable intelligence, not suggestions.
 
@@ -139,9 +197,7 @@ export function buildDownwindSystemPrompt(
   primaryConstraint?: string,
   sessionHistory?: string
 ): string {
-  const langNote = language !== 'en'
-    ? `LANGUAGE: Respond in the user's language (locale: ${language}).\n\n`
-    : ''
+  const langAnchor = buildLanguageAnchor(language)
   const constraintBlock = primaryConstraint
     ? `ANCHOR CONSTRAINT: The user's primary bottleneck is "${primaryConstraint}". Every exploration must eventually tie back to this constraint.\n\n`
     : ''
@@ -149,7 +205,7 @@ export function buildDownwindSystemPrompt(
     ? `SESSION MEMORY:\n${sessionHistory}\n\nContinue from where we left off. Do not repeat previously covered ground.\n\n`
     : ''
 
-  return `${constraintBlock}${langNote}${historyBlock}You are Aetheris DOWNWIND — a Socratic strategic coach. Your method: guided discovery through structured questioning, not telling.
+  return `${langAnchor}${DEEP_RESEARCH_DIRECTIVE}${constraintBlock}${historyBlock}You are Aetheris DOWNWIND — a Socratic strategic coach. Your method: guided discovery through structured questioning, not telling.
 
 PHILOSOPHY: The user has the answer. Your job is to excavate it through precision questioning.
 
@@ -194,14 +250,12 @@ export function buildSailSystemPrompt(
   language = 'en',
   primaryConstraint?: string
 ): string {
-  const langNote = language !== 'en'
-    ? `[LANGUAGE: Respond in the user's language — locale: ${language}.]\n\n`
-    : ''
+  const langAnchor = buildLanguageAnchor(language)
   const constraintBlock = primaryConstraint
     ? `PRIORITY CONSTRAINT: "${primaryConstraint}". This constraint must be visible in every response, regardless of intent.\n\n`
     : ''
 
-  return `${constraintBlock}${langNote}You are Aetheris SAIL — an adaptive intelligence system that morphs based on query type.
+  return `${langAnchor}${DEEP_RESEARCH_DIRECTIVE}${constraintBlock}You are Aetheris SAIL — an adaptive intelligence system that morphs based on query type.
 
 INTENT DETECTION PROTOCOL (Internal only — never expose):
 - ANALYTIC: Numbers, metrics, benchmarks, performance data, "how much", "what rate"
@@ -247,14 +301,12 @@ export function buildTrimSystemPrompt(
   language = 'en',
   primaryConstraint?: string
 ): string {
-  const langNote = language !== 'en'
-    ? `[LANGUAGE: Respond in the user's language — locale: ${language}.]\n\n`
-    : ''
+  const langAnchor = buildLanguageAnchor(language)
   const constraintBlock = primaryConstraint
     ? `CRITICAL PATH: "${primaryConstraint}" is the critical path. Every phase must show progress on this constraint. If a phase doesn't address it, redesign the phase.\n\n`
     : ''
 
-  return `${constraintBlock}${langNote}You are Aetheris TRIM — a calculative timeline architect. You don't just plan; you engineer time.
+  return `${langAnchor}${DEEP_RESEARCH_DIRECTIVE}${constraintBlock}You are Aetheris TRIM — a calculative timeline architect. You don't just plan; you engineer time.
 
 METHODOLOGY: Each phase is a calculated bet with explicit odds, not a wish list.
 
@@ -315,14 +367,12 @@ export function buildCatamaranSystemPrompt(
   language = 'en',
   primaryConstraint?: string
 ): string {
-  const langNote = language !== 'en'
-    ? `[LANGUAGE: Respond in the user's language — locale: ${language}.]\n\n`
-    : ''
+  const langAnchor = buildLanguageAnchor(language)
   const constraintBlock = primaryConstraint
     ? `KEEL CONSTRAINT: "${primaryConstraint}" is the keel. If Market Growth and CX tracks conflict on this constraint, CX wins. Retention before acquisition.\n\n`
     : ''
 
-  return `${constraintBlock}${langNote}You are Aetheris CATAMARAN — a dual-hull strategic system. Two tracks, one destination.
+  return `${langAnchor}${DEEP_RESEARCH_DIRECTIVE}${constraintBlock}You are Aetheris CATAMARAN — a dual-hull strategic system. Two tracks, one destination.
 
 PHILOSOPHY:
 - HULL A (Market Growth): Acquisition, expansion, new revenue.
@@ -390,14 +440,12 @@ export function buildOperatorSystemPrompt(
   language = 'en',
   primaryConstraint?: string
 ): string {
-  const langNote = language !== 'en'
-    ? `[LANGUAGE: Respond in the user's language — locale: ${language}.]\n\n`
-    : ''
+  const langAnchor = buildLanguageAnchor(language)
   const constraintBlock = primaryConstraint
     ? `ROOT CONSTRAINT: "${primaryConstraint}". This is the root node. Every branch of analysis must trace back to this root.\n\n`
     : ''
 
-  return `${constraintBlock}${langNote}You are Aetheris OPERATOR — the universal deep-intelligence layer. When other modes reach their limit, you go deeper.
+  return `${langAnchor}${DEEP_RESEARCH_DIRECTIVE}${constraintBlock}You are Aetheris OPERATOR — the universal deep-intelligence layer. When other modes reach their limit, you go deeper.
 
 CAPABILITY MATRIX:
 You combine the precision of UPWIND, the depth of DOWNWIND, the adaptivity of SAIL, the timeline rigor of TRIM, and the systems thinking of CATAMARAN.
@@ -443,9 +491,7 @@ export function buildScenarioSystemPrompt(
   primaryConstraint?: string,
   businessContext?: string
 ): string {
-  const langNote = language !== 'en'
-    ? `[LANGUAGE: Respond in the user's language — locale: ${language}.]\n\n`
-    : ''
+  const langAnchor = buildLanguageAnchor(language)
   const constraintBlock = primaryConstraint
     ? `SIMULATION ANCHOR: "${primaryConstraint}" is the key constraint. Every scenario must account for this as a fixed variable unless explicitly testing it.\n\n`
     : ''
@@ -453,7 +499,7 @@ export function buildScenarioSystemPrompt(
     ? `BUSINESS CONTEXT (use as simulation baseline):\n${businessContext}\n\n`
     : ''
 
-  return `${SOVEREIGN_COGNITIVE_LAYER}\n\n${langNote}${constraintBlock}${contextBlock}You are Aetheris SCENARIO ENGINE — a multi-agent predictive simulation system. Your method is inspired by the Mirofish architecture: one conversational thread handles the complete seed → simulation → report pipeline.
+  return `${langAnchor}${DEEP_RESEARCH_DIRECTIVE}${SOVEREIGN_COGNITIVE_LAYER}\n\n${constraintBlock}${contextBlock}You are Aetheris SCENARIO ENGINE — a multi-agent predictive simulation system. Your method is inspired by the Mirofish architecture: one conversational thread handles the complete seed → simulation → report pipeline.
 
 CORE PHILOSOPHY:
 Users ask "what if" — you simulate the future. Not with hand-waving, but with structured prediction chains, confidence intervals, and specific numbers. Every scenario is a calculated bet, not a guess.
@@ -767,9 +813,7 @@ export function buildSynergySystemPrompt(
   companyName?: string,
   primaryConstraint?: string
 ): string {
-  const langNote = language !== 'en'
-    ? `[LANGUAGE: Respond in the user's language — locale: ${language}.]\n\n`
-    : ''
+  const langAnchor = buildLanguageAnchor(language)
 
   const constraintBlock = primaryConstraint
     ? `PRIMARY CONSTRAINT: "${primaryConstraint}" is the #1 bottleneck. Every layer of this response must address or account for this constraint.\n\n`
@@ -792,7 +836,7 @@ export function buildSynergySystemPrompt(
     })
     .join('\n\n---\n\n')
 
-  return `${langNote}${constraintBlock}${SOVEREIGN_COGNITIVE_LAYER}
+  return `${langAnchor}${DEEP_RESEARCH_DIRECTIVE}${constraintBlock}${SOVEREIGN_COGNITIVE_LAYER}
 
 [END INTERNAL PROTOCOL — begin CUSTOM SYNERGY WAR ROOM response]
 

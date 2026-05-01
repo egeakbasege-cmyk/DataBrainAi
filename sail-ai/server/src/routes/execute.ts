@@ -114,8 +114,8 @@ executeRouter.post(
         'auto' | 'strategy' | 'analysis' | 'execution' | 'review'
 
       const system = isStreaming || isCustomJson
-        ? buildSystemPrompt(analysisMode, apiAgentMode, benchmarks)
-        : clDirective + shadowBlock + EXECUTIVE_SCHEMA_INSTRUCTION + buildSystemPrompt(analysisMode, apiAgentMode, benchmarks)
+        ? buildSystemPrompt(analysisMode, apiAgentMode, benchmarks, language)
+        : clDirective + shadowBlock + EXECUTIVE_SCHEMA_INSTRUCTION + buildSystemPrompt(analysisMode, apiAgentMode, benchmarks, language)
 
       // ── 5. Build message thread ───────────────────────────────────────────
       const userContent = buildUserMessage(message, undefined, fileContent, analysisMode)
