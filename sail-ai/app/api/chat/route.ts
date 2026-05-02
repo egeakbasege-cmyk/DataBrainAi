@@ -1,15 +1,16 @@
 /**
- * Aetheris Edge Proxy — with Groq fallback + SAIL adaptive mode
+ * Aetheris Edge — Groq-only AI router
  *
- * Priority:
- *   1. SAIL mode  → Groq llama-3.3-70b streaming (intent-driven markdown)
- *   2. Railway    → Forward to Railway backend (RAILWAY_BACKEND_URL)
- *   3. Groq       → Fall back to Groq direct API (GROQ_API_KEY or body.apiKey)
+ * All modes route directly to Groq (llama-3.3-70b-versatile).
+ * No external backend proxy.
  *
  * analysisMode routing:
  *   upwind/downwind → ExecutiveResponse JSON
  *   sail            → SSE stream (first line __sailMeta JSON, then markdown)
  *   trim            → TrimResponse JSON { trimTitle, summary, phases[] }
+ *   catamaran       → CatamaranResponse JSON
+ *   operator        → SSE stream markdown
+ *   synergy         → SSE stream markdown (multi-mode council)
  */
 
 import { type NextRequest } from 'next/server'
@@ -17,7 +18,6 @@ import NextAuth              from 'next-auth'
 import { authConfig }        from '@/auth.config'
 import type { AetherisPayload } from '@/types/architecture'
 import { cognitiveLoadDirective } from '@/types/architecture'
-import { buildOperatorSystemPrompt } from '@/lib/prompts/operator-mode'
 import {
   buildUpwindSystemPrompt,
   buildDownwindSystemPrompt,
@@ -32,7 +32,6 @@ const { auth } = NextAuth(authConfig)
 
 export const runtime = 'edge'
 
-const UPSTREAM_URL = process.env.RAILWAY_BACKEND_URL
 const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODEL   = 'llama-3.3-70b-versatile'
 
@@ -326,36 +325,7 @@ export async function POST(req: NextRequest) {
 
   const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' = body.analysisMode ?? 'upwind'
 
-  // 3. Railway backend (primary path — handles all modes natively)
-  if (UPSTREAM_URL) {
-    let upstream: Response
-    try {
-      upstream = await fetch(`${UPSTREAM_URL}/api/v1/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type':      'application/json',
-          'Authorization':     `Bearer ${process.env.INTERNAL_API_KEY ?? ''}`,
-          'X-User-Email':       session.user.email,
-          'X-Client-Language':  req.headers.get('X-Client-Language')  ?? body.language ?? 'en',
-          'X-Aetheris-Session': req.headers.get('X-Aetheris-Session') ?? body.sessionId ?? 'init',
-        },
-        body: JSON.stringify(body),
-      })
-    } catch {
-      return Response.json({ error: 'Proxy Forwarding Fault' }, { status: 502 })
-    }
-
-    return new Response(upstream.body, {
-      status: upstream.status,
-      headers: {
-        'Content-Type':      upstream.headers.get('Content-Type') ?? 'application/json; charset=utf-8',
-        'Cache-Control':     'no-store',
-        'X-Accel-Buffering': 'no',
-      },
-    })
-  }
-
-  // 4. Groq fallback (when Railway is not configured)
+  // 3. Groq — single AI provider
   const groqKey = process.env.GROQ_API_KEY ?? body.apiKey
 
   if (!groqKey) {
