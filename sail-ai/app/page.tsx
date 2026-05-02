@@ -230,12 +230,19 @@ export default function LandingPage() {
           HERO — Swiss typographic statement
       ══════════════════════════════════════════════ */}
       <section style={{ background: '#0C0C0E', paddingBottom: 0, position: 'relative', overflow: 'hidden' }}>
-        {/* Hero background photo — sail-square.jpg (1340×1339) gives 2× the pixel
-            density of the old sail-vertical.jpg (592px wide), eliminating upscale blur.
-            transform:scale(1.06) hides the feathered edges that CSS blur creates.   */}
+        {/* Animated topographic contour lines fill the whole section.
+            They are especially visible in the empty space on both sides
+            of the narrow vertical photo below.                          */}
+        <TopoBackground />
+
+        {/* Vertical sail photo — objectFit:contain so the full 592×2000
+            image is shown at its natural proportions without any crop or
+            zoom.  On any viewport the photo stays centred; the dark
+            background + topo animation fill the space on both sides.
+            z:3 places it above the topo canvas (z:2).                  */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/sail-square.jpg"
+          src="/sail-vertical.jpg"
           alt=""
           aria-hidden="true"
           style={{
@@ -243,20 +250,14 @@ export default function LandingPage() {
             inset:          0,
             width:          '100%',
             height:         '100%',
-            objectFit:      'cover',
-            objectPosition: 'center 28%',
-            opacity:        0.18,
-            filter:         'blur(0.6px) brightness(0.85)',
-            transform:      'scale(1.06)',
-            transformOrigin:'center center',
+            objectFit:      'contain',
+            objectPosition: 'center center',
+            opacity:        0.32,
             pointerEvents:  'none',
             userSelect:     'none',
-            willChange:     'transform',
+            zIndex:         3,
           }}
         />
-
-        {/* Animated topographic contour lines — gold organic waves on the sides */}
-        <TopoBackground />
         <div className="max-w-6xl mx-auto px-6 md:px-10 pt-20 md:pt-28" style={{ position: 'relative', zIndex: 10 }}>
 
           {/* Eyebrow */}

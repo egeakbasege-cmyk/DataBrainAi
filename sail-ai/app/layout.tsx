@@ -18,7 +18,10 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title:       'SAIL AI+ | Sovereign Intelligence',
   description: 'Benchmarked AI strategy advisory for independent operators. Data-referenced analysis in under 60 seconds.',
-  icons: { icon: '/favicon.svg' },
+  icons: { 
+    icon: '/logo-gold.png',
+    apple: '/logo-gold.png',
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
