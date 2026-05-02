@@ -121,12 +121,11 @@ export function useAetherisSubmit() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        if (res.status === 429) throw new Error('RATE_LIMIT')
-        throw new Error(
-          (data as Record<string, unknown>).message as string
-          ?? (data as Record<string, unknown>).error as string
-          ?? 'Request failed. Please try again.'
-        )
+        const apiMsg = (data as Record<string, unknown>).error as string
+                    ?? (data as Record<string, unknown>).message as string
+        if (res.status === 429) throw new Error(apiMsg ?? 'RATE_LIMIT')
+        if (res.status === 401) throw new Error(apiMsg ?? 'Invalid API key.')
+        throw new Error(apiMsg ?? 'Request failed. Please try again.')
       }
 
       // The Aetheris endpoint returns JSON — no stream reader needed
