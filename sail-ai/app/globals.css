@@ -18,8 +18,8 @@
   --champagne:  #C9A96E;
   --champagne-d:#A8873E;
   --champagne-x:rgba(201,169,110,0.12);
-  --error:      #991B1B;
-  --error-dim:  rgba(153,27,27,0.08);
+  --error:      #C9A96E;
+  --error-dim:  rgba(201,169,110,0.08);
   --border:     rgba(0,0,0,0.09);
   --border-mid: rgba(0,0,0,0.14);
 }
@@ -58,12 +58,12 @@
   --ae-border-mid:  rgba(226,226,232,0.14);
   --ae-border-strong: rgba(226,226,232,0.22);
 
-  /* Semantic */
+  /* Semantic - Gold Accent */
   --ae-velocity-pos: #4ADE80;
-  --ae-velocity-neg: #F87171;
+  --ae-velocity-neg: #D4B980;
   --ae-velocity-neu: #9898B0;
-  --ae-drift:        #F87171;
-  --ae-drift-wash:   rgba(248,113,113,0.08);
+  --ae-drift:        #D4B980;
+  --ae-drift-wash:   rgba(201,169,110,0.08);
 
   color:      var(--ae-text);
   background: var(--ae-bg);
@@ -518,8 +518,7 @@ input { outline: none; font-family: 'Inter', sans-serif; }
   --chrome-silver:    #B8C4CC;
   --chrome-light:     #E8EEF4;
   --gold-accent:      #D4AF37;
-  --red-accent:       #CC2200;
-  --red-accent-dim:   rgba(204,34,0,0.55);
+  --gold-accent-dim:  rgba(212,175,55,0.55);
   --vintage-bg:       #09090B;
 
   --gold-grad: linear-gradient(135deg, #D4AF37 0%, #F9E29D 45%, #B8860B 100%);
@@ -602,12 +601,12 @@ input { outline: none; font-family: 'Inter', sans-serif; }
   animation:               gold-shimmer 5s linear infinite;
 }
 
-/* ── Red attention pulse ──────────────────────────────────── */
-@keyframes red-attention {
+/* ── Gold attention pulse ─────────────────────────────────── */
+@keyframes gold-attention {
   0%, 100% { opacity: 0.55; }
   50%       { opacity: 1.00; }
 }
-.red-attention { animation: red-attention 3.5s ease-in-out infinite; }
+.gold-attention { animation: gold-attention 3.5s ease-in-out infinite; }
 
 /* ── Black-on-yellow CTA button ───────────────────────────── */
 .btn-yellow {
