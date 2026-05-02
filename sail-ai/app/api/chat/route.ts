@@ -43,9 +43,10 @@ function getKeyPool(): string[] {
   const keys: string[] = []
   const base = process.env.GROQ_API_KEY
   if (base) keys.push(base)
-  for (let i = 2; i <= 5; i++) {
+  // Support both _1,_2,_3... and _2,_3... naming conventions
+  for (let i = 1; i <= 5; i++) {
     const k = process.env[`GROQ_API_KEY_${i}`]
-    if (k) keys.push(k)
+    if (k && !keys.includes(k)) keys.push(k)
   }
   return keys
 }
