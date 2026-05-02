@@ -389,7 +389,11 @@ export async function POST(req: NextRequest) {
     }).catch(() => null)
 
     if (!synRes?.ok) {
-      return Response.json({ error: 'SYNERGY request failed.' }, { status: 502 })
+      const synStatus = synRes?.status === 401 ? 401 : synRes?.status === 429 ? 429 : 502
+      return Response.json(
+        { error: synStatus === 401 ? 'Invalid API key.' : synStatus === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status: synStatus },
+      )
     }
 
     const { readable, writable } = new TransformStream()
@@ -450,7 +454,11 @@ export async function POST(req: NextRequest) {
     }).catch(() => null)
 
     if (!sailRes?.ok) {
-      return Response.json({ error: 'SAIL request failed.' }, { status: 502 })
+      const sailStatus = sailRes?.status === 401 ? 401 : sailRes?.status === 429 ? 429 : 502
+      return Response.json(
+        { error: sailStatus === 401 ? 'Invalid API key.' : sailStatus === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status: sailStatus },
+      )
     }
 
     const { readable, writable } = new TransformStream()
@@ -542,7 +550,11 @@ export async function POST(req: NextRequest) {
     }).catch(() => null)
 
     if (!operatorRes?.ok) {
-      return Response.json({ error: 'Operator request failed.' }, { status: 502 })
+      const opStatus = operatorRes?.status === 401 ? 401 : operatorRes?.status === 429 ? 429 : 502
+      return Response.json(
+        { error: opStatus === 401 ? 'Invalid API key.' : opStatus === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status: opStatus },
+      )
     }
 
     const { readable, writable } = new TransformStream()
