@@ -32,19 +32,26 @@ const { auth } = NextAuth(authConfig)
 
 export const runtime = 'edge'
 
-const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL   = 'llama-3.3-70b-versatile'
+const GROQ_URL           = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_MODEL_PRIMARY  = 'llama-3.3-70b-versatile'
+const GROQ_MODEL_FALLBACK = 'llama-3.1-8b-instant'   // 500K TPD — 5× higher daily limit
+const GROQ_MODEL          = GROQ_MODEL_PRIMARY
 
-// ── Groq fetch with 1 automatic retry on per-minute rate limit ────────────────
-async function groqFetch(init: RequestInit, retries = 1): Promise<Response> {
+// ── Groq fetch: primary model → fallback model on 429 ────────────────────────
+async function groqFetch(init: RequestInit): Promise<Response> {
   const res = await fetch(GROQ_URL, init)
-  if (res.status === 429 && retries > 0) {
-    const retryAfter = Number(res.headers.get('retry-after') ?? '3')
-    const waitMs = Math.min(retryAfter * 1000, 5000)
-    await new Promise(r => setTimeout(r, waitMs))
-    return groqFetch(init, retries - 1)
+  if (res.status !== 429) return res
+
+  // Parse the request body to swap the model
+  const body = JSON.parse(init.body as string) as Record<string, unknown>
+  if (body.model === GROQ_MODEL_FALLBACK) return res   // already on fallback, give up
+
+  // Switch to fallback model and retry immediately
+  const fallbackInit: RequestInit = {
+    ...init,
+    body: JSON.stringify({ ...body, model: GROQ_MODEL_FALLBACK }),
   }
-  return res
+  return fetch(GROQ_URL, fallbackInit)
 }
 
 type ExtendedPayload = AetherisPayload & {
