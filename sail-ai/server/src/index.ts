@@ -1,7 +1,8 @@
 import express    from 'express'
 import cors       from 'cors'
-import { chatRouter }    from './routes/chat'
-import { executeRouter } from './routes/execute'
+import { chatRouter }       from './routes/chat'
+import { executeRouter }    from './routes/execute'
+import { mobileAuthRouter } from './routes/mobileAuth'
 
 const app  = express()
 const PORT = Number(process.env.PORT ?? 8080)
@@ -12,10 +13,17 @@ app.use(cors({
     process.env.VERCEL_URL ?? '',
     process.env.NEXT_PUBLIC_APP_URL ?? '',
     /\.vercel\.app$/,
-    // local dev
-    'http://localhost:3000',
+    // Capacitor mobile app origins
+    'capacitor://localhost',    // iOS Capacitor WebView
+    'http://localhost',         // Android Capacitor WebView
+    'http://localhost:3000',    // local web dev
+    'http://localhost:8100',    // Ionic dev server (if used)
   ].filter(Boolean),
-  methods: ['POST', 'GET'],
+  methods:         ['POST', 'GET', 'OPTIONS'],
+  allowedHeaders:  ['Content-Type', 'Authorization', 'X-User-Email',
+                    'X-Client-Language', 'X-Aetheris-Session'],
+  exposedHeaders:  ['X-Auth-Token'],
+  credentials:     true,
 }))
 
 app.use(express.json({ limit: '20mb' }))
@@ -26,6 +34,9 @@ app.get('/health', (_req, res) => {
 })
 
 // ── Routes ────────────────────────────────────────────────────────────────────
+// Mobile JWT auth (no NextAuth dependency — works in Capacitor static builds)
+app.use('/api/auth/mobile', mobileAuthRouter)
+
 // v1 — Aetheris ExecutiveResponse schema-enforced endpoint (primary)
 app.use('/api/v1', executeRouter)
 

@@ -27,10 +27,16 @@ const IS_CAPACITOR: boolean =
 
 // ── Storage key constants — single source of truth ───────────────────────────
 export const PREF_KEYS = {
+  // Auth
   AUTH_TOKEN:      'sail_auth_token',
   AUTH_EXPIRES_AT: 'sail_auth_expires_at',
+  // User profile
   USER_EMAIL:      'sail_user_email',
   USER_ID:         'sail_user_id',
+  USER_NAME:       'sail_user_name',
+  USER_IMAGE:      'sail_user_image',
+  USER_PLAN:       'sail_user_plan',
+  // App preferences
   LANGUAGE:        'sail_language',
   BRAND_CONFIG:    'sail_brand_config',
   THEME:           'sail_theme',
