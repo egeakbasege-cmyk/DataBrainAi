@@ -1,5 +1,5 @@
 /** Sail AI crest — Ultra Premium Gold on Black */
-export function Logo({ size = 32 }: { size?: number }) {
+export function Logo({ size = 48 }: { size?: number }) {
   return (
     <img 
       src="/logo-gold.png" 
@@ -8,7 +8,7 @@ export function Logo({ size = 32 }: { size?: number }) {
       height={size}
       style={{ 
         objectFit: 'contain',
-        filter: 'drop-shadow(0 0 4px rgba(201,169,110,0.3))'
+        filter: 'drop-shadow(0 0 6px rgba(201,169,110,0.4))'
       }}
     />
   )

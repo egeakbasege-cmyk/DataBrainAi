@@ -100,7 +100,7 @@ function LoginForm() {
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2rem', justifyContent: 'center' }}>
-          <Logo size={28} />
+          <Logo size={42} />
           <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 600, letterSpacing: '0.08em', color: '#0C0C0E' }}>
             SAIL AI
           </span>

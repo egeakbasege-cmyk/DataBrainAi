@@ -10,7 +10,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#FAFAF8' }}>
-      <Logo size={36} />
+      <Logo size={54} />
       <div className="mt-8 mb-6 w-24 mx-auto">
         <WaveRule color="#0C0C0E" opacity={0.15} />
       </div>

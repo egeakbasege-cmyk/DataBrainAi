@@ -8,7 +8,7 @@ export default function NotFound() {
       <div className="relative mb-4">
         <CompassRose size={120} color="#C9A96E" opacity={0.08} />
         <div className="absolute inset-0 flex items-center justify-center">
-          <Logo size={40} />
+          <Logo size={60} />
         </div>
       </div>
       <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 700, fontSize: 'clamp(4rem, 12vw, 7rem)', color: 'rgba(201,169,110,0.12)', letterSpacing: '-0.04em', lineHeight: 1 }}>
