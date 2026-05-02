@@ -32,26 +32,45 @@ const { auth } = NextAuth(authConfig)
 
 export const runtime = 'edge'
 
-const GROQ_URL           = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_URL            = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODEL_PRIMARY  = 'llama-3.3-70b-versatile'
 const GROQ_MODEL_FALLBACK = 'llama-3.1-8b-instant'   // 500K TPD — 5× higher daily limit
 const GROQ_MODEL          = GROQ_MODEL_PRIMARY
 
-// ── Groq fetch: primary model → fallback model on 429 ────────────────────────
-async function groqFetch(init: RequestInit): Promise<Response> {
-  const res = await fetch(GROQ_URL, init)
-  if (res.status !== 429) return res
-
-  // Parse the request body to swap the model
-  const body = JSON.parse(init.body as string) as Record<string, unknown>
-  if (body.model === GROQ_MODEL_FALLBACK) return res   // already on fallback, give up
-
-  // Switch to fallback model and retry immediately
-  const fallbackInit: RequestInit = {
-    ...init,
-    body: JSON.stringify({ ...body, model: GROQ_MODEL_FALLBACK }),
+// ── Key pool: rotate through up to 5 keys before falling back to a smaller model
+// Add GROQ_API_KEY_2 … GROQ_API_KEY_5 in Vercel env to multiply daily capacity.
+function getKeyPool(): string[] {
+  const keys: string[] = []
+  const base = process.env.GROQ_API_KEY
+  if (base) keys.push(base)
+  for (let i = 2; i <= 5; i++) {
+    const k = process.env[`GROQ_API_KEY_${i}`]
+    if (k) keys.push(k)
   }
-  return fetch(GROQ_URL, fallbackInit)
+  return keys
+}
+
+// ── Groq fetch: key rotation → model fallback on 429 ─────────────────────────
+async function groqFetch(init: RequestInit): Promise<Response> {
+  const reqBody = JSON.parse(init.body as string) as Record<string, unknown>
+  const keys    = getKeyPool()
+
+  // Try every key with the primary model first
+  for (const key of keys) {
+    const res = await fetch(GROQ_URL, {
+      ...init,
+      headers: { ...init.headers as Record<string, string>, 'Authorization': `Bearer ${key}` },
+    })
+    if (res.status !== 429) return res
+  }
+
+  // All keys exhausted on primary model — retry primary key with fallback model
+  const fallbackBody = JSON.stringify({ ...reqBody, model: GROQ_MODEL_FALLBACK })
+  return fetch(GROQ_URL, {
+    ...init,
+    headers: { ...init.headers as Record<string, string>, 'Authorization': `Bearer ${keys[0] ?? ''}` },
+    body: fallbackBody,
+  })
 }
 
 type ExtendedPayload = AetherisPayload & {
@@ -371,7 +390,7 @@ export async function POST(req: NextRequest) {
           { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) },
           { role: 'user',   content: userMessage },
         ],
-        max_tokens:  2400,
+        max_tokens:  1400,
         temperature: 0.45,
         stream:      true,
       }),
@@ -532,7 +551,7 @@ export async function POST(req: NextRequest) {
           { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) },
           { role: 'user',   content: userMessage },
         ],
-        max_tokens:  2000,
+        max_tokens:  1200,
         temperature: 0.5,
         stream:      true,
       }),
@@ -596,7 +615,7 @@ export async function POST(req: NextRequest) {
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
-          max_tokens:      1500,
+          max_tokens:      900,
           temperature:     0.4,
         }),
       })
@@ -640,7 +659,7 @@ export async function POST(req: NextRequest) {
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
-          max_tokens:      1800,
+          max_tokens:      1100,
           temperature:     0.35,
         }),
       })
@@ -692,7 +711,7 @@ export async function POST(req: NextRequest) {
           { role: 'user',   content: userMessage },
         ],
         response_format: { type: 'json_object' },
-        max_tokens:      2048,
+        max_tokens:      1200,
         temperature:     0.4,
       }),
     })
