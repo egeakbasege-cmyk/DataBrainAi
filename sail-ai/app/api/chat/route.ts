@@ -391,7 +391,7 @@ export async function POST(req: NextRequest) {
           { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) },
           { role: 'user',   content: userMessage },
         ],
-        max_tokens:  1400,
+        max_tokens:  1000,
         temperature: 0.45,
         stream:      true,
       }),

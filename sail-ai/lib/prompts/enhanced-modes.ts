@@ -756,54 +756,30 @@ export function selectOptimalMode(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Behavioural essence for each mode — injected as a "council member" directive */
-const SYNERGY_COUNCIL: Record<string, { role: string; layer: string; directive: string }> = {
+const SYNERGY_COUNCIL: Record<string, { layer: string; directive: string }> = {
   upwind: {
-    role: 'Strategic Strike Commander',
     layer: '▸ STRIKE',
-    directive: `Open with a single decisive strategic action. No preamble — lead with the exact move the business must make this week.
-Format: **[ACTION]** — [why this is the highest-leverage move right now] — [what it costs to delay by 7 days].
-Maximum 3 sentences. Zero hedge words.`,
+    directive: `Lead with the single highest-leverage action for this week. **[ACTION]** — [why now] — [cost of 7-day delay]. 3 sentences max, zero hedge words.`,
   },
   downwind: {
-    role: 'Deep Intelligence Analyst',
     layer: '▸ INTELLIGENCE',
-    directive: `Expand the strategic picture with second and third-order thinking. Identify the non-obvious constraint beneath the stated problem.
-What does succeeding at the primary action unlock? What does failing at it threaten?
-Coaching tone — build a mental model, not just an answer. 2–4 paragraphs.`,
+    directive: `Expose the non-obvious constraint beneath the stated problem. Map 2nd/3rd-order consequences of success and failure. Build a mental model, not just an answer.`,
   },
   sail: {
-    role: 'Intent Radar & Adaptive Synthesiser',
     layer: '▸ RADAR',
-    directive: `Detect the real question beneath the question. What is the user actually trying to solve?
-Cross-reference the stated query with the underlying business constraint and surface the pattern.
-Format: first state the deeper intent in one sentence, then deliver the highest-signal insight that bridges both the surface ask and the root problem.`,
+    directive: `Surface the real question beneath the stated one. State the deeper intent in one sentence, then deliver the highest-signal insight that bridges the surface ask and the root problem.`,
   },
   trim: {
-    role: 'Execution Engine & Roadmap Architect',
     layer: '▸ ROADMAP',
-    directive: `Convert all prior intelligence into a phased execution plan.
-Format:
-**Phase 1 (Week 1–2):** [action] → [metric target]
-**Phase 2 (Week 3–4):** [action] → [metric target]
-**Phase 3 (Month 2):** [action] → [metric target]
-Every phase must include a measurable KPI and a cost-of-delay figure if the phase is skipped.`,
+    directive: `Convert prior intelligence into a 3-phase plan.\n**Phase 1 (Wk 1–2):** [action → KPI]\n**Phase 2 (Wk 3–4):** [action → KPI]\n**Phase 3 (Mo 2):** [action → KPI]\nEach phase: measurable KPI + cost of skipping.`,
   },
   catamaran: {
-    role: 'Dual-Track Integration Strategist',
     layer: '▸ DUAL TRACK',
-    directive: `Run two parallel analysis tracks simultaneously:
-**Market Growth Track:** [3 growth actions with quantified impact]
-**CX Integration Track:** [3 CX actions with quantified impact]
-Then show the multiplier: how does success in each track amplify the other?
-Format: Growth → CX → Combined leverage effect (state as a %).`,
+    directive: `Run two tracks in parallel.\n**Growth Track:** 3 actions with quantified impact.\n**CX Track:** 3 actions with quantified impact.\nFinish with the combined leverage multiplier (as %).`,
   },
   operator: {
-    role: 'Universal Intelligence Engine',
     layer: '▸ DEEP CALC',
-    directive: `Apply quantitative depth to every recommendation.
-For each strategic claim: show the arithmetic. Revenue delta, margin impact, implementation cost, break-even timeline.
-If data is missing: use sector benchmarks labelled (est.) with source sector.
-No claim without a number. No number without a source or qualifier.`,
+    directive: `Show the arithmetic for every claim: revenue delta, margin impact, implementation cost, break-even timeline. Missing data → use sector benchmarks labelled (est.). No claim without a number.`,
   },
 }
 
@@ -814,50 +790,25 @@ export function buildSynergySystemPrompt(
   primaryConstraint?: string
 ): string {
   const langAnchor = buildLanguageAnchor(language)
+  const constraint = primaryConstraint ? `CONSTRAINT: "${primaryConstraint}" must be addressed in every layer.\n\n` : ''
+  const name       = companyName ? `${companyName} AI` : 'Aetheris'
 
-  const constraintBlock = primaryConstraint
-    ? `PRIMARY CONSTRAINT: "${primaryConstraint}" is the #1 bottleneck. Every layer of this response must address or account for this constraint.\n\n`
-    : ''
-
-  const entityName = companyName ? `${companyName} AI` : 'Aetheris'
-
-  // Build council manifest
-  const council = selectedModes
-    .filter(m => SYNERGY_COUNCIL[m])
-    .map((m, i) => `  ${i + 1}. ${SYNERGY_COUNCIL[m].role} (${m.toUpperCase()} module)`)
-    .join('\n')
-
-  // Build layer directives in order
   const layers = selectedModes
     .filter(m => SYNERGY_COUNCIL[m])
-    .map(m => {
-      const c = SYNERGY_COUNCIL[m]
-      return `### ${c.layer} [${m.toUpperCase()} MODULE — ${c.role}]\n\n${c.directive}`
-    })
-    .join('\n\n---\n\n')
+    .map(m => `### ${SYNERGY_COUNCIL[m].layer}\n${SYNERGY_COUNCIL[m].directive}`)
+    .join('\n\n')
 
-  return `${langAnchor}${constraintBlock}You are ${entityName} CUSTOM SYNERGY — a hybrid intelligence engine assembled from ${selectedModes.length} specialist modules operating as a unified War Room Council.
-
-WAR ROOM COUNCIL MANIFEST:
-${council}
-
-CRITICAL FORMATTING RULE: You MUST start each section with the exact header shown below, using the ▸ character (Unicode U+25B8). Do not replace it with >, -, or any other character.
-
-EXECUTE EACH MODULE IN ORDER:
+  return `${langAnchor}${constraint}You are ${name} WAR ROOM — ${selectedModes.length} specialist modules responding as one. Use the ▸ character (U+25B8) exactly as shown for every section header.
 
 ${layers}
 
----
+### ▸ WAR ROOM SYNTHESIS
+**Decisive move** — single highest-leverage action across all layers.
+**30-day proof** — the specific metric that confirms it's working.
+**Critical risk** — the one thing most likely to derail execution.
+**Confidence** — 0–100 (90+ = full data · 65–89 = estimates · <65 = gaps).
 
-### ▸ WAR ROOM SYNTHESIS [UNIFIED INTELLIGENCE]
-
-Synthesise all module outputs into:
-1. **The decisive move** — the single action with the highest leverage across all layers
-2. **30-day proof point** — the specific measurable target that confirms the strategy is working
-3. **The critical risk** — the one thing most likely to derail execution (name it precisely)
-4. **Confidence index** — 0–100 integer (90+ = full data, 65–89 = estimates used, <65 = critical gaps)
-
-FORMAT: Use markdown bold for key terms. Complete sentences. Zero hedge words.`
+Bold key terms. Complete sentences. Zero hedge words.`
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
