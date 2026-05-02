@@ -290,7 +290,7 @@ export function SynergyResponseCard({ text, streaming, modes, companyName }: Pro
           </div>
         )}
 
-        {/* Layer sections */}
+        {/* Layer sections — structured format */}
         {segments.length > 0 && (
           <div>
             {segments.map((seg, i) => (
@@ -299,18 +299,16 @@ export function SynergyResponseCard({ text, streaming, modes, companyName }: Pro
           </div>
         )}
 
-        {/* Streaming tail — raw text before first header is parsed */}
-        {streaming && segments.length === 0 && text.length > 0 && (
-          <p style={{
+        {/* Fallback: plain markdown when no ▸ markers found (streaming or complete) */}
+        {segments.length === 0 && text.length > 0 && (
+          <div style={{
             fontFamily: 'Inter, sans-serif',
-            fontSize:   '0.85rem',
-            color:      '#71717A',
-            lineHeight: 1.6,
-            margin:     0,
-            whiteSpace: 'pre-wrap',
+            fontSize:   '0.88rem',
+            lineHeight: 1.7,
+            color:      '#1A1A2E',
           }}>
-            {text}
-          </p>
+            <SailAdapter text={text} intent="analytic" streaming={streaming} />
+          </div>
         )}
       </div>
 

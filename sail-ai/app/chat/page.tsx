@@ -193,6 +193,12 @@ export default function ChatPage() {
   const [synergyMeta,  setSynergyMeta]  = useState<{ modes: string[]; companyName: string|null } | null>(null)
   const synergyAbortRef = useRef<AbortController|null>(null)
 
+  // OPERATOR state
+  const [operatorText,  setOperatorText]  = useState('')
+  const [operatorPhase, setOperatorPhase] = useState<'idle'|'streaming'|'complete'>('idle')
+  const [operatorError, setOperatorError] = useState<string|null>(null)
+  const operatorAbortRef = useRef<AbortController|null>(null)
+
   // Context toggle + inline paywall
   const [useProfileCtx,     setUseProfileCtx]    = useState(true)
   const [showInlinePaywall, setShowInlinePaywall] = useState(false)
@@ -504,6 +510,38 @@ export default function ChatPage() {
     }
   }
 
+  async function handleOperatorSubmit(text: string) {
+    setOperatorError(null); setOperatorText(''); setOperatorPhase('streaming')
+    operatorAbortRef.current = new AbortController()
+    try {
+      const res = await fetch('/api/chat', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body:    JSON.stringify(buildModeBody(text, 'operator')),
+        signal:  operatorAbortRef.current.signal,
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error((d as Record<string,unknown>).error as string ?? 'OPERATOR request failed.')
+      }
+      const reader  = res.body!.getReader()
+      const decoder = new TextDecoder()
+      let   buf     = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        setOperatorText(buf)
+      }
+      setOperatorPhase('complete')
+      saveAnalysis(text, buf.slice(0, 120))
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      setOperatorError(err instanceof Error ? err.message : 'OPERATOR request failed.')
+      setOperatorPhase('idle')
+    }
+  }
+
   async function handleSubmit() {
     const text = input.trim()
     if (!text) return
@@ -514,6 +552,7 @@ export default function ChatPage() {
     if (mode === 'trim')     { if (trimPhase      !== 'loading')   await handleTrimSubmit(text);      return }
     if (mode === 'catamaran'){ if (catamaranPhase !== 'loading')   await handleCatamaranSubmit(text); return }
     if (mode === 'synergy')  { if (synergyPhase   !== 'streaming' && synergyModes.length >= 2) await handleSynergySubmit(text); return }
+    if (mode === 'operator') { if (operatorPhase  !== 'streaming') await handleOperatorSubmit(text);  return }
 
     if (mode === 'downwind') {
       if (coachState === 'THINKING' || coachState === 'STREAMING') return
@@ -586,6 +625,8 @@ export default function ChatPage() {
     setCatamaranResponse(null); setCatamaranPhase('idle'); setCatamaranError(null)
     synergyAbortRef.current?.abort()
     setSynergyText(''); setSynergyPhase('idle'); setSynergyError(null); setSynergyMeta(null)
+    operatorAbortRef.current?.abort()
+    setOperatorText(''); setOperatorPhase('idle'); setOperatorError(null)
     setShowInlinePaywall(false)
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
@@ -605,6 +646,8 @@ export default function ChatPage() {
     ? catamaranPhase === 'loading'
     : mode === 'synergy'
     ? synergyPhase === 'streaming'
+    : mode === 'operator'
+    ? operatorPhase === 'streaming'
     : mode === 'downwind'
     ? coachState === 'THINKING' || coachState === 'STREAMING'
     : state === 'THINKING'
@@ -617,13 +660,15 @@ export default function ChatPage() {
     ? catamaranPhase === 'complete'
     : mode === 'synergy'
     ? synergyPhase === 'complete'
+    : mode === 'operator'
+    ? operatorPhase === 'complete'
     : mode === 'downwind'
     ? coachState === 'COMPLETE'
     : state === 'COMPLETE' || state === 'ERROR'
 
   const isConversing = mode === 'downwind' && coachState === 'CONVERSING'
 
-  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'catamaran' ? catamaranError : mode === 'synergy' ? synergyError : mode === 'downwind' ? coachError : error
+  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'catamaran' ? catamaranError : mode === 'synergy' ? synergyError : mode === 'operator' ? operatorError : mode === 'downwind' ? coachError : error
 
   const sailState = (
     isActive ? 'THINKING' : isConversing ? 'CONVERSING' : isComplete ? 'COMPLETE' : 'IDLE'
@@ -796,7 +841,7 @@ export default function ChatPage() {
                       }}
                     />
                     <span className="label-caps" style={{ color: '#71717A' }}>
-                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'synergy' ? `${brandConfig?.aiName ?? brandConfig?.companyName ?? 'War Room'} assembling…` : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
+                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'synergy' ? `${brandConfig?.aiName ?? brandConfig?.companyName ?? 'War Room'} assembling…` : mode === 'operator' ? 'Operator calculating…' : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
                     </span>
                   </motion.div>
                 )}
@@ -1192,6 +1237,27 @@ export default function ChatPage() {
                 modes={synergyMeta?.modes ?? synergyModes as string[]}
                 companyName={synergyMeta?.companyName ?? brandConfig?.aiName ?? brandConfig?.companyName ?? undefined}
               />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── OPERATOR deep intelligence result ── */}
+        <AnimatePresence>
+          {mode === 'operator' && (operatorPhase === 'streaming' || operatorPhase === 'complete') && (
+            <motion.div key="operator-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+              <div style={{ background: '#FFFFFF', border: '1px solid rgba(204,34,0,0.15)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(204,34,0,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
+                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(204,34,0,0.08)', background: 'rgba(204,34,0,0.025)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {operatorPhase === 'streaming' && (
+                    <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#CC2200', flexShrink: 0 }} />
+                  )}
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#CC2200', fontWeight: 700 }}>
+                    OPERATOR · Universal Intelligence
+                  </span>
+                </div>
+                <div style={{ padding: '1.5rem 1.25rem' }}>
+                  <SailAdapter text={operatorText} intent="analytic" streaming={operatorPhase === 'streaming'} />
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
