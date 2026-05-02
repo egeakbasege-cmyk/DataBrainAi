@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Nav } from '@/components/Nav'
@@ -161,6 +161,59 @@ function Rule() {
   return <div style={{ height: 1, background: 'rgba(0,0,0,0.09)' }} />
 }
 
+/* ── Mode card — reusable across all 6 grid modes ────── */
+function ModeCard({
+  badge, name, color, bg, border, icon, desc, detail,
+}: {
+  badge:  string
+  name:   string
+  color:  string
+  bg:     string
+  border: string
+  icon:   React.ReactNode
+  desc:   string
+  detail: string
+}) {
+  return (
+    <div
+      style={{
+        padding:      '1.75rem',
+        background:   bg,
+        border:       `1px solid ${border}`,
+        borderRadius: '10px',
+        display:      'flex',
+        flexDirection:'column',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1rem' }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: '6px',
+          background: `color-mix(in srgb, ${color} 12%, transparent)`,
+          border: `1px solid ${border}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          {icon}
+        </div>
+        <div>
+          <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.15rem', fontWeight: 700, color, display: 'block', lineHeight: 1.1 }}>
+            {name}
+          </span>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color, opacity: 0.65 }}>
+            {badge}
+          </span>
+        </div>
+      </div>
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', lineHeight: 1.7, color: '#0C0C0E', fontWeight: 300, marginBottom: '0.875rem', flex: 1 }}>
+        {desc}
+      </p>
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: '#71717A', lineHeight: 1.5, borderTop: `1px solid ${border}`, paddingTop: '0.75rem', margin: 0 }}>
+        {detail}
+      </p>
+    </div>
+  )
+}
+
 export default function LandingPage() {
   const { t } = useLanguage()
   const [agentMode,    setAgentMode]    = useState<AgentMode>('auto')
@@ -176,22 +229,28 @@ export default function LandingPage() {
           HERO — Swiss typographic statement
       ══════════════════════════════════════════════ */}
       <section style={{ background: '#0C0C0E', paddingBottom: 0, position: 'relative', overflow: 'hidden' }}>
-        {/* Hero background photo */}
+        {/* Hero background photo — sail-square.jpg (1340×1339) gives 2× the pixel
+            density of the old sail-vertical.jpg (592px wide), eliminating upscale blur.
+            transform:scale(1.06) hides the feathered edges that CSS blur creates.   */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/sail-vertical.jpg"
+          src="/sail-square.jpg"
           alt=""
           aria-hidden="true"
           style={{
-            position:   'absolute',
-            inset:      0,
-            width:      '100%',
-            height:     '100%',
-            objectFit:  'cover',
-            objectPosition: 'center top',
-            opacity:    0.18,
-            pointerEvents: 'none',
-            userSelect: 'none',
+            position:       'absolute',
+            inset:          0,
+            width:          '100%',
+            height:         '100%',
+            objectFit:      'cover',
+            objectPosition: 'center 28%',
+            opacity:        0.22,
+            filter:         'blur(0.6px) brightness(0.9)',
+            transform:      'scale(1.06)',
+            transformOrigin:'center center',
+            pointerEvents:  'none',
+            userSelect:     'none',
+            willChange:     'transform',
           }}
         />
         <div className="max-w-6xl mx-auto px-6 md:px-10 pt-20 md:pt-28">
@@ -486,66 +545,185 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════
-          MODE CARDS — Upwind vs Downwind
+          MODE CARDS — all 7 intelligence modes
       ══════════════════════════════════════════════ */}
       <section style={{ background: '#FAFAF8', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3rem' }}>
-            <span className="label-caps">{t('landing.twoModes')}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '0.625rem' }}>
+            <span className="label-caps">Intelligence Modes</span>
             <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.09)' }} />
           </div>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.825rem', color: '#71717A', fontWeight: 300, marginBottom: '2.5rem', maxWidth: '52ch' }}>
+            Seven specialist engines. Each optimised for a different strategic posture — select the one that matches your current situation.
+          </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-            {[
-              {
-                icon:   '🧭',
-                name:   'Upwind',
-                tag:    'Direct Mode',
-                desc:   'Feed your numbers and get an instant, benchmark-grounded action plan. No clarifying questions — sparse data is filled from sector medians and labelled accordingly.',
-                detail: 'Best for: operators who know their metrics and need fast execution clarity.',
-                color:  '#1A5276',
-                bg:     'rgba(26,82,118,0.05)',
-                border: 'rgba(26,82,118,0.18)',
-              },
-              {
-                icon:   '🌊',
-                name:   'Downwind',
-                tag:    'Guided Mode',
-                desc:   'Begin with a diagnostic summary, then follow a Socratic coaching flow. Each recommendation is explained with the reasoning behind it.',
-                detail: 'Best for: founders working through ambiguity who want to understand the why.',
-                color:  '#00695C',
-                bg:     'rgba(0,150,136,0.05)',
-                border: 'rgba(0,150,136,0.18)',
-              },
-            ].map(m => (
-              <div
-                key={m.name}
-                style={{
-                  padding:      '1.75rem',
-                  background:    m.bg,
-                  border:       `1px solid ${m.border}`,
-                  borderRadius: '10px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                  <span style={{ fontSize: '1.4rem' }}>{m.icon}</span>
-                  <div>
-                    <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.25rem', fontWeight: 700, color: m.color, display: 'block', lineHeight: 1.1 }}>
-                      {m.name}
-                    </span>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: m.color, opacity: 0.7 }}>
-                      {m.tag}
-                    </span>
-                  </div>
-                </div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.7, color: '#0C0C0E', fontWeight: 300, marginBottom: '0.875rem' }}>
-                  {m.desc}
-                </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', lineHeight: 1.5, borderTop: `1px solid ${m.border}`, paddingTop: '0.875rem', margin: 0 }}>
-                  {m.detail}
-                </p>
+          {/* ── Rows 1–3: 2-column grid ─────────────────────────── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+
+            {/* ── Upwind ── */}
+            <ModeCard
+              badge="Direct"
+              name="Upwind"
+              color="#1A5276"
+              bg="rgba(26,82,118,0.05)"
+              border="rgba(26,82,118,0.18)"
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3L12 19L4 19Z" fill="#1A5276" opacity="0.85"/>
+                  <path d="M12 3L12 19L20 12Z" fill="#1A5276" opacity="0.3"/>
+                  <line x1="12" y1="2" x2="12" y2="20" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M5 19Q12 22 19 19" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                </svg>
+              }
+              desc="Feed your numbers and get an instant, benchmark-grounded action plan. No clarifying questions — sparse data is filled from sector medians and labelled."
+              detail="Best for: operators who know their metrics and need fast execution clarity."
+            />
+
+            {/* ── Downwind ── */}
+            <ModeCard
+              badge="Guided"
+              name="Downwind"
+              color="#00695C"
+              bg="rgba(0,105,92,0.05)"
+              border="rgba(0,105,92,0.18)"
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 4C6 6 3 12 5 19L12 19Z" fill="#00695C" opacity="0.85"/>
+                  <path d="M12 4C18 6 21 12 19 19L12 19Z" fill="#00695C" opacity="0.35"/>
+                  <line x1="12" y1="3" x2="12" y2="20" stroke="#00695C" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M5 19Q12 22 19 19" stroke="#00695C" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                </svg>
+              }
+              desc="Begin with a diagnostic summary, then follow a Socratic coaching flow. Every recommendation surfaces the reasoning behind it."
+              detail="Best for: founders working through ambiguity who want to understand the why."
+            />
+
+            {/* ── SAIL ── */}
+            <ModeCard
+              badge="AI+"
+              name="SAIL"
+              color="#7C3AED"
+              bg="rgba(124,58,237,0.05)"
+              border="rgba(124,58,237,0.18)"
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3C18 5 22 11 20 19L12 19Z" fill="#7C3AED" opacity="0.85"/>
+                  <path d="M12 8C16 9 18 14 17 19L12 19Z" fill="#7C3AED" opacity="0.4"/>
+                  <line x1="12" y1="2" x2="12" y2="20" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M5 19Q12 22 19 19" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                  <circle cx="5" cy="6" r="1.8" fill="#7C3AED" opacity="0.6"/>
+                </svg>
+              }
+              desc="Adaptive intelligence that reads your intent and chooses between analytical depth and coaching dialogue automatically — no mode selection required."
+              detail="Best for: users who move between strategic and operational thinking within the same session."
+            />
+
+            {/* ── TRIM ── */}
+            <ModeCard
+              badge="NEW"
+              name="TRIM"
+              color="#B45309"
+              bg="rgba(180,83,9,0.05)"
+              border="rgba(201,169,110,0.28)"
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <line x1="6" y1="4" x2="6" y2="20" stroke="#B45309" strokeWidth="1.3" strokeLinecap="round" opacity="0.35"/>
+                  <circle cx="6" cy="6"  r="2.2" fill="#B45309" opacity="0.9"/>
+                  <circle cx="6" cy="12" r="2.2" fill="#B45309" opacity="0.65"/>
+                  <circle cx="6" cy="18" r="2.2" fill="#B45309" opacity="0.4"/>
+                  <rect x="11" y="5"  width="9" height="2" rx="1" fill="#B45309" opacity="0.85"/>
+                  <rect x="11" y="11" width="7" height="2" rx="1" fill="#B45309" opacity="0.65"/>
+                  <rect x="11" y="17" width="5" height="2" rx="1" fill="#B45309" opacity="0.45"/>
+                </svg>
+              }
+              desc="Generates a phased strategic timeline — 30, 60, and 90-day milestones with measurable targets. Translates your brief into a locked execution roadmap."
+              detail="Best for: leaders who need a structured plan with accountability checkpoints."
+            />
+
+            {/* ── Catamaran ── */}
+            <ModeCard
+              badge="PRO"
+              name="Catamaran"
+              color="#D4AF37"
+              bg="rgba(212,175,55,0.06)"
+              border="rgba(212,175,55,0.28)"
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 18L6 20L8 18" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16 18L18 20L20 18" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="6" y1="14" x2="18" y2="14" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="12" y1="14" x2="12" y2="4" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M8 4C10 6 14 6 16 4" stroke="#D4AF37" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+                </svg>
+              }
+              desc="Dual-track system overhaul. Market Growth and Customer Experience are analysed in parallel, then unified into a single executable strategy with one 30-day target."
+              detail="Best for: scaling businesses facing simultaneous revenue and retention pressure."
+            />
+
+            {/* ── Custom Synergy ── */}
+            <ModeCard
+              badge="HYBRID"
+              name="Custom Synergy"
+              color="#0891B2"
+              bg="rgba(8,145,178,0.05)"
+              border="rgba(8,145,178,0.18)"
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="3" stroke="#0891B2" strokeWidth="1.5" fill="rgba(8,145,178,0.2)"/>
+                  <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="#0891B2" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8" stroke="#0891B2" strokeWidth="1.2" strokeLinecap="round" opacity="0.55"/>
+                </svg>
+              }
+              desc="Select 2 to 4 intelligence modes and the system fuses them into a single coherent persona — a personalised AI council with weighted directives and one voice."
+              detail="Best for: complex situations that require simultaneous strategic, operational, and coaching lenses."
+            />
+          </div>
+
+          {/* ── Operator — full-width horizontal panel ──────────── */}
+          <div
+            style={{
+              marginTop:    '1rem',
+              padding:      '1.5rem 1.75rem',
+              background:   'rgba(204,34,0,0.04)',
+              border:       '1px solid rgba(204,34,0,0.2)',
+              borderRadius: '10px',
+              display:      'flex',
+              alignItems:   'flex-start',
+              gap:          '1.25rem',
+            }}
+          >
+            {/* Icon + name */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0, minWidth: '9rem' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="#CC2200" strokeWidth="1.4" opacity="0.4"/>
+                <circle cx="12" cy="12" r="3" fill="#CC2200" opacity="0.9"/>
+                <line x1="12" y1="3" x2="12" y2="7" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="12" y1="17" x2="12" y2="21" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="3" y1="12" x2="7" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="17" y1="12" x2="21" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <div>
+                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 700, color: '#CC2200', display: 'block', lineHeight: 1.1 }}>
+                  Operator
+                </span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#CC2200', opacity: 0.7 }}>
+                  Universal
+                </span>
               </div>
-            ))}
+            </div>
+
+            {/* Divider */}
+            <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(204,34,0,0.15)', flexShrink: 0 }} />
+
+            {/* Description */}
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: '#0C0C0E', fontWeight: 300, margin: '0 0 0.4rem' }}>
+                Domain-agnostic intelligence — real estate, law, medicine, finance, logistics. The same benchmark discipline applied to any question, streamed in real time with zero padding.
+              </p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', lineHeight: 1.5, margin: 0 }}>
+                Best for: cross-domain operators and consultants who switch contexts rapidly.
+              </p>
+            </div>
           </div>
         </div>
       </section>
