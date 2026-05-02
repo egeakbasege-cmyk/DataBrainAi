@@ -69,37 +69,41 @@
   background: var(--ae-bg);
 }
 
-/* ── Safe Area Insets for Mobile (Notch & Home Bar) ─ */
-@supports (padding-top: env(safe-area-inset-top)) {
-  .safe-area-top {
-    padding-top: env(safe-area-inset-top);
-  }
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .safe-area-x {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-  .safe-area-all {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-}
+/* ── Safe Area Insets for Mobile (Notch & Home Bar) ─────────────────────────
+ *
+ * Architecture: <body class="safe-area-top safe-area-bottom"> handles ALL
+ * safe-area padding via the utility classes below.
+ *
+ * BUG FIXED: The original code had BOTH these classes AND an
+ * @media (display-mode: standalone) rule that added the same padding-top/bottom
+ * to <body> directly. In Capacitor (which always runs as standalone), this caused
+ * DOUBLE padding — e.g. 47px notch × 2 = 94px white gap on iPhone 14 Pro.
+ * The @media standalone block has been REMOVED. Classes are the single source of truth.
+ *
+ * CSS cascade order (intentional):
+ *   1. Fallback rule (0) — for browsers/devices with no safe-area support
+ *   2. @supports rule — overrides with env() value when supported
+ * ─────────────────────────────────────────────────────────────────────────── */
 
-/* Default fallback for devices without safe-area support */
+/* Fallback: zero padding on devices without safe-area support */
 .safe-area-top    { padding-top: 0; }
 .safe-area-bottom { padding-bottom: 0; }
 .safe-area-x      { padding-left: 0; padding-right: 0; }
 .safe-area-all    { padding: 0; }
 
-/* Mobile-specific: ensure content doesn't go under notch/home bar */
-@media screen and (display-mode: standalone) {
-  body {
-    padding-top: env(safe-area-inset-top);
+/* Progressive enhancement: apply env() values where supported */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-area-top    { padding-top:    env(safe-area-inset-top); }
+  .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-area-x      {
+    padding-left:  env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  .safe-area-all {
+    padding-top:    env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+    padding-left:   env(safe-area-inset-left);
+    padding-right:  env(safe-area-inset-right);
   }
 }
 

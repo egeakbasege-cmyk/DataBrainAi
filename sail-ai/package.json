@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "build:mobile": "MOBILE_BUILD=true prisma generate && MOBILE_BUILD=true next build",
+    "build:mobile": "MOBILE_BUILD=true next build && npx cap sync",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "prisma generate",
