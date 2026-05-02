@@ -8,6 +8,7 @@ import { Logo } from '@/components/Logo'
 import { MicroAnalysis } from '@/components/MicroAnalysis'
 import { CompassRose, EngravedSailboat } from '@/components/Ornaments'
 import { AgentModeButton } from '@/components/AgentModeButton'
+import { TopoBackground } from '@/components/TopoBackground'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import type { AgentMode } from '@/types/chat'
 
@@ -244,8 +245,8 @@ export default function LandingPage() {
             height:         '100%',
             objectFit:      'cover',
             objectPosition: 'center 28%',
-            opacity:        0.22,
-            filter:         'blur(0.6px) brightness(0.9)',
+            opacity:        0.18,
+            filter:         'blur(0.6px) brightness(0.85)',
             transform:      'scale(1.06)',
             transformOrigin:'center center',
             pointerEvents:  'none',
@@ -253,7 +254,10 @@ export default function LandingPage() {
             willChange:     'transform',
           }}
         />
-        <div className="max-w-6xl mx-auto px-6 md:px-10 pt-20 md:pt-28">
+
+        {/* Animated topographic contour lines — gold organic waves on the sides */}
+        <TopoBackground />
+        <div className="max-w-6xl mx-auto px-6 md:px-10 pt-20 md:pt-28" style={{ position: 'relative', zIndex: 10 }}>
 
           {/* Eyebrow */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
@@ -869,8 +873,10 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           CTA — dark, minimal
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#0C0C0E' }}>
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-20" style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+      <section style={{ background: '#0C0C0E', position: 'relative', overflow: 'hidden' }}>
+        {/* Topo lines mirror the hero treatment on the CTA dark panel */}
+        <TopoBackground />
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-20" style={{ display: 'flex', flexDirection: 'column', gap: '0', position: 'relative', zIndex: 10 }}>
           <Rule />
           <div style={{ paddingTop: '3rem', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap' }}>
             <div>
