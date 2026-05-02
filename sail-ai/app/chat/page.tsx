@@ -338,16 +338,13 @@ export default function ChatPage() {
 
   // Show key panel on any AI failure that could be fixed with BYOK
   useEffect(() => {
-    const e = error ?? sailError ?? trimError ?? catamaranError ?? synergyError
+    const e = error ?? sailError ?? trimError
     if (!e) return
     const isAiError = e.includes('quota') || e.includes('aistudio') ||
       e.includes('API key') || e.includes('Unable to reach') ||
-      e.includes('AI_') || e.includes('exhausted') || e.includes('unavailable') ||
-      e === 'RATE_LIMIT' || e.toLowerCase().includes('rate limit') ||
-      e.toLowerCase().includes('rate_limit') || e.toLowerCase().includes('too many') ||
-      e.toLowerCase().includes('invalid api') || e.toLowerCase().includes('provider')
+      e.includes('AI_') || e.includes('exhausted') || e.includes('unavailable')
     if (isAiError) setShowKeyPanel(true)
-  }, [error, sailError, trimError, catamaranError, synergyError])
+  }, [error, sailError, trimError])
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     if (e.target.value.length <= MAX) setInput(e.target.value)
@@ -1055,10 +1052,8 @@ export default function ChatPage() {
             >
               <span style={{ color: '#991B1B', lineHeight: 1.5, flexShrink: 0, fontSize: '0.85rem' }}>⚠</span>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.6, color: '#991B1B', margin: 0 }}>
-                {activeError === 'RATE_LIMIT' || activeError?.toLowerCase().includes('rate limit') || activeError?.toLowerCase().includes('too many')
-                  ? 'API rate limit reached. Enter your own Groq API key below to continue instantly.'
-                  : activeError?.toLowerCase().includes('invalid api key') || activeError?.toLowerCase().includes('api key')
-                  ? 'Invalid API key. Please enter a valid Groq API key below.'
+                {activeError === 'RATE_LIMIT'
+                  ? 'Request limit reached. Please wait a moment before trying again.'
                   : activeError?.toLowerCase().includes('sign in') || activeError?.toLowerCase().includes('unauthorized')
                   ? <span>Session expired. <a href="/login?callbackUrl=%2Fchat" style={{ color: '#991B1B', textDecoration: 'underline' }}>Sign in again →</a></span>
                   : activeError}

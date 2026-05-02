@@ -35,6 +35,18 @@ export const runtime = 'edge'
 const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODEL   = 'llama-3.3-70b-versatile'
 
+// ── Groq fetch with 1 automatic retry on per-minute rate limit ────────────────
+async function groqFetch(init: RequestInit, retries = 1): Promise<Response> {
+  const res = await fetch(GROQ_URL, init)
+  if (res.status === 429 && retries > 0) {
+    const retryAfter = Number(res.headers.get('retry-after') ?? '3')
+    const waitMs = Math.min(retryAfter * 1000, 5000)
+    await new Promise(r => setTimeout(r, waitMs))
+    return groqFetch(init, retries - 1)
+  }
+  return res
+}
+
 type ExtendedPayload = AetherisPayload & {
   apiKey?:             string
   primaryConstraint?:  string
@@ -343,7 +355,7 @@ export async function POST(req: NextRequest) {
   if (analysisMode === 'synergy') {
     const modes        = body.synergyModes ?? ['upwind', 'sail']
     const synergyName  = body.synergyName
-    const synRes = await fetch(GROQ_URL, {
+    const synRes = await groqFetch({
       method: 'POST',
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -408,7 +420,7 @@ export async function POST(req: NextRequest) {
 
   // ── SAIL mode: streaming markdown response ────────────────────────────────
   if (analysisMode === 'sail') {
-    const sailRes = await fetch(GROQ_URL, {
+    const sailRes = await groqFetch({
       method: 'POST',
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -504,7 +516,7 @@ export async function POST(req: NextRequest) {
 
   // ── Operator mode: universal deep-intelligence streaming ─────────────────
   if (analysisMode === 'operator') {
-    const operatorRes = await fetch(GROQ_URL, {
+    const operatorRes = await groqFetch({
       method: 'POST',
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -567,7 +579,7 @@ export async function POST(req: NextRequest) {
   if (analysisMode === 'trim') {
     let trimRes: Response
     try {
-      trimRes = await fetch(GROQ_URL, {
+      trimRes = await groqFetch({
         method: 'POST',
         headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -611,7 +623,7 @@ export async function POST(req: NextRequest) {
   if (analysisMode === 'catamaran') {
     let catRes: Response
     try {
-      catRes = await fetch(GROQ_URL, {
+      catRes = await groqFetch({
         method: 'POST',
         headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -663,7 +675,7 @@ export async function POST(req: NextRequest) {
 
   let groqRes: Response
   try {
-    groqRes = await fetch(GROQ_URL, {
+    groqRes = await groqFetch({
       method: 'POST',
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -682,11 +694,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (!groqRes.ok) {
-    const status = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
-    return Response.json(
-      { error: status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : `AI provider error: ${groqRes.status}` },
-      { status },
-    )
+    const errBody = await groqRes.json().catch(() => ({})) as Record<string, unknown>
+    const groqMsg = (errBody?.error as Record<string, unknown>)?.message as string | undefined
+    const status  = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
+    const fallback = status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : `AI provider error: ${groqRes.status}`
+    return Response.json({ error: groqMsg ?? fallback }, { status })
   }
 
   let groqData: { choices?: Array<{ message?: { content?: string } }> }
