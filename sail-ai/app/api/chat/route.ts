@@ -405,42 +405,41 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { readable, writable } = new TransformStream()
-    const writer  = writable.getWriter()
-    const encoder = new TextEncoder()
+    const encoder   = new TextEncoder()
+    const metaLine  = JSON.stringify({ __synMeta: { modes, companyName: synergyName ?? null } }) + '\n'
+    const groqBody  = synRes.body!
 
-    // Emit metadata header on first chunk
-    const metaLine = JSON.stringify({ __synMeta: { modes, companyName: synergyName ?? null } }) + '\n'
-    await writer.write(encoder.encode(metaLine))
-
-    ;(async () => {
-      const reader    = synRes.body!.getReader()
-      const decoder   = new TextDecoder()
-      let   sseBuffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        sseBuffer += decoder.decode(value, { stream: true })
-        const lines = sseBuffer.split('\n')
-        sseBuffer = lines.pop() ?? ''
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          const raw = line.slice(6).trim()
-          if (raw === '[DONE]') continue
-          try {
-            const chunk = JSON.parse(raw)
-            const delta = chunk.choices?.[0]?.delta?.content ?? ''
-            if (delta) await writer.write(encoder.encode(delta))
-          } catch { /* ignore */ }
+    const stream = new ReadableStream({
+      async start(ctrl) {
+        ctrl.enqueue(encoder.encode(metaLine))
+        const reader  = groqBody.getReader()
+        const decoder = new TextDecoder()
+        let   buf     = ''
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buf += decoder.decode(value, { stream: true })
+            const lines = buf.split('\n')
+            buf = lines.pop() ?? ''
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue
+              const raw = line.slice(6).trim()
+              if (raw === '[DONE]') continue
+              try {
+                const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
+                  .choices?.[0]?.delta?.content ?? ''
+                if (delta) ctrl.enqueue(encoder.encode(delta))
+              } catch { /* ignore parse errors */ }
+            }
+          }
+        } catch { /* stream ended abruptly */ } finally {
+          ctrl.close()
         }
-      }
+      },
+    })
 
-      await writer.close()
-    })()
-
-    return new Response(readable, {
+    return new Response(stream, {
       headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' },
     })
   }
@@ -470,73 +469,70 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { readable, writable } = new TransformStream()
-    const writer  = writable.getWriter()
-    const encoder = new TextEncoder()
+    const encoder   = new TextEncoder()
+    const sailBody  = sailRes.body!
 
-    ;(async () => {
-      const reader        = sailRes.body!.getReader()
-      const decoder       = new TextDecoder()
-      let   sseBuffer     = ''   // raw SSE framing buffer
-      let   contentBuffer = ''   // accumulated content for intent detection
-      let   intentEmitted = false
+    const stream = new ReadableStream({
+      async start(ctrl) {
+        const reader        = sailBody.getReader()
+        const decoder       = new TextDecoder()
+        let   sseBuf        = ''
+        let   contentBuf    = ''
+        let   intentEmitted = false
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        sseBuffer += decoder.decode(value, { stream: true })
-        const lines = sseBuffer.split('\n')
-        sseBuffer = lines.pop() ?? ''
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            sseBuf += decoder.decode(value, { stream: true })
+            const lines = sseBuf.split('\n')
+            sseBuf = lines.pop() ?? ''
 
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          const raw = line.slice(6).trim()
-          if (raw === '[DONE]') continue
-          try {
-            const chunk = JSON.parse(raw)
-            const delta = chunk.choices?.[0]?.delta?.content ?? ''
-            if (!delta) continue
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue
+              const raw = line.slice(6).trim()
+              if (raw === '[DONE]') continue
+              try {
+                const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
+                  .choices?.[0]?.delta?.content ?? ''
+                if (!delta) continue
 
-            if (!intentEmitted) {
-              contentBuffer += delta
-              const nl = contentBuffer.indexOf('\n')
-              if (nl !== -1) {
-                // Found end of first line — extract intent token
-                const firstLine = contentBuffer.slice(0, nl).trim()
-                const match     = firstLine.match(/\[INTENT:(analytic|coaching)\]/)
-                const intent    = match ? (match[1] as 'analytic' | 'coaching') : 'analytic'
-                await writer.write(encoder.encode(JSON.stringify({ __sailMeta: { intent } }) + '\n'))
-                // Stream the rest (skip the intent line itself)
-                const rest = contentBuffer.slice(nl + 1)
-                if (rest) await writer.write(encoder.encode(rest))
-                contentBuffer = ''
-                intentEmitted = true
-              } else if (contentBuffer.length > 120) {
-                // No newline found — default to analytic and flush
-                await writer.write(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic' } }) + '\n'))
-                await writer.write(encoder.encode(contentBuffer))
-                contentBuffer = ''
-                intentEmitted = true
-              }
-            } else {
-              await writer.write(encoder.encode(delta))
+                if (!intentEmitted) {
+                  contentBuf += delta
+                  const nl = contentBuf.indexOf('\n')
+                  if (nl !== -1) {
+                    const match  = contentBuf.slice(0, nl).trim().match(/\[INTENT:(analytic|coaching)\]/)
+                    const intent = match ? (match[1] as 'analytic' | 'coaching') : 'analytic'
+                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent } }) + '\n'))
+                    const rest = contentBuf.slice(nl + 1)
+                    if (rest) ctrl.enqueue(encoder.encode(rest))
+                    contentBuf    = ''
+                    intentEmitted = true
+                  } else if (contentBuf.length > 120) {
+                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic' } }) + '\n'))
+                    ctrl.enqueue(encoder.encode(contentBuf))
+                    contentBuf    = ''
+                    intentEmitted = true
+                  }
+                } else {
+                  ctrl.enqueue(encoder.encode(delta))
+                }
+              } catch { /* ignore parse errors */ }
             }
-          } catch { /* ignore parse errors */ }
+          }
+        } catch { /* stream ended abruptly */ } finally {
+          if (!intentEmitted) {
+            ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic' } }) + '\n'))
+            if (contentBuf) ctrl.enqueue(encoder.encode(contentBuf))
+          } else if (contentBuf) {
+            ctrl.enqueue(encoder.encode(contentBuf))
+          }
+          ctrl.close()
         }
-      }
+      },
+    })
 
-      // Flush any remaining content after stream ends
-      if (!intentEmitted) {
-        await writer.write(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic' } }) + '\n'))
-        if (contentBuffer) await writer.write(encoder.encode(contentBuffer))
-      } else if (contentBuffer) {
-        await writer.write(encoder.encode(contentBuffer))
-      }
-
-      await writer.close()
-    })()
-
-    return new Response(readable, {
+    return new Response(stream, {
       headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' },
     })
   }
@@ -566,38 +562,39 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { readable, writable } = new TransformStream()
-    const writer  = writable.getWriter()
-    const encoder = new TextEncoder()
+    const encoder    = new TextEncoder()
+    const opBody     = operatorRes.body!
 
-    ;(async () => {
-      const reader     = operatorRes.body!.getReader()
-      const decoder    = new TextDecoder()
-      let   sseBuffer  = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        sseBuffer += decoder.decode(value, { stream: true })
-        const lines = sseBuffer.split('\n')
-        sseBuffer = lines.pop() ?? ''
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          const raw = line.slice(6).trim()
-          if (raw === '[DONE]') continue
-          try {
-            const chunk = JSON.parse(raw)
-            const delta = chunk.choices?.[0]?.delta?.content ?? ''
-            if (delta) await writer.write(encoder.encode(delta))
-          } catch { /* ignore */ }
+    const stream = new ReadableStream({
+      async start(ctrl) {
+        const reader  = opBody.getReader()
+        const decoder = new TextDecoder()
+        let   buf     = ''
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buf += decoder.decode(value, { stream: true })
+            const lines = buf.split('\n')
+            buf = lines.pop() ?? ''
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue
+              const raw = line.slice(6).trim()
+              if (raw === '[DONE]') continue
+              try {
+                const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
+                  .choices?.[0]?.delta?.content ?? ''
+                if (delta) ctrl.enqueue(encoder.encode(delta))
+              } catch { /* ignore */ }
+            }
+          }
+        } catch { /* stream ended abruptly */ } finally {
+          ctrl.close()
         }
-      }
+      },
+    })
 
-      await writer.close()
-    })()
-
-    return new Response(readable, {
+    return new Response(stream, {
       headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' },
     })
   }
