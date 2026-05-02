@@ -605,7 +605,10 @@ export async function POST(req: NextRequest) {
 
     if (!trimRes.ok) {
       const status = trimRes.status === 401 ? 401 : trimRes.status === 429 ? 429 : 502
-      return Response.json({ error: 'TRIM request failed.' }, { status })
+      return Response.json(
+        { error: status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status },
+      )
     }
 
     const trimData: { choices?: Array<{ message?: { content?: string } }> } = await trimRes.json().catch(() => ({}))
@@ -626,7 +629,6 @@ export async function POST(req: NextRequest) {
   if (analysisMode === 'catamaran') {
     let catRes: Response
     try {
-      console.log('[CATAMARAN] Starting request with Groq key:', groqKey ? 'Present' : 'Missing')
       catRes = await fetch(GROQ_URL, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
@@ -641,29 +643,25 @@ export async function POST(req: NextRequest) {
           temperature:     0.35,
         }),
       })
-      console.log('[CATAMARAN] Response status:', catRes.status)
-    } catch (err) {
-      console.error('[CATAMARAN] Fetch error:', err)
-      return Response.json({ error: 'CATAMARAN request failed.', details: String(err) }, { status: 502 })
+    } catch {
+      return Response.json({ error: 'AI provider unreachable.' }, { status: 502 })
     }
 
     if (!catRes.ok) {
       const status = catRes.status === 401 ? 401 : catRes.status === 429 ? 429 : 502
-      return Response.json({ error: 'CATAMARAN request failed.' }, { status })
+      return Response.json(
+        { error: status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status },
+      )
     }
 
     const catData: { choices?: Array<{ message?: { content?: string } }> } = await catRes.json().catch(() => ({}))
-    console.log('[CATAMARAN] Response data:', JSON.stringify(catData).slice(0, 500))
     const catContent = catData?.choices?.[0]?.message?.content ?? '{}'
-    console.log('[CATAMARAN] Content:', catContent.slice(0, 200))
 
     try {
       const parsed = JSON.parse(catContent)
-      console.log('[CATAMARAN] Parsed successfully:', Object.keys(parsed))
       return Response.json(parsed, { headers: { 'Cache-Control': 'no-store' } })
-    } catch (parseErr) {
-      console.error('[CATAMARAN] Parse error:', parseErr)
-      console.error('[CATAMARAN] Raw content that failed:', catContent.slice(0, 500))
+    } catch {
       return Response.json(
         { 
           catamaranTitle: 'System Overhaul Plan',
