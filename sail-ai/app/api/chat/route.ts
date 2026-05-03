@@ -33,8 +33,8 @@ import type { SkillCard }                            from '@/lib/skills/skillCar
 import { scrubPII }                                  from '@/lib/skills/piiScrubber'
 import {
   buildDataHealthReport,
-  // encodeHealthReport and GOVERNANCE_SYSTEM_SUFFIX intentionally not imported:
-  // health report is computed for internal analytics only, never shown to users.
+  GOVERNANCE_SYSTEM_SUFFIX,
+  // encodeHealthReport not imported — health report attached to JSON responses only, never streamed.
   type DataHealthReport,
 } from '@/lib/skills/dataHealthReport'
 
@@ -676,6 +676,10 @@ export async function POST(req: NextRequest) {
     bodyFields:      _bodyFields,
   })
 
+  // Governance suffix only when a business methodology was triggered.
+  // Casual / non-business queries (_appliedCards === []) get no suffix.
+  const governanceSuffix = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
+
   // ── SYNERGY mode: War Room Council — streaming markdown ──────────────────
   if (analysisMode === 'synergy') {
     const modes        = body.synergyModes ?? ['upwind', 'sail']
@@ -686,7 +690,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) },
+          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1000,
@@ -751,7 +755,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) },
+          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -847,7 +851,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) },
+          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
