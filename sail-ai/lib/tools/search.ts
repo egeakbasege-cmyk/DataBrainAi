@@ -228,6 +228,40 @@ async function searchSerper(query: string, signal?: AbortSignal): Promise<Search
   }))
 }
 
+// ── High-inflation economy detector ──────────────────────────────────────────
+// [SAIL-DATA-VERACITY]
+// Used by decomposeToSearchQueries() to force a USD/EUR anchor vector as Q1
+// for currencies where local-currency figures are likely stale or misleading.
+
+/**
+ * HIGH_INFLATION_CURRENCIES
+ *
+ * ISO 4217 currency codes and language codes for economies with historically
+ * elevated CPI risk (>20% annual average in recent years).
+ * Maps both currency code and primary language code so either can be checked.
+ */
+const HIGH_INFLATION_ENTRIES: ReadonlySet<string> = new Set([
+  // Currency codes
+  'TRY', 'ARS', 'VES', 'EGP', 'NGN', 'PKR', 'ETB', 'SDG', 'SYP', 'ZWL', 'LBP',
+  // Language codes (used when currency is unknown but language is detected)
+  'tr',  // Turkish
+  'es',  // Spanish (covers AR/VE)
+])
+
+/**
+ * isHighInflationEconomy
+ *
+ * Returns true when the given currency code (ISO 4217) or language code
+ * belongs to a known high-inflation economy.
+ * Case-insensitive. Falls back to false for unknown codes.
+ *
+ * @param currencyOrLanguage - e.g. 'TRY', 'ARS', 'tr', 'es'
+ */
+export function isHighInflationEconomy(currencyOrLanguage: string): boolean {
+  return HIGH_INFLATION_ENTRIES.has(currencyOrLanguage.toUpperCase()) ||
+         HIGH_INFLATION_ENTRIES.has(currencyOrLanguage.toLowerCase())
+}
+
 // ── Language detector ─────────────────────────────────────────────────────────
 // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
 // Heuristic — no API call. Covers the 6 languages SAIL AI supports.
@@ -299,8 +333,14 @@ export function decomposeToSearchQueries(
   const entityMatch  = message.match(/\b([A-ZÇĞIÖŞÜ][a-zA-ZçğışöşüÇĞIÖŞÜ]+(?:\s+[A-ZÇĞIÖŞÜ][a-zA-ZçğışöşüÇĞIÖŞÜ]+){0,2})\b/)
 
   if (isNonEnglish) {
-    // Q1 — English global query (high-authority international sources)
-    queries.push(`${keyTerms} ${currentYear} global statistics report`.trim())
+    const isVolatileEconomy = isHighInflationEconomy(detectedLang)
+
+    // Q1 — English global query; for volatile economies, anchor to USD/EUR pricing
+    // so the LLM receives hard-currency benchmarks, not stale local-currency figures.
+    const q1 = isVolatileEconomy
+      ? `${keyTerms} ${currentYear} USD EUR price cost global benchmark report`.trim()
+      : `${keyTerms} ${currentYear} global statistics report`.trim()
+    queries.push(q1)
 
     // Q2 — Native language query (regional/cultural sources)
     const nativeTerms = message.slice(0, 120).trim()
@@ -314,7 +354,11 @@ export function decomposeToSearchQueries(
     } else if (entityMatch && entityMatch[1].length > 3) {
       queries.push(`${entityMatch[1]} ${currentYear} industry analysis benchmark`.trim())
     } else {
-      queries.push(`${keyTerms} industry benchmark statistics ${currentYear}`.trim())
+      // For volatile economies, add an explicit forex/conversion query as Q3
+      const q3 = isVolatileEconomy
+        ? `${keyTerms} USD EUR equivalent exchange rate ${currentYear}`.trim()
+        : `${keyTerms} industry benchmark statistics ${currentYear}`.trim()
+      queries.push(q3)
     }
   } else {
     // Q1 — Primary: cleaned intent + year
