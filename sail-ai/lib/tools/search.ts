@@ -383,16 +383,26 @@ const RESEARCH_INTENT_PATTERNS: RegExp[] = [
   /\b(gdp|cpi|ppi|pmi|fed|ecb|imf|wto|oecd|g20)\b/i,
 ]
 
+// [SAIL-GLOBAL-VERACITY-PATCH]
+// Common greeting tokens that should never trigger a search — multilingual.
+const GREETING_PATTERN = /^(merhaba|selam|nasılsın|nasılsınız|iyi\s+günler|günaydın|iyi\s+akşamlar|hey|hi|hello|howdy|good\s+morning|good\s+evening|ok|okay|tamam|peki|evet|yes|no|hayır|teşekkür|teşekkürler|sağol|sağ\s+ol|mersi|gracias|danke|merci|谢谢|你好|再见)$/i
+
 /**
  * requiresResearch
  *
  * Universal intent-driven trigger. Returns true for any query involving
  * strategic advice, competitive analysis, market data, technical benchmarks,
  * or cultural/regional insights — regardless of the language used.
- * Requires message to be substantive (>15 chars) to avoid triggering on greetings.
+ *
+ * Guard order:
+ *   1. Hard-reject very short inputs (< 15 chars)
+ *   2. Hard-reject explicit greeting tokens (multilingual)
+ *   3. Intent-pattern match across 6 languages
  */
 export function requiresResearch(message: string): boolean {
-  if (message.trim().length < 15) return false    // skip greetings / one-word inputs
+  const trimmed = message.trim()
+  if (trimmed.length < 15) return false           // skip greetings / one-word inputs
+  if (GREETING_PATTERN.test(trimmed)) return false // skip explicit greeting phrases
   return RESEARCH_INTENT_PATTERNS.some(re => re.test(message))
 }
 
@@ -500,6 +510,8 @@ export function encodeResearchContext(res: DeepSearchResponse): string {
  *
  * Scores cross-source agreement on a 1–10 scale.
  * Uses lexical overlap of key noun phrases across result snippets as a proxy.
+ * Kept for backward-compat — see computeTriangulationAndConsensus for the
+ * richer [SAIL-GLOBAL-VERACITY-PATCH] version.
  */
 export function computeTriangulationLevel(results: SearchResult[]): number {
   if (results.length === 0) return 0
@@ -530,4 +542,78 @@ export function computeTriangulationLevel(results: SearchResult[]): number {
   const maxAgreements = wordSets.length - 1
   const ratio         = maxAgreements > 0 ? agreements / maxAgreements : 0
   return Math.round(3 + ratio * 6)   // 3–9
+}
+
+// [SAIL-GLOBAL-VERACITY-PATCH]
+/**
+ * TriangulationConsensus
+ *
+ * Richer output type returned by computeTriangulationAndConsensus.
+ */
+export interface TriangulationConsensus {
+  triangulationLevel: number    // 1–10 composite score
+  isGloballyVerified: boolean   // true when ≥3 unique domains AND ≥2 sources carry numeric data
+  uniqueDomains:      number    // count of distinct hostnames across results
+  discrepancyRisk:    boolean   // sources present but none carry numeric data
+}
+
+/**
+ * computeTriangulationAndConsensus
+ *
+ * Edge-optimised (no variance/std-dev math) composite triangulation.
+ * Replaces the single `triangulationLevel` number with a richer object
+ * that exposes domain diversity and numeric data coverage for the health report.
+ *
+ * Hard-Gate rule: isGloballyVerified requires
+ *   • ≥ 3 distinct authority domains (domain diversity)
+ *   • ≥ 2 sources containing quantitative data (numeric coverage)
+ */
+export function computeTriangulationAndConsensus(
+  results: SearchResult[],
+): TriangulationConsensus {
+  if (results.length === 0) {
+    return { triangulationLevel: 0, isGloballyVerified: false, uniqueDomains: 0, discrepancyRisk: false }
+  }
+
+  // ── 1. Unique domain count ────────────────────────────────────────────────
+  const uniqueDomains = new Set(
+    results.map(r => {
+      try { return new URL(r.url).hostname } catch { return 'unknown' }
+    }),
+  ).size
+
+  // ── 2. Numeric data coverage (Edge-safe regex — no backtracking risk) ────
+  // Matches magnitudes, percentages, large numbers in EN + TR (milyon/milyar)
+  const numericRegex = /\d+(?:[.,]\d+)?(?:\s*(?:K|M|B|T|milyon|milyar|billion|million|%))?/gi
+  const sourcesWithNumbers = results.filter(
+    r => (r.content.match(numericRegex) ?? []).length > 1,
+  ).length
+
+  // ── 3. Lexical overlap (existing baseline logic, unchanged) ─────────────
+  let lexicalAgreements = 0
+  if (results.length > 1) {
+    const baselineWords = new Set(
+      results[0].content.toLowerCase().match(/\b[a-zçğıöşü]{5,}\b/g) ?? [],
+    )
+    for (let i = 1; i < results.length; i++) {
+      const currentWords = results[i].content.toLowerCase().match(/\b[a-zçğıöşü]{5,}\b/g) ?? []
+      const shared = currentWords.filter(w => baselineWords.has(w))
+      if (shared.length >= 3) lexicalAgreements++
+    }
+  }
+
+  // ── 4. Hard-Gate consensus score ─────────────────────────────────────────
+  const isGloballyVerified = uniqueDomains >= 3 && sourcesWithNumbers >= 2
+
+  const score = isGloballyVerified
+    ? 10  // full consensus: diverse domains + quantitative corroboration
+    : Math.round(3 + (lexicalAgreements / Math.max(results.length - 1, 1)) * 5)
+
+  return {
+    triangulationLevel: Math.min(score, 10),
+    isGloballyVerified,
+    uniqueDomains,
+    // discrepancyRisk: sources exist but none carry numeric proof
+    discrepancyRisk: results.length > 0 && sourcesWithNumbers === 0,
+  }
 }

@@ -49,7 +49,8 @@ import {
 } from '@/lib/tools/search'
 import {
   ANALYTIC_SYNTHESIS_DIRECTIVE,
-  UNIVERSAL_LANGUAGE_DIRECTIVE, // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+  UNIVERSAL_LANGUAGE_DIRECTIVE,  // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+  UNIVERSAL_VERACITY_DIRECTIVE,  // [SAIL-GLOBAL-VERACITY-PATCH]
 } from '@/lib/prompts/enhanced-modes'
 
 const { auth } = NextAuth(authConfig)
@@ -730,8 +731,12 @@ export async function POST(req: NextRequest) {
   // [SAIL-INTELLIGENCE-UPGRADE] Synthesis suffix — appended when live research was retrieved.
   // [SAIL-UNIVERSAL-INTELLIGENCE-V2] For non-English queries, also injects UNIVERSAL_LANGUAGE_DIRECTIVE
   // to prevent language bleeding when Groq synthesises English-sourced research context.
+  // [SAIL-GLOBAL-VERACITY-PATCH] UNIVERSAL_VERACITY_DIRECTIVE enforces strict source traceability
+  // and conflict transparency for all queries when research context is active.
   const synthesisSuffix = _hasSynthesisContext
-    ? ANALYTIC_SYNTHESIS_DIRECTIVE + (_queryLanguage !== 'en' ? UNIVERSAL_LANGUAGE_DIRECTIVE : '')
+    ? ANALYTIC_SYNTHESIS_DIRECTIVE
+      + UNIVERSAL_VERACITY_DIRECTIVE
+      + (_queryLanguage !== 'en' ? UNIVERSAL_LANGUAGE_DIRECTIVE : '')
     : ''
 
   // ── SYNERGY mode: War Room Council — streaming markdown ──────────────────

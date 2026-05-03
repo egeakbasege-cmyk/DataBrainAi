@@ -17,7 +17,10 @@
 
 import type { SkillCard }    from './skillCards'
 import type { SearchResult } from '@/lib/tools/search'
-import { computeTriangulationLevel } from '@/lib/tools/search'
+import {
+  computeTriangulationLevel,
+  computeTriangulationAndConsensus, // [SAIL-GLOBAL-VERACITY-PATCH]
+} from '@/lib/tools/search'
 
 // ── Interface ─────────────────────────────────────────────────────────────────
 
@@ -37,6 +40,11 @@ export interface DataHealthReport {
   // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
   languagePurityScore?: number    // 0.0–1.0: 1.0 = bilingual query vectors used, 0.5 = English-only vectors, undefined = no research
   globalDataCoverage?:  boolean   // true = at least one English global query vector was used
+  // ── Global Veracity Patch metrics ─────────────────────────────────────────
+  // [SAIL-GLOBAL-VERACITY-PATCH]
+  isGloballyVerified?:  boolean   // true = ≥3 unique domains AND ≥2 numeric-data sources
+  uniqueDomains?:       number    // count of distinct authority domains retrieved
+  discrepancyRisk?:     boolean   // sources present but none carry quantitative data
 }
 
 // ── Builder params ────────────────────────────────────────────────────────────
@@ -89,10 +97,15 @@ export function buildDataHealthReport(params: DataHealthReportParams): DataHealt
   const dataCompleteness   = 1.0 - emptyFieldRatio
 
   // ── Research metrics (only when search results are present) ──────────────
-  const hasResearch      = searchResults.length > 0
-  const triangulationLevel = hasResearch
-    ? computeTriangulationLevel(searchResults)
+  const hasResearch = searchResults.length > 0
+
+  // [SAIL-GLOBAL-VERACITY-PATCH] Use the richer consensus function which also
+  // exposes uniqueDomains, isGloballyVerified, and discrepancyRisk.
+  // computeTriangulationLevel is retained for external callers (backward compat).
+  const consensus = hasResearch
+    ? computeTriangulationAndConsensus(searchResults)
     : undefined
+  const triangulationLevel = consensus?.triangulationLevel
   const sourceReliability  = hasResearch
     ? parseFloat(
         (searchResults.reduce((s, r) => s + r.reliabilityScore, 0) / searchResults.length)
@@ -198,6 +211,10 @@ export function buildDataHealthReport(params: DataHealthReportParams): DataHealt
     // Universal Intelligence V2 metrics [SAIL-UNIVERSAL-INTELLIGENCE-V2]
     ...(languagePurityScore !== undefined && { languagePurityScore }),
     ...(globalDataCoverage  !== undefined && { globalDataCoverage }),
+    // Global Veracity Patch metrics [SAIL-GLOBAL-VERACITY-PATCH]
+    ...(consensus !== undefined && { isGloballyVerified: consensus.isGloballyVerified }),
+    ...(consensus !== undefined && { uniqueDomains:      consensus.uniqueDomains }),
+    ...(consensus !== undefined && { discrepancyRisk:    consensus.discrepancyRisk }),
   }
 }
 

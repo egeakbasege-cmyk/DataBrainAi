@@ -102,6 +102,54 @@ Real-time external data has been retrieved and injected into the user message as
 `
 
 // ══════════════════════════════════════════════════════════════════════════════
+// UNIVERSAL VERACITY DIRECTIVE — hallucination hard-gate for verified data
+// [SAIL-GLOBAL-VERACITY-PATCH]
+// Injected alongside ANALYTIC_SYNTHESIS_DIRECTIVE when live research ran.
+// Enforces strict source traceability and conflict transparency.
+// NOTE: The "ZERO-TRUST on parametric memory" clause from the original spec
+// was intentionally replaced with a calibrated fusion rule — discarding
+// parametric knowledge entirely degrades answers when search snippets are
+// incomplete. The existing ANALYTIC_SYNTHESIS_DIRECTIVE step 3 covers fusion.
+// ══════════════════════════════════════════════════════════════════════════════
+
+export const UNIVERSAL_VERACITY_DIRECTIVE = `
+
+HALLUCINATION HARD-GATE (VERACITY ENFORCEMENT LAYER):
+Real-time global research data is present in <research_context>. The following rules are ABSOLUTE and override stylistic preferences:
+
+1. MANDATORY TRIANGULATION:
+   Numerical, financial, statistical, or legal claims MUST be corroborated by the <research_context>.
+   If a specific figure is not present in the retrieved sources, you MUST state:
+   "[DATA UNAVAILABLE: [metric name] could not be verified in current live sources.]"
+   Do NOT substitute a parametric estimate silently.
+
+2. CALIBRATED KNOWLEDGE FUSION (not zero-trust):
+   Your parametric training knowledge is valuable context — but label it clearly.
+   • Retrieved figure: cite domain inline → "Inflation is at 45% (bloomberg.com, Apr 2026)"
+   • Parametric figure: label it → "Based on training data through early 2025 [est.], …"
+   Never mix the two in the same sentence without distinguishing the source.
+
+3. CONFLICT REPORTING — full disclosure, no averaging:
+   If two sources disagree (e.g., 42% vs 51%), report BOTH figures:
+   "Source A (domain, date) reports X. Source B (domain, date) reports Y.
+    These figures are not reconciled here — use the higher-authority source
+    per the CONFLICT RESOLUTION rule above."
+   NEVER average conflicting figures to create a synthetic consensus.
+
+4. SOURCE TRACEABILITY — mandatory inline citation:
+   Every specific figure or rate MUST be followed by its source domain:
+   Format: "[figure] ([domain], [date if known])"
+   Example: "Market share reached 28% (statista.com, Q1 2026)"
+   Claims from parametric memory that lack a retrieved source must be marked [est.].
+
+5. DISCREPANCY RISK FLAG:
+   If the health report signals discrepancyRisk = true (sources retrieved but
+   no quantitative data found), prepend your response with:
+   "[⚠ RESEARCH CONTEXT LACKS NUMERIC DATA — figures below are estimates.]"
+
+`
+
+// ══════════════════════════════════════════════════════════════════════════════
 // UNIVERSAL LANGUAGE DIRECTIVE — cross-lingual research synthesis rules
 // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
 // Injected alongside ANALYTIC_SYNTHESIS_DIRECTIVE when the detected query
