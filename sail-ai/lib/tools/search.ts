@@ -199,7 +199,10 @@ export function decomposeToSearchQueries(
 
   // Strip filler words to get a compact intent string
   const keyTerms = message
-    .replace(/\b(what|how|why|when|where|who|is|are|was|were|will|would|could|should|can|please|help|tell|me|us|the|a|an|of|in|at|to|for|with|from|about|do|does|did|i|we|my|our)\b/gi, ' ')
+    // English filler words
+    .replace(/\b(what|how|why|when|where|who|is|are|was|were|will|would|could|should|can|please|help|tell|me|us|the|a|an|of|in|at|to|for|with|from|about|do|does|did|i|we|my|our|give|show|explain|describe)\b/gi, ' ')
+    // Turkish filler words
+    .replace(/\b(nedir|nasıl|neden|nerede|ne|kim|olan|olan|ile|için|bir|bu|şu|o|ve|da|de|ki|mi|mu|mü|mı|bana|bize|beni|bizi|var|yok|nasıldır|hakkında|anla|anlat|açıkla|göster|ver)\b/gi, ' ')
     .replace(/[?!.,;:]/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim()
