@@ -735,10 +735,21 @@ export async function POST(req: NextRequest) {
   // Casual / non-business queries (_appliedCards === []) get no suffix.
   const governanceSuffix = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
 
-  // [SAIL-FACTUAL-TRIGGER] uncertaintySuffix — ALWAYS injected regardless of whether
-  // research ran. Forces the LLM to label training-derived figures in every response.
-  // This is the primary fix for "wrong / outdated data on any query."
-  const uncertaintySuffix = DATA_UNCERTAINTY_SUFFIX
+  // [SAIL-FACTUAL-TRIGGER] uncertaintySuffix:
+  // • Streaming modes (sail, operator, synergy, scenario): inject DATA_UNCERTAINTY_SUFFIX
+  //   — LLM can freely add "(eğitim verisi)" labels inside markdown text.
+  // • JSON modes (upwind, downwind, trim, catamaran): do NOT inject DATA_UNCERTAINTY_SUFFIX.
+  //   JSON format prevents free-text labels. Schemas now have dataSource / null fields instead.
+  //   DEEP_RESEARCH_DIRECTIVE (already in mode prompts) handles training-data transparency.
+  // downwind falls through to the same JSON handler as upwind (buildUpwindSystemPrompt)
+  const streamingModes = new Set(['sail', 'operator', 'synergy', 'scenario'])
+  const uncertaintySuffix = streamingModes.has(analysisMode) ? DATA_UNCERTAINTY_SUFFIX : ''
+
+  // Research context for JSON modes injected as a SYSTEM-level block (higher authority than user msg)
+  // so the LLM prioritises live data over the "sector estimates (est.)" instructions in mode prompts.
+  const researchSystemBlock = _hasSynthesisContext && !streamingModes.has(analysisMode)
+    ? `\n\nLIVE RESEARCH DATA — USE THIS FIRST:\n${body.ragContext ?? ''}\n`
+    : ''
 
   // [SAIL-INTELLIGENCE-UPGRADE] Synthesis suffix — appended when live research was retrieved.
   // [SAIL-UNIVERSAL-INTELLIGENCE-V2] For non-English queries, also injects UNIVERSAL_LANGUAGE_DIRECTIVE.
@@ -1054,7 +1065,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: buildEnhancedTrimPrompt(language, primaryConstraint) + uncertaintySuffix + synthesisSuffix },
+            { role: 'system', content: buildEnhancedTrimPrompt(language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1099,7 +1110,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: buildEnhancedCatamaranPrompt(language, primaryConstraint) + uncertaintySuffix + synthesisSuffix },
+            { role: 'system', content: buildEnhancedCatamaranPrompt(language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1153,7 +1164,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:           GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint) + uncertaintySuffix + synthesisSuffix },
+          { role: 'system', content: buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         response_format: { type: 'json_object' },
