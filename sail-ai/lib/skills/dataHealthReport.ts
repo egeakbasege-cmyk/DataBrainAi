@@ -8,23 +8,31 @@
  *   base -= redactedCount * 0.05          // PII penalty per item
  *   base -= emptyFieldRatio * 0.30        // completeness penalty
  *   base += sum(appliedCards.map(c => c.confidenceBoost))  // skill boost
+ *   base += researchBoost                 // +0.08 when live data retrieved
  *   confidenceScore = clamp(base, 0.10, 1.00)
  *
  * Stream delimiter (consumed by frontend):
  *   %%HEALTH_REPORT%%{JSON}%%END_REPORT%%\n
  */
 
-import type { SkillCard } from './skillCards'
+import type { SkillCard }    from './skillCards'
+import type { SearchResult } from '@/lib/tools/search'
+import { computeTriangulationLevel } from '@/lib/tools/search'
 
 // ── Interface ─────────────────────────────────────────────────────────────────
 
 export interface DataHealthReport {
-  confidenceScore:   number      // 0.10–1.00
-  anomalyLog:        string[]    // human-readable issues detected
-  logicTrace:        string      // which cards were used and why
-  dataCompleteness:  number      // 0.0–1.0
-  piiRedacted:       boolean
-  skillsApplied:     string[]    // SkillCard ids
+  confidenceScore:    number      // 0.10–1.00
+  anomalyLog:         string[]    // human-readable issues detected
+  logicTrace:         string      // which cards were used and why
+  dataCompleteness:   number      // 0.0–1.0
+  piiRedacted:        boolean
+  skillsApplied:      string[]    // SkillCard ids
+  // ── Research-layer metrics (populated when live search ran) ────────────────
+  triangulationLevel?: number     // 1–10: cross-source agreement score
+  dataRecency?:        string     // ISO date of the most recently published result
+  sourceReliability?:  number     // 0.0–1.0 average domain reliability across results
+  researchQueriesUsed?: string[]  // search vectors that were sent
 }
 
 // ── Builder params ────────────────────────────────────────────────────────────
@@ -44,6 +52,11 @@ export interface DataHealthReportParams {
    * Example: [['context', body.context], ['message', body.message]]
    */
   bodyFields:       [string, string | undefined][]
+  // ── Optional: real-time research data (populated by Module 2 research loop) ─
+  /** Raw search results for triangulation scoring and recency detection. */
+  searchResults?:    SearchResult[]
+  /** Search queries sent to the provider (for audit trail). */
+  researchQueries?:  string[]
 }
 
 // ── Builder ───────────────────────────────────────────────────────────────────
@@ -55,19 +68,45 @@ export interface DataHealthReportParams {
  * a fully populated DataHealthReport.
  */
 export function buildDataHealthReport(params: DataHealthReportParams): DataHealthReport {
-  const { redactedCount, piiTags, appliedCards, matchedKeywords, bodyFields } = params
+  const {
+    redactedCount, piiTags, appliedCards, matchedKeywords, bodyFields,
+    searchResults = [], researchQueries = [],
+  } = params
 
   // ── Completeness ──────────────────────────────────────────────────────────
-  const totalFields   = bodyFields.length
-  const emptyFields   = bodyFields.filter(([, v]) => !v?.trim()).length
+  const totalFields        = bodyFields.length
+  const emptyFields        = bodyFields.filter(([, v]) => !v?.trim()).length
   const emptyFieldRatio    = totalFields > 0 ? emptyFields / totalFields : 0
   const dataCompleteness   = 1.0 - emptyFieldRatio
 
-  // ── Confidence score (exact spec formula) ─────────────────────────────────
+  // ── Research metrics (only when search results are present) ──────────────
+  const hasResearch      = searchResults.length > 0
+  const triangulationLevel = hasResearch
+    ? computeTriangulationLevel(searchResults)
+    : undefined
+  const sourceReliability  = hasResearch
+    ? parseFloat(
+        (searchResults.reduce((s, r) => s + r.reliabilityScore, 0) / searchResults.length)
+          .toFixed(3),
+      )
+    : undefined
+  // Most recent publishedDate among results
+  const dataRecency = hasResearch
+    ? searchResults
+        .map(r => r.publishedDate ?? '')
+        .filter(Boolean)
+        .sort()
+        .at(-1)   // lexicographic sort works for ISO-8601 and YYYY-MM-DD
+    : undefined
+  // Confidence boost: live research adds +0.08 when results returned
+  const researchBoost = hasResearch ? 0.08 : 0
+
+  // ── Confidence score (extended spec formula) ──────────────────────────────
   let base = 1.0
-  base -= redactedCount * 0.05                                     // PII penalty
-  base -= emptyFieldRatio * 0.30                                   // completeness penalty
-  base += appliedCards.reduce((sum, c) => sum + c.confidenceBoost, 0)  // skill boost
+  base -= redactedCount * 0.05                                          // PII penalty
+  base -= emptyFieldRatio * 0.30                                        // completeness penalty
+  base += appliedCards.reduce((sum, c) => sum + c.confidenceBoost, 0)   // skill boost
+  base += researchBoost                                                  // live data boost
   const confidenceScore = Math.max(0.10, Math.min(1.0, base))
 
   // ── Anomaly log ───────────────────────────────────────────────────────────
@@ -117,8 +156,13 @@ export function buildDataHealthReport(params: DataHealthReportParams): DataHealt
     anomalyLog,
     logicTrace,
     dataCompleteness,
-    piiRedacted: redactedCount > 0,
-    skillsApplied: appliedCards.map((c) => c.id),
+    piiRedacted:          redactedCount > 0,
+    skillsApplied:        appliedCards.map((c) => c.id),
+    // Research-layer metrics (undefined when no search was performed)
+    ...(triangulationLevel !== undefined && { triangulationLevel }),
+    ...(dataRecency        !== undefined && { dataRecency }),
+    ...(sourceReliability  !== undefined && { sourceReliability }),
+    ...(researchQueries.length > 0       && { researchQueriesUsed: researchQueries }),
   }
 }
 

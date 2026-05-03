@@ -77,6 +77,31 @@ export const DEEP_RESEARCH_DIRECTIVE = `DATA ACCURACY & RATIONALITY PROTOCOL —
 `
 
 // ══════════════════════════════════════════════════════════════════════════════
+// ANALYTIC SYNTHESIS DIRECTIVE — injected when live research context is present
+// Appended to system prompts by route.ts only when executeDeepSearch() returned
+// results. Teaches Groq/Llama 3 how to reason over injected <research_context>.
+// ══════════════════════════════════════════════════════════════════════════════
+export const ANALYTIC_SYNTHESIS_DIRECTIVE = `
+
+LIVE RESEARCH CONTEXT ACTIVE — SYNTHESIS PROTOCOL:
+Real-time external data has been retrieved and injected into the user message as <research_context> tags. Apply the following Groq-optimised synthesis protocol:
+
+1. SIGNAL vs. NOISE: Identify the 2–3 highest-impact data points from the research context. Discard low-signal filler. Elevate any figure from a .gov, .edu, Reuters, Bloomberg, or official exchange source.
+
+2. CONFLICT RESOLUTION: If sources present conflicting figures, apply this tiebreak order:
+   (a) Most recent publication date wins.
+   (b) Higher-authority domain wins (government > academia > tier-1 press > other).
+   State the discrepancy explicitly: "Sources conflict on [X]: [Source A] reports [Y], [Source B] reports [Z]. Using [winner] as the operative figure per recency/authority rule."
+
+3. INTERNAL KNOWLEDGE FUSION: Do not treat the research context as the only truth. Fuse it with your internal knowledge. Where they agree → higher confidence. Where they disagree → flag the tension.
+
+4. INLINE CITATION: Reference domain names inline where you use a retrieved figure. Format: "According to [domain] ([date if known])…". Never fabricate a citation for a fact you derived from internal knowledge.
+
+5. RECENCY CAVEAT: If the most recent retrieved source is older than 90 days relative to today, note: "[Research context may not reflect the latest market state — figures are estimates.]"
+
+`
+
+// ══════════════════════════════════════════════════════════════════════════════
 // SOVEREIGN COGNITIVE LAYER — prepended to every mode prompt
 // Principles: Autonomy · Ethical Reasoning · Adaptive Learning · Transparency
 // ══════════════════════════════════════════════════════════════════════════════

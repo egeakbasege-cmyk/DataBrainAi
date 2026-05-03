@@ -38,6 +38,15 @@ import {
   // encodeHealthReport not imported — health report attached to JSON responses only, never streamed.
   type DataHealthReport,
 } from '@/lib/skills/dataHealthReport'
+// [SAIL-INTELLIGENCE-UPGRADE] — Groq-optimised real-time research layer
+import {
+  executeDeepSearch,
+  encodeResearchContext,
+  requiresResearch,
+  decomposeToSearchQueries,
+  type SearchResult,
+} from '@/lib/tools/search'
+import { ANALYTIC_SYNTHESIS_DIRECTIVE } from '@/lib/prompts/enhanced-modes'
 
 const { auth } = NextAuth(authConfig)
 
@@ -334,10 +343,11 @@ function buildUserMessage(body: ExtendedPayload): string {
     parts.push(`BUSINESS CONTEXT\n${body.context.trim()}`)
   }
 
-  // RAG placeholder — future Pinecone/Weaviate retrieval injects retrieved chunks here.
-  // To activate: populate body.ragContext with retrieved passages before calling this route.
+  // Live research context — injected by the research loop when requiresResearch() is true.
+  // Also accepts Pinecone/Weaviate RAG chunks in the same field (future expansion).
+  // Format is already <research_context>…</research_context> via encodeResearchContext().
   if (body.ragContext?.trim()) {
-    parts.push(`[INJECTED_KNOWLEDGE_BASE]\n${body.ragContext.trim()}`)
+    parts.push(body.ragContext.trim())
   }
 
   parts.push(`QUERY\n${body.message.trim()}`)
@@ -656,31 +666,58 @@ export async function POST(req: NextRequest) {
     piiTags             = tags
   }
 
+  // [SAIL-INTELLIGENCE-UPGRADE] Module 2 — Parallel research loop
+  // Runs concurrently with PII scrubbing (above). Triggers when:
+  //   • the query is time-sensitive (latest/current/2025/market prices/…)
+  // Short-circuits cleanly when no search API key is configured.
+  const queryText = body.message?.trim() ?? ''
+  let _searchResults: SearchResult[] = []
+  let _researchQueries: string[]     = []
+  let _hasSynthesisContext            = false
+
+  if (requiresResearch(queryText)) {
+    _researchQueries = decomposeToSearchQueries(queryText, body.context)
+    const searchResponse = await executeDeepSearch(_researchQueries)
+    _searchResults = searchResponse.results
+
+    if (_searchResults.length > 0) {
+      // Inject into body.ragContext so buildUserMessage() wraps it in the prompt
+      body.ragContext     = encodeResearchContext(searchResponse)
+      _hasSynthesisContext = true
+    }
+  }
+
   const language           = body.language ?? 'en'
   const primaryConstraint  = body.primaryConstraint
-  const userMessage        = buildUserMessage(body)   // skill injection happens inside
+  const userMessage        = buildUserMessage(body)   // skill + research injection happens inside
 
   // [SAIL-NEW] Module 3 — Wabi-Sabi Health Report pre-computation
   // Computed once here; stream handlers embed it as the first chunk.
-  const _appliedCards     = selectSkillCards(body.message?.trim() ?? '')
+  const _appliedCards     = selectSkillCards(queryText)
   const _matchedKeywords  = _appliedCards.map((card) =>
-    card.triggerKeywords.filter((kw) => (body.message ?? '').toLowerCase().includes(kw)),
+    card.triggerKeywords.filter((kw) => queryText.toLowerCase().includes(kw)),
   )
   const _bodyFields: [string, string | undefined][] = [
     ['message',  body.message],
     ['context',  body.context],
   ]
   const healthReport: DataHealthReport = buildDataHealthReport({
-    redactedCount:   piiRedactedCount,
+    redactedCount:    piiRedactedCount,
     piiTags,
-    appliedCards:    _appliedCards,
-    matchedKeywords: _matchedKeywords,
-    bodyFields:      _bodyFields,
+    appliedCards:     _appliedCards,
+    matchedKeywords:  _matchedKeywords,
+    bodyFields:       _bodyFields,
+    searchResults:    _searchResults,
+    researchQueries:  _researchQueries,
   })
 
   // Governance suffix only when a business methodology was triggered.
   // Casual / non-business queries (_appliedCards === []) get no suffix.
   const governanceSuffix = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
+
+  // [SAIL-INTELLIGENCE-UPGRADE] Synthesis suffix — appended when live research was retrieved.
+  // Teaches Groq/Llama 3 how to reason over the injected <research_context>.
+  const synthesisSuffix = _hasSynthesisContext ? ANALYTIC_SYNTHESIS_DIRECTIVE : ''
 
   // ── SYNERGY mode: War Room Council — streaming markdown ──────────────────
   if (analysisMode === 'synergy') {
@@ -692,7 +729,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix },
+          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1000,
@@ -757,7 +794,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix },
+          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -855,7 +892,7 @@ export async function POST(req: NextRequest) {
         messages: [
           {
             role:    'system',
-            content: buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix,
+            content: buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + synthesisSuffix,
           },
           { role: 'user', content: userMessage },
         ],
@@ -921,7 +958,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix },
+          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -986,7 +1023,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: buildEnhancedTrimPrompt(language, primaryConstraint) },
+            { role: 'system', content: buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1031,7 +1068,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: buildEnhancedCatamaranPrompt(language, primaryConstraint) },
+            { role: 'system', content: buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1085,7 +1122,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:           GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint) },
+          { role: 'system', content: buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint) + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         response_format: { type: 'json_object' },
