@@ -44,9 +44,13 @@ import {
   encodeResearchContext,
   requiresResearch,
   decomposeToSearchQueries,
+  detectQueryLanguage,      // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
   type SearchResult,
 } from '@/lib/tools/search'
-import { ANALYTIC_SYNTHESIS_DIRECTIVE } from '@/lib/prompts/enhanced-modes'
+import {
+  ANALYTIC_SYNTHESIS_DIRECTIVE,
+  UNIVERSAL_LANGUAGE_DIRECTIVE, // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+} from '@/lib/prompts/enhanced-modes'
 
 const { auth } = NextAuth(authConfig)
 
@@ -667,16 +671,23 @@ export async function POST(req: NextRequest) {
   }
 
   // [SAIL-INTELLIGENCE-UPGRADE] Module 2 — Parallel research loop
-  // Runs concurrently with PII scrubbing (above). Triggers when:
-  //   • the query is time-sensitive (latest/current/2025/market prices/…)
-  // Short-circuits cleanly when no search API key is configured.
-  const queryText = body.message?.trim() ?? ''
+  // [SAIL-UNIVERSAL-INTELLIGENCE-V2] Language-aware: detects query language first so
+  // decomposeToSearchQueries() can produce bilingual vectors (EN global + native) for
+  // non-English queries.
+  const queryText   = body.message?.trim() ?? ''
+  // Prefer explicit body.language (set by frontend locale) over heuristic detection.
+  // detectQueryLanguage() is the heuristic fallback when body.language is absent or 'en'.
+  const _queryLanguage = (body.language && body.language !== 'en')
+    ? body.language
+    : detectQueryLanguage(queryText)
+
   let _searchResults: SearchResult[] = []
   let _researchQueries: string[]     = []
   let _hasSynthesisContext            = false
 
   if (requiresResearch(queryText)) {
-    _researchQueries = decomposeToSearchQueries(queryText, body.context)
+    // Pass detected language so bilingual vectors are generated for non-English queries
+    _researchQueries = decomposeToSearchQueries(queryText, body.context, _queryLanguage)
     const searchResponse = await executeDeepSearch(_researchQueries)
     _searchResults = searchResponse.results
 
@@ -709,6 +720,7 @@ export async function POST(req: NextRequest) {
     bodyFields:       _bodyFields,
     searchResults:    _searchResults,
     researchQueries:  _researchQueries,
+    queryLanguage:    _queryLanguage,   // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
   })
 
   // Governance suffix only when a business methodology was triggered.
@@ -716,8 +728,11 @@ export async function POST(req: NextRequest) {
   const governanceSuffix = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
 
   // [SAIL-INTELLIGENCE-UPGRADE] Synthesis suffix — appended when live research was retrieved.
-  // Teaches Groq/Llama 3 how to reason over the injected <research_context>.
-  const synthesisSuffix = _hasSynthesisContext ? ANALYTIC_SYNTHESIS_DIRECTIVE : ''
+  // [SAIL-UNIVERSAL-INTELLIGENCE-V2] For non-English queries, also injects UNIVERSAL_LANGUAGE_DIRECTIVE
+  // to prevent language bleeding when Groq synthesises English-sourced research context.
+  const synthesisSuffix = _hasSynthesisContext
+    ? ANALYTIC_SYNTHESIS_DIRECTIVE + (_queryLanguage !== 'en' ? UNIVERSAL_LANGUAGE_DIRECTIVE : '')
+    : ''
 
   // ── SYNERGY mode: War Room Council — streaming markdown ──────────────────
   if (analysisMode === 'synergy') {

@@ -86,14 +86,56 @@ function reliabilityOf(url: string): number {
   return 0.60   // default for unknown domains
 }
 
-// ── Content pruner ────────────────────────────────────────────────────────────
+// ── High-efficiency content summariser ────────────────────────────────────────
+// [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+// Scores sentences by information density (numbers, years, currencies, keywords)
+// so that the most signal-rich content survives token pruning.
 
-function pruneContent(raw: string, maxChars = 400): string {
+function sentenceScore(s: string): number {
+  let score = 0
+  score += (s.match(/\d[\d,.]*\s*%/g)           ?? []).length * 4   // percentages
+  score += (s.match(/\b20\d\d\b/g)              ?? []).length * 3   // years
+  score += (s.match(/[$€£₺¥]\s*[\d,.]+/g)       ?? []).length * 3   // currency amounts
+  score += (s.match(/\b[\d,.]+\s*(billion|million|trillion|B|M|T)\b/gi) ?? []).length * 3
+  score += (s.match(/\b(growth|decline|increase|decrease|revenue|profit|market|record|high|low)\b/gi) ?? []).length * 2
+  score += (s.match(/\b(according|report|survey|study|data|source|index|benchmark)\b/gi) ?? []).length
+  return score
+}
+
+/**
+ * extractHighValueContent
+ *
+ * Splits text into sentences, scores each by information density,
+ * and reassembles the highest-scoring sentences within `maxChars`.
+ * Falls back to simple head-truncation when sentence splitting fails.
+ */
+function extractHighValueContent(raw: string, maxChars = 380): string {
   const text = raw.replace(/\s+/g, ' ').trim()
   if (text.length <= maxChars) return text
-  // Keep opening context (first 300 chars) + closing signal (last 100 chars)
-  return text.slice(0, 300).trimEnd() + ' … ' + text.slice(-97).trimStart()
+
+  // Split on sentence boundaries (period/!/?  followed by space + capital)
+  const sentences = text.match(/[^.!?]+[.!?]+(?:\s|$)/g) ?? []
+  if (sentences.length <= 1) {
+    // No sentence boundaries found — keep head + tail
+    return text.slice(0, 280).trimEnd() + ' … ' + text.slice(-97).trimStart()
+  }
+
+  // Sort by score descending, then reconstruct within budget
+  const ranked = sentences
+    .map(s => ({ text: s.trim(), score: sentenceScore(s) }))
+    .sort((a, b) => b.score - a.score)
+
+  let result = ''
+  for (const { text: s } of ranked) {
+    if (result.length + s.length + 1 > maxChars) break
+    result = result ? result + ' ' + s : s
+  }
+
+  return (result.trim() || text.slice(0, maxChars))
 }
+
+// Internal alias for provider adapters (backward compat)
+const pruneContent = extractHighValueContent
 
 // ── Tavily provider ───────────────────────────────────────────────────────────
 
@@ -185,74 +227,173 @@ async function searchSerper(query: string, signal?: AbortSignal): Promise<Search
   }))
 }
 
-// ── Query decomposer ──────────────────────────────────────────────────────────
+// ── Language detector ─────────────────────────────────────────────────────────
+// [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+// Heuristic — no API call. Covers the 6 languages SAIL AI supports.
 
-/**
- * Heuristic decomposition — no extra LLM call required.
- * Generates up to 3 focused search vectors from a user query.
- */
-export function decomposeToSearchQueries(
-  message: string,
-  context?: string,
-): string[] {
-  const currentYear = new Date().getFullYear()
+export function detectQueryLanguage(text: string): string {
+  // Chinese characters (CJK Unified Ideographs)
+  if (/[一-鿿]/.test(text)) return 'zh'
+  // Turkish: unique diacritics OR high-frequency function words
+  if (/[ğışçöü]/i.test(text) ||
+      /\b(nedir|nasıl|için|ile|bir|bu|olan|değil|ama|ve|veya|gibi|daha|çok)\b/i.test(text)) return 'tr'
+  // German: ß or German diacritics + function words
+  if (/ß/i.test(text) ||
+      (/[äöü]/i.test(text) && /\b(ist|sind|und|das|die|der|ein|wie|aber|auch|auf)\b/i.test(text))) return 'de'
+  // French: French diacritics + function words
+  if (/[àâçèéêëîïôùûœæ]/i.test(text) &&
+      /\b(est|sont|les|des|une|comment|pourquoi|mais|avec|dans|pour|sur)\b/i.test(text)) return 'fr'
+  // Spanish: ñ or Spanish diacritics + function words
+  if (/ñ/i.test(text) ||
+      (/[áéíóúü]/i.test(text) && /\b(es|son|los|las|una|como|pero|también|está|para|con)\b/i.test(text))) return 'es'
+  return 'en'
+}
 
-  // Strip filler words to get a compact intent string
-  const keyTerms = message
-    // English filler words
-    .replace(/\b(what|how|why|when|where|who|is|are|was|were|will|would|could|should|can|please|help|tell|me|us|the|a|an|of|in|at|to|for|with|from|about|do|does|did|i|we|my|our|give|show|explain|describe)\b/gi, ' ')
-    // Turkish filler words
-    .replace(/\b(nedir|nasıl|neden|nerede|ne|kim|olan|olan|ile|için|bir|bu|şu|o|ve|da|de|ki|mi|mu|mü|mı|bana|bize|beni|bizi|var|yok|nasıldır|hakkında|anla|anlat|açıkla|göster|ver)\b/gi, ' ')
-    .replace(/[?!.,;:]/g, ' ')
+// ── Universal filler-word stripper ────────────────────────────────────────────
+// [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+
+function stripFillerWords(text: string): string {
+  return text
+    // English
+    .replace(/\b(what|how|why|when|where|who|is|are|was|were|will|would|could|should|can|please|help|tell|me|us|the|a|an|of|in|at|to|for|with|from|about|do|does|did|i|we|my|our|give|show|explain|describe|get|find)\b/gi, ' ')
+    // Turkish
+    .replace(/\b(nedir|nasıl|neden|nerede|ne|kim|ile|için|bir|bu|şu|o|ve|da|de|ki|mi|mu|mü|mı|bana|bize|beni|bizi|var|yok|hakkında|anlat|açıkla|göster|ver|gibi|daha|çok|ama|veya|olan)\b/gi, ' ')
+    // Spanish
+    .replace(/\b(qué|cómo|por|para|con|los|las|una|del|que|esto|eso|pero|también|como|más|muy|ya)\b/gi, ' ')
+    // German
+    .replace(/\b(was|wie|warum|wenn|aber|auch|auf|aus|bei|bis|dem|den|der|die|das|ein|eine|ist|und|oder|für|von|mit|nach|über|zum)\b/gi, ' ')
+    // French
+    .replace(/\b(quoi|comment|pourquoi|mais|avec|dans|pour|sur|les|des|une|cette|sont|est|être|avoir|plus|très|aussi|comme)\b/gi, ' ')
+    .replace(/[?!.,;:()]/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim()
     .slice(0, 120)
+}
+
+// ── Query decomposer — bilingual vectors ──────────────────────────────────────
+// [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+
+/**
+ * decomposeToSearchQueries
+ *
+ * Generates up to 3 focused search vectors from a user query.
+ * Non-English queries produce a bilingual set: English global query + native language query.
+ * This triangulates international authority sources with regional/cultural data.
+ */
+export function decomposeToSearchQueries(
+  message:  string,
+  context?: string,
+  language  = 'en',
+): string[] {
+  const currentYear  = new Date().getFullYear()
+  const detectedLang = language !== 'en' ? language : detectQueryLanguage(message)
+  const isNonEnglish = detectedLang !== 'en'
+  const keyTerms     = stripFillerWords(message)
 
   const queries: string[] = []
 
-  // Q1 — Primary: user intent + current year for recency
-  queries.push(`${keyTerms} ${currentYear}`.trim())
+  // ── Sector/company extraction (multilingual context patterns) ─────────────
+  const sectorMatch  = context?.match(/(?:sector|industry|sektör|endüstri|secteur|secteur|branche|sector)[:\s]+([^\n,]{3,40})/i)
+  const companyMatch = context?.match(/(?:company|brand|business|firm|startup|şirket|marca|empresa|unternehmen|entreprise)[:\s]+([^\n,]{3,30})/i)
+  const entityMatch  = message.match(/\b([A-ZÇĞIÖŞÜ][a-zA-ZçğışöşüÇĞIÖŞÜ]+(?:\s+[A-ZÇĞIÖŞÜ][a-zA-ZçğışöşüÇĞIÖŞÜ]+){0,2})\b/)
 
-  // Q2 — Entity/sector enrichment
-  const sectorMatch  = context?.match(/(?:sector|industry)[:\s]+([^\n,]{3,40})/i)
-  const companyMatch = context?.match(/(?:company|brand|business|firm|startup)[:\s]+([^\n,]{3,30})/i)
-  // Capitalised noun phrase from message (potential entity name)
-  const entityMatch  = message.match(/\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){0,2})\b/)
+  if (isNonEnglish) {
+    // Q1 — English global query (high-authority international sources)
+    queries.push(`${keyTerms} ${currentYear} global statistics report`.trim())
 
-  if (sectorMatch) {
-    queries.push(`${sectorMatch[1].trim()} ${keyTerms} statistics benchmark`.trim())
-  } else if (companyMatch) {
-    queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis data`.trim())
-  } else if (entityMatch && entityMatch[1].length > 3) {
-    queries.push(`${entityMatch[1]} ${currentYear} statistics data report`.trim())
+    // Q2 — Native language query (regional/cultural sources)
+    const nativeTerms = message.slice(0, 120).trim()
+    queries.push(`${nativeTerms} ${currentYear}`.trim())
+
+    // Q3 — English benchmark enrichment with sector/entity context
+    if (sectorMatch) {
+      queries.push(`${sectorMatch[1].trim()} ${keyTerms} benchmark data ${currentYear}`.trim())
+    } else if (companyMatch) {
+      queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis report`.trim())
+    } else if (entityMatch && entityMatch[1].length > 3) {
+      queries.push(`${entityMatch[1]} ${currentYear} industry analysis benchmark`.trim())
+    } else {
+      queries.push(`${keyTerms} industry benchmark statistics ${currentYear}`.trim())
+    }
   } else {
-    queries.push(`${keyTerms} industry report statistics`.trim())
+    // Q1 — Primary: cleaned intent + year
+    queries.push(`${keyTerms} ${currentYear}`.trim())
+
+    // Q2 — Entity/sector enrichment
+    if (sectorMatch) {
+      queries.push(`${sectorMatch[1].trim()} ${keyTerms} statistics benchmark`.trim())
+    } else if (companyMatch) {
+      queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis data`.trim())
+    } else if (entityMatch && entityMatch[1].length > 3) {
+      queries.push(`${entityMatch[1]} ${currentYear} statistics data report`.trim())
+    } else {
+      queries.push(`${keyTerms} industry report statistics`.trim())
+    }
+
+    // Q3 — Benchmark/trend anchor
+    queries.push(`${keyTerms} market trend benchmark report ${currentYear}`.trim())
   }
 
-  // Q3 — Benchmark/trend anchor
-  queries.push(`${keyTerms} market trend benchmark report ${currentYear}`.trim())
-
-  return Array.from(new Set(queries)).slice(0, 3)
+  return Array.from(new Set(queries.filter(q => q.length > 5))).slice(0, 3)
 }
 
-// ── Time-sensitivity detector ─────────────────────────────────────────────────
+// ── Universal research intent detector ───────────────────────────────────────
+// [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+// Covers strategic / competitive / analytical / cultural intent across 6 languages.
+// No longer restricted to time-sensitive keywords only.
 
-const TIME_SENSITIVE_RE = [
+const RESEARCH_INTENT_PATTERNS: RegExp[] = [
+  // ── Time-sensitive (language-neutral numerics + signals) ──────────────────
   /\b(latest|current|today|right now|live)\b/i,
   /\bthis\s+(week|month|quarter|year)\b/i,
-  /\b(price|rate|yield|market cap|valuation)\b/i,
+  /\b20(2[4-9]|[3-9]\d)\b/,                              // years 2024–2099
+  /\b(price|rate|yield|market cap|valuation|stock|share price)\b/i,
   /\b(news|breaking|update|just\s+announced|recently)\b/i,
-  /\b20(2[4-9]|[3-9]\d)\b/,                        // year 2024–2099
-  /\b(türkiye|turkey|bist|tcmb|tuik|enflasyon|dolar|faiz)\b/i,
-  /\b(nasdaq|s&p\s*500|dow jones|ftse|dax|nikkei)\b/i,
+
+  // ── Strategic / competitive intent — English ──────────────────────────────
+  /\bstrateg(y|ic|ies|ize)\b/i,
+  /\b(competi(tor|tion|tive)|vs\.?\s|versus|benchmark(ing|s)?|competitive\s+landscape)\b/i,
+  /\b(market\s+share|industry\s+report|sector\s+analysis|forecast|outlook)\b/i,
+  /\b(trend(s|ing)?|growth\s+rate|statistics|research\s+report|whitepaper|data\s+driven)\b/i,
+  /\b(swot|porter|pestle|tam|sam|som|roi|cagr|kpi|nps|cac|ltv|arr|mrr|ebitda)\b/i,
+
+  // ── Turkish ──────────────────────────────────────────────────────────────
+  /\b(strateji|rekabet(çi|çilik)?|kıyaslama|tahmin|pazar\s+analizi|sektör|endüstri|rakip)\b/i,
+  /\b(pazar\s+payı|büyüme\s+oranı|istatistik|araştırma|rapor|veri|trend|gelecek)\b/i,
+  /\b(türkiye|bist|tcmb|tuik|enflasyon|dolar|faiz|ekonomi|borsa)\b/i,
+
+  // ── Spanish ──────────────────────────────────────────────────────────────
+  /\b(estrategia|competencia|competitiv[ao]|pronóstico|tendencia|análisis|mercado)\b/i,
+  /\b(investigación|informe|sector|industria|comparación|datos|estadísticas|crecimiento)\b/i,
+  /\b(cuota\s+de\s+mercado|punto\s+de\s+referencia|perspectiva|futuro)\b/i,
+
+  // ── German ───────────────────────────────────────────────────────────────
+  /\b(strategie|wettbewerb(s|sfähig)?|prognose|trend|analyse|markt(anteil)?)\b/i,
+  /\b(forschung|bericht|branche|industrie|vergleich|daten|statistiken|wachstum|zukunft)\b/i,
+
+  // ── French ───────────────────────────────────────────────────────────────
+  /\b(stratégie|concurrence|concurrent|prévision|tendance|analyse|marché|part\s+de\s+marché)\b/i,
+  /\b(recherche|rapport|secteur|industrie|comparaison|données|statistiques|croissance|avenir)\b/i,
+
+  // ── Chinese ──────────────────────────────────────────────────────────────
+  /战略|竞争(力|分析|对手)?|预测|趋势|分析|市场(份额|分析)?|研究(报告)?|行业|产业|统计|数据|增长|未来|发展/,
+
+  // ── Financial / tech acronyms (cross-language) ───────────────────────────
+  /\b(nasdaq|s&p\s*500|dow\s+jones|ftse|dax|nikkei|hang\s+seng)\b/i,
+  /\b(gdp|cpi|ppi|pmi|fed|ecb|imf|wto|oecd|g20)\b/i,
 ]
 
 /**
- * Returns true when the query likely requires live/recent data.
- * Conservative: avoids triggering on generic business questions.
+ * requiresResearch
+ *
+ * Universal intent-driven trigger. Returns true for any query involving
+ * strategic advice, competitive analysis, market data, technical benchmarks,
+ * or cultural/regional insights — regardless of the language used.
+ * Requires message to be substantive (>15 chars) to avoid triggering on greetings.
  */
 export function requiresResearch(message: string): boolean {
-  return TIME_SENSITIVE_RE.some(re => re.test(message))
+  if (message.trim().length < 15) return false    // skip greetings / one-word inputs
+  return RESEARCH_INTENT_PATTERNS.some(re => re.test(message))
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────

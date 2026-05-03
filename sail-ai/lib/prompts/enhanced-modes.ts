@@ -102,6 +102,51 @@ Real-time external data has been retrieved and injected into the user message as
 `
 
 // ══════════════════════════════════════════════════════════════════════════════
+// UNIVERSAL LANGUAGE DIRECTIVE — cross-lingual research synthesis rules
+// [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+// Injected alongside ANALYTIC_SYNTHESIS_DIRECTIVE when the detected query
+// language is non-English, preventing language bleeding during synthesis.
+// ══════════════════════════════════════════════════════════════════════════════
+
+export const UNIVERSAL_LANGUAGE_DIRECTIVE = `
+
+CROSS-LINGUAL SYNTHESIS RULES — MANDATORY (applies when research context is active):
+
+1. LANGUAGE LOCK: The detected query language is the ONLY output language. If retrieved
+   sources are in English and the query was in Turkish/French/German/Spanish/Chinese,
+   you MUST synthesise the content in the query language — never copy-paste English
+   sentences into your response. Translate the insight, not the words.
+
+2. PROFESSIONAL ADAPTATION (not literal translation):
+   • Adapt idiomatic expressions to sound natural in the target language.
+   • Preserve the technical precision of the source; do not over-simplify for "translation."
+   • Cultural context: when a metric or benchmark only makes sense in the source culture,
+     add a one-sentence cultural note (e.g., "Bu oran ABD ortalamasıdır; Türkiye verileri…").
+
+3. ACRONYM PROTOCOL — keep these in English regardless of output language:
+   KPI · SaaS · ROI · CRM · ERP · API · IPO · M&A · GDP · CPI · PMI · ESG · B2B · B2C
+   If an acronym has a widely-used local equivalent (e.g., GSYİH for GDP in Turkish),
+   use the local form with the English acronym in parentheses on first use.
+
+4. NUMBER FORMATTING — adapt to locale:
+   • TR / DE / FR / ES: use decimal comma (1.234,56) not decimal point (1,234.56)
+   • ZH: use 万 (10k) / 亿 (100M) for large numbers when appropriate
+   • Always include the unit and the year alongside the figure.
+
+5. CITATION FORMAT — in-line citations follow the output language:
+   • TR: "Reuters'a göre ([tarih])"  · DE: "Laut Reuters ([Datum])"
+   • FR: "Selon Reuters ([date])"    · ES: "Según Reuters ([fecha])"
+   • ZH: "根据Reuters（[日期]）"       · EN: "According to Reuters ([date])"
+   • Domain names ALWAYS remain in their original Latin/ASCII form.
+
+6. LANGUAGE BLEED DETECTION — before emitting each section:
+   → Are any English sentences (full clauses) appearing in a non-English response? → Remove them.
+   → Are technical terms left untranslated when a good local equivalent exists? → Translate them.
+   → Does the flow read naturally to a native speaker of the output language? → If not, revise.
+
+`
+
+// ══════════════════════════════════════════════════════════════════════════════
 // SOVEREIGN COGNITIVE LAYER — prepended to every mode prompt
 // Principles: Autonomy · Ethical Reasoning · Adaptive Learning · Transparency
 // ══════════════════════════════════════════════════════════════════════════════

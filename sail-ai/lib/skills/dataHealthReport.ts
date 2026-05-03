@@ -33,6 +33,10 @@ export interface DataHealthReport {
   dataRecency?:        string     // ISO date of the most recently published result
   sourceReliability?:  number     // 0.0–1.0 average domain reliability across results
   researchQueriesUsed?: string[]  // search vectors that were sent
+  // ── Universal Intelligence V2 metrics ─────────────────────────────────────
+  // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+  languagePurityScore?: number    // 0.0–1.0: 1.0 = bilingual query vectors used, 0.5 = English-only vectors, undefined = no research
+  globalDataCoverage?:  boolean   // true = at least one English global query vector was used
 }
 
 // ── Builder params ────────────────────────────────────────────────────────────
@@ -57,6 +61,10 @@ export interface DataHealthReportParams {
   searchResults?:    SearchResult[]
   /** Search queries sent to the provider (for audit trail). */
   researchQueries?:  string[]
+  // ── Universal Intelligence V2 params ──────────────────────────────────────
+  // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+  /** Detected query language code ('en' | 'tr' | 'es' | 'de' | 'fr' | 'zh'). */
+  queryLanguage?:    string
 }
 
 // ── Builder ───────────────────────────────────────────────────────────────────
@@ -71,6 +79,7 @@ export function buildDataHealthReport(params: DataHealthReportParams): DataHealt
   const {
     redactedCount, piiTags, appliedCards, matchedKeywords, bodyFields,
     searchResults = [], researchQueries = [],
+    queryLanguage = 'en',
   } = params
 
   // ── Completeness ──────────────────────────────────────────────────────────
@@ -100,6 +109,29 @@ export function buildDataHealthReport(params: DataHealthReportParams): DataHealt
     : undefined
   // Confidence boost: live research adds +0.08 when results returned
   const researchBoost = hasResearch ? 0.08 : 0
+
+  // ── Universal Intelligence V2 metrics ─────────────────────────────────────
+  // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+  // languagePurityScore: 1.0 if non-English query used bilingual vectors (global EN + native),
+  //                      0.5 if English-only vectors were used for a non-English query,
+  //                      undefined if no research was performed.
+  // globalDataCoverage:  true if at least one English-language global vector was issued.
+  const isNonEnglish = queryLanguage !== 'en'
+  let languagePurityScore: number | undefined
+  let globalDataCoverage: boolean | undefined
+
+  if (hasResearch) {
+    // A non-English query producing bilingual vectors (EN global + native) scores 1.0.
+    // An English query always has globalDataCoverage = true; purity score = 1.0 (no translation risk).
+    // A non-English query with only English vectors scores 0.5 (coverage gap).
+    const hasNativeVector = isNonEnglish && researchQueries.length >= 2
+    languagePurityScore = isNonEnglish
+      ? (hasNativeVector ? 1.0 : 0.5)
+      : 1.0
+    // globalDataCoverage: did we send at least one English-language global query?
+    // For non-English: Q1 is always English global. For English: all queries are English.
+    globalDataCoverage = true
+  }
 
   // ── Confidence score (extended spec formula) ──────────────────────────────
   let base = 1.0
@@ -163,6 +195,9 @@ export function buildDataHealthReport(params: DataHealthReportParams): DataHealt
     ...(dataRecency        !== undefined && { dataRecency }),
     ...(sourceReliability  !== undefined && { sourceReliability }),
     ...(researchQueries.length > 0       && { researchQueriesUsed: researchQueries }),
+    // Universal Intelligence V2 metrics [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+    ...(languagePurityScore !== undefined && { languagePurityScore }),
+    ...(globalDataCoverage  !== undefined && { globalDataCoverage }),
   }
 }
 
