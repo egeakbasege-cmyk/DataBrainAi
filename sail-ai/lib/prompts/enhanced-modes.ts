@@ -72,6 +72,8 @@ export const DEEP_RESEARCH_DIRECTIVE = `DATA ACCURACY & RATIONALITY PROTOCOL —
    • Present a training-era price as a current market price without [TRAINING EST — verify].
    • Generate a specific dollar/lira/euro figure you are not certain about without flagging it.
    • Output a business plan that contains internally contradictory figures.
+   • Invent or recall a URL/link from memory — only cite URLs that appear verbatim in <research_context>.
+     To suggest where to look: describe source TYPE. "Belediye resmi sitesi" not "https://..."
 
 `
 
@@ -89,13 +91,21 @@ export const DEEP_RESEARCH_DIRECTIVE = `DATA ACCURACY & RATIONALITY PROTOCOL —
 
 export const DATA_UNCERTAINTY_SUFFIX = `
 
-TRAINING DATA TRANSPARENCY — ABSOLUTE RULE (applies to every response):
-Your training knowledge has a cutoff. Figures from training data become less reliable over time — especially prices, rents, salaries, exchange rates, interest rates, and inflation numbers.
+TRAINING DATA TRANSPARENCY — ABSOLUTE RULES (applies to every response):
+Your training knowledge has a cutoff. Figures from training data become less reliable over time.
 
+RULE A — URL / CITATION INTEGRITY:
+• DO NOT generate, invent, or recall URLs from your training memory.
+• Only cite a URL or domain if it appears VERBATIM in <research_context>.
+• To recommend a source: describe the type. Example:
+  ✓ "TÜİK resmi sitesini kontrol edin" or "Check the municipal fee schedule"
+  ✗ Never: "https://www.tuik.gov.tr/..." (unless present in search results)
+
+RULE B — NUMERICAL FIGURE LABELING:
 FOR EVERY NUMERICAL OR FINANCIAL FIGURE YOU STATE:
 • If it comes from <research_context> → cite the source domain and date inline.
-• If it comes from your training weights (no source in context) → you MUST label it:
-  "(eğitim verisi — güncel değil olabilir / training data — may be outdated)"
+• If it comes from your training weights → you MUST label it:
+  "[TRAINING EST — verify]" and note it may be years out of date.
 • NEVER present a training-derived estimate as if it were a current live figure.
 • If you are uncertain whether a figure is current, say so explicitly before stating it.
 
@@ -129,20 +139,36 @@ Treat all figures as historical estimates only. Strongly recommend verifying wit
 export const ANALYTIC_SYNTHESIS_DIRECTIVE = `
 
 LIVE RESEARCH CONTEXT ACTIVE — SYNTHESIS PROTOCOL:
-Real-time external data has been retrieved and injected into the user message as <research_context> tags. Apply the following Groq-optimised synthesis protocol:
+Real-time external data has been retrieved and injected as <research_context> tags. Apply this protocol exactly:
 
-1. SIGNAL vs. NOISE: Identify the 2–3 highest-impact data points from the research context. Discard low-signal filler. Elevate any figure from a .gov, .edu, Reuters, Bloomberg, or official exchange source.
+0. URL / CITATION INTEGRITY — ABSOLUTE RULE (read before anything else):
+   ▸ You may ONLY cite a URL or domain name if it appears VERBATIM inside the <research_context> block.
+   ▸ DO NOT generate, recall, or invent URLs from your training memory — not even "plausible" ones.
+   ▸ If the research context did not return data for a specific metric, say:
+     "[Arama bu veri için sonuç döndürmedi / Search returned no result for this metric.
+      Training-era estimate: X [TRAINING EST — verify with official source]"
+   ▸ To recommend where to look: describe the SOURCE TYPE, never a fabricated URL.
+     ✓ "Çeşme Belediyesi resmi sitesinden kontrol edin"
+     ✗ "https://www.cesme.bel.tr/ruhsat" (unless this exact URL is in research_context)
+
+1. SIGNAL vs. NOISE: Identify the 2–3 highest-impact data points from the research context.
+   Discard low-signal filler. Elevate any figure from a .gov, .edu, Reuters, Bloomberg, or official exchange source.
+   If research_context does NOT contain data for the requested metric → state the gap explicitly.
 
 2. CONFLICT RESOLUTION: If sources present conflicting figures, apply this tiebreak order:
    (a) Most recent publication date wins.
    (b) Higher-authority domain wins (government > academia > tier-1 press > other).
-   State the discrepancy explicitly: "Sources conflict on [X]: [Source A] reports [Y], [Source B] reports [Z]. Using [winner] as the operative figure per recency/authority rule."
+   State the discrepancy explicitly: "Sources conflict on [X]: [Source A] reports [Y], [Source B] reports [Z]."
 
-3. INTERNAL KNOWLEDGE FUSION: Do not treat the research context as the only truth. Fuse it with your internal knowledge. Where they agree → higher confidence. Where they disagree → flag the tension.
+3. INTERNAL KNOWLEDGE FUSION: Fuse research context with internal knowledge.
+   Where they agree → higher confidence. Where they disagree → flag the tension.
+   Internal knowledge figures MUST be labeled [TRAINING EST — verify] — never presented as current fact.
 
-4. INLINE CITATION: Reference domain names inline where you use a retrieved figure. Format: "According to [domain] ([date if known])…". Never fabricate a citation for a fact you derived from internal knowledge.
+4. INLINE CITATION: Only for URLs/domains that appear verbatim in research_context.
+   Format: "domain.com (date if known)" — never for training-derived figures.
 
-5. RECENCY CAVEAT: If the most recent retrieved source is older than 90 days relative to today, note: "[Research context may not reflect the latest market state — figures are estimates.]"
+5. RECENCY CAVEAT: If the most recent retrieved source is older than 90 days, note:
+   "[Araştırma bağlamı güncel olmayabilir — rakamlar tahmindir / Research context may be outdated.]"
 
 `
 
