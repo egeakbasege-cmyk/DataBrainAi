@@ -78,12 +78,15 @@ async function groqFetch(init: RequestInit, byokKey?: string): Promise<Response>
   })
 }
 
-type ExtendedPayload = AetherisPayload & {
+type ExtendedPayload = Omit<AetherisPayload, 'analysisMode'> & {
   apiKey?:             string
   primaryConstraint?:  string
-  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy'
+  /** 'auto' triggers the Gateway Router; other values select the mode directly. */
+  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'auto'
   synergyModes?:       string[]
   synergyName?:        string
+  /** Future RAG injection — populate with retrieved Pinecone/Weaviate chunks before calling this route. */
+  ragContext?:         string
 }
 
 // ── Groq system prompts ────────────────────────────────────────────────────────
@@ -320,6 +323,12 @@ function buildUserMessage(body: ExtendedPayload): string {
     parts.push(`BUSINESS CONTEXT\n${body.context.trim()}`)
   }
 
+  // RAG placeholder — future Pinecone/Weaviate retrieval injects retrieved chunks here.
+  // To activate: populate body.ragContext with retrieved passages before calling this route.
+  if (body.ragContext?.trim()) {
+    parts.push(`[INJECTED_KNOWLEDGE_BASE]\n${body.ragContext.trim()}`)
+  }
+
   parts.push(`QUERY\n${body.message.trim()}`)
 
   if (body.fileContent?.trim()) {
@@ -339,6 +348,172 @@ function buildUserMessage(body: ExtendedPayload): string {
   }
 
   return parts.join('\n\n')
+}
+
+// ── Gateway Router ────────────────────────────────────────────────────────────
+// Ultra-fast preliminary LLM call (llama-3.1-8b-instant, 150 tokens, 3s timeout)
+// that classifies query intent and selects the optimal analysis mode.
+// Returns null on timeout or any error → caller falls back to 'upwind'.
+
+const VALID_MODES = ['upwind', 'downwind', 'sail', 'trim', 'catamaran', 'operator', 'synergy'] as const
+type ValidMode  = typeof VALID_MODES[number]
+type RouterMood = 'analytical' | 'exploratory' | 'urgent' | 'planning' | 'creative'
+
+interface RouterResult {
+  mode:            ValidMode
+  confidence:      number
+  moodSignal:      RouterMood
+  urgencyLevel:    number
+  reasoning:       string
+  alternativeMode: ValidMode
+}
+
+const VALID_MODES_SET = new Set<string>(VALID_MODES)
+
+const ALTERNATIVE_MODE_MAP: Record<ValidMode, ValidMode> = {
+  upwind:    'sail',
+  sail:      'operator',
+  operator:  'synergy',
+  synergy:   'operator',
+  trim:      'operator',
+  catamaran: 'synergy',
+  downwind:  'sail',
+}
+
+// Fuzzy fallback — maps hallucinated/partial strings to the nearest valid mode
+const MODE_SIMILARITY: Record<string, ValidMode> = {
+  analysis:      'upwind',
+  analytics:     'upwind',
+  metric:        'upwind',
+  kpi:           'upwind',
+  strategy:      'sail',
+  strategic:     'sail',
+  adaptive:      'sail',
+  coaching:      'downwind',
+  conversation:  'downwind',
+  advisory:      'downwind',
+  timeline:      'trim',
+  roadmap:       'trim',
+  planning:      'trim',
+  schedule:      'trim',
+  deep:          'operator',
+  comprehensive: 'operator',
+  intelligence:  'operator',
+  universal:     'operator',
+  multi:         'synergy',
+  hybrid:        'synergy',
+  synergistic:   'synergy',
+  council:       'synergy',
+  growth:        'catamaran',
+  experience:    'catamaran',
+}
+
+const GATEWAY_ROUTER_PROMPT = `You are a query routing engine for a business intelligence platform. Analyze the user's message and route it to the optimal analysis mode.
+
+Available modes:
+- "upwind"    → metric-driven financial/KPI analysis, benchmarks, data interpretation
+- "downwind"  → coaching, conversational deep-dive, trade-off exploration
+- "sail"      → adaptive intelligence: detect query type and blend analytic + coaching
+- "trim"      → phased timeline planning, project roadmaps, execution schedules
+- "catamaran" → dual-track: market growth + customer experience simultaneously
+- "operator"  → comprehensive deep intelligence, multi-domain strategy
+- "synergy"   → war-room council: multiple specialist modules working in parallel
+
+Mood signals:
+- "analytical"  → user wants data, numbers, benchmarks
+- "exploratory" → user wants to think through options
+- "urgent"      → time-sensitive decision or crisis management
+- "planning"    → user wants a roadmap or action plan
+- "creative"    → user wants brainstorming or unconventional approaches
+
+urgencyLevel: 0.0–1.0. Set ≥ 0.8 only for genuine crises or deadlines within 48 hours.
+
+Return ONLY this JSON (no markdown, no explanation):
+{"mode":"<mode>","confidence":<0.0-1.0>,"moodSignal":"<mood>","urgencyLevel":<0.0-1.0>,"reasoning":"<max 80 chars>","alternativeMode":"<mode>"}`
+
+function sanitizeRouterResult(raw: Record<string, unknown>): RouterResult {
+  const toValidMode = (val: unknown): ValidMode => {
+    if (typeof val !== 'string') return 'upwind'
+    const lower = val.toLowerCase().trim()
+    if (VALID_MODES_SET.has(lower)) return lower as ValidMode
+    // Fuzzy match: check if any similarity key appears in the value
+    for (const [keyword, mode] of Object.entries(MODE_SIMILARITY)) {
+      if (lower.includes(keyword)) return mode
+    }
+    return 'upwind'
+  }
+
+  const toFloat = (val: unknown, def: number): number => {
+    const n = parseFloat(String(val))
+    return isNaN(n) ? def : Math.min(1, Math.max(0, n))
+  }
+
+  const toMood = (val: unknown): RouterMood => {
+    const VALID_MOODS: RouterMood[] = ['analytical', 'exploratory', 'urgent', 'planning', 'creative']
+    if (typeof val === 'string' && VALID_MOODS.includes(val.toLowerCase() as RouterMood)) {
+      return val.toLowerCase() as RouterMood
+    }
+    return 'analytical'
+  }
+
+  const mode = toValidMode(raw.mode)
+  const alt  = toValidMode(raw.alternativeMode)
+
+  return {
+    mode,
+    confidence:      toFloat(raw.confidence,   0.7),
+    moodSignal:      toMood(raw.moodSignal),
+    urgencyLevel:    toFloat(raw.urgencyLevel,  0.3),
+    reasoning:       typeof raw.reasoning === 'string' ? raw.reasoning.slice(0, 120) : '',
+    alternativeMode: alt === mode ? ALTERNATIVE_MODE_MAP[mode] : alt,
+  }
+}
+
+async function runGatewayRouter(
+  message:  string,
+  context?: string,
+  byokKey?: string,
+): Promise<RouterResult | null> {
+  const keys = getKeyPool(byokKey)
+  if (!keys.length) return null
+
+  const abort = new AbortController()
+  const timer = setTimeout(() => abort.abort(), 3_000)
+
+  try {
+    const userContent = context?.trim()
+      ? `Context: ${context.trim().slice(0, 300)}\n\nQuery: ${message.slice(0, 500)}`
+      : message.slice(0, 500)
+
+    const res = await fetch(GROQ_URL, {
+      method:  'POST',
+      headers: {
+        'Authorization': `Bearer ${keys[0]}`,
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({
+        model:           GROQ_MODEL_FALLBACK,   // llama-3.1-8b-instant — fast + high TPD
+        messages: [
+          { role: 'system', content: GATEWAY_ROUTER_PROMPT },
+          { role: 'user',   content: userContent },
+        ],
+        max_tokens:      150,
+        temperature:     0.1,
+        response_format: { type: 'json_object' },
+      }),
+      signal: abort.signal,
+    })
+
+    clearTimeout(timer)
+    if (!res.ok) return null
+
+    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
+    const raw  = JSON.parse(data.choices?.[0]?.message?.content ?? '{}') as Record<string, unknown>
+    return sanitizeRouterResult(raw)
+  } catch {
+    clearTimeout(timer)
+    return null
+  }
 }
 
 // ── Route handler ─────────────────────────────────────────────────────────────
@@ -366,7 +541,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Message is required.' }, { status: 422 })
   }
 
-  const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' = body.analysisMode ?? 'upwind'
+  const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'auto' = body.analysisMode ?? 'upwind'
 
   // 3. Groq — single AI provider
   const groqKey = process.env.GROQ_API_KEY ?? body.apiKey
@@ -376,6 +551,29 @@ export async function POST(req: NextRequest) {
       { error: 'AI provider not configured. Add a Groq API key in settings to continue.' },
       { status: 503 },
     )
+  }
+
+  // ── AUTO mode: Gateway Router — intelligent dispatch ─────────────────────
+  // Runs a fast 8B-model call (3 s timeout) to classify query intent and return
+  // a __moodGuide payload. The frontend shows a routing card; high-urgency
+  // queries (urgencyLevel ≥ 0.8) are auto-proceeded without user confirmation.
+  if (analysisMode === 'auto') {
+    const routerResult = await runGatewayRouter(
+      body.message ?? '',
+      body.context,
+      body.apiKey,
+    )
+    return Response.json({
+      __moodGuide: {
+        detectedMood:    routerResult?.moodSignal    ?? 'analytical',
+        selectedMode:    routerResult?.mode          ?? 'upwind',
+        alternativeMode: routerResult?.alternativeMode ?? 'sail',
+        reasoning:       routerResult?.reasoning     ?? '',
+        urgencyLevel:    routerResult?.urgencyLevel  ?? 0.3,
+        confidence:      routerResult?.confidence    ?? 0.7,
+        autoProceeding:  (routerResult?.urgencyLevel ?? 0) >= 0.8,
+      },
+    }, { headers: { 'Cache-Control': 'no-store' } })
   }
 
   const language           = body.language ?? 'en'

@@ -34,6 +34,8 @@ import { useBusinessContext }            from '@/lib/context/BusinessContext'
 import { useAetherisStore, selectAgentMode, selectActiveAlerts } from '@/lib/aetherisStore'
 import { SailAdapter }                    from '@/components/SailAdapter'
 import type { SailIntent }                from '@/lib/intent'
+import { MoodGuideCard }                  from '@/components/MoodGuideCard'
+import type { MoodGuideData }             from '@/components/MoodGuideCard'
 
 // Placeholders are derived from translations — built inside the component
 const PLACEHOLDER_KEYS = [
@@ -198,6 +200,14 @@ export default function ChatPage() {
   const [operatorPhase, setOperatorPhase] = useState<'idle'|'streaming'|'complete'>('idle')
   const [operatorError, setOperatorError] = useState<string|null>(null)
   const operatorAbortRef = useRef<AbortController|null>(null)
+
+  // AUTO mode — Gateway Router state
+  const [autoMode,  setAutoMode]  = useState(false)
+  const [autoPhase, setAutoPhase] = useState<'idle'|'routing'|'guiding'|'error'>('idle')
+  const [moodGuide, setMoodGuide] = useState<MoodGuideData | null>(null)
+  const [autoError, setAutoError] = useState<string | null>(null)
+  // Stores the original query text while the mood guide card is shown
+  const pendingAutoTextRef = useRef<string>('')
 
   // Context toggle + inline paywall
   const [useProfileCtx,     setUseProfileCtx]    = useState(true)
@@ -542,11 +552,79 @@ export default function ChatPage() {
     }
   }
 
+  // ── AUTO mode handlers ────────────────────────────────────────────────────
+
+  async function handleAutoSubmit(text: string) {
+    setAutoError(null)
+    setMoodGuide(null)
+    setAutoPhase('routing')
+    pendingAutoTextRef.current = text
+
+    try {
+      const res = await fetch('/api/chat', {
+        method:  'POST',
+        headers: {
+          'Content-Type':       'application/json',
+          'X-Client-Language':  language,
+          'X-Aetheris-Session': sessionId || 'init',
+        },
+        body: JSON.stringify(buildModeBody(text, 'auto')),
+      })
+
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error((d as Record<string, unknown>).error as string ?? 'Routing request failed.')
+      }
+
+      const data = await res.json() as { __moodGuide?: MoodGuideData }
+
+      if (data.__moodGuide) {
+        setMoodGuide(data.__moodGuide)
+        setAutoPhase('guiding')
+        // High urgency: MoodGuideCard fires onProceed automatically after 800ms
+      } else {
+        // Unexpected response — fall back to upwind
+        setAutoPhase('idle')
+        await submit(text, { context: getContext() || undefined, attachment: attachment ?? undefined, analysisMode: 'upwind', apiKey: apiKey || undefined, primaryConstraint })
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Routing failed. Please try again.'
+      setAutoError(msg)
+      setAutoPhase('error')
+    }
+  }
+
+  function proceedWithMode(selectedMode: string, text: string) {
+    // Clear mood guide state, lock in the chosen mode
+    setAutoPhase('idle')
+    setMoodGuide(null)
+    setMode(selectedMode as AnalysisMode)
+
+    // Dispatch to the correct mode handler
+    if      (selectedMode === 'sail')     void handleSailSubmit(text)
+    else if (selectedMode === 'trim')     void handleTrimSubmit(text)
+    else if (selectedMode === 'catamaran') void handleCatamaranSubmit(text)
+    else if (selectedMode === 'synergy')  void handleSynergySubmit(text)
+    else if (selectedMode === 'operator') void handleOperatorSubmit(text)
+    else if (selectedMode === 'downwind') {
+      lastDownwindInput.current = text
+      void coachSubmit(text, getContext() || undefined, apiKey || undefined, attachment ?? undefined, 'downwind', convHistory.length > 0 ? convHistory : undefined, undefined, primaryConstraint)
+    }
+    else void submit(text, { context: getContext() || undefined, attachment: attachment ?? undefined, analysisMode: selectedMode as AnalysisMode, apiKey: apiKey || undefined, primaryConstraint })
+  }
+
   async function handleSubmit() {
     const text = input.trim()
     if (!text) return
     if (!canAnalyse) { setShowInlinePaywall(true); return }
     setShowInlinePaywall(false)
+
+    // AUTO mode: run gateway router before dispatching to any specific mode
+    if (autoMode) {
+      if (autoPhase === 'routing') return  // already routing
+      await handleAutoSubmit(text)
+      return
+    }
 
     if (mode === 'sail')     { if (sailPhase      !== 'streaming') await handleSailSubmit(text);      return }
     if (mode === 'trim')     { if (trimPhase      !== 'loading')   await handleTrimSubmit(text);      return }
@@ -628,6 +706,8 @@ export default function ChatPage() {
     operatorAbortRef.current?.abort()
     setOperatorText(''); setOperatorPhase('idle'); setOperatorError(null)
     setShowInlinePaywall(false)
+    setAutoPhase('idle'); setMoodGuide(null); setAutoError(null)
+    pendingAutoTextRef.current = ''
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
 
@@ -638,7 +718,9 @@ export default function ChatPage() {
     setShowKeyPanel(false)
   }
 
-  const isActive = mode === 'sail'
+  const isActive = autoPhase === 'routing'
+    ? true
+    : mode === 'sail'
     ? sailPhase === 'streaming'
     : mode === 'trim'
     ? trimPhase === 'loading'
@@ -849,14 +931,56 @@ export default function ChatPage() {
 
               {/* Mode selector — hidden while active */}
               {!isActive && (
-                <div style={{ marginBottom: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                  <ModeSelector
-                    mode={mode}
-                    onChange={setMode}
-                    synergyModes={synergyModes}
-                    onSynergyChange={setSynergyModes}
-                    brandName={brandConfig?.aiName ?? brandConfig?.companyName}
-                  />
+                <div style={{ marginBottom: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {/* Auto mode hides the manual selector */}
+                  {!autoMode && (
+                    <ModeSelector
+                      mode={mode}
+                      onChange={setMode}
+                      synergyModes={synergyModes}
+                      onSynergyChange={setSynergyModes}
+                      brandName={brandConfig?.aiName ?? brandConfig?.companyName}
+                    />
+                  )}
+
+                  {/* ⊕ AUTO toggle */}
+                  <button
+                    onClick={() => { setAutoMode(m => !m); setAutoPhase('idle'); setMoodGuide(null); setAutoError(null) }}
+                    title={autoMode ? 'Switch to manual mode selection' : 'Let Aetheris pick the best mode automatically'}
+                    style={{
+                      display:       'flex',
+                      alignItems:    'center',
+                      gap:           '0.35rem',
+                      padding:       '0.3rem 0.75rem',
+                      borderRadius:  '999px',
+                      background:    autoMode ? 'rgba(201,169,110,0.12)' : 'rgba(0,0,0,0.04)',
+                      border:        `1px solid ${autoMode ? 'rgba(201,169,110,0.45)' : 'rgba(0,0,0,0.1)'}`,
+                      cursor:        'pointer',
+                      transition:    'all 0.18s',
+                      flexShrink:    0,
+                      marginLeft:    autoMode ? 0 : 'auto',
+                    }}
+                  >
+                    <span style={{
+                      fontFamily:    'Inter, sans-serif',
+                      fontSize:      '0.6rem',
+                      fontWeight:    700,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color:         autoMode ? '#C9A96E' : '#9CA3AF',
+                    }}>
+                      ⊕ AUTO
+                    </span>
+                    {autoMode && (
+                      <span style={{
+                        width:        5,
+                        height:       5,
+                        borderRadius: '50%',
+                        background:   '#C9A96E',
+                        flexShrink:   0,
+                      }} />
+                    )}
+                  </button>
                 </div>
               )}
 
@@ -1050,6 +1174,54 @@ export default function ChatPage() {
                   ))}
                 </motion.div>
               )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── AUTO / Mood Guide card ── */}
+        <AnimatePresence>
+          {(autoPhase === 'routing' || autoPhase === 'guiding') && (
+            <motion.div
+              key="mood-guide"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.28 }}
+            >
+              <MoodGuideCard
+                data={moodGuide ?? {
+                  detectedMood:    'analytical',
+                  selectedMode:    'upwind',
+                  alternativeMode: 'sail',
+                  reasoning:       '',
+                  urgencyLevel:    0.3,
+                  confidence:      0.7,
+                  autoProceeding:  false,
+                }}
+                phase={autoPhase}
+                onProceed={(selectedMode) => proceedWithMode(selectedMode, pendingAutoTextRef.current)}
+                onSwitch={(altMode)       => proceedWithMode(altMode,      pendingAutoTextRef.current)}
+              />
+            </motion.div>
+          )}
+          {autoPhase === 'error' && autoError && (
+            <motion.div
+              key="auto-error"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              style={{ padding: '0.75rem 1rem', background: 'rgba(153,27,27,0.04)', border: '1px solid rgba(153,27,27,0.15)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.625rem' }}
+            >
+              <span style={{ color: '#991B1B', fontSize: '0.85rem' }}>⚠</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#991B1B', flex: 1 }}>
+                {autoError}
+              </span>
+              <button
+                onClick={() => { setAutoPhase('idle'); setAutoError(null) }}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#991B1B', background: 'none', border: '1px solid rgba(153,27,27,0.3)', borderRadius: '5px', padding: '0.2rem 0.6rem', cursor: 'pointer' }}
+              >
+                Dismiss
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
