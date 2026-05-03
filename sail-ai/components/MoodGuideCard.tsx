@@ -31,6 +31,7 @@ const MODE_META: Record<string, { color: string; label: string; description: str
   catamaran: { color: '#D4AF37', label: 'Catamaran', description: 'Dual-track growth + CX'    },
   operator:  { color: '#CC2200', label: 'Operator',  description: 'Deep comprehensive intel'   },
   synergy:   { color: '#C9A96E', label: 'Synergy',   description: 'War-room council'           },
+  scenario:  { color: '#00C9B1', label: 'Scenario',  description: 'Predictive simulation'      },
 }
 
 // ── Mood badge config ─────────────────────────────────────────────────────────

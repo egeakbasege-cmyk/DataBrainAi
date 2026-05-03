@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import type { TranslationKey } from '@/lib/i18n/translations'
 
-export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy'
+export type AnalysisMode = 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'scenario'
 
 interface Props {
   mode: AnalysisMode
@@ -44,7 +44,7 @@ const OPERATOR_META = {
 // Colour looked up by mode id for synergy chip rendering
 const MODE_COLOR: Record<string, string> = {
   upwind: '#1A5276', downwind: '#00695C', sail: '#7C3AED',
-  trim: '#B45309', catamaran: '#D4AF37', operator: '#CC2200',
+  trim: '#B45309', catamaran: '#D4AF37', operator: '#CC2200', scenario: '#00C9B1',
 }
 
 const LABEL_KEYS: Record<AnalysisMode, TranslationKey> = {
@@ -55,6 +55,7 @@ const LABEL_KEYS: Record<AnalysisMode, TranslationKey> = {
   catamaran: 'mode.catamaran',
   operator:  'mode.operator',
   synergy:   'mode.synergy',
+  scenario:  'mode.scenario',
 }
 const DESC_KEYS: Record<AnalysisMode, TranslationKey> = {
   upwind:    'mode.upwindDesc',
@@ -64,6 +65,7 @@ const DESC_KEYS: Record<AnalysisMode, TranslationKey> = {
   catamaran: 'mode.catamaranDesc',
   operator:  'mode.operatorDesc',
   synergy:   'mode.synergyDesc',
+  scenario:  'mode.scenarioDesc',
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────

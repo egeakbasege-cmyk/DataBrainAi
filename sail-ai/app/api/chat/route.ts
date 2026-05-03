@@ -26,6 +26,7 @@ import {
   buildCatamaranSystemPrompt as buildEnhancedCatamaranPrompt,
   buildOperatorSystemPrompt as buildEnhancedOperatorPrompt,
   buildSynergySystemPrompt,
+  buildScenarioSystemPrompt,
 } from '@/lib/prompts/enhanced-modes'
 // [SAIL-NEW] — DataShift governance layer
 import { selectSkillCards, buildSkillBlock }         from '@/lib/skills/skillCards'
@@ -92,7 +93,7 @@ type ExtendedPayload = Omit<AetherisPayload, 'analysisMode'> & {
   apiKey?:             string
   primaryConstraint?:  string
   /** 'auto' triggers the Gateway Router; other values select the mode directly. */
-  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'auto'
+  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'scenario' | 'auto'
   synergyModes?:       string[]
   synergyName?:        string
   /** Future RAG injection — populate with retrieved Pinecone/Weaviate chunks before calling this route. */
@@ -371,7 +372,7 @@ function buildUserMessage(body: ExtendedPayload): string {
 // that classifies query intent and selects the optimal analysis mode.
 // Returns null on timeout or any error → caller falls back to 'upwind'.
 
-const VALID_MODES = ['upwind', 'downwind', 'sail', 'trim', 'catamaran', 'operator', 'synergy'] as const
+const VALID_MODES = ['upwind', 'downwind', 'sail', 'trim', 'catamaran', 'operator', 'synergy', 'scenario'] as const
 type ValidMode  = typeof VALID_MODES[number]
 type RouterMood = 'analytical' | 'exploratory' | 'urgent' | 'planning' | 'creative'
 
@@ -394,6 +395,7 @@ const ALTERNATIVE_MODE_MAP: Record<ValidMode, ValidMode> = {
   trim:      'operator',
   catamaran: 'synergy',
   downwind:  'sail',
+  scenario:  'sail',
 }
 
 // Fuzzy fallback — maps hallucinated/partial strings to the nearest valid mode
@@ -609,7 +611,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Message is required.' }, { status: 422 })
   }
 
-  const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'auto' = body.analysisMode ?? 'upwind'
+  const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'scenario' | 'auto' = body.analysisMode ?? 'upwind'
 
   // 3. Groq — single AI provider
   const groqKey = process.env.GROQ_API_KEY ?? body.apiKey
@@ -833,6 +835,74 @@ export async function POST(req: NextRequest) {
           } else if (contentBuf) {
             ctrl.enqueue(encoder.encode(contentBuf))
           }
+          ctrl.close()
+        }
+      },
+    })
+
+    return new Response(stream, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' },
+    })
+  }
+
+  // ── SCENARIO mode: Mirofish predictive simulation — streaming markdown ──────
+  if (analysisMode === 'scenario') {
+    const scenarioRes = await groqFetch({
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model:       GROQ_MODEL,
+        messages: [
+          {
+            role:    'system',
+            content: buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix,
+          },
+          { role: 'user', content: userMessage },
+        ],
+        max_tokens:  1400,
+        temperature: 0.5,
+        stream:      true,
+      }),
+    }, body.apiKey).catch(() => null)
+
+    if (!scenarioRes?.ok) {
+      const scStatus = scenarioRes?.status === 401 ? 401 : scenarioRes?.status === 429 ? 429 : 502
+      return Response.json(
+        { error: scStatus === 401 ? 'Invalid API key.' : scStatus === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status: scStatus },
+      )
+    }
+
+    const encoder   = new TextEncoder()
+    const scBody    = scenarioRes.body!
+
+    const stream = new ReadableStream({
+      async start(ctrl) {
+        // [SAIL-NEW] Module 3 — scenario meta line with health report
+        const metaLine = JSON.stringify({ __scenarioMeta: { healthReport } }) + '\n'
+        ctrl.enqueue(encoder.encode(metaLine))
+        const reader  = scBody.getReader()
+        const decoder = new TextDecoder()
+        let   buf     = ''
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buf += decoder.decode(value, { stream: true })
+            const lines = buf.split('\n')
+            buf = lines.pop() ?? ''
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue
+              const raw = line.slice(6).trim()
+              if (raw === '[DONE]') continue
+              try {
+                const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
+                  .choices?.[0]?.delta?.content ?? ''
+                if (delta) ctrl.enqueue(encoder.encode(delta))
+              } catch { /* ignore parse errors */ }
+            }
+          }
+        } catch { /* stream ended abruptly */ } finally {
           ctrl.close()
         }
       },

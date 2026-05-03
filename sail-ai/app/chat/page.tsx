@@ -201,6 +201,12 @@ export default function ChatPage() {
   const [operatorError, setOperatorError] = useState<string|null>(null)
   const operatorAbortRef = useRef<AbortController|null>(null)
 
+  // SCENARIO state — Mirofish predictive simulation
+  const [scenarioText,  setScenarioText]  = useState('')
+  const [scenarioPhase, setScenarioPhase] = useState<'idle'|'streaming'|'complete'>('idle')
+  const [scenarioError, setScenarioError] = useState<string|null>(null)
+  const scenarioAbortRef = useRef<AbortController|null>(null)
+
   // AUTO mode — Gateway Router state
   const [autoMode,  setAutoMode]  = useState(false)
   const [autoPhase, setAutoPhase] = useState<'idle'|'routing'|'guiding'|'error'>('idle')
@@ -552,6 +558,49 @@ export default function ChatPage() {
     }
   }
 
+  // ── SCENARIO mode: Mirofish predictive simulation ────────────────────────
+  async function handleScenarioSubmit(text: string) {
+    setScenarioError(null); setScenarioText(''); setScenarioPhase('streaming')
+    scenarioAbortRef.current = new AbortController()
+    try {
+      const res = await fetch('/api/chat', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body:    JSON.stringify(buildModeBody(text, 'scenario')),
+        signal:  scenarioAbortRef.current.signal,
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error((d as Record<string, unknown>).error as string ?? 'SCENARIO request failed.')
+      }
+      const reader  = res.body!.getReader()
+      const decoder = new TextDecoder()
+      let   buf     = ''
+      let   metaDone = false
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        // Strip meta JSON line (first newline-terminated JSON object)
+        if (!metaDone) {
+          const nl = buf.indexOf('\n')
+          if (nl !== -1) {
+            try { JSON.parse(buf.slice(0, nl)) } catch { /* not meta */ }
+            buf = buf.slice(nl + 1)
+            metaDone = true
+          }
+        }
+        setScenarioText(buf)
+      }
+      setScenarioPhase('complete')
+      saveAnalysis(text, buf.slice(0, 120))
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      setScenarioError(err instanceof Error ? err.message : 'SCENARIO request failed.')
+      setScenarioPhase('idle')
+    }
+  }
+
   // ── AUTO mode handlers ────────────────────────────────────────────────────
 
   async function handleAutoSubmit(text: string) {
@@ -606,6 +655,7 @@ export default function ChatPage() {
     else if (selectedMode === 'catamaran') void handleCatamaranSubmit(text)
     else if (selectedMode === 'synergy')  void handleSynergySubmit(text)
     else if (selectedMode === 'operator') void handleOperatorSubmit(text)
+    else if (selectedMode === 'scenario') void handleScenarioSubmit(text)
     else if (selectedMode === 'downwind') {
       lastDownwindInput.current = text
       void coachSubmit(text, getContext() || undefined, apiKey || undefined, attachment ?? undefined, 'downwind', convHistory.length > 0 ? convHistory : undefined, undefined, primaryConstraint)
@@ -631,6 +681,7 @@ export default function ChatPage() {
     if (mode === 'catamaran'){ if (catamaranPhase !== 'loading')   await handleCatamaranSubmit(text); return }
     if (mode === 'synergy')  { if (synergyPhase   !== 'streaming' && synergyModes.length >= 2) await handleSynergySubmit(text); return }
     if (mode === 'operator') { if (operatorPhase  !== 'streaming') await handleOperatorSubmit(text);  return }
+    if (mode === 'scenario') { if (scenarioPhase  !== 'streaming') await handleScenarioSubmit(text);  return }
 
     if (mode === 'downwind') {
       if (coachState === 'THINKING' || coachState === 'STREAMING') return
@@ -705,6 +756,8 @@ export default function ChatPage() {
     setSynergyText(''); setSynergyPhase('idle'); setSynergyError(null); setSynergyMeta(null)
     operatorAbortRef.current?.abort()
     setOperatorText(''); setOperatorPhase('idle'); setOperatorError(null)
+    scenarioAbortRef.current?.abort()
+    setScenarioText(''); setScenarioPhase('idle'); setScenarioError(null)
     setShowInlinePaywall(false)
     setAutoPhase('idle'); setMoodGuide(null); setAutoError(null)
     pendingAutoTextRef.current = ''
@@ -730,6 +783,8 @@ export default function ChatPage() {
     ? synergyPhase === 'streaming'
     : mode === 'operator'
     ? operatorPhase === 'streaming'
+    : mode === 'scenario'
+    ? scenarioPhase === 'streaming'
     : mode === 'downwind'
     ? coachState === 'THINKING' || coachState === 'STREAMING'
     : state === 'THINKING'
@@ -744,13 +799,15 @@ export default function ChatPage() {
     ? synergyPhase === 'complete'
     : mode === 'operator'
     ? operatorPhase === 'complete'
+    : mode === 'scenario'
+    ? scenarioPhase === 'complete'
     : mode === 'downwind'
     ? coachState === 'COMPLETE'
     : state === 'COMPLETE' || state === 'ERROR'
 
   const isConversing = mode === 'downwind' && coachState === 'CONVERSING'
 
-  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'catamaran' ? catamaranError : mode === 'synergy' ? synergyError : mode === 'operator' ? operatorError : mode === 'downwind' ? coachError : error
+  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'catamaran' ? catamaranError : mode === 'synergy' ? synergyError : mode === 'operator' ? operatorError : mode === 'scenario' ? scenarioError : mode === 'downwind' ? coachError : error
 
   const sailState = (
     isActive ? 'THINKING' : isConversing ? 'CONVERSING' : isComplete ? 'COMPLETE' : 'IDLE'
@@ -1428,6 +1485,27 @@ export default function ChatPage() {
                 </div>
                 <div style={{ padding: '1.5rem 1.25rem' }}>
                   <SailAdapter text={operatorText} intent="analytic" streaming={operatorPhase === 'streaming'} />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── SCENARIO predictive simulation result ── */}
+        <AnimatePresence>
+          {mode === 'scenario' && (scenarioPhase === 'streaming' || scenarioPhase === 'complete') && (
+            <motion.div key="scenario-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+              <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,201,177,0.18)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,201,177,0.07), 0 1px 4px rgba(0,0,0,0.04)' }}>
+                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(0,201,177,0.10)', background: 'rgba(0,201,177,0.03)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {scenarioPhase === 'streaming' && (
+                    <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#00C9B1', flexShrink: 0 }} />
+                  )}
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#00C9B1', fontWeight: 700 }}>
+                    SCENARIO · Predictive Simulation
+                  </span>
+                </div>
+                <div style={{ padding: '1.5rem 1.25rem' }}>
+                  <SailAdapter text={scenarioText} intent="scenario" streaming={scenarioPhase === 'streaming'} />
                 </div>
               </div>
             </motion.div>
