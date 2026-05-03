@@ -27,6 +27,16 @@ import {
   buildOperatorSystemPrompt as buildEnhancedOperatorPrompt,
   buildSynergySystemPrompt,
 } from '@/lib/prompts/enhanced-modes'
+// [SAIL-NEW] — DataShift governance layer
+import { selectSkillCards, buildSkillBlock }         from '@/lib/skills/skillCards'
+import type { SkillCard }                            from '@/lib/skills/skillCards'
+import { scrubPII }                                  from '@/lib/skills/piiScrubber'
+import {
+  buildDataHealthReport,
+  encodeHealthReport,
+  GOVERNANCE_SYSTEM_SUFFIX,
+  type DataHealthReport,
+} from '@/lib/skills/dataHealthReport'
 
 const { auth } = NextAuth(authConfig)
 
@@ -347,6 +357,12 @@ function buildUserMessage(body: ExtendedPayload): string {
     parts.push('MODE: Conversational deep-dive — expand on trade-offs and second-order effects.')
   }
 
+  // [SAIL-NEW] Module 1 — Expert Skill injection
+  // selectSkillCards scores every card by keyword hit count; returns [] on no match.
+  const skillCards = selectSkillCards(body.message?.trim() ?? '')
+  const skillBlock = buildSkillBlock(skillCards)
+  if (skillBlock) parts.push(skillBlock)
+
   return parts.join('\n\n')
 }
 
@@ -431,6 +447,33 @@ urgencyLevel: 0.0–1.0. Set ≥ 0.8 only for genuine crises or deadlines within
 Return ONLY this JSON (no markdown, no explanation):
 {"mode":"<mode>","confidence":<0.0-1.0>,"moodSignal":"<mood>","urgencyLevel":<0.0-1.0>,"reasoning":"<max 80 chars>","alternativeMode":"<mode>"}`
 
+// [SAIL-NEW] Module 4 — sanitizeRouterResult(string) overload
+// Validates a raw mode string from the LLM against the valid-modes list,
+// scores by substring overlap, and falls back to 'synergy' if no match.
+// Used by the adaptive domain-bias logic in runGatewayRouter().
+function sanitizeRouterResultStr(
+  raw: string,
+  validModes: readonly string[],
+): string {
+  const lower = raw.toLowerCase().trim()
+  if (validModes.includes(lower)) return lower
+
+  // Score each valid mode by bi-directional substring overlap
+  let bestMode  = 'synergy'
+  let bestScore = 0
+  for (const vm of validModes) {
+    const score =
+      (lower.includes(vm)  ? vm.length  : 0) +
+      (vm.includes(lower)  ? lower.length : 0)
+    if (score > bestScore) { bestScore = score; bestMode = vm }
+  }
+
+  if (bestScore === 0) {
+    console.warn(`[SAIL-ROUTER] Invalid mode suggestion: "${raw}" — falling back to 'synergy'`)
+  }
+  return bestMode
+}
+
 function sanitizeRouterResult(raw: Record<string, unknown>): RouterResult {
   const toValidMode = (val: unknown): ValidMode => {
     if (typeof val !== 'string') return 'upwind'
@@ -467,6 +510,20 @@ function sanitizeRouterResult(raw: Record<string, unknown>): RouterResult {
     reasoning:       typeof raw.reasoning === 'string' ? raw.reasoning.slice(0, 120) : '',
     alternativeMode: alt === mode ? ALTERNATIVE_MODE_MAP[mode] : alt,
   }
+}
+
+// [SAIL-NEW] Module 4 — domain → mode bias map
+// Advisory only: active when analysisMode === 'auto'.
+// Raw bias strings are passed through sanitizeRouterResultStr() before use.
+const DOMAIN_MODE_BIAS: Partial<Record<SkillCard['domain'][number], string>> = {
+  financial_analysis:      'trim',
+  business_strategy:       'synergy',
+  risk_assessment:         'audit',     // sanitizes → 'synergy' (no overlap)
+  product_strategy:        'roadmap',   // sanitizes → 'synergy' (no overlap)
+  market_research:         'sail',
+  operations:              'operator',
+  competitive_intelligence:'upwind',
+  data_governance:         'operator',
 }
 
 async function runGatewayRouter(
@@ -509,6 +566,17 @@ async function runGatewayRouter(
 
     const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
     const raw  = JSON.parse(data.choices?.[0]?.message?.content ?? '{}') as Record<string, unknown>
+
+    // [SAIL-NEW] Module 4 — skill-card domain bias (advisory, auto mode only)
+    const topCard = selectSkillCards(message, 1)[0]
+    if (topCard) {
+      const biasedMode = DOMAIN_MODE_BIAS[topCard.domain[0]]
+      if (biasedMode) {
+        // Validate the biased suggestion; sanitizer maps invalid strings → 'synergy'
+        raw.mode = sanitizeRouterResultStr(biasedMode, VALID_MODES)
+      }
+    }
+
     return sanitizeRouterResult(raw)
   } catch {
     clearTimeout(timer)
@@ -576,9 +644,37 @@ export async function POST(req: NextRequest) {
     }, { headers: { 'Cache-Control': 'no-store' } })
   }
 
+  // [SAIL-NEW] Module 2 — PII scrubbing (fileContent only; message/context never stored)
+  let piiRedactedCount = 0
+  let piiTags: string[] = []
+  if (body.fileContent) {
+    const { scrubbedText, redactedCount, tags } = scrubPII(body.fileContent)
+    body.fileContent    = scrubbedText
+    piiRedactedCount    = redactedCount
+    piiTags             = tags
+  }
+
   const language           = body.language ?? 'en'
   const primaryConstraint  = body.primaryConstraint
-  const userMessage        = buildUserMessage(body)
+  const userMessage        = buildUserMessage(body)   // skill injection happens inside
+
+  // [SAIL-NEW] Module 3 — Wabi-Sabi Health Report pre-computation
+  // Computed once here; stream handlers embed it as the first chunk.
+  const _appliedCards     = selectSkillCards(body.message?.trim() ?? '')
+  const _matchedKeywords  = _appliedCards.map((card) =>
+    card.triggerKeywords.filter((kw) => (body.message ?? '').toLowerCase().includes(kw)),
+  )
+  const _bodyFields: [string, string | undefined][] = [
+    ['message',  body.message],
+    ['context',  body.context],
+  ]
+  const healthReport: DataHealthReport = buildDataHealthReport({
+    redactedCount:   piiRedactedCount,
+    piiTags,
+    appliedCards:    _appliedCards,
+    matchedKeywords: _matchedKeywords,
+    bodyFields:      _bodyFields,
+  })
 
   // ── SYNERGY mode: War Room Council — streaming markdown ──────────────────
   if (analysisMode === 'synergy') {
@@ -590,7 +686,8 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) },
+          // [SAIL-NEW] Module 3 — governance suffix appended to system prompt
+          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + GOVERNANCE_SYSTEM_SUFFIX },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1000,
@@ -608,7 +705,8 @@ export async function POST(req: NextRequest) {
     }
 
     const encoder   = new TextEncoder()
-    const metaLine  = JSON.stringify({ __synMeta: { modes, companyName: synergyName ?? null } }) + '\n'
+    // [SAIL-NEW] Module 3 — health report embedded in meta (frontend splits independently)
+    const metaLine  = JSON.stringify({ __synMeta: { modes, companyName: synergyName ?? null, healthReport } }) + '\n'
     const groqBody  = synRes.body!
 
     const stream = new ReadableStream({
@@ -654,7 +752,8 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) },
+          // [SAIL-NEW] Module 3 — governance suffix
+          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) + GOVERNANCE_SYSTEM_SUFFIX },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -705,13 +804,15 @@ export async function POST(req: NextRequest) {
                   if (nl !== -1) {
                     const match  = contentBuf.slice(0, nl).trim().match(/\[INTENT:(analytic|coaching)\]/)
                     const intent = match ? (match[1] as 'analytic' | 'coaching') : 'analytic'
-                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent } }) + '\n'))
+                    // [SAIL-NEW] Module 3 — health report embedded in __sailMeta
+                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent, healthReport } }) + '\n'))
                     const rest = contentBuf.slice(nl + 1)
                     if (rest) ctrl.enqueue(encoder.encode(rest))
                     contentBuf    = ''
                     intentEmitted = true
                   } else if (contentBuf.length > 120) {
-                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic' } }) + '\n'))
+                    // [SAIL-NEW] Module 3 — health report in fallback meta
+                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport } }) + '\n'))
                     ctrl.enqueue(encoder.encode(contentBuf))
                     contentBuf    = ''
                     intentEmitted = true
@@ -724,7 +825,8 @@ export async function POST(req: NextRequest) {
           }
         } catch { /* stream ended abruptly */ } finally {
           if (!intentEmitted) {
-            ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic' } }) + '\n'))
+            // [SAIL-NEW] Module 3 — health report in finally-block fallback
+            ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport } }) + '\n'))
             if (contentBuf) ctrl.enqueue(encoder.encode(contentBuf))
           } else if (contentBuf) {
             ctrl.enqueue(encoder.encode(contentBuf))
@@ -747,7 +849,8 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) },
+          // [SAIL-NEW] Module 3 — governance suffix
+          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) + GOVERNANCE_SYSTEM_SUFFIX },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -769,6 +872,8 @@ export async function POST(req: NextRequest) {
 
     const stream = new ReadableStream({
       async start(ctrl) {
+        // [SAIL-NEW] Module 3 — health report as first stream chunk (delimiter format)
+        ctrl.enqueue(encoder.encode(encodeHealthReport(healthReport)))
         const reader  = opBody.getReader()
         const decoder = new TextDecoder()
         let   buf     = ''
@@ -836,10 +941,11 @@ export async function POST(req: NextRequest) {
 
     try {
       const parsed = JSON.parse(trimContent)
-      return Response.json(parsed, { headers: { 'Cache-Control': 'no-store' } })
+      // [SAIL-NEW] Module 3 — health report in JSON response
+      return Response.json({ ...parsed, __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       return Response.json(
-        { trimTitle: 'Strategic Plan', summary: trimContent, phases: [] },
+        { trimTitle: 'Strategic Plan', summary: trimContent, phases: [], __healthReport: healthReport },
         { headers: { 'Cache-Control': 'no-store' } },
       )
     }
@@ -880,16 +986,18 @@ export async function POST(req: NextRequest) {
 
     try {
       const parsed = JSON.parse(catContent)
-      return Response.json(parsed, { headers: { 'Cache-Control': 'no-store' } })
+      // [SAIL-NEW] Module 3 — health report in JSON response
+      return Response.json({ ...parsed, __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       return Response.json(
-        { 
+        {
           catamaranTitle: 'System Overhaul Plan',
           marketGrowth: { actions: [], target: '' },
           customerExperience: { actions: [], target: '' },
           unifiedStrategy: '',
           thirtyDayTarget: '',
-          greatestRisk: ''
+          greatestRisk: '',
+          __healthReport: healthReport,  // [SAIL-NEW]
         },
         { headers: { 'Cache-Control': 'no-store' } },
       )
@@ -938,10 +1046,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const parsed = JSON.parse(content)
-    return Response.json(parsed, { headers: { 'Cache-Control': 'no-store' } })
+    // [SAIL-NEW] Module 3 — health report in JSON response
+    return Response.json({ ...parsed, __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
   } catch {
     return Response.json(
-      { insight: content || 'Analysis complete. Please review and try again.' },
+      { insight: content || 'Analysis complete. Please review and try again.', __healthReport: healthReport },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   }
