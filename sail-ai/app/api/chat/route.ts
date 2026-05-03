@@ -33,8 +33,8 @@ import type { SkillCard }                            from '@/lib/skills/skillCar
 import { scrubPII }                                  from '@/lib/skills/piiScrubber'
 import {
   buildDataHealthReport,
-  encodeHealthReport,
-  GOVERNANCE_SYSTEM_SUFFIX,
+  // encodeHealthReport and GOVERNANCE_SYSTEM_SUFFIX intentionally not imported:
+  // health report is computed for internal analytics only, never shown to users.
   type DataHealthReport,
 } from '@/lib/skills/dataHealthReport'
 
@@ -686,8 +686,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          // [SAIL-NEW] Module 3 — governance suffix appended to system prompt
-          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + GOVERNANCE_SYSTEM_SUFFIX },
+          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1000,
@@ -752,8 +751,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          // [SAIL-NEW] Module 3 — governance suffix
-          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) + GOVERNANCE_SYSTEM_SUFFIX },
+          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -849,8 +847,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          // [SAIL-NEW] Module 3 — governance suffix
-          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) + GOVERNANCE_SYSTEM_SUFFIX },
+          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -872,8 +869,7 @@ export async function POST(req: NextRequest) {
 
     const stream = new ReadableStream({
       async start(ctrl) {
-        // [SAIL-NEW] Module 3 — health report as first stream chunk (delimiter format)
-        ctrl.enqueue(encoder.encode(encodeHealthReport(healthReport)))
+        // Health report is attached to JSON responses only; not streamed as visible text
         const reader  = opBody.getReader()
         const decoder = new TextDecoder()
         let   buf     = ''
