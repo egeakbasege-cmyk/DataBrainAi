@@ -39,7 +39,9 @@ const GROQ_MODEL          = GROQ_MODEL_PRIMARY
 
 // ── Key pool: rotate through up to 5 keys before falling back to a smaller model
 // Add GROQ_API_KEY_2 … GROQ_API_KEY_5 in Vercel env to multiply daily capacity.
-function getKeyPool(): string[] {
+// byokKey: user-supplied BYOK key — appended after server keys so server capacity
+// is consumed first; BYOK is the last-resort fallback key.
+function getKeyPool(byokKey?: string): string[] {
   const keys: string[] = []
   const base = process.env.GROQ_API_KEY
   if (base) keys.push(base)
@@ -48,13 +50,15 @@ function getKeyPool(): string[] {
     const k = process.env[`GROQ_API_KEY_${i}`]
     if (k && !keys.includes(k)) keys.push(k)
   }
+  // Include BYOK key as last-resort fallback (after all server keys)
+  if (byokKey && !keys.includes(byokKey)) keys.push(byokKey)
   return keys
 }
 
 // ── Groq fetch: key rotation → model fallback on 429 ─────────────────────────
-async function groqFetch(init: RequestInit): Promise<Response> {
+async function groqFetch(init: RequestInit, byokKey?: string): Promise<Response> {
   const reqBody = JSON.parse(init.body as string) as Record<string, unknown>
-  const keys    = getKeyPool()
+  const keys    = getKeyPool(byokKey)
 
   // Try every key with the primary model first
   for (const key of keys) {
@@ -395,7 +399,7 @@ export async function POST(req: NextRequest) {
         temperature: 0.45,
         stream:      true,
       }),
-    }).catch(() => null)
+    }, body.apiKey).catch(() => null)
 
     if (!synRes?.ok) {
       const synStatus = synRes?.status === 401 ? 401 : synRes?.status === 429 ? 429 : 502
@@ -459,7 +463,7 @@ export async function POST(req: NextRequest) {
         temperature: 0.45,
         stream:      true,
       }),
-    }).catch(() => null)
+    }, body.apiKey).catch(() => null)
 
     if (!sailRes?.ok) {
       const sailStatus = sailRes?.status === 401 ? 401 : sailRes?.status === 429 ? 429 : 502
@@ -552,7 +556,7 @@ export async function POST(req: NextRequest) {
         temperature: 0.5,
         stream:      true,
       }),
-    }).catch(() => null)
+    }, body.apiKey).catch(() => null)
 
     if (!operatorRes?.ok) {
       const opStatus = operatorRes?.status === 401 ? 401 : operatorRes?.status === 429 ? 429 : 502
@@ -616,7 +620,7 @@ export async function POST(req: NextRequest) {
           max_tokens:      900,
           temperature:     0.4,
         }),
-      })
+      }, body.apiKey)
     } catch {
       return Response.json({ error: 'TRIM request failed.' }, { status: 502 })
     }
@@ -660,7 +664,7 @@ export async function POST(req: NextRequest) {
           max_tokens:      1100,
           temperature:     0.35,
         }),
-      })
+      }, body.apiKey)
     } catch {
       return Response.json({ error: 'AI provider unreachable.' }, { status: 502 })
     }
@@ -712,7 +716,7 @@ export async function POST(req: NextRequest) {
         max_tokens:      1200,
         temperature:     0.4,
       }),
-    })
+    }, body.apiKey)
   } catch {
     return Response.json({ error: 'Unable to reach AI provider.' }, { status: 502 })
   }
