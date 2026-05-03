@@ -36,10 +36,12 @@ async function getUpstashChecker(): Promise<((id: string) => Promise<boolean>) |
 
   try {
     /* eslint-disable @typescript-eslint/ban-ts-comment */
-    // @ts-ignore — optional peer dep; not installed → caught below
-    const { Ratelimit } = await import('@upstash/ratelimit')
-    // @ts-ignore — optional peer dep; not installed → caught below
-    const { Redis } = await import('@upstash/redis')
+    // webpackIgnore: true prevents the Next.js bundler from trying to resolve
+    // these modules at build time. The try/catch handles runtime absence.
+    // @ts-ignore — optional peer dep; activate by: npm i @upstash/ratelimit @upstash/redis
+    const { Ratelimit } = await import(/* webpackIgnore: true */ '@upstash/ratelimit')
+    // @ts-ignore
+    const { Redis } = await import(/* webpackIgnore: true */ '@upstash/redis')
     /* eslint-enable @typescript-eslint/ban-ts-comment */
     const redis   = new Redis({ url, token })
     const limiter = new Ratelimit({
