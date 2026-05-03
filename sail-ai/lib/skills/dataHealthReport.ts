@@ -45,6 +45,9 @@ export interface DataHealthReport {
   isGloballyVerified?:  boolean   // true = ≥3 unique domains AND ≥2 numeric-data sources
   uniqueDomains?:       number    // count of distinct authority domains retrieved
   discrepancyRisk?:     boolean   // sources present but none carry quantitative data
+  // ── Data Veracity — recency metrics ───────────────────────────────────────
+  // [SAIL-DATA-VERACITY]
+  staleSourceCount?:    number    // results with publishedDate determinably > 12 months old
 }
 
 // ── Builder params ────────────────────────────────────────────────────────────
@@ -73,6 +76,10 @@ export interface DataHealthReportParams {
   // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
   /** Detected query language code ('en' | 'tr' | 'es' | 'de' | 'fr' | 'zh'). */
   queryLanguage?:    string
+  // ── Data Veracity params ───────────────────────────────────────────────────
+  // [SAIL-DATA-VERACITY]
+  /** Number of results flagged as stale (>12 months old) by isStaleSource(). */
+  staleSourceCount?: number
 }
 
 // ── Builder ───────────────────────────────────────────────────────────────────
@@ -88,6 +95,7 @@ export function buildDataHealthReport(params: DataHealthReportParams): DataHealt
     redactedCount, piiTags, appliedCards, matchedKeywords, bodyFields,
     searchResults = [], researchQueries = [],
     queryLanguage = 'en',
+    staleSourceCount,
   } = params
 
   // ── Completeness ──────────────────────────────────────────────────────────
@@ -215,6 +223,8 @@ export function buildDataHealthReport(params: DataHealthReportParams): DataHealt
     ...(consensus !== undefined && { isGloballyVerified: consensus.isGloballyVerified }),
     ...(consensus !== undefined && { uniqueDomains:      consensus.uniqueDomains }),
     ...(consensus !== undefined && { discrepancyRisk:    consensus.discrepancyRisk }),
+    // Data Veracity — recency [SAIL-DATA-VERACITY]
+    ...(staleSourceCount !== undefined && { staleSourceCount }),
   }
 }
 

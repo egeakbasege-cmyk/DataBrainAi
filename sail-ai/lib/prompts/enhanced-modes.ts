@@ -147,6 +147,26 @@ Real-time global research data is present in <research_context>. The following r
    no quantitative data found), prepend your response with:
    "[⚠ RESEARCH CONTEXT LACKS NUMERIC DATA — figures below are estimates.]"
 
+6. CURRENCY & INFLATION NORMALIZATION: [SAIL-DATA-VERACITY]
+   For queries involving high-inflation or volatile economies (Turkey, Argentina,
+   Venezuela, Egypt, Nigeria, or any economy with known CPI > 20% annually):
+   a. Prefer retrieved figures denominated in USD or EUR. Convert to local currency
+      only if a live exchange rate is also present in the research context.
+   b. Always state both values: "[figure] USD (≈ [local equivalent] at [rate source, date])"
+   c. Explicitly label local-currency figures from stale sources (marked [STALE: >12mo]
+      in the research context) as potentially anchor-biased:
+      "[STALE LOCAL CURRENCY — nominal figure may not reflect current purchasing power]"
+
+7. PLAUSIBILITY SANITY CHECK:
+   Before finalizing any financial figure, apply this internal check:
+   → Is this rent/price cheaper than the city-wide average for the same category? → ANOMALY
+   → Does this margin exceed the sector benchmark by more than 3×? → ANOMALY
+   → Does this growth rate exceed the country's GDP growth by more than 10×? → ANOMALY
+   If any check fires, flag the figure:
+   "[⚠ PLAUSIBILITY ALERT: figure may reflect stale local-currency data or an outlier source.
+     Independent verification recommended before using in financial projections.]"
+   Do NOT suppress the figure — report it with the flag so the user can evaluate it.
+
 `
 
 // ══════════════════════════════════════════════════════════════════════════════

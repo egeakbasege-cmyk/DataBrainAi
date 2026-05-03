@@ -25,10 +25,11 @@ export interface SearchResult {
 }
 
 export interface DeepSearchResponse {
-  results:     SearchResult[]
-  queriesUsed: string[]      // the vectors sent to the API
-  searchedAt:  string        // ISO-8601 timestamp
-  provider:    'tavily' | 'serper' | 'none'
+  results:          SearchResult[]
+  queriesUsed:      string[]      // the vectors sent to the API
+  searchedAt:       string        // ISO-8601 timestamp
+  provider:         'tavily' | 'serper' | 'none'
+  staleSourceCount: number        // [SAIL-DATA-VERACITY] results with publishedDate > 12 months old
 }
 
 // ── Domain reliability registry ───────────────────────────────────────────────
@@ -406,6 +407,39 @@ export function requiresResearch(message: string): boolean {
   return RESEARCH_INTENT_PATTERNS.some(re => re.test(message))
 }
 
+// ── Recency filter (Rule 2 of Data Veracity Protocol) ────────────────────────
+// [SAIL-DATA-VERACITY]
+// Results older than 12 months are flagged as stale for financial queries.
+// publishedDate formats vary wildly (ISO-8601, "Jan 2024", "2 days ago", etc.)
+// so we apply a best-effort parse rather than strict validation.
+
+/**
+ * isStaleSource
+ *
+ * Returns true if the published date is determinably older than 12 months.
+ * Returns false (not stale) when the date is absent or unparseable —
+ * we don't penalise sources whose date we simply can't read.
+ */
+export function isStaleSource(publishedDate: string | undefined): boolean {
+  if (!publishedDate) return false   // unknown date → don't penalise
+
+  // Try native Date parse (handles ISO-8601 and many human-readable formats)
+  const parsed = new Date(publishedDate)
+  if (!isNaN(parsed.getTime())) {
+    const twelveMonthsAgo = new Date()
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
+    return parsed < twelveMonthsAgo
+  }
+
+  // Fallback: extract a 4-digit year and compare to (currentYear - 1)
+  const yearMatch = publishedDate.match(/\b(20\d\d)\b/)
+  if (yearMatch) {
+    return parseInt(yearMatch[1], 10) < new Date().getFullYear() - 1
+  }
+
+  return false   // unparseable → assume fresh
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 /** Timeout for the entire parallel search operation (ms). */
@@ -432,7 +466,7 @@ export async function executeDeepSearch(
 
   if (!hasTavily && !hasSerper) {
     clearTimeout(timer)
-    return { results: [], queriesUsed: queries, searchedAt, provider: 'none' }
+    return { results: [], queriesUsed: queries, searchedAt, provider: 'none', staleSourceCount: 0 }
   }
 
   try {
@@ -467,15 +501,21 @@ export async function executeDeepSearch(
     // Sort: highest reliability first
     results.sort((a, b) => b.reliabilityScore - a.reliabilityScore)
 
+    const trimmed = results.slice(0, 8)
+
+    // [SAIL-DATA-VERACITY] Count results older than 12 months (Rule 2 — recency filter)
+    const staleSourceCount = trimmed.filter(r => isStaleSource(r.publishedDate)).length
+
     return {
-      results:    results.slice(0, 8),
+      results:     trimmed,
       queriesUsed: queries,
       searchedAt,
-      provider:   hasTavily ? 'tavily' : 'serper',
+      provider:         hasTavily ? 'tavily' : 'serper',
+      staleSourceCount,
     }
   } catch {
     clearTimeout(timer)
-    return { results: [], queriesUsed: queries, searchedAt, provider: 'none' }
+    return { results: [], queriesUsed: queries, searchedAt, provider: 'none', staleSourceCount: 0 }
   }
 }
 
@@ -493,11 +533,12 @@ export async function executeDeepSearch(
 export function encodeResearchContext(res: DeepSearchResponse): string {
   if (res.results.length === 0) return ''
 
+  // [SAIL-DATA-VERACITY] Mark stale sources inline so the LLM synthesis layer can see them
   const blocks = res.results
-    .map(
-      r =>
-        `Source: ${r.url} | Date: ${r.publishedDate ?? 'unknown'} | Reliability: ${Math.round(r.reliabilityScore * 100)}%\nContent: ${r.content}`,
-    )
+    .map(r => {
+      const staleFlag = isStaleSource(r.publishedDate) ? ' [STALE: >12mo]' : ''
+      return `Source: ${r.url} | Date: ${r.publishedDate ?? 'unknown'}${staleFlag} | Reliability: ${Math.round(r.reliabilityScore * 100)}%\nContent: ${r.content}`
+    })
     .join('\n\n')
 
   return `<research_context>\n${blocks}\n</research_context>`

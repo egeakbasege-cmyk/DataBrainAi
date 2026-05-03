@@ -685,12 +685,14 @@ export async function POST(req: NextRequest) {
   let _searchResults: SearchResult[] = []
   let _researchQueries: string[]     = []
   let _hasSynthesisContext            = false
+  let _staleSourceCount: number | undefined
 
   if (requiresResearch(queryText)) {
     // Pass detected language so bilingual vectors are generated for non-English queries
     _researchQueries = decomposeToSearchQueries(queryText, body.context, _queryLanguage)
     const searchResponse = await executeDeepSearch(_researchQueries)
-    _searchResults = searchResponse.results
+    _searchResults     = searchResponse.results
+    _staleSourceCount  = searchResponse.staleSourceCount  // [SAIL-DATA-VERACITY]
 
     if (_searchResults.length > 0) {
       // Inject into body.ragContext so buildUserMessage() wraps it in the prompt
@@ -721,7 +723,8 @@ export async function POST(req: NextRequest) {
     bodyFields:       _bodyFields,
     searchResults:    _searchResults,
     researchQueries:  _researchQueries,
-    queryLanguage:    _queryLanguage,   // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+    queryLanguage:    _queryLanguage,    // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+    staleSourceCount: _staleSourceCount, // [SAIL-DATA-VERACITY]
   })
 
   // Governance suffix only when a business methodology was triggered.
