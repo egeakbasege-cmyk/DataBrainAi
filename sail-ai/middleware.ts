@@ -6,64 +6,25 @@ import { authConfig }       from './auth.config'
 const { auth } = NextAuth(authConfig)
 
 // ── Edge rate limiter ─────────────────────────────────────────────
-// Primary: @upstash/ratelimit (globally consistent across Edge instances).
-// Fallback: per-instance in-memory Map (activates silently when Upstash
-//   env vars are missing or the package is not installed).
+// Per-instance in-memory Map. Sufficient for single-region deployments.
 //
-// To enable Upstash, set in Vercel env:
-//   UPSTASH_REDIS_REST_URL   — from Upstash dashboard → REST API
-//   UPSTASH_REDIS_REST_TOKEN — from Upstash dashboard → REST API
+// To upgrade to globally-consistent Upstash Redis limiting:
+//   1. npm install @upstash/ratelimit @upstash/redis
+//   2. Add UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to Vercel env
+//   3. Replace checkRate() body with the Upstash Ratelimit.slidingWindow() call
+//
+// NOTE: Next.js compiles middleware with the Edge Runtime bundler (SWC), which
+// hard-fails on any unresolved import specifier — even inside try/catch and even
+// with /* webpackIgnore */ comments. Packages must be installed before importing.
 
 const RATE_CONFIG: Record<string, { limit: number; window: number }> = {
   ai:   { limit: 10, window: 60_000 },   // AI routes: 10 req/min
   auth: { limit: 8,  window: 60_000 },   // Auth routes: 8 req/min (brute-force guard)
 }
 
-// ── Upstash lazy singleton ─────────────────────────────────────────
-// Initialised once on first request; null if Upstash is unavailable.
-// Uses dynamic import so the build never hard-fails when the package
-// is absent — the in-memory Map silently takes over instead.
-let _upstashChecker: ((id: string) => Promise<boolean>) | null = null
-let _upstashAttempted = false
-
-async function getUpstashChecker(): Promise<((id: string) => Promise<boolean>) | null> {
-  if (_upstashAttempted) return _upstashChecker
-  _upstashAttempted = true
-
-  const url   = process.env.UPSTASH_REDIS_REST_URL
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN
-  if (!url || !token) return null
-
-  try {
-    /* eslint-disable @typescript-eslint/ban-ts-comment */
-    // webpackIgnore: true prevents the Next.js bundler from trying to resolve
-    // these modules at build time. The try/catch handles runtime absence.
-    // @ts-ignore — optional peer dep; activate by: npm i @upstash/ratelimit @upstash/redis
-    const { Ratelimit } = await import(/* webpackIgnore: true */ '@upstash/ratelimit')
-    // @ts-ignore
-    const { Redis } = await import(/* webpackIgnore: true */ '@upstash/redis')
-    /* eslint-enable @typescript-eslint/ban-ts-comment */
-    const redis   = new Redis({ url, token })
-    const limiter = new Ratelimit({
-      redis,
-      limiter:   Ratelimit.slidingWindow(10, '60 s'),
-      analytics: false,
-    })
-    _upstashChecker = async (id: string) => {
-      const { success } = await limiter.limit(id)
-      return success
-    }
-  } catch {
-    // Package not installed or Redis unreachable — fall through to in-memory
-    _upstashChecker = null
-  }
-  return _upstashChecker
-}
-
-// ── In-memory fallback Map ─────────────────────────────────────────
 const rateMap = new Map<string, { count: number; reset: number }>()
 
-function checkRateInMemory(key: string, tier: keyof typeof RATE_CONFIG): boolean {
+function checkRate(key: string, tier: keyof typeof RATE_CONFIG): boolean {
   const { limit, window } = RATE_CONFIG[tier]
   const now   = Date.now()
   const entry = rateMap.get(key)
@@ -82,18 +43,6 @@ function checkRateInMemory(key: string, tier: keyof typeof RATE_CONFIG): boolean
   return true
 }
 
-async function checkRate(key: string, tier: keyof typeof RATE_CONFIG): Promise<boolean> {
-  const upstash = await getUpstashChecker()
-  if (upstash) {
-    try {
-      return await upstash(`${tier}:${key}`)
-    } catch {
-      // Upstash call failed mid-flight — fall through to in-memory silently
-    }
-  }
-  return checkRateInMemory(key, tier)
-}
-
 function getIdentity(req: NextRequest, session: any): string {
   if (session?.user?.email) return `email:${session.user.email}`
   const ip =
@@ -104,7 +53,7 @@ function getIdentity(req: NextRequest, session: any): string {
 }
 
 // ── Main middleware ───────────────────────────────────────────────
-export default auth(async (req: NextRequest & { auth?: any }) => {
+export default auth((req: NextRequest & { auth?: any }) => {
   const path = req.nextUrl.pathname
 
   // ── Rate limiting ────────────────────────────────────────────
@@ -113,7 +62,7 @@ export default auth(async (req: NextRequest & { auth?: any }) => {
   const isAiRoute   = path.startsWith('/api/chat') || path.startsWith('/api/analyze')
   const isAuthRoute = path.startsWith('/api/auth/register')
 
-  if (isAiRoute && !(await checkRate(`ai:${identity}`, 'ai'))) {
+  if (isAiRoute && !checkRate(`ai:${identity}`, 'ai')) {
     return NextResponse.json(
       {
         statusCode: 429,
@@ -127,7 +76,7 @@ export default auth(async (req: NextRequest & { auth?: any }) => {
     )
   }
 
-  if (isAuthRoute && !(await checkRate(`auth:${identity}`, 'auth'))) {
+  if (isAuthRoute && !checkRate(`auth:${identity}`, 'auth')) {
     return NextResponse.json(
       {
         statusCode: 429,
