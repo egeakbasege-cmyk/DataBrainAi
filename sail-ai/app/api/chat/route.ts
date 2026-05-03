@@ -51,6 +51,8 @@ import {
   ANALYTIC_SYNTHESIS_DIRECTIVE,
   UNIVERSAL_LANGUAGE_DIRECTIVE,  // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
   UNIVERSAL_VERACITY_DIRECTIVE,  // [SAIL-GLOBAL-VERACITY-PATCH]
+  DATA_UNCERTAINTY_SUFFIX,       // [SAIL-FACTUAL-TRIGGER] always-on training-data transparency
+  SEARCH_FAILED_WARNING,         // [SAIL-FACTUAL-TRIGGER] search ran but no results
 } from '@/lib/prompts/enhanced-modes'
 
 const { auth } = NextAuth(authConfig)
@@ -685,9 +687,11 @@ export async function POST(req: NextRequest) {
   let _searchResults: SearchResult[] = []
   let _researchQueries: string[]     = []
   let _hasSynthesisContext            = false
+  let _researchAttempted              = false   // [SAIL-FACTUAL-TRIGGER] search was triggered
   let _staleSourceCount: number | undefined
 
   if (requiresResearch(queryText)) {
+    _researchAttempted = true
     // Pass detected language so bilingual vectors are generated for non-English queries
     _researchQueries = decomposeToSearchQueries(queryText, body.context, _queryLanguage)
     const searchResponse = await executeDeepSearch(_researchQueries)
@@ -731,16 +735,20 @@ export async function POST(req: NextRequest) {
   // Casual / non-business queries (_appliedCards === []) get no suffix.
   const governanceSuffix = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
 
+  // [SAIL-FACTUAL-TRIGGER] uncertaintySuffix — ALWAYS injected regardless of whether
+  // research ran. Forces the LLM to label training-derived figures in every response.
+  // This is the primary fix for "wrong / outdated data on any query."
+  const uncertaintySuffix = DATA_UNCERTAINTY_SUFFIX
+
   // [SAIL-INTELLIGENCE-UPGRADE] Synthesis suffix — appended when live research was retrieved.
-  // [SAIL-UNIVERSAL-INTELLIGENCE-V2] For non-English queries, also injects UNIVERSAL_LANGUAGE_DIRECTIVE
-  // to prevent language bleeding when Groq synthesises English-sourced research context.
-  // [SAIL-GLOBAL-VERACITY-PATCH] UNIVERSAL_VERACITY_DIRECTIVE enforces strict source traceability
-  // and conflict transparency for all queries when research context is active.
+  // [SAIL-UNIVERSAL-INTELLIGENCE-V2] For non-English queries, also injects UNIVERSAL_LANGUAGE_DIRECTIVE.
+  // [SAIL-GLOBAL-VERACITY-PATCH] UNIVERSAL_VERACITY_DIRECTIVE enforces strict source traceability.
+  // [SAIL-FACTUAL-TRIGGER] SEARCH_FAILED_WARNING injected when search was triggered but empty.
   const synthesisSuffix = _hasSynthesisContext
     ? ANALYTIC_SYNTHESIS_DIRECTIVE
       + UNIVERSAL_VERACITY_DIRECTIVE
       + (_queryLanguage !== 'en' ? UNIVERSAL_LANGUAGE_DIRECTIVE : '')
-    : ''
+    : (_researchAttempted ? SEARCH_FAILED_WARNING : '')
 
   // ── SYNERGY mode: War Room Council — streaming markdown ──────────────────
   if (analysisMode === 'synergy') {
@@ -752,7 +760,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + synthesisSuffix },
+          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1000,
@@ -817,7 +825,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + synthesisSuffix },
+          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -915,7 +923,7 @@ export async function POST(req: NextRequest) {
         messages: [
           {
             role:    'system',
-            content: buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + synthesisSuffix,
+            content: buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           },
           { role: 'user', content: userMessage },
         ],
@@ -981,7 +989,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + synthesisSuffix },
+          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -1046,7 +1054,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix },
+            { role: 'system', content: buildEnhancedTrimPrompt(language, primaryConstraint) + uncertaintySuffix + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1091,7 +1099,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix },
+            { role: 'system', content: buildEnhancedCatamaranPrompt(language, primaryConstraint) + uncertaintySuffix + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1145,7 +1153,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:           GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint) + synthesisSuffix },
+          { role: 'system', content: buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint) + uncertaintySuffix + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         response_format: { type: 'json_object' },

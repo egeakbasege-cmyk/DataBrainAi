@@ -81,6 +81,52 @@ export const DEEP_RESEARCH_DIRECTIVE = `DATA ACCURACY & RATIONALITY PROTOCOL —
 // Appended to system prompts by route.ts only when executeDeepSearch() returned
 // results. Teaches Groq/Llama 3 how to reason over injected <research_context>.
 // ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
+// DATA UNCERTAINTY SUFFIX — injected into EVERY mode, with or without research
+// [SAIL-FACTUAL-TRIGGER]
+// Prevents the LLM from presenting stale training data as current fact.
+// This is the core fix for "wrong / outdated data regardless of query type."
+// ══════════════════════════════════════════════════════════════════════════════
+
+export const DATA_UNCERTAINTY_SUFFIX = `
+
+TRAINING DATA TRANSPARENCY — ABSOLUTE RULE (applies to every response):
+Your training knowledge has a cutoff. Figures from training data become less reliable over time — especially prices, rents, salaries, exchange rates, interest rates, and inflation numbers.
+
+FOR EVERY NUMERICAL OR FINANCIAL FIGURE YOU STATE:
+• If it comes from <research_context> → cite the source domain and date inline.
+• If it comes from your training weights (no source in context) → you MUST label it:
+  "(eğitim verisi — güncel değil olabilir / training data — may be outdated)"
+• NEVER present a training-derived estimate as if it were a current live figure.
+• If you are uncertain whether a figure is current, say so explicitly before stating it.
+
+HIGH-RISK CATEGORIES (extra caution required — these change rapidly):
+• Rent / property prices in any city
+• Salaries and minimum wages
+• Currency exchange rates (especially TRY, ARS, EGP)
+• Fuel, utility, and food prices
+• Interest rates and inflation figures
+• Stock prices and market valuations
+
+Silence about data source is the primary cause of user-perceived hallucination.
+Label everything. If in doubt, flag it.
+
+`
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SEARCH FAILED WARNING — injected when research was attempted but returned nothing
+// [SAIL-FACTUAL-TRIGGER]
+// ══════════════════════════════════════════════════════════════════════════════
+
+export const SEARCH_FAILED_WARNING = `
+
+[⚠ LIVE SEARCH ATTEMPTED — NO RESULTS RETRIEVED]
+A real-time web search was triggered for this query but returned no usable results.
+The response below is based entirely on training data and may be significantly outdated.
+Treat all figures as historical estimates only. Strongly recommend verifying with a current source before acting on any number provided.
+
+`
+
 export const ANALYTIC_SYNTHESIS_DIRECTIVE = `
 
 LIVE RESEARCH CONTEXT ACTIVE — SYNTHESIS PROTOCOL:

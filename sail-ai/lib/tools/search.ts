@@ -395,6 +395,14 @@ const RESEARCH_INTENT_PATTERNS: RegExp[] = [
   /\b(price|rate|yield|market cap|valuation|stock|share price)\b/i,
   /\b(news|breaking|update|just\s+announced|recently)\b/i,
 
+  // ── Price / cost / salary — English ──────────────────────────────────────
+  // [SAIL-FACTUAL-TRIGGER] Most factual queries involve "how much / cost / rent / salary"
+  /\b(how\s+much|cost(s|ing)?|rental|fee|salary|wage|earning|income|afford|budget)\b/i,
+  /\b(rent|lease|subscription|tuition|utility|expense|overhead|spend(ing)?)\b/i,
+  /\b(average\s+(price|cost|salary|rent|wage)|median\s+(income|salary|price))\b/i,
+  /\b(cost\s+of\s+living|per\s+month|per\s+year|annually|monthly|hourly\s+rate)\b/i,
+  /\b(minimum\s+wage|interest\s+rate|mortgage|property\s+price|square\s+meter|sqm)\b/i,
+
   // ── Strategic / competitive intent — English ──────────────────────────────
   /\bstrateg(y|ic|ies|ize)\b/i,
   /\b(competi(tor|tion|tive)|vs\.?\s|versus|benchmark(ing|s)?|competitive\s+landscape)\b/i,
@@ -402,26 +410,46 @@ const RESEARCH_INTENT_PATTERNS: RegExp[] = [
   /\b(trend(s|ing)?|growth\s+rate|statistics|research\s+report|whitepaper|data\s+driven)\b/i,
   /\b(swot|porter|pestle|tam|sam|som|roi|cagr|kpi|nps|cac|ltv|arr|mrr|ebitda)\b/i,
 
-  // ── Turkish ──────────────────────────────────────────────────────────────
+  // ── Turkish — price / cost / salary ──────────────────────────────────────
+  // [SAIL-FACTUAL-TRIGGER] Türkçe fiyat/kira/maaş sorguları için
+  /\b(kira|fiyat|maliyet|ücret|maaş|tutar|bedel|masraf|gider|harcama|bütçe|ödeme)\b/i,
+  /\b(ne\s+kadar|kaç\s+(para|lira|tl|dolar|euro|usd|eur)|ortalama|pahalı|ucuz|değer)\b/i,
+  /\b(aylık|yıllık|haftalık|günlük|saatlik|metrekare|m²|depozito|aidat|stopaj)\b/i,
+  /\b(asgari\s+ücret|faiz\s+oranı|kur|döviz|altın\s+fiyatı|konut\s+fiyatı)\b/i,
+
+  // ── Turkish — strategic / market ─────────────────────────────────────────
   /\b(strateji|rekabet(çi|çilik)?|kıyaslama|tahmin|pazar\s+analizi|sektör|endüstri|rakip)\b/i,
   /\b(pazar\s+payı|büyüme\s+oranı|istatistik|araştırma|rapor|veri|trend|gelecek)\b/i,
   /\b(türkiye|bist|tcmb|tuik|enflasyon|dolar|faiz|ekonomi|borsa)\b/i,
 
-  // ── Spanish ──────────────────────────────────────────────────────────────
+  // ── Spanish — price / cost / salary ──────────────────────────────────────
+  /\b(cuánto\s+cuesta|precio|costo|alquiler|salario|sueldo|ingreso|gasto|tarifa)\b/i,
+  /\b(promedio|mensual|anual|semanal|diario|por\s+mes|por\s+año|metro\s+cuadrado)\b/i,
+
+  // ── Spanish — strategic / market ─────────────────────────────────────────
   /\b(estrategia|competencia|competitiv[ao]|pronóstico|tendencia|análisis|mercado)\b/i,
   /\b(investigación|informe|sector|industria|comparación|datos|estadísticas|crecimiento)\b/i,
   /\b(cuota\s+de\s+mercado|punto\s+de\s+referencia|perspectiva|futuro)\b/i,
 
-  // ── German ───────────────────────────────────────────────────────────────
+  // ── German — price / cost / salary ───────────────────────────────────────
+  /\b(wie\s+viel\s+(kostet|verdient)|preis|miete|gehalt|lohn|einkommen|kosten|gebühr)\b/i,
+  /\b(durchschnitt(lich)?|monatlich|jährlich|wöchentlich|pro\s+(monat|jahr)|quadratmeter)\b/i,
+
+  // ── German — strategic / market ──────────────────────────────────────────
   /\b(strategie|wettbewerb(s|sfähig)?|prognose|trend|analyse|markt(anteil)?)\b/i,
   /\b(forschung|bericht|branche|industrie|vergleich|daten|statistiken|wachstum|zukunft)\b/i,
 
-  // ── French ───────────────────────────────────────────────────────────────
+  // ── French — price / cost / salary ───────────────────────────────────────
+  /\b(combien\s+(coûte|gagne)|prix|loyer|salaire|revenu|coût|tarif|frais|dépense)\b/i,
+  /\b(moyen(ne)?|mensuel(le)?|annuel(le)?|hebdomadaire|par\s+(mois|an)|mètre\s+carré)\b/i,
+
+  // ── French — strategic / market ──────────────────────────────────────────
   /\b(stratégie|concurrence|concurrent|prévision|tendance|analyse|marché|part\s+de\s+marché)\b/i,
   /\b(recherche|rapport|secteur|industrie|comparaison|données|statistiques|croissance|avenir)\b/i,
 
   // ── Chinese ──────────────────────────────────────────────────────────────
   /战略|竞争(力|分析|对手)?|预测|趋势|分析|市场(份额|分析)?|研究(报告)?|行业|产业|统计|数据|增长|未来|发展/,
+  /多少钱|价格|费用|工资|薪资|租金|成本|平均|月(薪|租|费)|年(薪|租|费)|汇率|利率/,
 
   // ── Financial / tech acronyms (cross-language) ───────────────────────────
   /\b(nasdaq|s&p\s*500|dow\s+jones|ftse|dax|nikkei|hang\s+seng)\b/i,
