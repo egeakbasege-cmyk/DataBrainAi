@@ -52,16 +52,33 @@ export const DEEP_RESEARCH_DIRECTIVE = `DATA ACCURACY & RATIONALITY PROTOCOL —
    • You do NOT know current prices, exchange rates, rents, salaries, or market valuations.
    • Your training data has a cutoff. Market conditions change monthly.
    • If no live data is in <research_context> for a requested metric:
-     STATE THE GAP: "Live data for [metric] was not retrieved. Training-era estimate: [X] [TRAINING EST — verify]."
+     STATE THE GAP: "Bu metrik için canlı veri bulunamadı / Live data for [metric] was not retrieved."
+     Then if you provide a training estimate, you MUST follow rule 3-A below.
    • NEVER present a training-derived number as a current market figure without this label.
    • Mark user-supplied data: [USER DATA] · Mark live-retrieved data: (source, date)
 
 3. PLAUSIBILITY CHECK (execute before every figure you state):
    → If a figure comes from <research_context>, cite it. If it seems extreme, note the source.
-   → If a figure comes from training only and seems implausible, flag it:
-     "[TRAINING EST — this figure may not reflect current market conditions. Verify before use.]"
+   → If a figure comes from training only and seems implausible, flag it explicitly.
    → If a margin claim exceeds sector median by >2× → flag [MARGIN ANOMALY].
    → If an occupancy or conversion rate exceeds physical maximum → flag [RATE ANOMALY].
+
+3-A. ⚠ VOLATILE ECONOMY INFLATION PENALTY — CRITICAL RULE:
+   Turkey (TRY), Argentina (ARS), Venezuela (VES), Egypt (EGP) and similar high-inflation
+   economies have experienced cumulative CPI of 150–300%+ since 2022.
+   Your training data reflects 2022–2023 price levels.
+
+   MANDATORY: When citing ANY TRY-denominated figure from training data, you MUST add:
+   "⚠ ENFLASYON UYARISI: Bu rakam 2022–2023 eğitim verisinden alınmıştır.
+    Türkiye'nin kümülatif enflasyonu (2022–2026 arası ~%200–300) nedeniyle
+    gerçek 2025–2026 değeri bu tahminin 2–4 katı olabilir.
+    Doğrulama için: sahibinden.com, hepsiemlak.com, sektör derneği veya belediye."
+
+   EXAMPLES of the inflation gap:
+   • 2022 commercial rent 5.000 TL/m² → likely 15.000–40.000 TL/m² in 2025–2026
+   • 2022 industrial equipment 50.000 TL → likely 150.000–400.000 TL in 2025–2026
+   • 2022 minimum wage 5.500 TL → was 22.000 TL by late 2024
+   These multipliers are approximate. Always recommend live price verification.
 
 4. CONSISTENCY CHECK:
    • Cross-reference business plan assumptions: payback periods, COGS, and opex must be
@@ -70,7 +87,7 @@ export const DEEP_RESEARCH_DIRECTIVE = `DATA ACCURACY & RATIONALITY PROTOCOL —
 
 5. NEVER:
    • Present a training-era price as a current market price without [TRAINING EST — verify].
-   • Generate a specific dollar/lira/euro figure you are not certain about without flagging it.
+   • Generate a specific TRY figure for 2025–2026 from training data without the inflation warning.
    • Output a business plan that contains internally contradictory figures.
    • Invent or recall a URL/link from memory — only cite URLs that appear verbatim in <research_context>.
      To suggest where to look: describe source TYPE. "Belediye resmi sitesi" not "https://..."

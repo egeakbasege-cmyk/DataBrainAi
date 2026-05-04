@@ -332,51 +332,104 @@ export function decomposeToSearchQueries(
   const companyMatch = context?.match(/(?:company|brand|business|firm|startup|şirket|marca|empresa|unternehmen|entreprise)[:\s]+([^\n,]{3,30})/i)
   const entityMatch  = message.match(/\b([A-ZÇĞIÖŞÜ][a-zA-ZçğışöşüÇĞIÖŞÜ]+(?:\s+[A-ZÇĞIÖŞÜ][a-zA-ZçğışöşüÇĞIÖŞÜ]+){0,2})\b/)
 
+  // ── Business startup / cost-of-opening intent detector ────────────────────
+  // Fires when the query is about opening/starting a specific business in a location.
+  // Generates highly targeted component queries instead of generic terms.
+  // Note: No trailing \b — Turkish suffixes (açmanın, kurmanın) must also match.
+  const isStartupCostQuery =
+    /\b(açmak|açma|kurmak|kurma|başlatmak|başlatma|yatırım|girişim|işletme\s+maliyet)/i.test(message) ||
+    /\b(open(ing)?|start(ing)?|launch(ing)?|set\s+up|startup\s+cost|cost\s+to\s+open)\b/i.test(message)
+
+  // Extract location from message.
+  // No \b around Turkish proper nouns — \b doesn't work reliably with non-ASCII chars (ç,ı,ğ…)
+  const locationMatch =
+    message.match(/(Alaçatı|Alacati|Çeşme|Cesme|İzmir|Izmir|İstanbul|Istanbul|Ankara|Bodrum|Fethiye|Antalya|Alanya|Marmaris|Kuşadası|Kusadasi|Kapadokya|Cappadocia)/i) ??
+    message.match(/([A-ZÇĞIÖŞÜa-zçğışöşü]{4,20})[''']?(?:da|de|ta|te)\b/i)
+
+  // Extract business type keywords — no \b on right side for Turkish morphology
+  const businessTypeMatch =
+    message.match(/(dondurma|gelato|ice[\s-]?cream|cafe|kafe|restoran|restaurant|pastane|bakery|bar|pub|lokanta|büfe|market|fırın|bakkal)/i)
+
   if (isNonEnglish) {
     const isVolatileEconomy = isHighInflationEconomy(detectedLang)
 
-    // Q1 — English global query; for volatile economies, anchor to USD/EUR pricing
-    // so the LLM receives hard-currency benchmarks, not stale local-currency figures.
-    const q1 = isVolatileEconomy
-      ? `${keyTerms} ${currentYear} USD EUR price cost global benchmark report`.trim()
-      : `${keyTerms} ${currentYear} global statistics report`.trim()
-    queries.push(q1)
+    if (isStartupCostQuery && isVolatileEconomy) {
+      // ── Targeted startup-cost queries for Turkish volatile economy ─────────
+      const location     = locationMatch?.[1] ?? ''
+      const businessType = businessTypeMatch?.[1] ?? keyTerms.split(' ').slice(0, 3).join(' ')
 
-    // Q2 — Native language query (regional/cultural sources)
-    const nativeTerms = message.slice(0, 120).trim()
-    queries.push(`${nativeTerms} ${currentYear}`.trim())
+      // Q1 — Commercial rent: most critical cost variable, search in USD/EUR for stable comparison
+      const rentQuery = location
+        ? `${location} commercial shop rent price per square meter ${currentYear} TRY USD`
+        : `Turkey commercial rent boutique shop per m2 tourist area ${currentYear}`
+      queries.push(rentQuery.trim())
 
-    // Q3 — English benchmark enrichment with sector/entity context
-    if (sectorMatch) {
-      queries.push(`${sectorMatch[1].trim()} ${keyTerms} benchmark data ${currentYear}`.trim())
-    } else if (companyMatch) {
-      queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis report`.trim())
-    } else if (entityMatch && entityMatch[1].length > 3) {
-      queries.push(`${entityMatch[1]} ${currentYear} industry analysis benchmark`.trim())
+      // Q2 — Equipment cost in native language (local market prices)
+      const equipQuery = businessType
+        ? `${businessType} makinesi fiyatı Türkiye ${currentYear} TL ticari endüstriyel`.trim()
+        : `${keyTerms} ekipman fiyatı Türkiye ${currentYear}`.trim()
+      queries.push(equipQuery)
+
+      // Q3 — English benchmark for the business type (global comparable)
+      const globalQuery = businessType
+        ? `${businessType.replace(/ı|ğ|ü|ş|ç|ö/gi, (c) => ({ ı:'i',ğ:'g',ü:'u',ş:'s',ç:'c',ö:'o' }[c] ?? c))} business startup cost ${currentYear} investment`.trim()
+        : `${keyTerms} small business startup cost investment ${currentYear}`.trim()
+      queries.push(globalQuery)
+
     } else {
-      // For volatile economies, add an explicit forex/conversion query as Q3
-      const q3 = isVolatileEconomy
-        ? `${keyTerms} USD EUR equivalent exchange rate ${currentYear}`.trim()
-        : `${keyTerms} industry benchmark statistics ${currentYear}`.trim()
-      queries.push(q3)
+      // ── Standard non-English query decomposition ──────────────────────────
+      const q1 = isVolatileEconomy
+        ? `${keyTerms} ${currentYear} USD EUR price cost global benchmark report`.trim()
+        : `${keyTerms} ${currentYear} global statistics report`.trim()
+      queries.push(q1)
+
+      // Q2 — Native language query (regional/cultural sources)
+      const nativeTerms = message.slice(0, 120).trim()
+      queries.push(`${nativeTerms} ${currentYear}`.trim())
+
+      // Q3 — English benchmark enrichment with sector/entity context
+      if (sectorMatch) {
+        queries.push(`${sectorMatch[1].trim()} ${keyTerms} benchmark data ${currentYear}`.trim())
+      } else if (companyMatch) {
+        queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis report`.trim())
+      } else if (entityMatch && entityMatch[1].length > 3) {
+        queries.push(`${entityMatch[1]} ${currentYear} industry analysis benchmark`.trim())
+      } else {
+        const q3 = isVolatileEconomy
+          ? `${keyTerms} USD EUR equivalent exchange rate ${currentYear}`.trim()
+          : `${keyTerms} industry benchmark statistics ${currentYear}`.trim()
+        queries.push(q3)
+      }
     }
   } else {
-    // Q1 — Primary: cleaned intent + year
-    queries.push(`${keyTerms} ${currentYear}`.trim())
+    if (isStartupCostQuery) {
+      // ── Targeted startup-cost queries for English ─────────────────────────
+      const location     = locationMatch?.[1] ?? ''
+      const businessType = businessTypeMatch?.[1] ?? keyTerms.split(' ').slice(0, 3).join(' ')
 
-    // Q2 — Entity/sector enrichment
-    if (sectorMatch) {
-      queries.push(`${sectorMatch[1].trim()} ${keyTerms} statistics benchmark`.trim())
-    } else if (companyMatch) {
-      queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis data`.trim())
-    } else if (entityMatch && entityMatch[1].length > 3) {
-      queries.push(`${entityMatch[1]} ${currentYear} statistics data report`.trim())
+      queries.push(
+        location
+          ? `${location} commercial rent per square meter ${currentYear}`.trim()
+          : `${keyTerms} commercial rent cost ${currentYear}`.trim()
+      )
+      queries.push(`${businessType} equipment cost startup investment ${currentYear}`.trim())
+      queries.push(`${businessType} small business startup cost breakdown ${currentYear}`.trim())
     } else {
-      queries.push(`${keyTerms} industry report statistics`.trim())
-    }
+      // ── Standard English query decomposition ──────────────────────────────
+      queries.push(`${keyTerms} ${currentYear}`.trim())
 
-    // Q3 — Benchmark/trend anchor
-    queries.push(`${keyTerms} market trend benchmark report ${currentYear}`.trim())
+      if (sectorMatch) {
+        queries.push(`${sectorMatch[1].trim()} ${keyTerms} statistics benchmark`.trim())
+      } else if (companyMatch) {
+        queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis data`.trim())
+      } else if (entityMatch && entityMatch[1].length > 3) {
+        queries.push(`${entityMatch[1]} ${currentYear} statistics data report`.trim())
+      } else {
+        queries.push(`${keyTerms} industry report statistics`.trim())
+      }
+
+      queries.push(`${keyTerms} market trend benchmark report ${currentYear}`.trim())
+    }
   }
 
   return Array.from(new Set(queries.filter(q => q.length > 5))).slice(0, 3)
