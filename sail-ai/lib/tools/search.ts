@@ -465,15 +465,18 @@ const RESEARCH_INTENT_PATTERNS: RegExp[] = [
 
   // ── Turkish — price / cost / salary ──────────────────────────────────────
   // [SAIL-FACTUAL-TRIGGER] Türkçe fiyat/kira/maaş sorguları için
-  /\b(kira|fiyat|maliyet|ücret|maaş|tutar|bedel|masraf|gider|harcama|bütçe|ödeme)\b/i,
-  /\b(ne\s+kadar|kaç\s+(para|lira|tl|dolar|euro|usd|eur)|ortalama|pahalı|ucuz|değer)\b/i,
-  /\b(aylık|yıllık|haftalık|günlük|saatlik|metrekare|m²|depozito|aidat|stopaj)\b/i,
-  /\b(asgari\s+ücret|faiz\s+oranı|kur|döviz|altın\s+fiyatı|konut\s+fiyatı)\b/i,
+  // NOTE: No trailing \b — Turkish morphological suffixes (kiralık, maliyeti,
+  // fiyatları, aylığı, giderleri…) are non-ASCII and break JS \b word boundary.
+  // Leading \b is kept (Turkish stems start with ASCII chars) to avoid mid-word hits.
+  /\b(kira|fiyat|maliyet|ücret|maaş|tutar|bedel|masraf|gider|harcama|bütçe|ödeme)/i,
+  /\b(ne\s+kadar|kaç\s+(para|lira|tl|dolar|euro|usd|eur)|ortalama|pahalı|ucuz|değer)/i,
+  /\b(aylık|yıllık|haftalık|günlük|saatlik|metrekare|m²|depozito|aidat|stopaj)/i,
+  /\b(asgari\s+ücret|faiz\s+oranı|kur|döviz|altın\s+fiyat|konut\s+fiyat)/i,
 
   // ── Turkish — strategic / market ─────────────────────────────────────────
-  /\b(strateji|rekabet(çi|çilik)?|kıyaslama|tahmin|pazar\s+analizi|sektör|endüstri|rakip)\b/i,
-  /\b(pazar\s+payı|büyüme\s+oranı|istatistik|araştırma|rapor|veri|trend|gelecek)\b/i,
-  /\b(türkiye|bist|tcmb|tuik|enflasyon|dolar|faiz|ekonomi|borsa)\b/i,
+  /\b(strateji|rekabet|kıyaslama|tahmin|pazar\s+analiz|sektör|endüstri|rakip)/i,
+  /\b(pazar\s+pay|büyüme\s+oran|istatistik|araştırma|rapor|veri\b|trend|gelecek)/i,
+  /\b(türkiye|bist|tcmb|tuik|enflasyon|ekonomi|borsa)/i,
 
   // ── Spanish — price / cost / salary ──────────────────────────────────────
   /\b(cuánto\s+cuesta|precio|costo|alquiler|salario|sueldo|ingreso|gasto|tarifa)\b/i,
