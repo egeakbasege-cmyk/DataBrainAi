@@ -114,6 +114,104 @@ type ExtendedPayload = Omit<AetherisPayload, 'analysisMode'> & {
   ragContext?:         string
 }
 
+// ── Stream URL hallucination stripper ────────────────────────────────────────
+// Defence-in-depth against URL citation hallucination in streaming modes.
+//
+// Problem: Even with strict prompt rules, LLaMA 3.3 70B sometimes emits
+// markdown hyperlinks ([text](url)) from training memory that were never
+// actually retrieved. These appear as clickable, authoritative-looking
+// citations for sources the system never visited.
+//
+// Fix: This class strips markdown hyperlink syntax from the stream at the
+// output layer — converting [text](url) → text — so fabricated links can
+// never reach the user regardless of LLM compliance with prompt instructions.
+//
+// Safe because:
+//   • Real sources injected via encodeResearchContext() are already plain
+//     text (e.g. "Source: https://example.com | Date: ..."), not markdown links.
+//   • Domain names are still visible as plain text — only the clickable
+//     hyperlink markup is removed.
+//   • Uses a rolling buffer to handle patterns split across SSE chunks.
+//
+class StreamUrlStripper {
+  private buf = ''
+
+  /**
+   * Push a new streaming chunk. Returns any text that is safe to emit.
+   * May hold back a short tail when a URL pattern might be mid-stream.
+   */
+  push(chunk: string): string {
+    this.buf += chunk
+
+    // Strip double-bracket citation: [[display](url)] → display
+    this.buf = this.buf.replace(
+      /\[\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)\]/g,
+      '$1',
+    )
+    // Strip single-bracket markdown link: [display](url) → display
+    this.buf = this.buf.replace(
+      /\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)/g,
+      '$1',
+    )
+
+    // Hold back content from the last unmatched '[' so we don't emit a
+    // partial pattern that would leave a dangling bracket in the output.
+    const lastOpen = this.buf.lastIndexOf('[')
+    if (lastOpen !== -1 && lastOpen > this.buf.length - 500) {
+      const safe = this.buf.slice(0, lastOpen)
+      this.buf   = this.buf.slice(lastOpen)
+      return safe
+    }
+
+    const out  = this.buf
+    this.buf   = ''
+    return out
+  }
+
+  /** Call after the stream ends to emit any held-back tail. */
+  flush(): string {
+    // Apply substitutions one final time on anything still buffered
+    this.buf = this.buf.replace(
+      /\[\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)\]/g,
+      '$1',
+    )
+    this.buf = this.buf.replace(
+      /\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)/g,
+      '$1',
+    )
+    const out = this.buf
+    this.buf  = ''
+    return out
+  }
+}
+
+/**
+ * stripUrlsFromJson
+ *
+ * Recursively walks a parsed JSON object and strips markdown hyperlink syntax
+ * from every string value. Covers JSON-mode responses (upwind/trim/catamaran)
+ * where the LLM might embed [text](url) patterns inside string fields.
+ *
+ * [text](url)    → text
+ * [[text](url)]  → text
+ */
+function stripUrlsFromJson(val: unknown): unknown {
+  if (typeof val === 'string') {
+    return val
+      .replace(/\[\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)\]/g, '$1')
+      .replace(/\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)/g, '$1')
+  }
+  if (Array.isArray(val)) return val.map(stripUrlsFromJson)
+  if (val !== null && typeof val === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+      out[k] = stripUrlsFromJson(v)
+    }
+    return out
+  }
+  return val
+}
+
 // ── User message builder ──────────────────────────────────────────────────────
 
 function buildUserMessage(body: ExtendedPayload): string {
@@ -569,9 +667,10 @@ export async function POST(req: NextRequest) {
     const stream = new ReadableStream({
       async start(ctrl) {
         ctrl.enqueue(encoder.encode(metaLine))
-        const reader  = groqBody.getReader()
-        const decoder = new TextDecoder()
-        let   buf     = ''
+        const reader   = groqBody.getReader()
+        const decoder  = new TextDecoder()
+        const stripper = new StreamUrlStripper()
+        let   buf      = ''
         try {
           while (true) {
             const { done, value } = await reader.read()
@@ -586,11 +685,16 @@ export async function POST(req: NextRequest) {
               try {
                 const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
                   .choices?.[0]?.delta?.content ?? ''
-                if (delta) ctrl.enqueue(encoder.encode(delta))
+                if (delta) {
+                  const clean = stripper.push(delta)
+                  if (clean) ctrl.enqueue(encoder.encode(clean))
+                }
               } catch { /* ignore parse errors */ }
             }
           }
         } catch { /* stream ended abruptly */ } finally {
+          const tail = stripper.flush()
+          if (tail) ctrl.enqueue(encoder.encode(tail))
           ctrl.close()
         }
       },
@@ -633,6 +737,7 @@ export async function POST(req: NextRequest) {
       async start(ctrl) {
         const reader        = sailBody.getReader()
         const decoder       = new TextDecoder()
+        const stripper      = new StreamUrlStripper()
         let   sseBuf        = ''
         let   contentBuf    = ''
         let   intentEmitted = false
@@ -663,29 +768,37 @@ export async function POST(req: NextRequest) {
                     // [SAIL-NEW] Module 3 — health report embedded in __sailMeta
                     ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent, healthReport } }) + '\n'))
                     const rest = contentBuf.slice(nl + 1)
-                    if (rest) ctrl.enqueue(encoder.encode(rest))
+                    if (rest) {
+                      const clean = stripper.push(rest)
+                      if (clean) ctrl.enqueue(encoder.encode(clean))
+                    }
                     contentBuf    = ''
                     intentEmitted = true
                   } else if (contentBuf.length > 120) {
                     // [SAIL-NEW] Module 3 — health report in fallback meta
                     ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport } }) + '\n'))
-                    ctrl.enqueue(encoder.encode(contentBuf))
+                    const clean = stripper.push(contentBuf)
+                    if (clean) ctrl.enqueue(encoder.encode(clean))
                     contentBuf    = ''
                     intentEmitted = true
                   }
                 } else {
-                  ctrl.enqueue(encoder.encode(delta))
+                  const clean = stripper.push(delta)
+                  if (clean) ctrl.enqueue(encoder.encode(clean))
                 }
               } catch { /* ignore parse errors */ }
             }
           }
         } catch { /* stream ended abruptly */ } finally {
+          const tail = stripper.flush()
           if (!intentEmitted) {
             // [SAIL-NEW] Module 3 — health report in finally-block fallback
             ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport } }) + '\n'))
-            if (contentBuf) ctrl.enqueue(encoder.encode(contentBuf))
-          } else if (contentBuf) {
-            ctrl.enqueue(encoder.encode(contentBuf))
+            const clean = contentBuf + tail
+            if (clean) ctrl.enqueue(encoder.encode(clean))
+          } else {
+            const clean = contentBuf + tail
+            if (clean) ctrl.enqueue(encoder.encode(clean))
           }
           ctrl.close()
         }
@@ -733,9 +846,10 @@ export async function POST(req: NextRequest) {
         // [SAIL-NEW] Module 3 — scenario meta line with health report
         const metaLine = JSON.stringify({ __scenarioMeta: { healthReport } }) + '\n'
         ctrl.enqueue(encoder.encode(metaLine))
-        const reader  = scBody.getReader()
-        const decoder = new TextDecoder()
-        let   buf     = ''
+        const reader   = scBody.getReader()
+        const decoder  = new TextDecoder()
+        const stripper = new StreamUrlStripper()
+        let   buf      = ''
         try {
           while (true) {
             const { done, value } = await reader.read()
@@ -750,11 +864,16 @@ export async function POST(req: NextRequest) {
               try {
                 const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
                   .choices?.[0]?.delta?.content ?? ''
-                if (delta) ctrl.enqueue(encoder.encode(delta))
+                if (delta) {
+                  const clean = stripper.push(delta)
+                  if (clean) ctrl.enqueue(encoder.encode(clean))
+                }
               } catch { /* ignore parse errors */ }
             }
           }
         } catch { /* stream ended abruptly */ } finally {
+          const tail = stripper.flush()
+          if (tail) ctrl.enqueue(encoder.encode(tail))
           ctrl.close()
         }
       },
@@ -796,9 +915,10 @@ export async function POST(req: NextRequest) {
     const stream = new ReadableStream({
       async start(ctrl) {
         // Health report is attached to JSON responses only; not streamed as visible text
-        const reader  = opBody.getReader()
-        const decoder = new TextDecoder()
-        let   buf     = ''
+        const reader   = opBody.getReader()
+        const decoder  = new TextDecoder()
+        const stripper = new StreamUrlStripper()
+        let   buf      = ''
         try {
           while (true) {
             const { done, value } = await reader.read()
@@ -813,11 +933,16 @@ export async function POST(req: NextRequest) {
               try {
                 const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
                   .choices?.[0]?.delta?.content ?? ''
-                if (delta) ctrl.enqueue(encoder.encode(delta))
+                if (delta) {
+                  const clean = stripper.push(delta)
+                  if (clean) ctrl.enqueue(encoder.encode(clean))
+                }
               } catch { /* ignore */ }
             }
           }
         } catch { /* stream ended abruptly */ } finally {
+          const tail = stripper.flush()
+          if (tail) ctrl.enqueue(encoder.encode(tail))
           ctrl.close()
         }
       },
@@ -864,7 +989,8 @@ export async function POST(req: NextRequest) {
     try {
       const parsed = JSON.parse(trimContent)
       // [SAIL-NEW] Module 3 — health report in JSON response
-      return Response.json({ ...parsed, __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
+      // stripUrlsFromJson: remove any markdown hyperlinks the LLM may have embedded in string fields
+      return Response.json({ ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       return Response.json(
         { trimTitle: 'Strategic Plan', summary: trimContent, phases: [], __healthReport: healthReport },
@@ -909,7 +1035,8 @@ export async function POST(req: NextRequest) {
     try {
       const parsed = JSON.parse(catContent)
       // [SAIL-NEW] Module 3 — health report in JSON response
-      return Response.json({ ...parsed, __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
+      // stripUrlsFromJson: remove any markdown hyperlinks embedded in string fields
+      return Response.json({ ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       return Response.json(
         {
@@ -969,7 +1096,8 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = JSON.parse(content)
     // [SAIL-NEW] Module 3 — health report in JSON response
-    return Response.json({ ...parsed, __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
+    // stripUrlsFromJson: remove any markdown hyperlinks the LLM may have embedded in string fields
+    return Response.json({ ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
   } catch {
     return Response.json(
       { insight: content || 'Analysis complete. Please review and try again.', __healthReport: healthReport },
