@@ -125,12 +125,16 @@ function reliabilityOf(url: string): number {
 
 function sentenceScore(s: string): number {
   let score = 0
-  score += (s.match(/\d[\d,.]*\s*%/g)           ?? []).length * 4   // percentages
-  score += (s.match(/\b20\d\d\b/g)              ?? []).length * 3   // years
-  score += (s.match(/[$€£₺¥]\s*[\d,.]+/g)       ?? []).length * 3   // currency amounts
+  score += (s.match(/\d[\d,.]*\s*%/g)                     ?? []).length * 4  // percentages
+  score += (s.match(/\b20\d\d\b/g)                        ?? []).length * 3  // years
+  score += (s.match(/[$€£₺¥]\s*[\d,.]+/g)                 ?? []).length * 3  // currency (symbol first)
+  score += (s.match(/[\d.,]+\s*(TL|lira|USD|EUR|GBP|JPY|₺)/gi) ?? []).length * 3  // currency (symbol after)
   score += (s.match(/\b[\d,.]+\s*(billion|million|trillion|B|M|T)\b/gi) ?? []).length * 3
   score += (s.match(/\b(growth|decline|increase|decrease|revenue|profit|market|record|high|low)\b/gi) ?? []).length * 2
-  score += (s.match(/\b(according|report|survey|study|data|source|index|benchmark)\b/gi) ?? []).length
+  score += (s.match(/\b(according|report|survey|study|data|source|index|benchmark|research|found|shows)\b/gi) ?? []).length
+  score += (s.match(/\b(fiyat|kira|maliyet|ücret|araştırma|rapor|istatistik|veri)\b/gi) ?? []).length * 2
+  score += (s.match(/\b(preis|miete|kosten|bericht|studie|daten|statistik)\b/gi)        ?? []).length * 2
+  score += (s.match(/\b(prix|loyer|coût|rapport|étude|données|statistique)\b/gi)        ?? []).length * 2
   return score
 }
 
@@ -355,149 +359,264 @@ function stripFillerWords(text: string): string {
     .slice(0, 120)
 }
 
-// ── Query decomposer — bilingual vectors ──────────────────────────────────────
-// [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+// ── Universal intent classifier ───────────────────────────────────────────────
+// Detects query type across all 6 languages to generate targeted search vectors.
+
+type QueryIntent =
+  | 'startup_business'   // opening/starting a specific business
+  | 'price_cost'         // prices, salaries, rents, costs
+  | 'news_current'       // latest events, breaking news, today
+  | 'financial_market'   // stocks, crypto, market data, investment
+  | 'tech_product'       // product reviews, comparisons, specs
+  | 'scientific'         // research, studies, medical evidence
+  | 'general'            // everything else
+
+function classifyIntent(message: string): QueryIntent {
+  const m = message  // shorthand
+
+  // ── Startup / business opening ──────────────────────────────────────────────
+  // Turkish: no trailing \b — suffixes like açmanın, kurmanın must match
+  if (
+    /(açmak|açma|kurmak|kurma|başlatmak|başlatma|yatırım\s+maliyet|girişim\s+maliyet)/i.test(m) ||
+    /\b(open(ing)?\s+a|start(ing)?\s+a|launch(ing)?\s+a|set\s+up\s+a|startup\s+cost|cost\s+to\s+open)\b/i.test(m)
+  ) return 'startup_business'
+
+  // ── News / current events — checked BEFORE financial so "enflasyon son dakika" → news ──
+  if (
+    /\b(latest|breaking|today|right\s+now|live|just\s+announced|recently|this\s+week|this\s+month)\b/i.test(m) ||
+    // Turkish: no trailing \b — güncel, şu an, son dakika
+    /(son\s+dakika|bugün|güncel|şu\s+an|son\s+gelişme|son\s+haber)/i.test(m) ||
+    /\b(aktuell|heute|neueste|letzte\s+nachrichten)\b/i.test(m) ||
+    /\b(actualité|aujourd'hui|dernières\s+nouvelles|récemment)\b/i.test(m)
+  ) return 'news_current'
+
+  // ── Financial / market data ────────────────────────────────────────────────
+  if (
+    /\b(stock|crypto|bitcoin|ethereum|nasdaq|s&p|dow\s+jones|forex|commodity|etf|fund|portfolio|invest|bist|bourse)\b/i.test(m) ||
+    // Turkish: remove trailing \b — döviz/borsa/altın end with non-ASCII or have suffixes
+    /(hisse|borsa|kripto|dolar\s+kur|euro\s+kur|döviz|altın\s+fiyat|enflasyon|faiz\s+oran)/i.test(m) ||
+    /\b(aktie|kurs|rendite|anlage|fonds|börse)\b/i.test(m)
+  ) return 'financial_market'
+
+  // ── Price / cost / salary ──────────────────────────────────────────────────
+  if (
+    /\b(price|cost|salary|wage|rent|fee|rate|tariff|afford|budget|expense|income|how\s+much)\b/i.test(m) ||
+    // Turkish: no trailing \b — maaş, ücret, fiyat have non-ASCII endings
+    /(fiyat|maliyet|kira|ücret|maaş|masraf|bütçe|ne\s+kadar|kaç\s+(para|lira|tl)|aylık|yıllık\s+gelir)/i.test(m) ||
+    /\b(preis|miete|gehalt|kosten|gebühr|lohn|wie\s+viel)\b/i.test(m) ||
+    /\b(prix|loyer|salaire|coût|tarif|combien)\b/i.test(m) ||
+    /\b(precio|alquiler|salario|costo|tarifa|cuánto)\b/i.test(m)
+  ) return 'price_cost'
+
+  // ── Tech / product — reviews, comparisons, specs ───────────────────────────
+  if (
+    /\b(vs\.?|versus|review|comparison|best|recommend|specs|features|model|benchmark|which\s+is|top\s+\d)\b/i.test(m) ||
+    // Turkish: no trailing \b
+    /(karşılaştır|en\s+iyi|inceleme|özellik|öneri)/i.test(m) ||
+    /\b(vergleich|empfehlung|test|bewertung|beste)\b/i.test(m)
+  ) return 'tech_product'
+
+  // ── Scientific / research / health ────────────────────────────────────────
+  if (
+    /\b(research|study|evidence|clinical|trial|findings|journal|paper|meta.?analysis|systematic\s+review|health\s+effect|causes|symptoms)\b/i.test(m) ||
+    // Turkish: no trailing \b — araştırmaları, çalışmaları must match
+    /(araştırma|çalışma|kanıt|klinik|bilimsel|sağlık\s+etkisi|hastalık|tedavi|istatistik)/i.test(m) ||
+    /\b(studie|forschung|klinisch|evidenz|ergebnis|gesundheit)\b/i.test(m) ||
+    /\b(étude|recherche|clinique|preuve|résultat|santé)\b/i.test(m)
+  ) return 'scientific'
+
+  return 'general'
+}
+
+// ASCII transliterator for Turkish → English for global benchmark queries
+function toAscii(s: string): string {
+  return s.replace(/[ıİğĞüÜşŞçÇöÖ]/g, (c: string) => (
+    ({ ı:'i', İ:'I', ğ:'g', Ğ:'G', ü:'u', Ü:'U', ş:'s', Ş:'S', ç:'c', Ç:'C', ö:'o', Ö:'O' } as Record<string,string>)[c] ?? c
+  ))
+}
+
+// ── Query decomposer — universal intent-aware ─────────────────────────────────
+// [SAIL-UNIVERSAL-INTELLIGENCE-V3]
 
 /**
  * decomposeToSearchQueries
  *
  * Generates up to 3 focused search vectors from a user query.
- * Non-English queries produce a bilingual set: English global query + native language query.
- * This triangulates international authority sources with regional/cultural data.
+ * Intent is detected across 6 languages and 7 categories.
+ * Each intent type gets query templates optimised for real data retrieval.
+ *
+ * Strategy per query slot:
+ *   Q1 — Native-language primary (regional sources, current data)
+ *   Q2 — English global anchor  (international authority sources)
+ *   Q3 — Deep-dive enrichment   (specific data type for the intent)
  */
 export function decomposeToSearchQueries(
   message:  string,
   context?: string,
   language  = 'en',
 ): string[] {
-  const currentYear  = new Date().getFullYear()
+  const year         = new Date().getFullYear()
   const detectedLang = language !== 'en' ? language : detectQueryLanguage(message)
   const isNonEnglish = detectedLang !== 'en'
+  const isVolatile   = isHighInflationEconomy(detectedLang)
   const keyTerms     = stripFillerWords(message)
+  const nativeMsg    = message.slice(0, 120).trim()
+  const intent       = classifyIntent(message)
 
   const queries: string[] = []
 
-  // ── Sector/company extraction (multilingual context patterns) ─────────────
-  const sectorMatch  = context?.match(/(?:sector|industry|sektör|endüstri|secteur|secteur|branche|sector)[:\s]+([^\n,]{3,40})/i)
-  const companyMatch = context?.match(/(?:company|brand|business|firm|startup|şirket|marca|empresa|unternehmen|entreprise)[:\s]+([^\n,]{3,30})/i)
-  const entityMatch  = message.match(/\b([A-ZÇĞIÖŞÜ][a-zA-ZçğışöşüÇĞIÖŞÜ]+(?:\s+[A-ZÇĞIÖŞÜ][a-zA-ZçğışöşüÇĞIÖŞÜ]+){0,2})\b/)
-
-  // ── Business startup / cost-of-opening intent detector ────────────────────
-  // Fires when the query is about opening/starting a specific business in a location.
-  // Generates highly targeted component queries instead of generic terms.
-  // Note: No trailing \b — Turkish suffixes (açmanın, kurmanın) must also match.
-  const isStartupCostQuery =
-    /\b(açmak|açma|kurmak|kurma|başlatmak|başlatma|yatırım|girişim|işletme\s+maliyet)/i.test(message) ||
-    /\b(open(ing)?|start(ing)?|launch(ing)?|set\s+up|startup\s+cost|cost\s+to\s+open)\b/i.test(message)
-
-  // Extract location from message.
-  // No \b around Turkish proper nouns — \b doesn't work reliably with non-ASCII chars (ç,ı,ğ…)
+  // ── Location + business-type extraction (used by startup_business intent) ──
   const locationMatch =
-    message.match(/(Alaçatı|Alacati|Çeşme|Cesme|İzmir|Izmir|İstanbul|Istanbul|Ankara|Bodrum|Fethiye|Antalya|Alanya|Marmaris|Kuşadası|Kusadasi|Kapadokya|Cappadocia)/i) ??
-    message.match(/([A-ZÇĞIÖŞÜa-zçğışöşü]{4,20})[''']?(?:da|de|ta|te)\b/i)
-
-  // Extract business type keywords — no \b on right side for Turkish morphology
+    message.match(/(Alaçatı|Alacati|Çeşme|Cesme|İzmir|Izmir|İstanbul|Istanbul|Ankara|Bodrum|Fethiye|Antalya|Alanya|Marmaris|Kuşadası|Kusadasi|Kapadokya|Cappadocia|London|Berlin|Paris|Madrid|New York|Dubai|Amsterdam)/i) ??
+    message.match(/([A-ZÇĞIÖŞÜa-zçğışöşü]{4,20})[''']?(?:da|de|ta|te|'da|'de)\b/i)
   const businessTypeMatch =
-    message.match(/(dondurma|gelato|ice[\s-]?cream|cafe|kafe|restoran|restaurant|pastane|bakery|bar|pub|lokanta|büfe|market|fırın|bakkal)/i)
+    message.match(/(dondurma|gelato|ice[\s-]?cream|cafe|kafe|restoran|restaurant|pastane|bakery|bar|pub|lokanta|büfe|market|fırın|bakkal|kuaför|berber|gym|spa|hotel|otel)/i)
+  const location     = locationMatch?.[1] ?? ''
+  const businessType = businessTypeMatch?.[1] ?? ''
 
-  if (isNonEnglish) {
-    const isVolatileEconomy = isHighInflationEconomy(detectedLang)
+  // ── Context entity extraction ──────────────────────────────────────────────
+  const sectorMatch  = context?.match(/(?:sector|industry|sektör|endüstri|branche)[:\s]+([^\n,]{3,40})/i)
+  const companyMatch = context?.match(/(?:company|brand|şirket|marca|unternehmen|entreprise)[:\s]+([^\n,]{3,30})/i)
 
-    if (isStartupCostQuery && isVolatileEconomy) {
-      // ── Targeted startup-cost queries for Turkish volatile economy ─────────
-      // NOTE: No site: operators — Tavily can't render JS-heavy listing pages.
-      //       Keyword-based queries retrieve articles/aggregators with actual TL figures.
-      const location     = locationMatch?.[1] ?? ''
-      const businessType = businessTypeMatch?.[1] ?? keyTerms.split(' ').slice(0, 3).join(' ')
+  // ══════════════════════════════════════════════════════════════════════════
+  // STARTUP BUSINESS — most targeted, split into rent + equipment + global
+  // ══════════════════════════════════════════════════════════════════════════
+  if (intent === 'startup_business') {
+    const biz = businessType || keyTerms.split(' ').slice(0, 3).join(' ')
 
-      // Q1 — Commercial rent: keyword-rich, triggers articles & aggregators with real prices
-      const rentQuery = location
-        ? `${location} ticari kiralık işyeri dükkan kira fiyatı ${currentYear} TL aylık`
-        : `Türkiye turistik bölge ticari kiralık dükkan aylık kira fiyatı ${currentYear} TL`
-      queries.push(rentQuery.trim())
-
-      // Q2 — Equipment: add "endüstriyel/ticari/profesyonel" to avoid cheap home models
-      const equipQuery = businessType
-        ? `endüstriyel ${businessType} makinesi fiyatı Türkiye ${currentYear} TL ticari profesyonel`
-        : `${keyTerms} ticari endüstriyel ekipman fiyatı Türkiye ${currentYear} TL`
-      queries.push(equipQuery.trim())
-
-      // Q3 — English benchmark + USD anchor for international comparables
-      const asciiType = businessType.replace(/[ıİğĞüÜşŞçÇöÖ]/g, (c: string) => (
-        ({ ı:'i', İ:'I', ğ:'g', Ğ:'G', ü:'u', Ü:'U', ş:'s', Ş:'S', ç:'c', Ç:'C', ö:'o', Ö:'O' } as Record<string,string>)[c] ?? c
-      ))
-      const globalQuery = `${asciiType} commercial business startup cost ${currentYear} investment USD EUR`
-      queries.push(globalQuery.trim())
-
-    } else {
-      // ── Standard non-English query decomposition ──────────────────────────
-      // Q1 — Native-language query: always search in the user's own language first
-      //      so regional sources (Serper geo-targeted) return local data.
-      const nativeTerms = message.slice(0, 120).trim()
-      const q1Native    = isVolatileEconomy
-        ? `${nativeTerms} ${currentYear} fiyat maliyet kur`.trim()   // TR volatile: add price keywords
-        : `${nativeTerms} ${currentYear}`.trim()
-
-      // For DE/FR/ES/ZH, Q1 is already the native query — no change needed.
-      // For TR volatile, the inflation-appended form above is preferred.
-      queries.push(detectedLang === 'tr' && isVolatileEconomy ? q1Native : `${nativeTerms} ${currentYear}`.trim())
-
-      // Q2 — English global anchor (authoritative international sources)
-      const q2 = isVolatileEconomy
-        ? `${keyTerms} ${currentYear} USD EUR price global benchmark`.trim()
-        : `${keyTerms} ${currentYear} statistics report data`.trim()
-      queries.push(q2)
-
-      // Q3 — Language-specific enrichment with sector/entity context
-      if (sectorMatch) {
-        // Include the native query for sector refinement
-        queries.push(`${sectorMatch[1].trim()} ${keyTerms} ${currentYear}`.trim())
-      } else if (companyMatch) {
-        queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis`.trim())
-      } else if (entityMatch && entityMatch[1].length > 3) {
-        queries.push(`${entityMatch[1]} ${currentYear} analysis data`.trim())
-      } else {
-        // Language-specific Q3 for known languages
-        const q3Map: Record<string, string> = {
-          tr: `${keyTerms} Türkiye ${currentYear} güncel veri istatistik`.trim(),
-          de: `${keyTerms} Deutschland ${currentYear} Statistik Daten`.trim(),
-          fr: `${keyTerms} France ${currentYear} statistiques données`.trim(),
-          es: `${keyTerms} España ${currentYear} estadísticas datos`.trim(),
-          zh: `${keyTerms} 中国 ${currentYear} 统计数据`.trim(),
-          en: `${keyTerms} ${currentYear} industry benchmark statistics report`.trim(),
-        }
-        queries.push(q3Map[detectedLang] ?? `${keyTerms} ${currentYear} benchmark report`.trim())
-      }
-    }
-  } else {
-    if (isStartupCostQuery) {
-      // ── Targeted startup-cost queries for English ─────────────────────────
-      const location     = locationMatch?.[1] ?? ''
-      const businessType = businessTypeMatch?.[1] ?? keyTerms.split(' ').slice(0, 3).join(' ')
-
+    if (isVolatile && detectedLang === 'tr') {
+      // Turkish volatile economy — rent + industrial equipment + global USD
       queries.push(
         location
-          ? `"${location}" commercial property rent price ${currentYear}`.trim()
-          : `${keyTerms} commercial rent cost ${currentYear}`.trim()
+          ? `${location} ticari kiralık işyeri dükkan kira fiyatı ${year} TL aylık`
+          : `Türkiye turistik bölge ticari kiralık dükkan aylık kira fiyatı ${year} TL`
       )
-      queries.push(`${businessType} commercial equipment cost price ${currentYear} USD`.trim())
-      queries.push(`${businessType} small business startup cost breakdown ${currentYear}`.trim())
+      queries.push(`endüstriyel ${biz} makinesi fiyatı Türkiye ${year} TL ticari profesyonel`)
+      queries.push(`${toAscii(biz)} commercial business startup cost ${year} investment USD EUR`)
     } else {
-      // ── Standard English query decomposition ──────────────────────────────
-      queries.push(`${keyTerms} ${currentYear}`.trim())
-
-      if (sectorMatch) {
-        queries.push(`${sectorMatch[1].trim()} ${keyTerms} statistics benchmark`.trim())
-      } else if (companyMatch) {
-        queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis data`.trim())
-      } else if (entityMatch && entityMatch[1].length > 3) {
-        queries.push(`${entityMatch[1]} ${currentYear} statistics data report`.trim())
-      } else {
-        queries.push(`${keyTerms} industry report statistics`.trim())
-      }
-
-      queries.push(`${keyTerms} market trend benchmark report ${currentYear}`.trim())
+      // English / other language startup cost
+      queries.push(
+        location
+          ? `${location} commercial rent shop price ${year}`
+          : `${keyTerms} commercial rent cost ${year}`
+      )
+      queries.push(`${biz} commercial equipment cost price ${year}`)
+      queries.push(`${biz} small business startup cost breakdown ${year}`)
     }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // PRICE / COST — specific price lookup, current rates
+  // ══════════════════════════════════════════════════════════════════════════
+  else if (intent === 'price_cost') {
+    if (isVolatile && detectedLang === 'tr') {
+      queries.push(`${nativeMsg} ${year} güncel fiyat TL`)
+      queries.push(`${keyTerms} ${year} current price USD EUR global`)
+      queries.push(`${keyTerms} Türkiye ${year} piyasa fiyatı karşılaştırma`)
+    } else if (isNonEnglish) {
+      queries.push(`${nativeMsg} ${year}`)
+      queries.push(`${keyTerms} ${year} current price statistics`)
+      queries.push(`${keyTerms} ${year} price comparison data`)
+    } else {
+      queries.push(`${keyTerms} current price ${year}`)
+      queries.push(`${keyTerms} cost breakdown analysis ${year}`)
+      queries.push(`${keyTerms} price comparison statistics ${year}`)
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // FINANCIAL MARKET — real-time quotes, market data, investment analysis
+  // ══════════════════════════════════════════════════════════════════════════
+  else if (intent === 'financial_market') {
+    if (isNonEnglish) {
+      queries.push(`${nativeMsg} ${year} piyasa veri analiz`)
+      queries.push(`${keyTerms} ${year} market data analysis performance`)
+      queries.push(`${keyTerms} ${year} investment outlook forecast`)
+    } else {
+      queries.push(`${keyTerms} ${year} market data price performance`)
+      queries.push(`${keyTerms} ${year} analysis forecast outlook`)
+      queries.push(`${keyTerms} ${year} investment report statistics`)
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // NEWS / CURRENT EVENTS — latest developments, breaking news
+  // ══════════════════════════════════════════════════════════════════════════
+  else if (intent === 'news_current') {
+    if (isNonEnglish) {
+      queries.push(`${nativeMsg} son gelişme haber ${year}`)
+      queries.push(`${keyTerms} latest news developments ${year}`)
+      queries.push(`${keyTerms} recent update analysis ${year}`)
+    } else {
+      queries.push(`${keyTerms} latest news ${year}`)
+      queries.push(`${keyTerms} recent developments update`)
+      queries.push(`${keyTerms} analysis current situation ${year}`)
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // TECH / PRODUCT — reviews, comparisons, specs
+  // ══════════════════════════════════════════════════════════════════════════
+  else if (intent === 'tech_product') {
+    if (isNonEnglish) {
+      queries.push(`${nativeMsg} ${year} inceleme karşılaştırma`)
+      queries.push(`${keyTerms} ${year} review comparison specs`)
+      queries.push(`${keyTerms} best ${year} expert recommendation`)
+    } else {
+      queries.push(`${keyTerms} review ${year}`)
+      queries.push(`${keyTerms} comparison specs features ${year}`)
+      queries.push(`${keyTerms} best expert recommendation ${year}`)
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // SCIENTIFIC — research, studies, evidence
+  // ══════════════════════════════════════════════════════════════════════════
+  else if (intent === 'scientific') {
+    if (isNonEnglish) {
+      queries.push(`${nativeMsg} araştırma bulgu ${year}`)
+      queries.push(`${keyTerms} research study findings ${year}`)
+      queries.push(`${keyTerms} systematic review evidence meta-analysis`)
+    } else {
+      queries.push(`${keyTerms} research study findings ${year}`)
+      queries.push(`${keyTerms} systematic review evidence`)
+      queries.push(`${keyTerms} clinical data statistics ${year}`)
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // GENERAL — smart contextual decomposition
+  // ══════════════════════════════════════════════════════════════════════════
+  else {
+    // Q1 — Always native language first for regional relevance
+    if (isVolatile && detectedLang === 'tr') {
+      queries.push(`${nativeMsg} ${year} güncel veri`)
+    } else if (isNonEnglish) {
+      queries.push(`${nativeMsg} ${year}`)
+    } else {
+      queries.push(`${keyTerms} ${year}`)
+    }
+
+    // Q2 — English global anchor
+    if (sectorMatch) {
+      queries.push(`${sectorMatch[1].trim()} ${keyTerms} ${year} data report`)
+    } else if (companyMatch) {
+      queries.push(`${companyMatch[1].trim()} ${year} analysis performance`)
+    } else {
+      queries.push(`${keyTerms} ${year} comprehensive analysis report`)
+    }
+
+    // Q3 — Language-specific deep-dive
+    const q3 = isNonEnglish
+      ? ({
+          tr: `${keyTerms} Türkiye ${year} istatistik araştırma rapor`,
+          de: `${keyTerms} Deutschland ${year} Statistik Analyse`,
+          fr: `${keyTerms} France ${year} statistiques analyse`,
+          es: `${keyTerms} España ${year} estadísticas análisis`,
+          zh: `${keyTerms} 中国 ${year} 统计分析报告`,
+        } as Record<string, string>)[detectedLang]
+      : `${keyTerms} statistics data evidence ${year}`
+    queries.push((q3 ?? `${keyTerms} ${year} data statistics`).trim())
   }
 
   return Array.from(new Set(queries.filter(q => q.length > 5))).slice(0, 3)
@@ -670,34 +789,26 @@ export async function executeDeepSearch(
     return { results: [], queriesUsed: queries, searchedAt, provider: 'none', staleSourceCount: 0 }
   }
 
-  // For high-inflation economies (TR, AR, EG…) run BOTH providers in parallel
-  // so we get both Tavily's AI-crawled content AND Serper's Google index results.
-  // For all other languages, Tavily-first with Serper as fallback.
-  const isDualMode = isHighInflationEconomy(language)
-  // Use 'advanced' Tavily depth for volatile-economy price queries (better content)
-  const tavilyDepth: 'basic' | 'advanced' = isDualMode ? 'advanced' : 'basic'
+  // Always run BOTH Tavily AND Serper in parallel for every query.
+  // Tavily = AI-native deep crawl, Serper = Google's full index.
+  // Together they cover both freshly-crawled content and Google-cached pages.
+  // 'advanced' Tavily depth gives richer sentence extraction for all queries.
+  const tavilyDepth: 'basic' | 'advanced' = 'advanced'
 
   try {
     const batches = await Promise.all(
       queries.map(async (q) => {
-        if (isDualMode && hasTavily && hasSerper) {
-          // Run both in parallel → merge results for richer coverage
+        if (hasTavily && hasSerper) {
+          // Both providers in parallel → maximum coverage
           const [tv, sp] = await Promise.all([
             searchTavily(q, abort.signal, tavilyDepth),
             searchSerper(q, abort.signal, language),
           ])
-          // Deduplicate by URL before returning
           const seen = new Set<string>()
           return [...tv, ...sp].filter(r => seen.has(r.url) ? false : (seen.add(r.url), true))
         }
-        // Standard: Tavily first; Serper fallback
-        if (hasTavily) {
-          const tv = await searchTavily(q, abort.signal, tavilyDepth)
-          if (tv.length > 0) return tv
-        }
-        if (hasSerper) {
-          return searchSerper(q, abort.signal, language)
-        }
+        if (hasTavily) return searchTavily(q, abort.signal, tavilyDepth)
+        if (hasSerper) return searchSerper(q, abort.signal, language)
         return []
       }),
     )
@@ -719,7 +830,7 @@ export async function executeDeepSearch(
     // Sort: highest reliability first
     results.sort((a, b) => b.reliabilityScore - a.reliabilityScore)
 
-    const trimmed = results.slice(0, 8)
+    const trimmed = results.slice(0, 12)   // 12 = dual-provider × 3 queries headroom
 
     // [SAIL-DATA-VERACITY] Count results older than 12 months (Rule 2 — recency filter)
     const staleSourceCount = trimmed.filter(r => isStaleSource(r.publishedDate)).length
