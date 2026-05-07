@@ -34,6 +34,11 @@ import structlog
 from app.connectors.base import ConnectorResult
 from app.connectors.registry import registry
 from app.connectors.ecommerce.amazon import AmazonConnector
+from app.connectors.ecommerce.ebay import EbayConnector
+from app.connectors.social.tiktok import TikTokAdsConnector
+from app.connectors.social.meta import MetaAdsConnector
+from app.connectors.creator.spotify import SpotifyConnector
+from app.connectors.local_markets.real_estate import RealEstateConnector
 from app.core.exceptions import AllConnectorsFailed
 from app.core.events import bus, ConnectorRunFailed
 
@@ -75,12 +80,19 @@ class ApifyOrchestrator:
             return
 
         connectors = [
-            AmazonConnector(),
-            # Remaining connectors registered in subsequent modules:
-            # EbayConnector(), AlibabaConnector(),
-            # RealEstateConnector(), AutomotiveConnector(),
-            # TikTokAdsConnector(), YoutubeAdsConnector(), MetaAdsConnector(),
-            # SpotifyConnector(),
+            # ── E-commerce ────────────────────────────────────────────────────
+            AmazonConnector(),       # amazon-product-price  → fallback: ebay
+            EbayConnector(),         # ebay-product-price    → terminal
+
+            # ── Social / Ads ──────────────────────────────────────────────────
+            TikTokAdsConnector(),    # tiktok-ads            → fallback: meta-ads
+            MetaAdsConnector(),      # meta-ads              → terminal
+
+            # ── Creator economy ───────────────────────────────────────────────
+            SpotifyConnector(),      # spotify-creator       → terminal
+
+            # ── Local markets ─────────────────────────────────────────────────
+            RealEstateConnector(),   # real-estate           → terminal
         ]
 
         for connector in connectors:
