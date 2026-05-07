@@ -13,7 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application
 COPY app/ ./app/
-COPY alembic.ini .
+# alembic.ini is optional — only needed when running migrations
+COPY alembic.ini* ./
 
 # Non-root user
 RUN useradd -m -u 1000 sail && chown -R sail:sail /app

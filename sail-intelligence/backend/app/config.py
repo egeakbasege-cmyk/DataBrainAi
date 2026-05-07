@@ -41,8 +41,9 @@ class Settings(BaseSettings):
     celery_result_backend: str = "redis://localhost:6379/1"
 
     # ── Pinecone ──────────────────────────────────────────────────────────────
-    pinecone_api_key: str = Field(...)
-    pinecone_environment: str = Field(...)
+    # Optional — vector store disabled when empty; agents degrade gracefully
+    pinecone_api_key: str = ""
+    pinecone_environment: str = ""
     pinecone_index_name: str = "sail-intelligence"
 
     # ── Auth / JWT ────────────────────────────────────────────────────────────
@@ -57,13 +58,12 @@ class Settings(BaseSettings):
     oauth_redirect_uri: str = "http://localhost:8000/api/v1/auth/callback"
 
     # ── AES-256 Vault ─────────────────────────────────────────────────────────
-    vault_encryption_key: str = Field(
-        ...,
-        description="Fernet key — 32 URL-safe base64-encoded bytes",
-    )
+    # Optional in dev — connector credential encryption disabled when empty
+    vault_encryption_key: str = ""
 
     # ── Apify ─────────────────────────────────────────────────────────────────
-    apify_api_token: str = Field(...)
+    # Optional — web scraping disabled when empty
+    apify_api_token: str = ""
     apify_default_timeout_secs: int = 120
     apify_max_retries: int = 4
 

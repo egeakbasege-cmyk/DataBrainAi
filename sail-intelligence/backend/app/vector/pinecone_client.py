@@ -47,10 +47,25 @@ class PineconeClient:
     """
 
     def __init__(self) -> None:
+        # Skip real initialisation when Pinecone is not configured (dev mode)
+        if not settings.pinecone_api_key:
+            self._pc     = None  # type: ignore[assignment]
+            self._index  = None  # type: ignore[assignment]
+            self._openai = None  # type: ignore[assignment]
+            self._dim    = settings.embedding_dimensions
+            logger.warning("pinecone_disabled", reason="PINECONE_API_KEY not set — vector store offline")
+            return
         self._pc     = Pinecone(api_key=settings.pinecone_api_key)
         self._index  = self._pc.Index(settings.pinecone_index_name)
         self._openai = AsyncOpenAI(api_key=settings.openai_api_key)
         self._dim    = settings.embedding_dimensions
+
+    def _require_index(self) -> None:
+        if self._index is None:
+            raise VectorDBError(
+                message="Pinecone is not configured — set PINECONE_API_KEY in .env",
+                code="vector_db_disabled",
+            )
 
     # ── Index bootstrap ───────────────────────────────────────────────────────
 
