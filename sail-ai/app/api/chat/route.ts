@@ -565,7 +565,7 @@ export async function POST(req: NextRequest) {
     _researchAttempted = true
     // Pass detected language so bilingual vectors are generated for non-English queries
     _researchQueries = decomposeToSearchQueries(queryText, body.context, _queryLanguage)
-    const searchResponse = await executeDeepSearch(_researchQueries)
+    const searchResponse = await executeDeepSearch(_researchQueries, _queryLanguage)
     _searchResults     = searchResponse.results
     _staleSourceCount  = searchResponse.staleSourceCount  // [SAIL-DATA-VERACITY]
 

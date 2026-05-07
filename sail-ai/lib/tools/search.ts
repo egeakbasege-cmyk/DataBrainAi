@@ -68,11 +68,42 @@ const HIGH_RELIABILITY: Array<[string, number]> = [
   ['github.com',        0.80],
   ['techcrunch.com',    0.78],
   ['wired.com',         0.78],
-  // Turkish-market sources
-  ['kap.org.tr',        0.91],  // BIST public disclosures
-  ['tcmb.gov.tr',       0.95],  // Central Bank of Turkey
-  ['tuik.gov.tr',       0.93],  // TÜİK statistics
-  ['spk.gov.tr',        0.92],  // Capital Markets Board
+  // ── Turkish-market sources ────────────────────────────────────────────────
+  ['kap.org.tr',           0.91],  // BIST public disclosures
+  ['tcmb.gov.tr',          0.95],  // Central Bank of Turkey
+  ['tuik.gov.tr',          0.93],  // TÜİK statistics
+  ['spk.gov.tr',           0.92],  // Capital Markets Board
+  ['hepsiemlak.com',       0.82],  // Real estate listings
+  ['sahibinden.com',       0.81],  // Classified ads / real estate / cars
+  ['akakce.com',           0.80],  // Price comparison
+  ['hurriyet.com.tr',      0.74],
+  ['sozcu.com.tr',         0.72],
+  ['ensonhaber.com',       0.70],
+  // ── German-market sources ─────────────────────────────────────────────────
+  ['bundesbank.de',        0.94],  // Deutsche Bundesbank
+  ['destatis.de',          0.93],  // Statistisches Bundesamt
+  ['bmwi.de',              0.91],
+  ['handelsblatt.com',     0.83],
+  ['finanzen.net',         0.76],
+  ['boerse.de',            0.75],
+  ['immobilienscout24.de', 0.78],
+  // ── French-market sources ─────────────────────────────────────────────────
+  ['insee.fr',             0.94],  // Institut national de la statistique
+  ['banque-france.fr',     0.94],  // Banque de France
+  ['lefigaro.fr',          0.77],
+  ['lemonde.fr',           0.79],
+  ['seloger.com',          0.76],
+  // ── Spanish-market sources ────────────────────────────────────────────────
+  ['bde.es',               0.93],  // Banco de España
+  ['ine.es',               0.94],  // Instituto Nacional de Estadística
+  ['expansion.com',        0.81],
+  ['cincodias.elpais.com', 0.80],
+  ['idealista.com',        0.78],
+  // ── Chinese-market sources ────────────────────────────────────────────────
+  ['stats.gov.cn',         0.89],  // National Bureau of Statistics
+  ['pboc.gov.cn',          0.92],  // People's Bank of China
+  ['caixin.com',           0.82],
+  ['xinhua.net',           0.78],
 ]
 
 function domainOf(url: string): string {
@@ -198,9 +229,26 @@ interface SerperResponse {
   organic?: SerperResult[]
 }
 
-async function searchSerper(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
+// Maps SAIL language codes → Serper geo/language params so results are
+// returned from the correct regional Google index.
+const SERPER_LOCALE: Record<string, { gl: string; hl: string }> = {
+  tr: { gl: 'tr', hl: 'tr' },   // Turkish → Google Turkey
+  de: { gl: 'de', hl: 'de' },   // German  → Google Germany
+  fr: { gl: 'fr', hl: 'fr' },   // French  → Google France
+  es: { gl: 'es', hl: 'es' },   // Spanish → Google Spain
+  zh: { gl: 'cn', hl: 'zh-cn'}, // Chinese → Google China
+  en: { gl: 'us', hl: 'en' },   // English → Google US (default)
+}
+
+async function searchSerper(
+  query:   string,
+  signal?: AbortSignal,
+  lang     = 'en',
+): Promise<SearchResult[]> {
   const apiKey = process.env.SERPER_API_KEY
   if (!apiKey) return []
+
+  const locale = SERPER_LOCALE[lang] ?? SERPER_LOCALE['en']
 
   let res: Response
   try {
@@ -210,7 +258,7 @@ async function searchSerper(query: string, signal?: AbortSignal): Promise<Search
         'Content-Type': 'application/json',
         'X-API-KEY':    apiKey,
       },
-      body: JSON.stringify({ q: query, num: 5, gl: 'us', hl: 'en' }),
+      body: JSON.stringify({ q: query, num: 5, gl: locale.gl, hl: locale.hl }),
       signal,
     })
   } catch { return [] }
@@ -378,27 +426,41 @@ export function decomposeToSearchQueries(
 
     } else {
       // ── Standard non-English query decomposition ──────────────────────────
-      const q1 = isVolatileEconomy
-        ? `${keyTerms} ${currentYear} USD EUR price cost global benchmark report`.trim()
-        : `${keyTerms} ${currentYear} global statistics report`.trim()
-      queries.push(q1)
-
-      // Q2 — Native language query (regional/cultural sources)
+      // Q1 — Native-language query: always search in the user's own language first
+      //      so regional sources (Serper geo-targeted) return local data.
       const nativeTerms = message.slice(0, 120).trim()
-      queries.push(`${nativeTerms} ${currentYear}`.trim())
+      const q1Native    = isVolatileEconomy
+        ? `${nativeTerms} ${currentYear} fiyat maliyet kur`.trim()   // TR volatile: add price keywords
+        : `${nativeTerms} ${currentYear}`.trim()
 
-      // Q3 — English benchmark enrichment with sector/entity context
+      // For DE/FR/ES/ZH, Q1 is already the native query — no change needed.
+      // For TR volatile, the inflation-appended form above is preferred.
+      queries.push(detectedLang === 'tr' && isVolatileEconomy ? q1Native : `${nativeTerms} ${currentYear}`.trim())
+
+      // Q2 — English global anchor (authoritative international sources)
+      const q2 = isVolatileEconomy
+        ? `${keyTerms} ${currentYear} USD EUR price global benchmark`.trim()
+        : `${keyTerms} ${currentYear} statistics report data`.trim()
+      queries.push(q2)
+
+      // Q3 — Language-specific enrichment with sector/entity context
       if (sectorMatch) {
-        queries.push(`${sectorMatch[1].trim()} ${keyTerms} benchmark data ${currentYear}`.trim())
+        // Include the native query for sector refinement
+        queries.push(`${sectorMatch[1].trim()} ${keyTerms} ${currentYear}`.trim())
       } else if (companyMatch) {
-        queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis report`.trim())
+        queries.push(`${companyMatch[1].trim()} ${currentYear} market analysis`.trim())
       } else if (entityMatch && entityMatch[1].length > 3) {
-        queries.push(`${entityMatch[1]} ${currentYear} industry analysis benchmark`.trim())
+        queries.push(`${entityMatch[1]} ${currentYear} analysis data`.trim())
       } else {
-        const q3 = isVolatileEconomy
-          ? `${keyTerms} USD EUR equivalent exchange rate ${currentYear}`.trim()
-          : `${keyTerms} industry benchmark statistics ${currentYear}`.trim()
-        queries.push(q3)
+        // Language-specific Q3 for known languages
+        const q3Map: Record<string, string> = {
+          tr: `${keyTerms} Türkiye ${currentYear} güncel veri istatistik`.trim(),
+          de: `${keyTerms} Deutschland ${currentYear} Statistik Daten`.trim(),
+          fr: `${keyTerms} France ${currentYear} statistiques données`.trim(),
+          es: `${keyTerms} España ${currentYear} estadísticas datos`.trim(),
+          zh: `${keyTerms} 中国 ${currentYear} 统计数据`.trim(),
+        }
+        queries.push(q3Map[detectedLang] ?? `${keyTerms} ${currentYear} benchmark report`.trim())
       }
     }
   } else {
@@ -579,9 +641,14 @@ const SEARCH_TIMEOUT_MS = 4_500
  * Runs all queries in parallel (Tavily preferred, Serper fallback per query).
  * Deduplicates by URL and sorts by reliability score.
  * Hard-capped at 8 results to control token spend.
+ *
+ * @param queries  - search vectors from decomposeToSearchQueries()
+ * @param language - detected query language code (e.g. 'tr', 'de', 'fr', 'es', 'zh', 'en')
+ *                   Passed to Serper so results come from the correct regional index.
  */
 export async function executeDeepSearch(
-  queries: string[],
+  queries:  string[],
+  language  = 'en',
 ): Promise<DeepSearchResponse> {
   const searchedAt = new Date().toISOString()
 
@@ -606,7 +673,7 @@ export async function executeDeepSearch(
           if (tv.length > 0) return tv
         }
         if (hasSerper) {
-          return searchSerper(q, abort.signal)
+          return searchSerper(q, abort.signal, language)
         }
         return []
       }),
