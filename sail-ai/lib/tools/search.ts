@@ -406,23 +406,24 @@ export function decomposeToSearchQueries(
       const location     = locationMatch?.[1] ?? ''
       const businessType = businessTypeMatch?.[1] ?? keyTerms.split(' ').slice(0, 3).join(' ')
 
-      // Q1 — Commercial rent: most critical cost variable, search in USD/EUR for stable comparison
+      // Q1 — Commercial rent: site:sahibinden.com targets actual current listings
       const rentQuery = location
-        ? `${location} commercial shop rent price per square meter ${currentYear} TRY USD`
-        : `Turkey commercial rent boutique shop per m2 tourist area ${currentYear}`
+        ? `${location} kiralık işyeri dükkan ${currentYear} site:sahibinden.com OR site:hepsiemlak.com`
+        : `Türkiye ticari kiralık dükkan işyeri turizm bölgesi ${currentYear} site:sahibinden.com`
       queries.push(rentQuery.trim())
 
-      // Q2 — Equipment cost in native language (local market prices)
+      // Q2 — Equipment cost: site:akakce.com targets real-time Turkish price comparison
       const equipQuery = businessType
-        ? `${businessType} makinesi fiyatı Türkiye ${currentYear} TL ticari endüstriyel`.trim()
-        : `${keyTerms} ekipman fiyatı Türkiye ${currentYear}`.trim()
-      queries.push(equipQuery)
+        ? `${businessType} makinesi fiyatı ${currentYear} site:akakce.com OR site:sahibinden.com`
+        : `${keyTerms} ekipman fiyatı ${currentYear} site:akakce.com`
+      queries.push(equipQuery.trim())
 
-      // Q3 — English benchmark for the business type (global comparable)
-      const globalQuery = businessType
-        ? `${businessType.replace(/ı|ğ|ü|ş|ç|ö/gi, (c) => ({ ı:'i',ğ:'g',ü:'u',ş:'s',ç:'c',ö:'o' }[c] ?? c))} business startup cost ${currentYear} investment`.trim()
-        : `${keyTerms} small business startup cost investment ${currentYear}`.trim()
-      queries.push(globalQuery)
+      // Q3 — English benchmark + USD anchor for international comparables
+      const asciiType = businessType.replace(/[ıİğĞüÜşŞçÇöÖ]/g, (c: string) => (
+        ({ ı:'i', İ:'I', ğ:'g', Ğ:'G', ü:'u', Ü:'U', ş:'s', Ş:'S', ç:'c', Ç:'C', ö:'o', Ö:'O' } as Record<string,string>)[c] ?? c
+      ))
+      const globalQuery = `${asciiType} business startup cost ${currentYear} investment USD EUR`
+      queries.push(globalQuery.trim())
 
     } else {
       // ── Standard non-English query decomposition ──────────────────────────
@@ -459,6 +460,7 @@ export function decomposeToSearchQueries(
           fr: `${keyTerms} France ${currentYear} statistiques données`.trim(),
           es: `${keyTerms} España ${currentYear} estadísticas datos`.trim(),
           zh: `${keyTerms} 中国 ${currentYear} 统计数据`.trim(),
+          en: `${keyTerms} ${currentYear} industry benchmark statistics report`.trim(),
         }
         queries.push(q3Map[detectedLang] ?? `${keyTerms} ${currentYear} benchmark report`.trim())
       }
@@ -471,10 +473,10 @@ export function decomposeToSearchQueries(
 
       queries.push(
         location
-          ? `${location} commercial rent per square meter ${currentYear}`.trim()
+          ? `"${location}" commercial property rent price ${currentYear}`.trim()
           : `${keyTerms} commercial rent cost ${currentYear}`.trim()
       )
-      queries.push(`${businessType} equipment cost startup investment ${currentYear}`.trim())
+      queries.push(`${businessType} equipment price cost ${currentYear} site:amazon.com OR site:alibaba.com`.trim())
       queries.push(`${businessType} small business startup cost breakdown ${currentYear}`.trim())
     } else {
       // ── Standard English query decomposition ──────────────────────────────
