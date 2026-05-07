@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-sail-900 text-white font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar         { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track   { @apply bg-sail-800; }
+  ::-webkit-scrollbar-thumb   { @apply bg-sail-600 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-sail-accent; }
+}
+
+@layer components {
+  /* Glass card — used by MetricsPanel, LiveActionFeed */
+  .card {
+    @apply bg-sail-800 border border-sail-700 rounded-xl p-5;
+  }
+
+  /* Terminal text style */
+  .terminal {
+    @apply font-mono text-sm text-sail-accent;
+  }
+
+  /* Section label */
+  .section-label {
+    @apply text-xs font-semibold tracking-widest uppercase text-sail-muted;
+  }
+
+  /* Glow ring on focus */
+  .input-field {
+    @apply bg-sail-800 border border-sail-700 rounded-lg px-4 py-2.5
+           text-white placeholder-sail-muted outline-none transition-all duration-200
+           focus:border-sail-accent focus:shadow-glow-cyan;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-sail-accent to-blue-400 bg-clip-text text-transparent;
+  }
+}
