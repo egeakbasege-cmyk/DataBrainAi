@@ -43,7 +43,14 @@ const GROQ_MODEL = 'llama-3.3-70b-versatile'
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
 function getGroqKey(req: NextRequest, body: PersonalisedRequestBody): string | null {
-  return process.env.GROQ_API_KEY ?? body.apiKey ?? null
+  return (
+    process.env.GROQ_API_KEY ??
+    process.env.GROQ_API_KEY_1 ??
+    process.env.GROQ_API_KEY_2 ??
+    process.env.GROQ_API_KEY_3 ??
+    body.apiKey ??
+    null
+  )
 }
 
 /**

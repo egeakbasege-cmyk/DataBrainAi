@@ -502,7 +502,14 @@ export async function POST(req: NextRequest) {
   const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'scenario' | 'auto' = body.analysisMode ?? 'upwind'
 
   // 3. Groq — single AI provider
-  const groqKey = process.env.GROQ_API_KEY ?? body.apiKey
+  // Fall back through numbered keys (GROQ_API_KEY_1 … _5) so Vercel envs with only
+  // numbered keys still pass the guard. getKeyPool() already collects all of them.
+  const groqKey =
+    process.env.GROQ_API_KEY ??
+    process.env.GROQ_API_KEY_1 ??
+    process.env.GROQ_API_KEY_2 ??
+    process.env.GROQ_API_KEY_3 ??
+    body.apiKey
 
   if (!groqKey) {
     return Response.json(
