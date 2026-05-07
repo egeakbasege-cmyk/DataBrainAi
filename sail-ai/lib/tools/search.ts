@@ -182,7 +182,11 @@ interface TavilyResponse {
   results?: TavilyResult[]
 }
 
-async function searchTavily(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
+async function searchTavily(
+  query:  string,
+  signal?: AbortSignal,
+  depth:  'basic' | 'advanced' = 'basic',
+): Promise<SearchResult[]> {
   const apiKey = process.env.TAVILY_API_KEY
   if (!apiKey) return []
 
@@ -192,13 +196,11 @@ async function searchTavily(query: string, signal?: AbortSignal): Promise<Search
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        api_key:      apiKey,
+        api_key:             apiKey,
         query,
-        search_depth: 'basic',
-        max_results:  5,
+        search_depth:        depth,
+        max_results:         5,
         include_raw_content: false,
-        // Boost authority domains
-        include_domains: [],
       }),
       signal,
     })
@@ -403,26 +405,28 @@ export function decomposeToSearchQueries(
 
     if (isStartupCostQuery && isVolatileEconomy) {
       // ── Targeted startup-cost queries for Turkish volatile economy ─────────
+      // NOTE: No site: operators — Tavily can't render JS-heavy listing pages.
+      //       Keyword-based queries retrieve articles/aggregators with actual TL figures.
       const location     = locationMatch?.[1] ?? ''
       const businessType = businessTypeMatch?.[1] ?? keyTerms.split(' ').slice(0, 3).join(' ')
 
-      // Q1 — Commercial rent: site:sahibinden.com targets actual current listings
+      // Q1 — Commercial rent: keyword-rich, triggers articles & aggregators with real prices
       const rentQuery = location
-        ? `${location} kiralık işyeri dükkan ${currentYear} site:sahibinden.com OR site:hepsiemlak.com`
-        : `Türkiye ticari kiralık dükkan işyeri turizm bölgesi ${currentYear} site:sahibinden.com`
+        ? `${location} ticari kiralık işyeri dükkan kira fiyatı ${currentYear} TL aylık`
+        : `Türkiye turistik bölge ticari kiralık dükkan aylık kira fiyatı ${currentYear} TL`
       queries.push(rentQuery.trim())
 
-      // Q2 — Equipment cost: site:akakce.com targets real-time Turkish price comparison
+      // Q2 — Equipment: add "endüstriyel/ticari/profesyonel" to avoid cheap home models
       const equipQuery = businessType
-        ? `${businessType} makinesi fiyatı ${currentYear} site:akakce.com OR site:sahibinden.com`
-        : `${keyTerms} ekipman fiyatı ${currentYear} site:akakce.com`
+        ? `endüstriyel ${businessType} makinesi fiyatı Türkiye ${currentYear} TL ticari profesyonel`
+        : `${keyTerms} ticari endüstriyel ekipman fiyatı Türkiye ${currentYear} TL`
       queries.push(equipQuery.trim())
 
       // Q3 — English benchmark + USD anchor for international comparables
       const asciiType = businessType.replace(/[ıİğĞüÜşŞçÇöÖ]/g, (c: string) => (
         ({ ı:'i', İ:'I', ğ:'g', Ğ:'G', ü:'u', Ü:'U', ş:'s', Ş:'S', ç:'c', Ç:'C', ö:'o', Ö:'O' } as Record<string,string>)[c] ?? c
       ))
-      const globalQuery = `${asciiType} business startup cost ${currentYear} investment USD EUR`
+      const globalQuery = `${asciiType} commercial business startup cost ${currentYear} investment USD EUR`
       queries.push(globalQuery.trim())
 
     } else {
@@ -476,7 +480,7 @@ export function decomposeToSearchQueries(
           ? `"${location}" commercial property rent price ${currentYear}`.trim()
           : `${keyTerms} commercial rent cost ${currentYear}`.trim()
       )
-      queries.push(`${businessType} equipment price cost ${currentYear} site:amazon.com OR site:alibaba.com`.trim())
+      queries.push(`${businessType} commercial equipment cost price ${currentYear} USD`.trim())
       queries.push(`${businessType} small business startup cost breakdown ${currentYear}`.trim())
     } else {
       // ── Standard English query decomposition ──────────────────────────────
@@ -666,12 +670,29 @@ export async function executeDeepSearch(
     return { results: [], queriesUsed: queries, searchedAt, provider: 'none', staleSourceCount: 0 }
   }
 
+  // For high-inflation economies (TR, AR, EG…) run BOTH providers in parallel
+  // so we get both Tavily's AI-crawled content AND Serper's Google index results.
+  // For all other languages, Tavily-first with Serper as fallback.
+  const isDualMode = isHighInflationEconomy(language)
+  // Use 'advanced' Tavily depth for volatile-economy price queries (better content)
+  const tavilyDepth: 'basic' | 'advanced' = isDualMode ? 'advanced' : 'basic'
+
   try {
     const batches = await Promise.all(
       queries.map(async (q) => {
-        // Try Tavily first; fall back to Serper if Tavily returns nothing
+        if (isDualMode && hasTavily && hasSerper) {
+          // Run both in parallel → merge results for richer coverage
+          const [tv, sp] = await Promise.all([
+            searchTavily(q, abort.signal, tavilyDepth),
+            searchSerper(q, abort.signal, language),
+          ])
+          // Deduplicate by URL before returning
+          const seen = new Set<string>()
+          return [...tv, ...sp].filter(r => seen.has(r.url) ? false : (seen.add(r.url), true))
+        }
+        // Standard: Tavily first; Serper fallback
         if (hasTavily) {
-          const tv = await searchTavily(q, abort.signal)
+          const tv = await searchTavily(q, abort.signal, tavilyDepth)
           if (tv.length > 0) return tv
         }
         if (hasSerper) {
