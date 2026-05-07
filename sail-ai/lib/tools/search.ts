@@ -532,7 +532,7 @@ export function requiresResearch(message: string): boolean {
   const trimmed = message.trim()
   if (trimmed.length < 15) return false           // skip greetings / one-word inputs
   if (GREETING_PATTERN.test(trimmed)) return false // skip explicit greeting phrases
-  return RESEARCH_INTENT_PATTERNS.some(re => re.test(message))
+  return true   // always research all meaningful queries
 }
 
 // ── Recency filter (Rule 2 of Data Veracity Protocol) ────────────────────────
