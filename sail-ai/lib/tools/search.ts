@@ -359,267 +359,51 @@ function stripFillerWords(text: string): string {
     .slice(0, 120)
 }
 
-// ── Universal intent classifier ───────────────────────────────────────────────
-// Detects query type across all 6 languages to generate targeted search vectors.
-
-type QueryIntent =
-  | 'startup_business'   // opening/starting a specific business
-  | 'price_cost'         // prices, salaries, rents, costs
-  | 'news_current'       // latest events, breaking news, today
-  | 'financial_market'   // stocks, crypto, market data, investment
-  | 'tech_product'       // product reviews, comparisons, specs
-  | 'scientific'         // research, studies, medical evidence
-  | 'general'            // everything else
-
-function classifyIntent(message: string): QueryIntent {
-  const m = message  // shorthand
-
-  // ── Startup / business opening ──────────────────────────────────────────────
-  // Turkish: no trailing \b — suffixes like açmanın, kurmanın must match
-  if (
-    /(açmak|açma|kurmak|kurma|başlatmak|başlatma|yatırım\s+maliyet|girişim\s+maliyet)/i.test(m) ||
-    /\b(open(ing)?\s+a|start(ing)?\s+a|launch(ing)?\s+a|set\s+up\s+a|startup\s+cost|cost\s+to\s+open)\b/i.test(m)
-  ) return 'startup_business'
-
-  // ── News / current events — checked BEFORE financial so "enflasyon son dakika" → news ──
-  if (
-    /\b(latest|breaking|today|right\s+now|live|just\s+announced|recently|this\s+week|this\s+month)\b/i.test(m) ||
-    // Turkish: no trailing \b — güncel, şu an, son dakika
-    /(son\s+dakika|bugün|güncel|şu\s+an|son\s+gelişme|son\s+haber)/i.test(m) ||
-    /\b(aktuell|heute|neueste|letzte\s+nachrichten)\b/i.test(m) ||
-    /\b(actualité|aujourd'hui|dernières\s+nouvelles|récemment)\b/i.test(m)
-  ) return 'news_current'
-
-  // ── Financial / market data ────────────────────────────────────────────────
-  if (
-    /\b(stock|crypto|bitcoin|ethereum|nasdaq|s&p|dow\s+jones|forex|commodity|etf|fund|portfolio|invest|bist|bourse)\b/i.test(m) ||
-    // Turkish: remove trailing \b — döviz/borsa/altın end with non-ASCII or have suffixes
-    /(hisse|borsa|kripto|dolar\s+kur|euro\s+kur|döviz|altın\s+fiyat|enflasyon|faiz\s+oran)/i.test(m) ||
-    /\b(aktie|kurs|rendite|anlage|fonds|börse)\b/i.test(m)
-  ) return 'financial_market'
-
-  // ── Price / cost / salary ──────────────────────────────────────────────────
-  if (
-    /\b(price|cost|salary|wage|rent|fee|rate|tariff|afford|budget|expense|income|how\s+much)\b/i.test(m) ||
-    // Turkish: no trailing \b — maaş, ücret, fiyat have non-ASCII endings
-    /(fiyat|maliyet|kira|ücret|maaş|masraf|bütçe|ne\s+kadar|kaç\s+(para|lira|tl)|aylık|yıllık\s+gelir)/i.test(m) ||
-    /\b(preis|miete|gehalt|kosten|gebühr|lohn|wie\s+viel)\b/i.test(m) ||
-    /\b(prix|loyer|salaire|coût|tarif|combien)\b/i.test(m) ||
-    /\b(precio|alquiler|salario|costo|tarifa|cuánto)\b/i.test(m)
-  ) return 'price_cost'
-
-  // ── Tech / product — reviews, comparisons, specs ───────────────────────────
-  if (
-    /\b(vs\.?|versus|review|comparison|best|recommend|specs|features|model|benchmark|which\s+is|top\s+\d)\b/i.test(m) ||
-    // Turkish: no trailing \b
-    /(karşılaştır|en\s+iyi|inceleme|özellik|öneri)/i.test(m) ||
-    /\b(vergleich|empfehlung|test|bewertung|beste)\b/i.test(m)
-  ) return 'tech_product'
-
-  // ── Scientific / research / health ────────────────────────────────────────
-  if (
-    /\b(research|study|evidence|clinical|trial|findings|journal|paper|meta.?analysis|systematic\s+review|health\s+effect|causes|symptoms)\b/i.test(m) ||
-    // Turkish: no trailing \b — araştırmaları, çalışmaları must match
-    /(araştırma|çalışma|kanıt|klinik|bilimsel|sağlık\s+etkisi|hastalık|tedavi|istatistik)/i.test(m) ||
-    /\b(studie|forschung|klinisch|evidenz|ergebnis|gesundheit)\b/i.test(m) ||
-    /\b(étude|recherche|clinique|preuve|résultat|santé)\b/i.test(m)
-  ) return 'scientific'
-
-  return 'general'
-}
-
-// ASCII transliterator for Turkish → English for global benchmark queries
-function toAscii(s: string): string {
-  return s.replace(/[ıİğĞüÜşŞçÇöÖ]/g, (c: string) => (
-    ({ ı:'i', İ:'I', ğ:'g', Ğ:'G', ü:'u', Ü:'U', ş:'s', Ş:'S', ç:'c', Ç:'C', ö:'o', Ö:'O' } as Record<string,string>)[c] ?? c
-  ))
-}
-
-// ── Query decomposer — universal intent-aware ─────────────────────────────────
-// [SAIL-UNIVERSAL-INTELLIGENCE-V3]
+// ── Query decomposer ──────────────────────────────────────────────────────────
+// [SAIL-UNIVERSAL-INTELLIGENCE-V4]
+// Direct approach: search is derived straight from the user's message.
+// No intent classification, no templates — what the user asks is what we search.
 
 /**
  * decomposeToSearchQueries
  *
- * Generates up to 3 focused search vectors from a user query.
- * Intent is detected across 6 languages and 7 categories.
- * Each intent type gets query templates optimised for real data retrieval.
+ * Generates up to 3 focused search vectors from the user's actual message.
+ * Searches are constructed directly from what the user asked — no intent
+ * categories or template substitution.
  *
- * Strategy per query slot:
- *   Q1 — Native-language primary (regional sources, current data)
- *   Q2 — English global anchor  (international authority sources)
- *   Q3 — Deep-dive enrichment   (specific data type for the intent)
+ * Strategy:
+ *   Q1 — User's exact message + year (in their own language, regional sources)
+ *   Q2 — Stripped key terms in English + year (international authority sources)
+ *   Q3 — Enrichment suffix for data freshness (volatile economy → TL price anchor;
+ *         non-English → native stats/analysis; English → analysis data report)
  */
 export function decomposeToSearchQueries(
   message:  string,
-  context?: string,
+  _context?: string,
   language  = 'en',
 ): string[] {
   const year         = new Date().getFullYear()
   const detectedLang = language !== 'en' ? language : detectQueryLanguage(message)
-  const isNonEnglish = detectedLang !== 'en'
   const isVolatile   = isHighInflationEconomy(detectedLang)
   const keyTerms     = stripFillerWords(message)
   const nativeMsg    = message.slice(0, 120).trim()
-  const intent       = classifyIntent(message)
 
-  const queries: string[] = []
+  // Q1 — User's exact question in their language + year
+  const q1 = isVolatile
+    ? `${nativeMsg} ${year} güncel`
+    : `${nativeMsg} ${year}`
 
-  // ── Location + business-type extraction (used by startup_business intent) ──
-  const locationMatch =
-    message.match(/(Alaçatı|Alacati|Çeşme|Cesme|İzmir|Izmir|İstanbul|Istanbul|Ankara|Bodrum|Fethiye|Antalya|Alanya|Marmaris|Kuşadası|Kusadasi|Kapadokya|Cappadocia|London|Berlin|Paris|Madrid|New York|Dubai|Amsterdam)/i) ??
-    message.match(/([A-ZÇĞIÖŞÜa-zçğışöşü]{4,20})[''']?(?:da|de|ta|te|'da|'de)\b/i)
-  const businessTypeMatch =
-    message.match(/(dondurma|gelato|ice[\s-]?cream|cafe|kafe|restoran|restaurant|pastane|bakery|bar|pub|lokanta|büfe|market|fırın|bakkal|kuaför|berber|gym|spa|hotel|otel)/i)
-  const location     = locationMatch?.[1] ?? ''
-  const businessType = businessTypeMatch?.[1] ?? ''
+  // Q2 — English key terms for global / authoritative sources
+  const q2 = `${keyTerms} ${year}`
 
-  // ── Context entity extraction ──────────────────────────────────────────────
-  const sectorMatch  = context?.match(/(?:sector|industry|sektör|endüstri|branche)[:\s]+([^\n,]{3,40})/i)
-  const companyMatch = context?.match(/(?:company|brand|şirket|marca|unternehmen|entreprise)[:\s]+([^\n,]{3,30})/i)
+  // Q3 — Enrichment based on language/economy context
+  const q3 = isVolatile
+    ? `${keyTerms} ${year} TL güncel fiyat veri`
+    : detectedLang !== 'en'
+      ? `${nativeMsg} ${year} istatistik veri analiz`
+      : `${keyTerms} ${year} analysis data report`
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // STARTUP BUSINESS — most targeted, split into rent + equipment + global
-  // ══════════════════════════════════════════════════════════════════════════
-  if (intent === 'startup_business') {
-    const biz = businessType || keyTerms.split(' ').slice(0, 3).join(' ')
-
-    if (isVolatile && detectedLang === 'tr') {
-      // Turkish volatile economy — rent + industrial equipment + global USD
-      queries.push(
-        location
-          ? `${location} ticari kiralık işyeri dükkan kira fiyatı ${year} TL aylık`
-          : `Türkiye turistik bölge ticari kiralık dükkan aylık kira fiyatı ${year} TL`
-      )
-      queries.push(`endüstriyel ${biz} makinesi fiyatı Türkiye ${year} TL ticari profesyonel`)
-      queries.push(`${toAscii(biz)} commercial business startup cost ${year} investment USD EUR`)
-    } else {
-      // English / other language startup cost
-      queries.push(
-        location
-          ? `${location} commercial rent shop price ${year}`
-          : `${keyTerms} commercial rent cost ${year}`
-      )
-      queries.push(`${biz} commercial equipment cost price ${year}`)
-      queries.push(`${biz} small business startup cost breakdown ${year}`)
-    }
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // PRICE / COST — specific price lookup, current rates
-  // ══════════════════════════════════════════════════════════════════════════
-  else if (intent === 'price_cost') {
-    if (isVolatile && detectedLang === 'tr') {
-      queries.push(`${nativeMsg} ${year} güncel fiyat TL`)
-      queries.push(`${keyTerms} ${year} current price USD EUR global`)
-      queries.push(`${keyTerms} Türkiye ${year} piyasa fiyatı karşılaştırma`)
-    } else if (isNonEnglish) {
-      queries.push(`${nativeMsg} ${year}`)
-      queries.push(`${keyTerms} ${year} current price statistics`)
-      queries.push(`${keyTerms} ${year} price comparison data`)
-    } else {
-      queries.push(`${keyTerms} current price ${year}`)
-      queries.push(`${keyTerms} cost breakdown analysis ${year}`)
-      queries.push(`${keyTerms} price comparison statistics ${year}`)
-    }
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // FINANCIAL MARKET — real-time quotes, market data, investment analysis
-  // ══════════════════════════════════════════════════════════════════════════
-  else if (intent === 'financial_market') {
-    if (isNonEnglish) {
-      queries.push(`${nativeMsg} ${year} piyasa veri analiz`)
-      queries.push(`${keyTerms} ${year} market data analysis performance`)
-      queries.push(`${keyTerms} ${year} investment outlook forecast`)
-    } else {
-      queries.push(`${keyTerms} ${year} market data price performance`)
-      queries.push(`${keyTerms} ${year} analysis forecast outlook`)
-      queries.push(`${keyTerms} ${year} investment report statistics`)
-    }
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // NEWS / CURRENT EVENTS — latest developments, breaking news
-  // ══════════════════════════════════════════════════════════════════════════
-  else if (intent === 'news_current') {
-    if (isNonEnglish) {
-      queries.push(`${nativeMsg} son gelişme haber ${year}`)
-      queries.push(`${keyTerms} latest news developments ${year}`)
-      queries.push(`${keyTerms} recent update analysis ${year}`)
-    } else {
-      queries.push(`${keyTerms} latest news ${year}`)
-      queries.push(`${keyTerms} recent developments update`)
-      queries.push(`${keyTerms} analysis current situation ${year}`)
-    }
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // TECH / PRODUCT — reviews, comparisons, specs
-  // ══════════════════════════════════════════════════════════════════════════
-  else if (intent === 'tech_product') {
-    if (isNonEnglish) {
-      queries.push(`${nativeMsg} ${year} inceleme karşılaştırma`)
-      queries.push(`${keyTerms} ${year} review comparison specs`)
-      queries.push(`${keyTerms} best ${year} expert recommendation`)
-    } else {
-      queries.push(`${keyTerms} review ${year}`)
-      queries.push(`${keyTerms} comparison specs features ${year}`)
-      queries.push(`${keyTerms} best expert recommendation ${year}`)
-    }
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // SCIENTIFIC — research, studies, evidence
-  // ══════════════════════════════════════════════════════════════════════════
-  else if (intent === 'scientific') {
-    if (isNonEnglish) {
-      queries.push(`${nativeMsg} araştırma bulgu ${year}`)
-      queries.push(`${keyTerms} research study findings ${year}`)
-      queries.push(`${keyTerms} systematic review evidence meta-analysis`)
-    } else {
-      queries.push(`${keyTerms} research study findings ${year}`)
-      queries.push(`${keyTerms} systematic review evidence`)
-      queries.push(`${keyTerms} clinical data statistics ${year}`)
-    }
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // GENERAL — smart contextual decomposition
-  // ══════════════════════════════════════════════════════════════════════════
-  else {
-    // Q1 — Always native language first for regional relevance
-    if (isVolatile && detectedLang === 'tr') {
-      queries.push(`${nativeMsg} ${year} güncel veri`)
-    } else if (isNonEnglish) {
-      queries.push(`${nativeMsg} ${year}`)
-    } else {
-      queries.push(`${keyTerms} ${year}`)
-    }
-
-    // Q2 — English global anchor
-    if (sectorMatch) {
-      queries.push(`${sectorMatch[1].trim()} ${keyTerms} ${year} data report`)
-    } else if (companyMatch) {
-      queries.push(`${companyMatch[1].trim()} ${year} analysis performance`)
-    } else {
-      queries.push(`${keyTerms} ${year} comprehensive analysis report`)
-    }
-
-    // Q3 — Language-specific deep-dive
-    const q3 = isNonEnglish
-      ? ({
-          tr: `${keyTerms} Türkiye ${year} istatistik araştırma rapor`,
-          de: `${keyTerms} Deutschland ${year} Statistik Analyse`,
-          fr: `${keyTerms} France ${year} statistiques analyse`,
-          es: `${keyTerms} España ${year} estadísticas análisis`,
-          zh: `${keyTerms} 中国 ${year} 统计分析报告`,
-        } as Record<string, string>)[detectedLang]
-      : `${keyTerms} statistics data evidence ${year}`
-    queries.push((q3 ?? `${keyTerms} ${year} data statistics`).trim())
-  }
-
-  return Array.from(new Set(queries.filter(q => q.length > 5))).slice(0, 3)
+  return Array.from(new Set([q1, q2, q3].filter(q => q.length > 5))).slice(0, 3)
 }
 
 // ── Universal research intent detector ───────────────────────────────────────
