@@ -84,7 +84,7 @@ def _build_actor_input(mode: str, queries: list[str]) -> dict[str, Any]:
     """
     base: dict[str, Any] = {
         "search": queries,
-        "maxItems": 20,
+        "maxItems": 200,
         "country": "US",
         "proxyConfiguration": {
             "useApifyProxy": True,
@@ -104,7 +104,7 @@ def _build_actor_input(mode: str, queries: list[str]) -> dict[str, Any]:
         # Seller analysis: search by seller name, pull their recent listings
         base["seller"] = queries[0] if queries else ""
         base.pop("search", None)
-        base["maxItems"] = 50
+        base["maxItems"] = 1000
 
     return base
 
@@ -121,7 +121,7 @@ class EbayConnector(AbstractDataConnector):
     meta = ConnectorMeta(
         connector_id="ebay-product-price",
         domain="ecommerce",
-        rate_limit_rpm=15,
+        rate_limit_rpm=500,
         fallback_ids=[],   # terminal node — Amazon falls back to eBay, not further
     )
 
@@ -145,9 +145,9 @@ class EbayConnector(AbstractDataConnector):
 
     @with_resilience(
         connector_id="ebay-product-price",
-        max_attempts=4,
-        base_wait_secs=2.0,
-        max_wait_secs=30.0,
+        max_attempts=10,
+        base_wait_secs=1.0,
+        max_wait_secs=120.0,
     )
     async def _fetch_with_resilience(
         self,

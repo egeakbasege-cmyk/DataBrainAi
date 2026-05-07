@@ -32,7 +32,7 @@ class AmazonConnector(AbstractDataConnector):
     meta = ConnectorMeta(
         connector_id="amazon-product-price",
         domain="ecommerce",
-        rate_limit_rpm=20,
+        rate_limit_rpm=500,
         fallback_ids=["ebay-product-price"],
     )
 
@@ -50,14 +50,14 @@ class AmazonConnector(AbstractDataConnector):
 
     @with_resilience(
         connector_id="amazon-product-price",
-        max_attempts=4,
-        base_wait_secs=2.0,
-        max_wait_secs=30.0,
+        max_attempts=10,
+        base_wait_secs=1.0,
+        max_wait_secs=120.0,
     )
     async def _fetch_with_resilience(self, queries: list[str]) -> list[dict[str, Any]]:
         actor_input = {
             "searchKeywords": queries,
-            "maxItems": 10,
+            "maxItems": 200,
             "country": "US",
             "proxyConfiguration": {
                 "useApifyProxy": True,

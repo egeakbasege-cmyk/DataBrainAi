@@ -132,7 +132,7 @@ class TikTokAdsConnector(AbstractDataConnector):
     meta = ConnectorMeta(
         connector_id="tiktok-ads",
         domain="social",
-        rate_limit_rpm=10,
+        rate_limit_rpm=500,
         fallback_ids=["meta-ads"],
     )
 
@@ -164,9 +164,9 @@ class TikTokAdsConnector(AbstractDataConnector):
 
     @with_resilience(
         connector_id="tiktok-ads",
-        max_attempts=4,
-        base_wait_secs=2.0,
-        max_wait_secs=30.0,
+        max_attempts=10,
+        base_wait_secs=1.0,
+        max_wait_secs=120.0,
     )
     async def _fetch_with_resilience(
         self,
@@ -192,13 +192,13 @@ class TikTokAdsConnector(AbstractDataConnector):
             actor       = self.APIFY_ACTOR_PROFILE
             actor_input: dict[str, Any] = {
                 "profiles":       queries,
-                "resultsPerPage": 10,
+                "resultsPerPage": 200,
             }
         elif mode == "shop":
             actor = self.APIFY_ACTOR_SHOP
             actor_input = {
                 "searchQueries":  queries,
-                "maxItems":       20,
+                "maxItems":       500,
                 "proxyConfiguration": {
                     "useApifyProxy":    True,
                     "apifyProxyGroups": ["RESIDENTIAL"],
@@ -209,7 +209,7 @@ class TikTokAdsConnector(AbstractDataConnector):
             actor = self.APIFY_ACTOR_HASHTAG
             actor_input = {
                 "hashtags":       queries,
-                "resultsPerPage": 20,
+                "resultsPerPage": 500,
                 "proxyConfiguration": {
                     "useApifyProxy":    True,
                     "apifyProxyGroups": ["RESIDENTIAL"],

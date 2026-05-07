@@ -64,8 +64,8 @@ class Settings(BaseSettings):
     # ── Apify ─────────────────────────────────────────────────────────────────
     # Optional — web scraping disabled when empty
     apify_api_token: str = ""
-    apify_default_timeout_secs: int = 120
-    apify_max_retries: int = 4
+    apify_default_timeout_secs: int = 600   # 10-minute cap — long actors need it
+    apify_max_retries: int = 10
 
     # ── LLM providers ─────────────────────────────────────────────────────────
     openai_api_key: str = ""

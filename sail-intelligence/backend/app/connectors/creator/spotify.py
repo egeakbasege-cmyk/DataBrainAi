@@ -148,7 +148,7 @@ class SpotifyConnector(AbstractDataConnector):
     meta = ConnectorMeta(
         connector_id="spotify-creator",
         domain="creator",
-        rate_limit_rpm=15,
+        rate_limit_rpm=500,
         fallback_ids=[],
     )
 
@@ -177,9 +177,9 @@ class SpotifyConnector(AbstractDataConnector):
 
     @with_resilience(
         connector_id="spotify-creator",
-        max_attempts=4,
-        base_wait_secs=2.0,
-        max_wait_secs=30.0,
+        max_attempts=10,
+        base_wait_secs=1.0,
+        max_wait_secs=120.0,
     )
     async def _fetch_with_resilience(
         self,
@@ -205,14 +205,14 @@ class SpotifyConnector(AbstractDataConnector):
             actor = self.APIFY_ACTOR_PLAYLIST
             actor_input: dict[str, Any] = {
                 "playlistUrls": queries,
-                "maxTracks":    50,
+                "maxTracks":    5000,
             }
         else:
             actor = self.APIFY_ACTOR_ARTIST
             actor_input = {
                 "searchQueries": queries,
                 "searchType":    "artists",
-                "maxResults":    15,
+                "maxResults":    500,
                 "proxyConfiguration": {
                     "useApifyProxy": True,
                 },

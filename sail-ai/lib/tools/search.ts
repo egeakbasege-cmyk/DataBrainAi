@@ -203,7 +203,7 @@ async function searchTavily(
         api_key:             apiKey,
         query,
         search_depth:        depth,
-        max_results:         5,
+        max_results:         20,
         include_raw_content: false,
       }),
       signal,
@@ -264,7 +264,7 @@ async function searchSerper(
         'Content-Type': 'application/json',
         'X-API-KEY':    apiKey,
       },
-      body: JSON.stringify({ q: query, num: 5, gl: locale.gl, hl: locale.hl }),
+      body: JSON.stringify({ q: query, num: 20, gl: locale.gl, hl: locale.hl }),
       signal,
     })
   } catch { return [] }
@@ -542,7 +542,7 @@ export function isStaleSource(publishedDate: string | undefined): boolean {
 // ── Main export ───────────────────────────────────────────────────────────────
 
 /** Timeout for the entire parallel search operation (ms). */
-const SEARCH_TIMEOUT_MS = 4_500
+const SEARCH_TIMEOUT_MS = 15_000
 
 /**
  * executeDeepSearch
@@ -614,7 +614,7 @@ export async function executeDeepSearch(
     // Sort: highest reliability first
     results.sort((a, b) => b.reliabilityScore - a.reliabilityScore)
 
-    const trimmed = results.slice(0, 12)   // 12 = dual-provider × 3 queries headroom
+    const trimmed = results.slice(0, 60)   // 60 = dual-provider × 3 queries × 10 results
 
     // [SAIL-DATA-VERACITY] Count results older than 12 months (Rule 2 — recency filter)
     const staleSourceCount = trimmed.filter(r => isStaleSource(r.publishedDate)).length

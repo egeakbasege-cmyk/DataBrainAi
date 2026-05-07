@@ -130,7 +130,7 @@ def _build_actor_input(actor: str, queries: list[str]) -> dict[str, Any]:
                 f"https://www.zillow.com/homes/{q.replace(' ', '-')}_rb/"
                 for q in queries
             ],
-            "maxItems": 20,
+            "maxItems": 500,
             "proxyConfiguration": {
                 "useApifyProxy":    True,
                 "apifyProxyGroups": ["RESIDENTIAL"],
@@ -241,7 +241,7 @@ class RealEstateConnector(AbstractDataConnector):
     meta = ConnectorMeta(
         connector_id="real-estate",
         domain="local_markets",
-        rate_limit_rpm=10,
+        rate_limit_rpm=500,
         fallback_ids=[],
     )
 
@@ -274,9 +274,9 @@ class RealEstateConnector(AbstractDataConnector):
 
     @with_resilience(
         connector_id="real-estate",
-        max_attempts=4,
-        base_wait_secs=2.0,
-        max_wait_secs=30.0,
+        max_attempts=10,
+        base_wait_secs=1.0,
+        max_wait_secs=120.0,
     )
     async def _fetch_with_resilience(self, queries: list[str]) -> list[dict[str, Any]]:
         """
