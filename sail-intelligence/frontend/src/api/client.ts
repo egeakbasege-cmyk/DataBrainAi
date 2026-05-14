@@ -181,11 +181,13 @@ export const api = {
 
   agents: {
     run: (payload: {
-      query:         string
-      entities?:     unknown[]
-      price_points?: unknown[]
-      ad_assets?:    unknown[]
-      trend_signals?: unknown[]
+      query:           string
+      entities?:       unknown[]
+      price_points?:   unknown[]
+      ad_assets?:      unknown[]
+      trend_signals?:  unknown[]
+      connector_ids?:  string[]     // selected connector IDs from dock
+      user_urls?:      string[]     // user-imported store URLs
     }) => apiClient.post<AgentRunResponse>('/agents/run', payload),
 
     results: (job_id: string) =>

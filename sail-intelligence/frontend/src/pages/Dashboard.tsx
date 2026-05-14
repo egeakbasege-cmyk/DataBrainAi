@@ -20,17 +20,20 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-import { useAuthStore }  from '@/stores/authStore'
-import { useSSE }        from '@/hooks/useSSE'
-import { api }           from '@/api/client'
-import type { AgentResult } from '@/api/client'
+import { useAuthStore }       from '@/stores/authStore'
+import { useConnectorStore }  from '@/stores/connectorStore'
+import { useSSE }             from '@/hooks/useSSE'
+import { api }                from '@/api/client'
+import type { AgentResult }   from '@/api/client'
 
-import { MetricsPanel }   from '@/components/MetricsPanel/MetricsPanel'
-import { StrategicRadar } from '@/components/StrategicRadar/StrategicRadar'
-import { LiveActionFeed } from '@/components/LiveActionFeed/LiveActionFeed'
-import { Button }         from '@/components/ui/Button'
-import { Badge }          from '@/components/ui/Badge'
-import { Spinner }        from '@/components/ui/Spinner'
+import { MetricsPanel }    from '@/components/MetricsPanel/MetricsPanel'
+import { StrategicRadar }  from '@/components/StrategicRadar/StrategicRadar'
+import { LiveActionFeed }  from '@/components/LiveActionFeed/LiveActionFeed'
+import { ConnectorDock }   from '@/components/ConnectorDock/ConnectorDock'
+import { UserDataImport }  from '@/components/UserDataImport/UserDataImport'
+import { Button }          from '@/components/ui/Button'
+import { Badge }           from '@/components/ui/Badge'
+import { Spinner }         from '@/components/ui/Spinner'
 import { type Domain, KPI_CONFIGS } from '@/components/MetricsPanel/kpi-configs'
 
 const DOMAINS: Domain[] = ['ecommerce', 'real_estate', 'automotive', 'social', 'creator']
@@ -251,6 +254,9 @@ export default function Dashboard() {
   const logout    = useAuthStore((s) => s.logout)
   const email     = useAuthStore((s) => s.userEmail)
 
+  const { enabledIds, analysisActive, importOpen, setImportOpen, userSources } =
+    useConnectorStore()
+
   const [domain,         setDomain]        = useState<Domain>('ecommerce')
   const [query,          setQuery]         = useState('')
   const [jobId,          setJobId]         = useState<string | null>(null)
@@ -290,8 +296,16 @@ export default function Dashboard() {
     setAgentRunning(true)
     setAgentResult(null)
 
+    // Pass selected connector IDs and user source URLs to the agent run
+    const activeConnectors = analysisActive ? Array.from(enabledIds) : []
+    const userUrls         = userSources.filter(s => s.url).map(s => s.url as string)
+
     try {
-      const { data } = await api.agents.run({ query: query.trim() })
+      const { data } = await api.agents.run({
+        query:         query.trim(),
+        connector_ids: activeConnectors.length > 0 ? activeConnectors : undefined,
+        user_urls:     userUrls.length > 0 ? userUrls : undefined,
+      })
       setJobId(data.job_id)
       startPolling(data.job_id)
     } catch {
@@ -308,7 +322,13 @@ export default function Dashboard() {
     <div className="min-h-screen flex flex-col bg-sail-900">
       <Navbar onLogout={logout} email={email} />
 
+      {/* User Data Import drawer */}
+      <UserDataImport open={importOpen} onClose={() => setImportOpen(false)} />
+
       <main className="flex-1 p-4 sm:p-6 space-y-5 max-w-[1600px] mx-auto w-full">
+
+        {/* Connector Analysis Dock */}
+        <ConnectorDock onImportClick={() => setImportOpen(true)} />
 
         {/* Control bar */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">

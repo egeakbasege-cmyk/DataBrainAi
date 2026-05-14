@@ -35,8 +35,16 @@ from app.connectors.base import ConnectorResult
 from app.connectors.registry import registry
 from app.connectors.ecommerce.amazon import AmazonConnector
 from app.connectors.ecommerce.ebay import EbayConnector
+from app.connectors.ecommerce.etsy import EtsyConnector
+from app.connectors.ecommerce.walmart import WalmartConnector
+from app.connectors.ecommerce.aliexpress import AliexpressConnector
+from app.connectors.ecommerce.shopify import ShopifyConnector
+from app.connectors.analytics.google_trends import GoogleTrendsConnector
+from app.connectors.creator.youtube import YouTubeConnector
+from app.connectors.secondhand.poshmark import PoshmarkConnector
 from app.connectors.social.tiktok import TikTokAdsConnector
 from app.connectors.social.meta import MetaAdsConnector
+from app.connectors.social.pinterest import PinterestConnector
 from app.connectors.creator.spotify import SpotifyConnector
 from app.connectors.local_markets.real_estate import RealEstateConnector
 from app.core.exceptions import AllConnectorsFailed
@@ -83,13 +91,25 @@ class ApifyOrchestrator:
             # ── E-commerce ────────────────────────────────────────────────────
             AmazonConnector(),       # amazon-product-price  → fallback: ebay
             EbayConnector(),         # ebay-product-price    → terminal
+            EtsyConnector(),         # etsy-marketplace      → fallback: ebay-product-price
+            WalmartConnector(),      # walmart-marketplace   → fallback: amazon-product-price
+            AliexpressConnector(),   # aliexpress-sourcing   → terminal
+            ShopifyConnector(),      # shopify-store         → terminal
+
+            # ── Analytics ─────────────────────────────────────────────────────
+            GoogleTrendsConnector(), # google-trends         → terminal
 
             # ── Social / Ads ──────────────────────────────────────────────────
             TikTokAdsConnector(),    # tiktok-ads            → fallback: meta-ads
             MetaAdsConnector(),      # meta-ads              → terminal
+            PinterestConnector(),    # pinterest-shopping    → fallback: meta-ads
 
             # ── Creator economy ───────────────────────────────────────────────
             SpotifyConnector(),      # spotify-creator       → terminal
+            YouTubeConnector(),      # youtube-creator       → terminal
+
+            # ── Secondhand / Resale ───────────────────────────────────────────
+            PoshmarkConnector(),     # poshmark-resale       → terminal
 
             # ── Local markets ─────────────────────────────────────────────────
             RealEstateConnector(),   # real-estate           → terminal
