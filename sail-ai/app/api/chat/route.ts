@@ -80,27 +80,63 @@ function getKeyPool(byokKey?: string): string[] {
   return keys
 }
 
-// ── Groq fetch: key rotation → model fallback on 429 ─────────────────────────
+// ── Groq fetch: key rotation → model fallback on 429/503/500 ─────────────────
+// Retry strategy:
+//   1. Try each key with the primary model (llama-3.3-70b-versatile)
+//   2. If ALL keys return 429 → switch to fallback model (llama-3.1-8b-instant)
+//   3. If primary model returns 503/500/400 → immediately retry with fallback model
+//   4. On any other error → return the response as-is for caller to handle
 async function groqFetch(init: RequestInit, byokKey?: string): Promise<Response> {
   const reqBody = JSON.parse(init.body as string) as Record<string, unknown>
   const keys    = getKeyPool(byokKey)
 
+  const fallbackBody = JSON.stringify({ ...reqBody, model: GROQ_MODEL_FALLBACK })
+
   // Try every key with the primary model first
+  let lastStatus = 0
   for (const key of keys) {
     const res = await fetch(GROQ_URL, {
       ...init,
       headers: { ...init.headers as Record<string, string>, 'Authorization': `Bearer ${key}` },
-    })
-    if (res.status !== 429) return res
+    }).catch(() => null)
+
+    if (!res) continue
+    lastStatus = res.status
+
+    // 429 rate-limit → try next key
+    if (res.status === 429) continue
+
+    // 503 / 500 / 400 (context too long) → immediately fall back to smaller model
+    if (res.status === 503 || res.status === 500 || res.status === 400) {
+      const fallback = await fetch(GROQ_URL, {
+        ...init,
+        headers: { ...init.headers as Record<string, string>, 'Authorization': `Bearer ${key}` },
+        body: fallbackBody,
+      }).catch(() => null)
+      if (fallback && fallback.ok) return fallback
+      // If fallback also fails, return original error
+      return res
+    }
+
+    // 200 / 401 / any other → return as-is
+    return res
   }
 
-  // All keys exhausted on primary model — retry primary key with fallback model
-  const fallbackBody = JSON.stringify({ ...reqBody, model: GROQ_MODEL_FALLBACK })
-  return fetch(GROQ_URL, {
-    ...init,
-    headers: { ...init.headers as Record<string, string>, 'Authorization': `Bearer ${keys[0] ?? ''}` },
-    body: fallbackBody,
-  })
+  // All keys exhausted on 429 → retry all keys with fallback model
+  for (const key of keys) {
+    const res = await fetch(GROQ_URL, {
+      ...init,
+      headers: { ...init.headers as Record<string, string>, 'Authorization': `Bearer ${key}` },
+      body: fallbackBody,
+    }).catch(() => null)
+    if (res && res.status !== 429) return res
+  }
+
+  // Complete failure — return synthetic 503
+  return new Response(
+    JSON.stringify({ error: { message: `All Groq keys exhausted (last status: ${lastStatus})` } }),
+    { status: 503, headers: { 'Content-Type': 'application/json' } },
+  )
 }
 
 type ExtendedPayload = Omit<AetherisPayload, 'analysisMode'> & {
