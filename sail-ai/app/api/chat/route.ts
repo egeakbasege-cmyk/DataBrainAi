@@ -17,8 +17,10 @@ import { type NextRequest } from 'next/server'
 import NextAuth              from 'next-auth'
 import { authConfig }        from '@/auth.config'
 import type { AetherisPayload } from '@/types/architecture'
+import { SOVEREIGN_COGNITIVE_DIRECTIVE } from '@/lib/ai-prompt'
 import {
   buildUpwindSystemPrompt,
+  buildDownwindSystemPrompt as buildEnhancedDownwindPrompt,
   buildSailSystemPrompt as buildEnhancedSailPrompt,
   buildTrimSystemPrompt as buildEnhancedTrimPrompt,
   buildCatamaranSystemPrompt as buildEnhancedCatamaranPrompt,
@@ -154,6 +156,8 @@ type ExtendedPayload = Omit<AetherisPayload, 'analysisMode'> & {
    * Default: true
    */
   businessMode?:       boolean
+  /** Conversation history for downwind coaching continuity */
+  messages?:           Array<{ role: string; content: string }>
 }
 
 // ── Stream URL hallucination stripper ────────────────────────────────────────
@@ -657,8 +661,12 @@ export async function POST(req: NextRequest) {
   // ── Business / Free-chat domain prefix ──────────────────────────────────
   // businessMode=true (default): lock AI to business & market intelligence scope.
   // businessMode=false: free chat — no domain restriction, answer any topic naturally.
+  //
+  // SOVEREIGN_COGNITIVE_DIRECTIVE is ALWAYS prepended — it is the core "thinking
+  // mechanism" that enforces deep reasoning, second-order analysis, confidence
+  // calibration, and self-correction before every response regardless of mode.
   const isBusinessMode = body.businessMode !== false  // default true
-  const domainPrefix = isBusinessMode
+  const domainPrefix = SOVEREIGN_COGNITIVE_DIRECTIVE + '\n\n' + (isBusinessMode
     ? `DOMAIN LOCK — MANDATORY (read before everything else):
 You are a business strategy and market intelligence assistant. You ONLY operate in the commercial domain.
 
@@ -673,7 +681,7 @@ SCOPE RULES — NON-NEGOTIABLE:
 5. ALWAYS ground responses in: specific numbers, named metrics, concrete actions with timelines, or explicit questions to gather missing data. Vague advice is a quality failure.
 
 `
-    : `DOMAIN: Free chat mode — answer any topic naturally and helpfully. You are a versatile AI assistant with no domain restrictions. Be direct, specific, and genuinely useful.\n\n`
+    : `DOMAIN: Free chat mode — answer any topic naturally and helpfully. You are a versatile AI assistant with no domain restrictions. Be direct, specific, and genuinely useful.\n\n`)
 
   // Governance suffix only when a business methodology was triggered.
   // Casual / non-business queries (_appliedCards === []) get no suffix.
@@ -1127,7 +1135,22 @@ SCOPE RULES — NON-NEGOTIABLE:
   }
 
   // ── Upwind / Downwind: ExecutiveResponse JSON ─────────────────────────────
+  // NOTE: downwind uses buildEnhancedDownwindPrompt (Socratic coaching JSON schema).
+  // upwind uses buildUpwindSystemPrompt (precision analysis JSON schema).
+  // Both return JSON compatible with ExecutiveResponseCard via json_object mode.
   const cognitiveLoad = (body.state as { cognitiveLoadIndex?: number } | undefined)?.cognitiveLoadIndex ?? 0
+
+  // Build the session history string for downwind coaching continuity
+  const sessionHistoryBlock = analysisMode === 'downwind' && body.messages?.length
+    ? (body.messages as Array<{ role: string; content: string }>)
+        .slice(-6)  // last 3 turns (user + assistant pairs)
+        .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content.slice(0, 400)}`)
+        .join('\n')
+    : undefined
+
+  const activeSystemPrompt = analysisMode === 'downwind'
+    ? buildEnhancedDownwindPrompt(language, primaryConstraint, sessionHistoryBlock)
+    : buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint)
 
   let groqRes: Response
   try {
@@ -1137,12 +1160,12 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:           GROQ_MODEL,
         messages: [
-          { role: 'system', content: domainPrefix + buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
+          { role: 'system', content: domainPrefix + activeSystemPrompt + researchSystemBlock + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         response_format: { type: 'json_object' },
         max_tokens:      1200,
-        temperature:     0.4,
+        temperature:     analysisMode === 'downwind' ? 0.5 : 0.4,
       }),
     }, body.apiKey)
   } catch {

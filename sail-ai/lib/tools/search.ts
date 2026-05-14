@@ -501,9 +501,11 @@ const GREETING_PATTERN = /^(merhaba|selam|nasılsın|nasılsınız|iyi\s+günler
  */
 export function requiresResearch(message: string): boolean {
   const trimmed = message.trim()
-  if (trimmed.length < 15) return false           // skip greetings / one-word inputs
+  if (trimmed.length < 15) return false            // skip greetings / one-word inputs
   if (GREETING_PATTERN.test(trimmed)) return false // skip explicit greeting phrases
-  return true   // always research all meaningful queries
+  // Intent-pattern match: only trigger search for genuinely data-hungry queries.
+  // Avoids injecting SEARCH_FAILED_WARNING on every vague/coaching query.
+  return RESEARCH_INTENT_PATTERNS.some(pattern => pattern.test(trimmed))
 }
 
 // ── Recency filter (Rule 2 of Data Veracity Protocol) ────────────────────────
