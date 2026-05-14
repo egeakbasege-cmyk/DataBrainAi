@@ -219,6 +219,11 @@ export default function ChatPage() {
   const [useProfileCtx,     setUseProfileCtx]    = useState(true)
   const [showInlinePaywall, setShowInlinePaywall] = useState(false)
 
+  // Business / Free-chat mode toggle
+  // true  = domain-locked to business & market intelligence (default)
+  // false = free chat, no domain restriction
+  const [businessMode, setBusinessMode] = useState(true)
+
   // Aetheris store — agent mode + drift alerts (filter locally for stable refs)
   const agentMode    = useAetherisStore(selectAgentMode)
   const setAgentMode = useAetherisStore((s) => s.setAgentMode)
@@ -393,6 +398,7 @@ export default function ChatPage() {
     const body: Record<string, unknown> = {
       message: text, sessionId: sessionId || 'init', userId: userId || 'anonymous',
       language, agentMode, analysisMode,
+      businessMode,
     }
     const ctx = getContext()
     if (ctx)               body.context           = ctx
@@ -896,6 +902,17 @@ export default function ChatPage() {
                   <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: useProfileCtx ? '#C9A96E' : '#D4D4D8', transition: 'background 0.15s' }} />
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 500, color: useProfileCtx ? '#B8935A' : '#9CA3AF' }}>
                     {t('chat.useProfileContext')}
+                  </span>
+                </button>
+                {/* Business / Free-chat mode toggle */}
+                <button
+                  onClick={() => setBusinessMode(v => !v)}
+                  title={businessMode ? 'Business mode active — click for free chat' : 'Free chat mode — click for business intelligence'}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.55rem', cursor: 'pointer', background: businessMode ? 'rgba(99,102,241,0.12)' : 'rgba(0,0,0,0.04)', border: `1px solid ${businessMode ? 'rgba(99,102,241,0.35)' : 'rgba(0,0,0,0.08)'}`, borderRadius: '5px', transition: 'all 0.15s' }}
+                >
+                  <span style={{ fontSize: '0.58rem', lineHeight: 1, flexShrink: 0 }}>{businessMode ? '💼' : '💬'}</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 500, color: businessMode ? '#818CF8' : '#9CA3AF' }}>
+                    {businessMode ? 'Business' : 'Free Chat'}
                   </span>
                 </button>
               </div>

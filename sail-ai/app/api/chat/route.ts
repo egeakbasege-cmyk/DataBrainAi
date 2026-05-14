@@ -112,6 +112,12 @@ type ExtendedPayload = Omit<AetherisPayload, 'analysisMode'> & {
   synergyName?:        string
   /** Future RAG injection — populate with retrieved Pinecone/Weaviate chunks before calling this route. */
   ragContext?:         string
+  /**
+   * businessMode = true  → domain-locked to business/market intelligence only
+   * businessMode = false → free chat, unrestricted topic scope
+   * Default: true
+   */
+  businessMode?:       boolean
 }
 
 // ── Stream URL hallucination stripper ────────────────────────────────────────
@@ -609,6 +615,14 @@ export async function POST(req: NextRequest) {
     staleSourceCount: _staleSourceCount, // [SAIL-DATA-VERACITY]
   })
 
+  // ── Business / Free-chat domain prefix ──────────────────────────────────
+  // businessMode=true (default): lock AI to business & market intelligence scope.
+  // businessMode=false: free chat — no domain restriction, answer any topic naturally.
+  const isBusinessMode = body.businessMode !== false  // default true
+  const domainPrefix = isBusinessMode
+    ? `DOMAIN: You are a business strategy and market intelligence assistant. Answer questions about businesses, markets, products, sales, e-commerce, finance, strategy, and commercial operations. If the query has no clear business context, ask the user to clarify their business goal before answering.\n\n`
+    : `DOMAIN: Free chat mode — you may answer any topic naturally and helpfully. You are a versatile AI assistant with no domain restrictions.\n\n`
+
   // Governance suffix only when a business methodology was triggered.
   // Casual / non-business queries (_appliedCards === []) get no suffix.
   const governanceSuffix = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
@@ -649,7 +663,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
+          { role: 'system', content: domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1000,
@@ -720,7 +734,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
+          { role: 'system', content: domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -899,7 +913,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
+          { role: 'system', content: domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         max_tokens:  1200,
@@ -970,7 +984,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: buildEnhancedTrimPrompt(language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
+            { role: 'system', content: domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1016,7 +1030,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: buildEnhancedCatamaranPrompt(language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
+            { role: 'system', content: domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1071,7 +1085,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:           GROQ_MODEL,
         messages: [
-          { role: 'system', content: buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
+          { role: 'system', content: domainPrefix + buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         response_format: { type: 'json_object' },
