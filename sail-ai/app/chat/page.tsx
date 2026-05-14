@@ -13,6 +13,8 @@ import { DailyCounter }                  from '@/components/DailyCounter'
 import { PaywallModal }                  from '@/components/PaywallModal'
 import { FeedbackModal }                 from '@/components/FeedbackModal'
 import { FileAttachmentPill }            from '@/components/FileAttachmentPill'
+import { ConnectorDock, useConnectorState } from '@/components/ConnectorDock'
+import { UserDataImport, useUserSources }   from '@/components/UserDataImport'
 import type { Attachment }               from '@/components/FileAttachmentPill'
 import { ModeSelector }                  from '@/components/ModeSelector'
 import type { AnalysisMode }             from '@/components/ModeSelector'
@@ -220,9 +222,12 @@ export default function ChatPage() {
   const [showInlinePaywall, setShowInlinePaywall] = useState(false)
 
   // Business / Free-chat mode toggle
-  // true  = domain-locked to business & market intelligence (default)
-  // false = free chat, no domain restriction
   const [businessMode, setBusinessMode] = useState(true)
+
+  // Connector dock state
+  const { enabledIds, analysisActive, toggle: toggleConnector, setActive: setConnectorActive, enableAll: enableAllConnectors, disableAll: disableAllConnectors, activeConnectorIds } = useConnectorState()
+  const { userUrls } = useUserSources()
+  const [importOpen, setImportOpen] = useState(false)
 
   // Aetheris store — agent mode + drift alerts (filter locally for stable refs)
   const agentMode    = useAetherisStore(selectAgentMode)
@@ -399,6 +404,8 @@ export default function ChatPage() {
       message: text, sessionId: sessionId || 'init', userId: userId || 'anonymous',
       language, agentMode, analysisMode,
       businessMode,
+      connector_ids: activeConnectorIds,
+      user_urls:     userUrls,
     }
     const ctx = getContext()
     if (ctx)               body.context           = ctx
@@ -1002,6 +1009,22 @@ export default function ChatPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* User Data Import drawer */}
+              <UserDataImport open={importOpen} onClose={() => setImportOpen(false)} />
+
+              {/* Connector Dock — hidden while active */}
+              {!isActive && (
+                <ConnectorDock
+                  enabledIds={enabledIds}
+                  analysisActive={analysisActive}
+                  onToggle={toggleConnector}
+                  onSetActive={setConnectorActive}
+                  onEnableAll={enableAllConnectors}
+                  onDisableAll={disableAllConnectors}
+                  onImportClick={() => setImportOpen(true)}
+                />
+              )}
 
               {/* Mode selector — hidden while active */}
               {!isActive && (
