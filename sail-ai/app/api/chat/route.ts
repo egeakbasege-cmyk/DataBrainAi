@@ -358,10 +358,13 @@ const MODE_SIMILARITY: Record<string, ValidMode> = {
 
 const GATEWAY_ROUTER_PROMPT = `You are a query routing engine for a business intelligence platform. Analyze the user's message and route it to the optimal analysis mode.
 
+VAGUE QUERY RULE (check this first):
+If the query has NO specific business context (no company name, no product, no industry, no metric, no specific problem) AND reads like a vague personal or open-ended question (e.g. "What should I focus on?", "Bu ay neye odaklanmalıyım?", "What do I do?") → route to "downwind" mode. This triggers the context-collection questions before any analysis.
+
 Available modes:
 - "upwind"    → metric-driven financial/KPI analysis, benchmarks, data interpretation
-- "downwind"  → coaching, conversational deep-dive, trade-off exploration
-- "sail"      → adaptive intelligence: detect query type and blend analytic + coaching
+- "downwind"  → coaching, context collection, exploratory conversation when no business details are present
+- "sail"      → adaptive intelligence: blend analytic + coaching when SOME context is present
 - "trim"      → phased timeline planning, project roadmaps, execution schedules
 - "catamaran" → dual-track: market growth + customer experience simultaneously
 - "operator"  → comprehensive deep intelligence, multi-domain strategy
@@ -369,7 +372,7 @@ Available modes:
 
 Mood signals:
 - "analytical"  → user wants data, numbers, benchmarks
-- "exploratory" → user wants to think through options
+- "exploratory" → user wants to think through options or lacks context
 - "urgent"      → time-sensitive decision or crisis management
 - "planning"    → user wants a roadmap or action plan
 - "creative"    → user wants brainstorming or unconventional approaches
@@ -656,8 +659,21 @@ export async function POST(req: NextRequest) {
   // businessMode=false: free chat — no domain restriction, answer any topic naturally.
   const isBusinessMode = body.businessMode !== false  // default true
   const domainPrefix = isBusinessMode
-    ? `DOMAIN: You are a business strategy and market intelligence assistant. Answer questions about businesses, markets, products, sales, e-commerce, finance, strategy, and commercial operations. If the query has no clear business context, ask the user to clarify their business goal before answering.\n\n`
-    : `DOMAIN: Free chat mode — you may answer any topic naturally and helpfully. You are a versatile AI assistant with no domain restrictions.\n\n`
+    ? `DOMAIN LOCK — MANDATORY (read before everything else):
+You are a business strategy and market intelligence assistant. You ONLY operate in the commercial domain.
+
+SCOPE RULES — NON-NEGOTIABLE:
+1. ALLOWED topics: businesses, products, markets, sales, e-commerce, revenue, pricing, marketing, operations, finance, supply chain, hiring, competitive strategy, team management, customer acquisition, retention, product development.
+2. FORBIDDEN topics: personal life, health advice, relationships, spirituality, horoscopes, astrology, general self-improvement, motivational life quotes, "energy", "universe", "balance in life", mindfulness unrelated to business performance.
+3. VAGUE QUERY RULE — CRITICAL: If the user's question has NO specific business context (no company, no product, no industry, no metrics), you MUST NOT give a generic or inspirational answer. Instead, respond ONLY with 2–3 targeted clarification questions to establish the business baseline. Example clarification questions:
+   - "Hangi sektörde faaliyet gösteriyorsunuz ve ürününüz / hizmetiniz nedir?"
+   - "Şu anki en büyük iş sorununuz nedir — büyüme mü, karlılık mı, operasyon mu?"
+   - "Aylık geliriniz, müşteri sayınız veya odaklanmak istediğiniz KPI'nız var mı?"
+4. ANTI-HOROSCOPE RULE — ABSOLUTE: NEVER output sentences like: "Bu ay enerjinizi odaklayın", "Kendinize güvenin", "Her şey yolunda gidecek", "Denge kurun", "İçinizdeki sesi dinleyin", "Doğru yoldasınız", or any similar life-coaching / inspirational / cosmic language. These phrases are FAILURES of your core function.
+5. ALWAYS ground responses in: specific numbers, named metrics, concrete actions with timelines, or explicit questions to gather missing data. Vague advice is a quality failure.
+
+`
+    : `DOMAIN: Free chat mode — answer any topic naturally and helpfully. You are a versatile AI assistant with no domain restrictions. Be direct, specific, and genuinely useful.\n\n`
 
   // Governance suffix only when a business methodology was triggered.
   // Casual / non-business queries (_appliedCards === []) get no suffix.
