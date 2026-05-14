@@ -503,9 +503,17 @@ export function requiresResearch(message: string): boolean {
   const trimmed = message.trim()
   if (trimmed.length < 15) return false            // skip greetings / one-word inputs
   if (GREETING_PATTERN.test(trimmed)) return false // skip explicit greeting phrases
-  // Intent-pattern match: only trigger search for genuinely data-hungry queries.
-  // Avoids injecting SEARCH_FAILED_WARNING on every vague/coaching query.
-  return RESEARCH_INTENT_PATTERNS.some(pattern => pattern.test(trimmed))
+
+  // Hard-skip purely conversational/clarification messages that have no data need:
+  // "evet", "tamam", "devam et", "anladım", "ok thanks", "ne demek istiyorsun?"
+  const CONVERSATIONAL = /^(evet|tamam|peki|hayır|devam|anladım|anladım|ok|okay|sure|yes|no|got\s*it|understood|continue|sounds\s*good|teşekkür|teşekkürler|sağol|ne\s*demek|açıkla|tekrar|anlat\s*bakalım)[\s!.]*$/i
+  if (CONVERSATIONAL.test(trimmed)) return false
+
+  // Any substantive query (over 15 chars, not a greeting) triggers research.
+  // Both TAVILY_API_KEY and SERPER_API_KEY are available in production —
+  // SEARCH_FAILED_WARNING only fires when the API actually returns 0 results,
+  // not when keys are missing. Always-on research gives the AI fresh data.
+  return true
 }
 
 // ── Recency filter (Rule 2 of Data Veracity Protocol) ────────────────────────
