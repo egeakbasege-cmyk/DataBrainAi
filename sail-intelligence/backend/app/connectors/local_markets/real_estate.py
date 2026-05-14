@@ -55,11 +55,11 @@ _DE_KEYWORDS = {"berlin", "münchen", "munich", "hamburg", "frankfurt", "cologne
 
 # ── Actor IDs ─────────────────────────────────────────────────────────────────
 
-_ACTOR_ZILLOW     = "apify/zillow-com-scraper"
-_ACTOR_RIGHTMOVE  = "dtrungtin/rightmove-scraper"
-_ACTOR_SAHIBINDEN = "apify/sahibinden-scraper"
-_ACTOR_IDEALISTA  = "apify/idealista-scraper"
-_ACTOR_IMMOSCOUT  = "apify/immobilienscout24-scraper"
+_ACTOR_ZILLOW     = "maxcopell~zillow-scraper"
+_ACTOR_RIGHTMOVE  = "memo23~rightmove-scraper"
+_ACTOR_SAHIBINDEN = "clearpath~sahibinden-real-estate"
+_ACTOR_IDEALISTA  = "memo23~idealista-scraper"
+_ACTOR_IMMOSCOUT  = "memo23~immobilienscout24-scraper"
 
 # ── Market labels ─────────────────────────────────────────────────────────────
 
@@ -303,8 +303,8 @@ class RealEstateConnector(AbstractDataConnector):
             # ── Step 1: Launch actor ────────────────────────────────────────
             run_resp = await client.post(
                 self.APIFY_RUN_URL.format(actor=actor),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                json={"input": actor_input},
+                params={"token": settings.apify_api_token, "waitForFinish": 300},
+                json=actor_input,
             )
 
             if run_resp.status_code == 429:
@@ -335,8 +335,7 @@ class RealEstateConnector(AbstractDataConnector):
             # ── Step 2: Fetch dataset ───────────────────────────────────────
             dataset_resp = await client.get(
                 self.APIFY_DATASET_URL.format(dataset_id=dataset_id),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                params={"clean": "true", "format": "json"},
+                params={"token": settings.apify_api_token, "clean": "true", "format": "json"},
             )
 
             if not dataset_resp.is_success:

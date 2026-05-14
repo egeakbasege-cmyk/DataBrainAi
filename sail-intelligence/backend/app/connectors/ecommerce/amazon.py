@@ -37,7 +37,7 @@ class AmazonConnector(AbstractDataConnector):
     )
 
     # Apify actor ID for Amazon scraping
-    APIFY_ACTOR = "apify/amazon-crawler"
+    APIFY_ACTOR = "junglee~Amazon-crawler"
     APIFY_RUN_URL = "https://api.apify.com/v2/acts/{actor}/runs"
     APIFY_DATASET_URL = "https://api.apify.com/v2/datasets/{dataset_id}/items"
 
@@ -55,22 +55,23 @@ class AmazonConnector(AbstractDataConnector):
         max_wait_secs=120.0,
     )
     async def _fetch_with_resilience(self, queries: list[str]) -> list[dict[str, Any]]:
+        # junglee/Amazon-crawler expects categoryOrProductUrls with Amazon search URLs
+        search_urls = [
+            {"url": f"https://www.amazon.com/s?k={q.replace(' ', '+')}"}
+            for q in queries
+        ]
         actor_input = {
-            "searchKeywords": queries,
-            "maxItems": 200,
-            "country": "US",
-            "proxyConfiguration": {
-                "useApifyProxy": True,
-                "apifyProxyGroups": ["RESIDENTIAL"],
-            },
+            "categoryOrProductUrls": search_urls,
+            "maxItemsPerStartUrl": 50,
+            "proxyConfiguration": {"useApifyProxy": True},
         }
 
         async with httpx.AsyncClient(timeout=settings.apify_default_timeout_secs) as client:
             # 1. Start actor run
             run_resp = await client.post(
                 self.APIFY_RUN_URL.format(actor=self.APIFY_ACTOR),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                json={"input": actor_input},
+                params={"token": settings.apify_api_token, "waitForFinish": 300},
+                json=actor_input,
             )
 
             if run_resp.status_code == 429:
@@ -98,8 +99,7 @@ class AmazonConnector(AbstractDataConnector):
             # 2. Poll for dataset items (actor may still be running)
             dataset_resp = await client.get(
                 self.APIFY_DATASET_URL.format(dataset_id=dataset_id),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                params={"clean": "true", "format": "json"},
+                params={"token": settings.apify_api_token, "clean": "true", "format": "json"},
             )
 
             if not dataset_resp.is_success:

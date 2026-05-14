@@ -83,27 +83,22 @@ def _build_actor_input(mode: str, queries: list[str]) -> dict[str, Any]:
         Dict suitable for posting as the actor's ``input`` body.
     """
     base: dict[str, Any] = {
-        "search": queries,
+        "searchQueries": queries,
         "maxItems": 200,
         "country": "US",
-        "proxyConfiguration": {
-            "useApifyProxy": True,
-            "apifyProxyGroups": ["RESIDENTIAL"],
-        },
     }
 
     if mode == "arbitrage":
-        base["sortBy"]    = "price"
+        base["sortBy"]    = "lowest_price"
         base["condition"] = "Used"
 
     elif mode == "auction":
         base["listingType"] = "auction"
-        base["sortBy"]      = "endingSoonest"
+        base["sortBy"]      = "ending_soonest"
 
     elif mode == "seller":
-        # Seller analysis: search by seller name, pull their recent listings
-        base["seller"] = queries[0] if queries else ""
-        base.pop("search", None)
+        base["sellerName"] = queries[0] if queries else ""
+        base.pop("searchQueries", None)
         base["maxItems"] = 1000
 
     return base
@@ -125,7 +120,7 @@ class EbayConnector(AbstractDataConnector):
         fallback_ids=[],   # terminal node — Amazon falls back to eBay, not further
     )
 
-    APIFY_ACTOR       = "apify/ebay-scraper"
+    APIFY_ACTOR       = "automation-lab~ebay-scraper"
     APIFY_RUN_URL     = "https://api.apify.com/v2/acts/{actor}/runs"
     APIFY_DATASET_URL = "https://api.apify.com/v2/datasets/{dataset_id}/items"
 
@@ -167,8 +162,8 @@ class EbayConnector(AbstractDataConnector):
             # ── Step 1: Launch actor run ────────────────────────────────────────
             run_resp = await client.post(
                 self.APIFY_RUN_URL.format(actor=self.APIFY_ACTOR),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                json={"input": actor_input},
+                params={"token": settings.apify_api_token, "waitForFinish": 300},
+                json=actor_input,
             )
 
             if run_resp.status_code == 429:
@@ -196,8 +191,7 @@ class EbayConnector(AbstractDataConnector):
             # ── Step 2: Fetch dataset items ─────────────────────────────────────
             dataset_resp = await client.get(
                 self.APIFY_DATASET_URL.format(dataset_id=dataset_id),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                params={"clean": "true", "format": "json"},
+                params={"token": settings.apify_api_token, "clean": "true", "format": "json"},
             )
 
             if not dataset_resp.is_success:
@@ -233,8 +227,18 @@ class EbayConnector(AbstractDataConnector):
             price          = item.get("price")
             original_price = item.get("originalPrice") or item.get("regularPrice")
             condition      = item.get("condition", "")
-            watcher_count  = item.get("watcherCount") or item.get("watchCount") or 0
-            sold_count     = item.get("soldCount") or item.get("unitsSold") or 0
+            # Force numeric — eBay API returns strings like "23", "178+", "1,234"
+            def _to_int(v: Any) -> int:
+                if not v:
+                    return 0
+                if isinstance(v, (int, float)):
+                    return int(v)
+                import re as _re
+                m = _re.search(r'[\d,]+', str(v))
+                return int(m.group().replace(",", "")) if m else 0
+
+            watcher_count  = _to_int(item.get("watcherCount") or item.get("watchCount"))
+            sold_count     = _to_int(item.get("soldCount") or item.get("unitsSold"))
             is_auction     = bool(item.get("isAuction", False))
             bid_count      = item.get("bidCount") or 0
             description    = item.get("description") or item.get("subtitle") or ""

@@ -136,9 +136,9 @@ class TikTokAdsConnector(AbstractDataConnector):
         fallback_ids=["meta-ads"],
     )
 
-    APIFY_ACTOR_HASHTAG = "clockworks/free-tiktok-scraper"
-    APIFY_ACTOR_PROFILE = "clockworks/tiktok-profile-scraper"
-    APIFY_ACTOR_SHOP    = "apify/tiktok-shop-scraper"
+    APIFY_ACTOR_HASHTAG = "clockworks~free-tiktok-scraper"
+    APIFY_ACTOR_PROFILE = "clockworks~tiktok-profile-scraper"
+    APIFY_ACTOR_SHOP    = "clockworks~tiktok-scraper"
 
     APIFY_RUN_URL     = "https://api.apify.com/v2/acts/{actor}/runs"
     APIFY_DATASET_URL = "https://api.apify.com/v2/datasets/{dataset_id}/items"
@@ -220,8 +220,8 @@ class TikTokAdsConnector(AbstractDataConnector):
             # ── Step 1: Launch actor ────────────────────────────────────────
             run_resp = await client.post(
                 self.APIFY_RUN_URL.format(actor=actor),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                json={"input": actor_input},
+                params={"token": settings.apify_api_token, "waitForFinish": 300},
+                json=actor_input,
             )
 
             if run_resp.status_code == 429:
@@ -252,8 +252,7 @@ class TikTokAdsConnector(AbstractDataConnector):
             # ── Step 2: Fetch dataset ───────────────────────────────────────
             dataset_resp = await client.get(
                 self.APIFY_DATASET_URL.format(dataset_id=dataset_id),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                params={"clean": "true", "format": "json"},
+                params={"token": settings.apify_api_token, "clean": "true", "format": "json"},
             )
 
             if not dataset_resp.is_success:

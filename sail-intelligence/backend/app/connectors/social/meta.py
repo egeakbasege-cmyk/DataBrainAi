@@ -127,8 +127,8 @@ class MetaAdsConnector(AbstractDataConnector):
         fallback_ids=[],
     )
 
-    APIFY_ACTOR_ADS    = "apify/facebook-ads-scraper"
-    APIFY_ACTOR_PAGES  = "apify/facebook-pages-scraper"
+    APIFY_ACTOR_ADS    = "apify~facebook-ads-scraper"
+    APIFY_ACTOR_PAGES  = "apify~facebook-pages-scraper"
     APIFY_RUN_URL      = "https://api.apify.com/v2/acts/{actor}/runs"
     APIFY_DATASET_URL  = "https://api.apify.com/v2/datasets/{dataset_id}/items"
 
@@ -257,8 +257,8 @@ class MetaAdsConnector(AbstractDataConnector):
         async with httpx.AsyncClient(timeout=settings.apify_default_timeout_secs) as client:
             run_resp = await client.post(
                 self.APIFY_RUN_URL.format(actor=actor),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                json={"input": actor_input},
+                params={"token": settings.apify_api_token, "waitForFinish": 300},
+                json=actor_input,
             )
 
             if run_resp.status_code == 429:
@@ -285,8 +285,7 @@ class MetaAdsConnector(AbstractDataConnector):
 
             dataset_resp = await client.get(
                 self.APIFY_DATASET_URL.format(dataset_id=dataset_id),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                params={"clean": "true", "format": "json"},
+                params={"token": settings.apify_api_token, "clean": "true", "format": "json"},
             )
 
             if not dataset_resp.is_success:

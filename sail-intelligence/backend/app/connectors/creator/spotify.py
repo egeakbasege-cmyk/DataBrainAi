@@ -152,8 +152,8 @@ class SpotifyConnector(AbstractDataConnector):
         fallback_ids=[],
     )
 
-    APIFY_ACTOR_ARTIST   = "maxcopell/spotify-scraper"
-    APIFY_ACTOR_PLAYLIST = "maxcopell/spotify-playlist-scraper"
+    APIFY_ACTOR_ARTIST   = "easyapi~spotify-artists-scraper"
+    APIFY_ACTOR_PLAYLIST = "easyapi~spotify-playlists-scraper"
     APIFY_RUN_URL        = "https://api.apify.com/v2/acts/{actor}/runs"
     APIFY_DATASET_URL    = "https://api.apify.com/v2/datasets/{dataset_id}/items"
 
@@ -203,27 +203,29 @@ class SpotifyConnector(AbstractDataConnector):
         """
         if mode == "playlist":
             actor = self.APIFY_ACTOR_PLAYLIST
+            # easyapi~spotify-playlists-scraper expects playlist URLs
             actor_input: dict[str, Any] = {
-                "playlistUrls": queries,
-                "maxTracks":    5000,
+                "playlistUrls": [{"url": q} for q in queries],
+                "maxItems":     500,
             }
         else:
             actor = self.APIFY_ACTOR_ARTIST
+            # easyapi~spotify-artists-scraper: build search URLs from queries
+            artist_urls = [
+                {"url": f"https://open.spotify.com/search/{q.replace(' ', '%20')}/artists"}
+                for q in queries
+            ]
             actor_input = {
-                "searchQueries": queries,
-                "searchType":    "artists",
-                "maxResults":    500,
-                "proxyConfiguration": {
-                    "useApifyProxy": True,
-                },
+                "artistUrls": artist_urls,
+                "maxItems":   200,
             }
 
         async with httpx.AsyncClient(timeout=settings.apify_default_timeout_secs) as client:
             # ── Step 1: Launch actor ────────────────────────────────────────
             run_resp = await client.post(
                 self.APIFY_RUN_URL.format(actor=actor),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                json={"input": actor_input},
+                params={"token": settings.apify_api_token, "waitForFinish": 300},
+                json=actor_input,
             )
 
             if run_resp.status_code == 429:
@@ -254,8 +256,7 @@ class SpotifyConnector(AbstractDataConnector):
             # ── Step 2: Fetch dataset ───────────────────────────────────────
             dataset_resp = await client.get(
                 self.APIFY_DATASET_URL.format(dataset_id=dataset_id),
-                headers={"Authorization": f"Bearer {settings.apify_api_token}"},
-                params={"clean": "true", "format": "json"},
+                params={"token": settings.apify_api_token, "clean": "true", "format": "json"},
             )
 
             if not dataset_resp.is_success:
