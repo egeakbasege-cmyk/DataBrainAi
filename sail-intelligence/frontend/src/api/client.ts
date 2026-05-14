@@ -7,7 +7,7 @@
  * - All response types are defined as TypeScript interfaces below.
  */
 
-import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
+import axios, { type AxiosInstance } from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '') + '/api/v1'

@@ -50,7 +50,7 @@ function deriveRadarValues(
 ): [number, number, number, number, number] {
   if (!result) return [0, 0, 0, 0, 0]
 
-  const total  = Math.max(1,
+  Math.max(1,
     result.pl_simulations.length + result.entity_links.length +
     result.forecasts.length + result.archetypes.length + result.copy_angles.length
   )

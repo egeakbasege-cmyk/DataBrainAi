@@ -29,7 +29,10 @@ def _parse_cron(cron_str: str) -> crontab:
     minute, hour, day_of_month, month_of_year, day_of_week = parts
 
     def _v(s: str) -> str | int:
-        return s if s == "*" else int(s)
+        # Pass through wildcards, steps (*/n), ranges (a-b), and lists (a,b,c)
+        if s == "*" or "/" in s or "-" in s or "," in s:
+            return s
+        return int(s)
 
     return crontab(
         minute=_v(minute),

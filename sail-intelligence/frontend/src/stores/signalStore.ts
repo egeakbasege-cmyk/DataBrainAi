@@ -23,7 +23,7 @@ interface SignalState {
   setConnection:  (state: SignalState['connectionState']) => void
 }
 
-export const useSignalStore = create<SignalState>()((set, get) => ({
+export const useSignalStore = create<SignalState>()((set, _get) => ({
   signals:         [],
   pendingIds:      new Set(),
   resolvedIds:     new Set(),
