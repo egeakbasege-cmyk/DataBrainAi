@@ -2,7 +2,7 @@
 
 /**
  * ConnectorDock — platform data source selector
- * Uses official SVG logos from simpleicons.org CDN.
+ * Logos served from /public/icons/ (same-domain static files — no CDN dependency).
  * Persisted to localStorage.
  */
 
@@ -14,30 +14,28 @@ export interface ConnectorDef {
   id:          string
   label:       string
   domain:      string
-  /** simpleicons slug, e.g. "ebay" → cdn.simpleicons.org/ebay/{color} */
-  siSlug?:     string
-  /** jsdelivr path for icons not on simpleicons CDN */
-  jsdSlug?:    string
+  /** Local icon slug → /icons/{iconSlug}.svg */
+  iconSlug?:   string
   /** Fallback letter when no icon available */
   letter?:     string
   accentColor: string
 }
 
 export const ALL_CONNECTORS: ConnectorDef[] = [
-  { id: 'ebay-product-price',   label: 'eBay',       domain: 'ecommerce',  siSlug: 'ebay',       accentColor: '#E43137' },
-  { id: 'amazon-product-price', label: 'Amazon',     domain: 'ecommerce',  jsdSlug: 'amazon',    accentColor: '#FF9900' },
-  { id: 'etsy-marketplace',     label: 'Etsy',       domain: 'ecommerce',  siSlug: 'etsy',       accentColor: '#F16521' },
-  { id: 'walmart-marketplace',  label: 'Walmart',    domain: 'ecommerce',  jsdSlug: 'walmart',   accentColor: '#0071CE' },
-  { id: 'aliexpress-sourcing',  label: 'AliExpress', domain: 'ecommerce',  siSlug: 'aliexpress', accentColor: '#FF6A00' },
-  { id: 'shopify-store',        label: 'Shopify',    domain: 'ecommerce',  siSlug: 'shopify',    accentColor: '#96BF48' },
-  { id: 'tiktok-ads',           label: 'TikTok',     domain: 'social',     siSlug: 'tiktok',     accentColor: '#010101' },
-  { id: 'meta-ads',             label: 'Meta',       domain: 'social',     siSlug: 'meta',       accentColor: '#0467DF' },
-  { id: 'pinterest-shopping',   label: 'Pinterest',  domain: 'social',     siSlug: 'pinterest',  accentColor: '#BD081C' },
-  { id: 'youtube-creator',      label: 'YouTube',    domain: 'creator',    siSlug: 'youtube',    accentColor: '#FF0000' },
-  { id: 'spotify-creator',      label: 'Spotify',    domain: 'creator',    siSlug: 'spotify',    accentColor: '#1ED760' },
-  { id: 'poshmark-resale',      label: 'Poshmark',   domain: 'secondhand', letter: 'P',          accentColor: '#7D3F98' },
-  { id: 'google-trends',        label: 'Trends',     domain: 'analytics',  siSlug: 'google',     accentColor: '#4285F4' },
-  { id: 'real-estate',          label: 'Real Estate',domain: 'local',      letter: '🏠',         accentColor: '#10B981' },
+  { id: 'ebay-product-price',   label: 'eBay',        domain: 'ecommerce',  iconSlug: 'ebay',        accentColor: '#E43137' },
+  { id: 'amazon-product-price', label: 'Amazon',      domain: 'ecommerce',  iconSlug: 'amazon',      accentColor: '#FF9900' },
+  { id: 'etsy-marketplace',     label: 'Etsy',        domain: 'ecommerce',  iconSlug: 'etsy',        accentColor: '#F16521' },
+  { id: 'walmart-marketplace',  label: 'Walmart',     domain: 'ecommerce',  iconSlug: 'walmart',     accentColor: '#0071CE' },
+  { id: 'aliexpress-sourcing',  label: 'AliExpress',  domain: 'ecommerce',  iconSlug: 'aliexpress',  accentColor: '#FF6A00' },
+  { id: 'shopify-store',        label: 'Shopify',     domain: 'ecommerce',  iconSlug: 'shopify',     accentColor: '#96BF48' },
+  { id: 'tiktok-ads',           label: 'TikTok',      domain: 'social',     iconSlug: 'tiktok',      accentColor: '#69C9D0' },
+  { id: 'meta-ads',             label: 'Meta',        domain: 'social',     iconSlug: 'meta',        accentColor: '#0467DF' },
+  { id: 'pinterest-shopping',   label: 'Pinterest',   domain: 'social',     iconSlug: 'pinterest',   accentColor: '#BD081C' },
+  { id: 'youtube-creator',      label: 'YouTube',     domain: 'creator',    iconSlug: 'youtube',     accentColor: '#FF0000' },
+  { id: 'spotify-creator',      label: 'Spotify',     domain: 'creator',    iconSlug: 'spotify',     accentColor: '#1ED760' },
+  { id: 'poshmark-resale',      label: 'Poshmark',    domain: 'secondhand', letter:   'P',           accentColor: '#7D3F98' },
+  { id: 'google-trends',        label: 'Trends',      domain: 'analytics',  iconSlug: 'google',      accentColor: '#4285F4' },
+  { id: 'real-estate',          label: 'Real Estate', domain: 'local',      letter:   '🏠',          accentColor: '#10B981' },
 ]
 
 const DOMAIN_GROUPS = [
@@ -50,76 +48,48 @@ const DOMAIN_GROUPS = [
 ]
 
 // ── Logo component ────────────────────────────────────────────────────────────
+// Logos served from /public/icons/ as pre-colored SVGs (same-domain, no CDN).
+// Two variants per icon: {slug}-active.svg (brand color) + {slug}-inactive.svg (gray).
+// This avoids all CDN failures, CORS issues, and service-worker cache problems.
 
 function ConnectorLogo({ c, active, size = 22 }: { c: ConnectorDef; active: boolean; size?: number }) {
   const [imgError, setImgError] = useState(false)
 
-  const src = c.siSlug
-    ? `https://cdn.simpleicons.org/${c.siSlug}/${active ? c.accentColor.replace('#', '') : 'A0A0A0'}`
-    : c.jsdSlug
-    ? `https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/${c.jsdSlug}.svg`
-    : null
-
-  if (src && !imgError) {
+  if (c.iconSlug && !imgError) {
+    const variant = active ? 'active' : 'inactive'
     return (
       <img
-        src={src}
+        src={`/icons/${c.iconSlug}-${variant}.svg`}
         alt={c.label}
         width={size}
         height={size}
         onError={() => setImgError(true)}
-        style={{
-          display:  'block',
-          filter:   c.jsdSlug && !active ? 'grayscale(1) opacity(0.5)'
-                  : c.jsdSlug && active  ? `opacity(1)` + colorFilter(c.accentColor)
-                  : undefined,
-          transition: 'filter 0.15s',
-        }}
+        style={{ display: 'block', transition: 'opacity 0.15s' }}
       />
     )
   }
 
-  // Fallback: letter or emoji badge
+  // Fallback: letter or emoji badge (Poshmark, Real Estate)
   const letter = c.letter ?? c.label[0]
   return (
     <span style={{
-      display:      'flex',
-      alignItems:   'center',
+      display:        'flex',
+      alignItems:     'center',
       justifyContent: 'center',
-      width:        size,
-      height:       size,
-      borderRadius: 4,
-      background:   active ? c.accentColor + '22' : '#F3F4F6',
-      color:        active ? c.accentColor : '#9CA3AF',
-      fontSize:     letter.length === 1 ? size * 0.6 : size * 0.85,
-      fontWeight:   700,
-      lineHeight:   1,
-      fontFamily:   'Inter, sans-serif',
-      flexShrink:   0,
+      width:          size,
+      height:         size,
+      borderRadius:   4,
+      background:     active ? c.accentColor + '22' : '#F3F4F6',
+      color:          active ? c.accentColor : '#9CA3AF',
+      fontSize:       letter.length === 1 ? size * 0.6 : size * 0.85,
+      fontWeight:     700,
+      lineHeight:     1,
+      fontFamily:     'Inter, sans-serif',
+      flexShrink:     0,
     }}>
       {letter}
     </span>
   )
-}
-
-/**
- * Generate a CSS filter to tint a black SVG to a target hex color.
- * Used for jsdelivr icons (which are black by default).
- */
-function colorFilter(hex: string): string {
-  // Parse hex to RGB
-  const r = parseInt(hex.slice(1, 3), 16) / 255
-  const g = parseInt(hex.slice(3, 5), 16) / 255
-  const b = parseInt(hex.slice(5, 7), 16) / 255
-  // Rough approximation using sepia + hue-rotate + saturate
-  // Good enough for brand colors; precise calculation not needed
-  const hue = Math.round(Math.atan2(
-    Math.sqrt(3) * (g - b),
-    2 * r - g - b
-  ) * 180 / Math.PI)
-  const sat = Math.round(Math.max(r, g, b) === 0 ? 0 :
-    (Math.max(r, g, b) - Math.min(r, g, b)) / Math.max(r, g, b) * 100)
-  return ` sepia(1) saturate(${sat * 5}%) hue-rotate(${hue}deg)`
 }
 
 // ── localStorage persistence ──────────────────────────────────────────────────
