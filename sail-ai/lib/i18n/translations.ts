@@ -508,6 +508,9 @@ const translations = {
     'research.positive':        'Positive ↑',
     'research.negative':        'Negative ↓',
     'research.neutral':         'Neutral →',
+    'research.noImages':        'No images found for this search',
+    'research.newSearch':       'New Search',
+    'research.retry':           'Try again',
   },
 
   tr: {
@@ -980,6 +983,9 @@ const translations = {
     'research.positive':        'Pozitif ↑',
     'research.negative':        'Negatif ↓',
     'research.neutral':         'Nötr →',
+    'research.noImages':        'Bu arama için görsel bulunamadı',
+    'research.newSearch':       'Yeni Arama',
+    'research.retry':           'Tekrar dene',
   },
 
   es: {
@@ -1452,6 +1458,9 @@ const translations = {
     'research.positive':        'Positivo ↑',
     'research.negative':        'Negativo ↓',
     'research.neutral':         'Neutral →',
+    'research.noImages':        'No se encontraron imágenes para esta búsqueda',
+    'research.newSearch':       'Nueva búsqueda',
+    'research.retry':           'Intentar de nuevo',
   },
 
   de: {
@@ -1924,6 +1933,9 @@ const translations = {
     'research.positive':        'Positiv ↑',
     'research.negative':        'Negativ ↓',
     'research.neutral':         'Neutral →',
+    'research.noImages':        'Keine Bilder für diese Suche gefunden',
+    'research.newSearch':       'Neue Suche',
+    'research.retry':           'Erneut versuchen',
   },
 
   fr: {
@@ -2396,6 +2408,9 @@ const translations = {
     'research.positive':        'Positif ↑',
     'research.negative':        'Négatif ↓',
     'research.neutral':         'Neutre →',
+    'research.noImages':        'Aucune image trouvée pour cette recherche',
+    'research.newSearch':       'Nouvelle recherche',
+    'research.retry':           'Réessayer',
   },
 
   zh: {
@@ -2905,6 +2920,9 @@ const translations = {
     'research.positive':        '积极 ↑',
     'research.negative':        '消极 ↓',
     'research.neutral':         '中性 →',
+    'research.noImages':        '未找到此搜索的图片',
+    'research.newSearch':       '新搜索',
+    'research.retry':           '重试',
   },
 } as const
 

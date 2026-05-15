@@ -10,7 +10,7 @@
  *  • Separate from chat — editorial / report style UI
  */
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Nav }               from '@/components/Nav'
 import { useLanguage }        from '@/lib/i18n/LanguageContext'
 
@@ -170,7 +170,7 @@ function SectionCard({ section }: { section: ReportSection }) {
 
 // ── Image gallery ─────────────────────────────────────────────────────────────
 
-function ImageGallery({ images }: { images: ResearchImage[] }) {
+function ImageGallery({ images, isMobile }: { images: ResearchImage[]; isMobile?: boolean }) {
   const { t } = useLanguage()
   const [failed, setFailed] = useState<Set<string>>(new Set())
   const visible = images.filter(img => !failed.has(img.url)).slice(0, 9)
@@ -181,7 +181,7 @@ function ImageGallery({ images }: { images: ResearchImage[] }) {
       <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
         {t('research.images')}
       </h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 2 : 3}, 1fr)`, gap: '0.5rem' }}>
         {visible.map((img, i) => (
           <div key={i} style={{ position: 'relative', aspectRatio: '16/9', borderRadius: '8px', overflow: 'hidden', background: '#F3F4F6' }}>
             <img
@@ -271,7 +271,15 @@ export default function ResearchPage() {
   const [report,  setReport]  = useState<ResearchReport | null>(null)
   const [error,   setError]   = useState('')
   const [showSources, setShowSources] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const SENTIMENT_LABEL_I18N: Record<string, string> = {
     bullish: t('research.positive'),
@@ -426,6 +434,7 @@ export default function ResearchPage() {
                   color:        'rgba(250,250,248,0.65)',
                   cursor:       'pointer',
                   transition:   'all 0.1s',
+                  minWidth:     isMobile ? '120px' : undefined,
                 }}
               >
                 {example}
@@ -448,11 +457,32 @@ export default function ResearchPage() {
             border:       '1px solid rgba(239,68,68,0.2)',
             borderRadius: '8px',
             padding:      '1rem 1.25rem',
-            fontFamily:   'Inter, sans-serif',
-            fontSize:     '0.85rem',
-            color:        '#B91C1C',
+            display:      'flex',
+            alignItems:   'center',
+            justifyContent: 'space-between',
+            gap:          '1rem',
+            flexWrap:     'wrap',
           }}>
-            ⚠️ {error}
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: '#B91C1C' }}>
+              ⚠️ {error}
+            </span>
+            <button
+              onClick={() => runResearch()}
+              style={{
+                padding:      '0.4rem 0.875rem',
+                background:   '#EF4444',
+                border:       'none',
+                borderRadius: '6px',
+                fontFamily:   'Inter, sans-serif',
+                fontSize:     '0.72rem',
+                fontWeight:   700,
+                color:        '#FFFFFF',
+                cursor:       'pointer',
+                flexShrink:   0,
+              }}
+            >
+              {t('research.retry')}
+            </button>
           </div>
         )}
 
@@ -466,7 +496,7 @@ export default function ResearchPage() {
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: '#9CA3AF', maxWidth: 480, margin: '0 auto' }}>
               {t('research.subtitle')}
             </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '2rem', flexWrap: 'wrap' }}>
               {[
                 { icon: '🔎', label: t('research.searching2').split('…')[0] },
                 { icon: '🖼️', label: t('research.images') },
@@ -487,13 +517,34 @@ export default function ResearchPage() {
           <div>
             {/* Report header */}
             <div style={{ marginBottom: '1.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.875rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.875rem', flexDirection: isMobile ? 'column' : 'row' }}>
                 <div>
-                  <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.6rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.25rem' }}>
-                    {report.title}
-                  </h2>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+                    <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.6rem', fontWeight: 600, color: '#0C0C0E', margin: 0 }}>
+                      {report.title}
+                    </h2>
+                    <button
+                      onClick={() => { setReport(null); setQuery(''); setTimeout(() => inputRef.current?.focus(), 100) }}
+                      style={{
+                        padding:      '0.3rem 0.75rem',
+                        background:   'none',
+                        border:       '1px solid rgba(0,0,0,0.15)',
+                        borderRadius: '6px',
+                        fontFamily:   'Inter, sans-serif',
+                        fontSize:     '0.68rem',
+                        fontWeight:   600,
+                        color:        '#6B7280',
+                        cursor:       'pointer',
+                        flexShrink:   0,
+                        alignSelf:    'center',
+                        transition:   'all 0.1s',
+                      }}
+                    >
+                      ← {t('research.newSearch')}
+                    </button>
+                  </div>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#9CA3AF', margin: 0 }}>
-                    {new Date(report.searchedAt).toLocaleString('tr-TR')} · {report.queriesUsed?.length ?? 0} arama vektörü · {report.sources?.length ?? 0} kaynak
+                    {new Date(report.searchedAt).toLocaleString()} · {report.queriesUsed?.length ?? 0} {t('walk.queryVectors').toLowerCase()} · {report.sources?.length ?? 0} {t('research.sources').toLowerCase()}
                   </p>
                 </div>
                 {/* Market sentiment badge */}
@@ -546,7 +597,7 @@ export default function ResearchPage() {
             </div>
 
             {/* Two-column layout: main content + image sidebar */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem', alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: '1.5rem', alignItems: 'start' }}>
 
               {/* ── Left: analysis content ─────────── */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -628,11 +679,11 @@ export default function ResearchPage() {
               </div>
 
               {/* ── Right: images + search meta ──────── */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'sticky', top: '5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', ...(isMobile ? {} : { position: 'sticky', top: '5rem' }) }}>
 
                 {/* Image gallery */}
                 {report.images?.length > 0
-                  ? <ImageGallery images={report.images} />
+                  ? <ImageGallery images={report.images} isMobile={isMobile} />
                   : (
                     <div style={{
                       background:   '#FFFFFF',
@@ -643,7 +694,7 @@ export default function ResearchPage() {
                     }}>
                       <div style={{ fontSize: 28, marginBottom: '0.5rem' }}>🖼️</div>
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#9CA3AF', margin: 0 }}>
-                        Bu arama için görsel bulunamadı
+                        {t('research.noImages')}
                       </p>
                     </div>
                   )

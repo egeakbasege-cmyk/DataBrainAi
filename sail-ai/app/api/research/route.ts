@@ -52,8 +52,9 @@ CRITICAL RULES:
 4. Write in the SAME language as the user's query (Turkish → full Turkish report, English → full English report).
 5. marketSnapshot.sentiment must be one of: "bullish" | "bearish" | "neutral"
 6. All sections should contain actionable, specific insights — no vague generalities.
-7. keyFindings must be the 4 most important, specific data points from the sources.
+7. keyFindings must be the 5-6 most important, specific data points from the sources.
 8. Each section.dataPoints entry must be a specific number, stat, or concrete finding.
+9. sections must cover: Market Overview, Key Metrics & Data, Competitive Landscape, Trends & Opportunities, Risk Factors. Return at least 4 sections.
 
 Return ONLY this JSON (no markdown fences, no explanation outside JSON):
 {
@@ -85,12 +86,14 @@ Return ONLY this JSON (no markdown fences, no explanation outside JSON):
     "< specific action 2 >",
     "< specific action 3 >"
   ]
-}`
+}
+
+Return 3-5 competitorInsights and 4-5 actionableRecommendations.`
 
 // ── Source encoder for LLM context ───────────────────────────────────────────
 
 function buildResearchContext(results: SearchResult[]): string {
-  const top = results.slice(0, 15)   // feed top 15 to LLM
+  const top = results.slice(0, 18)   // feed top 18 to LLM
   return top
     .map((r, i) =>
       `[${i + 1}] SOURCE: ${r.url}\nDATE: ${r.publishedDate ?? 'unknown'} | RELIABILITY: ${Math.round(r.reliabilityScore * 100)}%\n${r.content}`,
@@ -176,8 +179,8 @@ export async function POST(req: NextRequest) {
           { role: 'user',   content: userPrompt },
         ],
         response_format: { type: 'json_object' },
-        max_tokens:      1800,
-        temperature:     0.2,
+        max_tokens:      2800,
+        temperature:     0.15,
       }),
     })
   } catch {

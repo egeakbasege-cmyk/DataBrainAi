@@ -455,6 +455,14 @@ export function ProductWalkthrough() {
   const [current,   setCurrent]   = useState(1)
   const [paused,    setPaused]    = useState(false)
   const [progress,  setProgress]  = useState(0)
+  const [isMobile,  setIsMobile]  = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // Build translated slides list inside component to use t()
   const SLIDES_I18N: Slide[] = [
@@ -505,7 +513,7 @@ export function ProductWalkthrough() {
       <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#C9A96E' }}>
@@ -524,7 +532,7 @@ export function ProductWalkthrough() {
           </div>
           <Link
             href="/welcome"
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.35)', borderRadius: '6px', padding: '0.5rem 1rem', textDecoration: 'none', flexShrink: 0 }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.35)', borderRadius: '6px', padding: '0.5rem 1rem', textDecoration: 'none', flexShrink: 0, width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'center' : 'left' }}
           >
             {t('walk.ctaBtn')}
           </Link>
@@ -533,7 +541,102 @@ export function ProductWalkthrough() {
         {/* Main content: YouTube or animated demo */}
         {YOUTUBE_VIDEO_ID ? (
           <YouTubeEmbed videoId={YOUTUBE_VIDEO_ID} />
+        ) : isMobile ? (
+          /* ── Mobile layout ───────────────────────────── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+            {/* Full-width animated screen */}
+            <div
+              onTouchStart={() => setPaused(true)}
+              onTouchEnd={() => setPaused(false)}
+              style={{
+                background:   '#111318',
+                border:       '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                overflow:     'hidden',
+                position:     'relative',
+              }}
+            >
+              {/* Fake window chrome */}
+              <div style={{ padding: '0.625rem 0.875rem', background: '#1A1A22', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  {['#FF5F57','#FFBD2E','#28C840'].map(c => <div key={c} style={{ width: 9, height: 9, borderRadius: '50%', background: c }} />)}
+                </div>
+                <div style={{ flex: 1, height: 16, background: 'rgba(255,255,255,0.05)', borderRadius: '3px', display: 'flex', alignItems: 'center', paddingLeft: '0.625rem' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)' }}>sail-ai.vercel.app</span>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div style={{ height: 2, background: 'rgba(255,255,255,0.06)' }}>
+                <div style={{ height: '100%', width: `${progress}%`, background: '#C9A96E', transition: 'width 0.05s linear' }} />
+              </div>
+
+              {/* Slide content */}
+              <div style={{ padding: '1rem', minHeight: 300, position: 'relative' }}>
+                <SlideContent slide={current} />
+              </div>
+            </div>
+
+            {/* Horizontal scrollable chapter strip */}
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', paddingBottom: '0.25rem' }}>
+                {SLIDES_I18N.map((slide) => {
+                  const active = current === slide.id
+                  const done   = current > slide.id
+                  return (
+                    <button
+                      key={slide.id}
+                      onClick={() => { setCurrent(slide.id); setProgress(0) }}
+                      style={{
+                        display:       'flex',
+                        alignItems:    'center',
+                        gap:           '0.35rem',
+                        padding:       '0.4rem 0.625rem',
+                        background:    active ? '#C9A96E' : done ? 'rgba(201,169,110,0.15)' : 'rgba(255,255,255,0.05)',
+                        border:        `1px solid ${active ? '#C9A96E' : done ? 'rgba(201,169,110,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                        borderRadius:  '20px',
+                        cursor:        'pointer',
+                        whiteSpace:    'nowrap',
+                        flexShrink:    0,
+                        transition:    'all 0.15s',
+                      }}
+                    >
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: active ? '#0C0C0E' : done ? '#C9A96E' : 'rgba(255,255,255,0.4)' }}>
+                        {done ? '✓' : slide.id}
+                      </span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: active ? 700 : 400, color: active ? '#0C0C0E' : done ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.35)' }}>
+                        {slide.chapter}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Full-width CTA link */}
+            <Link
+              href="/welcome"
+              style={{
+                display:       'block',
+                textAlign:     'center',
+                padding:       '0.625rem',
+                background:    '#C9A96E',
+                color:         '#0C0C0E',
+                fontFamily:    'Inter, sans-serif',
+                fontSize:      '0.72rem',
+                fontWeight:    700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                borderRadius:  '7px',
+                textDecoration:'none',
+              }}
+            >
+              {t('walk.ctaBtn')}
+            </Link>
+          </div>
         ) : (
+          /* ── Desktop two-column layout ───────────────── */
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: '1.5rem', alignItems: 'start' }}>
 
             {/* ── Animated screen ─── */}
