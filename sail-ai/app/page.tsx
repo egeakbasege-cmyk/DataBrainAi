@@ -6,7 +6,7 @@ import { Nav } from '@/components/Nav'
 import { Logo } from '@/components/Logo'
 import { CompassRose, EngravedSailboat } from '@/components/Ornaments'
 import { TopoBackground } from '@/components/TopoBackground'
-import { TutorialVideoSection } from '@/components/TutorialVideoSection'
+import { ProductWalkthrough } from '@/components/ProductWalkthrough'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 /* ── Sample outcome cases ──────────────────────────── */
@@ -222,7 +222,7 @@ export default function LandingPage() {
 
           {/* CTAs */}
           <div style={{ marginTop: '1.75rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <Link href="/login" className="btn-primary">
+            <Link href="/welcome" className="btn-primary">
               Begin free →
             </Link>
             <a
@@ -322,7 +322,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           SECTION 3: TUTORIAL VIDEO
       ══════════════════════════════════════════════ */}
-      <TutorialVideoSection />
+      <ProductWalkthrough />
 
       {/* ══════════════════════════════════════════════
           SECTION 4: INTELLIGENCE MODES (simplified — 3 modes)
@@ -502,7 +502,7 @@ export default function LandingPage() {
                 Zero friction. No payment details. Professional-grade strategy, validated by data.
               </p>
             </div>
-            <Link href="/login" className="btn-ghost-white" style={{ flexShrink: 0 }}>
+            <Link href="/welcome" className="btn-ghost-white" style={{ flexShrink: 0 }}>
               Begin →
             </Link>
           </div>
