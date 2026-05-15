@@ -141,10 +141,79 @@ async function parseFile(file: File): Promise<Attachment> {
   throw new Error(`Unsupported file type: ${file.type || file.name}`)
 }
 
+const WELCOME_DISMISSED_KEY = 'sail_welcome_dismissed_v1'
+
+function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
+  const steps = [
+    { icon: '1', text: 'Describe your business situation in plain language' },
+    { icon: '2', text: 'Choose an analysis mode (Upwind = fast plan, SAIL = adaptive)' },
+    { icon: '3', text: 'Get a benchmark-grounded strategy with live web data' },
+  ]
+  return (
+    <div style={{
+      background:   'linear-gradient(135deg, #0C0C0E 0%, #1A1A20 100%)',
+      borderRadius: '12px',
+      border:       '1px solid rgba(201,169,110,0.25)',
+      padding:      '1rem 1.25rem',
+      marginBottom: '0.75rem',
+      position:     'relative',
+    }}>
+      {/* Gold accent top line */}
+      <div style={{ position: 'absolute', top: 0, left: '10%', right: '10%', height: 1, background: 'linear-gradient(90deg, transparent, #C9A96E, transparent)' }} />
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#FFFFFF', margin: '0 0 0.75rem', lineHeight: 1.3 }}>
+            Welcome to SAIL AI — here's how to get started
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {steps.map(s => (
+              <div key={s.icon} style={{
+                display:      'flex',
+                alignItems:   'flex-start',
+                gap:          '0.5rem',
+                background:   'rgba(255,255,255,0.05)',
+                border:       '1px solid rgba(255,255,255,0.09)',
+                borderRadius: '8px',
+                padding:      '0.5rem 0.75rem',
+                flex:         '1 1 200px',
+              }}>
+                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 700, color: '#C9A96E', flexShrink: 0, lineHeight: 1 }}>
+                  {s.icon}
+                </span>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5, margin: 0 }}>
+                  {s.text}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+            <a href="/research" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: '#C9A96E', textDecoration: 'none', letterSpacing: '0.06em' }}>
+              Try Deep Research →
+            </a>
+            <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.7rem' }}>|</span>
+            <a href="/#tutorial" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none', letterSpacing: '0.06em' }}>
+              Watch tutorial
+            </a>
+          </div>
+        </div>
+        <button
+          onClick={onDismiss}
+          aria-label="Dismiss welcome"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: '1.1rem', lineHeight: 1, flexShrink: 0, padding: '0.1rem' }}
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function ChatPage() {
   const [input,        setInput]        = useState('')
   const [phIdx,        setPhIdx]        = useState(0)
   const [isMac,        setIsMac]        = useState(true)
+  const [showWelcome,  setShowWelcome]  = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const [showKeyPanel, setShowKeyPanel] = useState(false)
   const [showHistory,  setShowHistory]  = useState(false)
@@ -266,6 +335,18 @@ export default function ChatPage() {
     : undefined
 
   useEffect(() => { setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent)) }, [])
+
+  // Welcome banner: show only on first visit, dismiss stores to localStorage
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(WELCOME_DISMISSED_KEY)) setShowWelcome(true)
+    } catch { /* ignore */ }
+  }, [])
+
+  function dismissWelcome() {
+    setShowWelcome(false)
+    try { localStorage.setItem(WELCOME_DISMISSED_KEY, '1') } catch { /* ignore */ }
+  }
   useEffect(() => {
     const iv = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 4000)
     return () => clearInterval(iv)
@@ -846,6 +927,9 @@ export default function ChatPage() {
       <Nav />
 
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 flex flex-col gap-4">
+
+        {/* ── First-use welcome banner ── */}
+        {showWelcome && <WelcomeBanner onDismiss={dismissWelcome} />}
 
         {/* ── Header: Boat animation + counter ── */}
         <div style={{
