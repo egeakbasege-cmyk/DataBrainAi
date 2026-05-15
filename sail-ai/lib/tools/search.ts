@@ -24,12 +24,18 @@ export interface SearchResult {
   reliabilityScore: number   // 0.0–1.0
 }
 
+export interface SearchImage {
+  url:          string
+  description?: string
+}
+
 export interface DeepSearchResponse {
   results:          SearchResult[]
-  queriesUsed:      string[]      // the vectors sent to the API
-  searchedAt:       string        // ISO-8601 timestamp
+  images:           SearchImage[]   // real web images from Tavily image search
+  queriesUsed:      string[]        // the vectors sent to the API
+  searchedAt:       string          // ISO-8601 timestamp
   provider:         'tavily' | 'serper' | 'none'
-  staleSourceCount: number        // [SAIL-DATA-VERACITY] results with publishedDate > 12 months old
+  staleSourceCount: number          // [SAIL-DATA-VERACITY] results with publishedDate > 12 months old
 }
 
 // ── Domain reliability registry ───────────────────────────────────────────────
@@ -182,14 +188,24 @@ interface TavilyResult {
   published_date?: string
   score?:          number
 }
+interface TavilyImageResult {
+  url:          string
+  description?: string
+}
 interface TavilyResponse {
   results?: TavilyResult[]
+  images?:  TavilyImageResult[] | string[]
 }
 
+// Module-level accumulator — images from the FIRST Tavily call are kept here
+// so executeDeepSearch() can include them in DeepSearchResponse.
+let _tavilyImagesAccum: SearchImage[] = []
+
 async function searchTavily(
-  query:  string,
-  signal?: AbortSignal,
-  depth:  'basic' | 'advanced' = 'basic',
+  query:         string,
+  signal?:       AbortSignal,
+  depth:         'basic' | 'advanced' = 'basic',
+  captureImages  = false,              // true only for the first query
 ): Promise<SearchResult[]> {
   const apiKey = process.env.TAVILY_API_KEY
   if (!apiKey) return []
@@ -200,11 +216,13 @@ async function searchTavily(
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        api_key:             apiKey,
+        api_key:                    apiKey,
         query,
-        search_depth:        depth,
-        max_results:         20,
-        include_raw_content: false,
+        search_depth:               depth,
+        max_results:                20,
+        include_raw_content:        false,
+        include_images:             captureImages,
+        include_image_descriptions: captureImages,
       }),
       signal,
     })
@@ -212,6 +230,16 @@ async function searchTavily(
 
   if (!res.ok) return []
   const data = await res.json().catch(() => ({})) as TavilyResponse
+
+  // Capture images from first query (if requested)
+  if (captureImages && data.images?.length) {
+    _tavilyImagesAccum = (data.images as Array<string | TavilyImageResult>)
+      .map(img => typeof img === 'string'
+        ? { url: img }
+        : { url: img.url, description: img.description ?? undefined })
+      .filter(img => img.url?.startsWith('http'))
+      .slice(0, 12)
+  }
 
   return (data.results ?? []).map(r => ({
     url:              r.url,
@@ -566,10 +594,14 @@ const SEARCH_TIMEOUT_MS = 15_000
  *                   Passed to Serper so results come from the correct regional index.
  */
 export async function executeDeepSearch(
-  queries:  string[],
-  language  = 'en',
+  queries:      string[],
+  language      = 'en',
+  fetchImages   = false,   // pass true from /api/research to get Tavily images
 ): Promise<DeepSearchResponse> {
   const searchedAt = new Date().toISOString()
+
+  // Reset module-level image accumulator before each run
+  _tavilyImagesAccum = []
 
   // Shared abort controller — kills all in-flight fetches if timeout fires
   const abort  = new AbortController()
@@ -580,8 +612,10 @@ export async function executeDeepSearch(
 
   if (!hasTavily && !hasSerper) {
     clearTimeout(timer)
-    return { results: [], queriesUsed: queries, searchedAt, provider: 'none', staleSourceCount: 0 }
+    return { results: [], images: [], queriesUsed: queries, searchedAt, provider: 'none', staleSourceCount: 0 }
   }
+
+
 
   // Always run BOTH Tavily AND Serper in parallel for every query.
   // Tavily = AI-native deep crawl, Serper = Google's full index.
@@ -591,17 +625,19 @@ export async function executeDeepSearch(
 
   try {
     const batches = await Promise.all(
-      queries.map(async (q) => {
+      queries.map(async (q, idx) => {
+        // Only the first query captures images (to avoid quota overuse)
+        const captureImgs = fetchImages && idx === 0
         if (hasTavily && hasSerper) {
           // Both providers in parallel → maximum coverage
           const [tv, sp] = await Promise.all([
-            searchTavily(q, abort.signal, tavilyDepth),
+            searchTavily(q, abort.signal, tavilyDepth, captureImgs),
             searchSerper(q, abort.signal, language),
           ])
           const seen = new Set<string>()
           return [...tv, ...sp].filter(r => seen.has(r.url) ? false : (seen.add(r.url), true))
         }
-        if (hasTavily) return searchTavily(q, abort.signal, tavilyDepth)
+        if (hasTavily) return searchTavily(q, abort.signal, tavilyDepth, captureImgs)
         if (hasSerper) return searchSerper(q, abort.signal, language)
         return []
       }),
@@ -631,6 +667,7 @@ export async function executeDeepSearch(
 
     return {
       results:     trimmed,
+      images:      _tavilyImagesAccum,
       queriesUsed: queries,
       searchedAt,
       provider:         hasTavily ? 'tavily' : 'serper',
@@ -638,7 +675,7 @@ export async function executeDeepSearch(
     }
   } catch {
     clearTimeout(timer)
-    return { results: [], queriesUsed: queries, searchedAt, provider: 'none', staleSourceCount: 0 }
+    return { results: [], images: _tavilyImagesAccum, queriesUsed: queries, searchedAt, provider: 'none', staleSourceCount: 0 }
   }
 }
 

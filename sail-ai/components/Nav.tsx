@@ -82,6 +82,20 @@ export function Nav() {
         <nav style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <LanguageSelector />
           <Link
+            href="/research"
+            style={{
+              fontFamily:    'Inter, sans-serif',
+              fontSize:      '0.6875rem',
+              fontWeight:    600,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color:         '#C9A96E',
+              textDecoration:'none',
+            }}
+          >
+            Research
+          </Link>
+          <Link
             href="/pricing"
             style={{
               fontFamily:    'Inter, sans-serif',
@@ -160,6 +174,7 @@ export function Nav() {
                     </div>
 
                     <MenuItem href="/chat"      onClick={() => setMenuOpen(false)} label={t('nav.chartCourse')} />
+                    <MenuItem href="/research"  onClick={() => setMenuOpen(false)} label="Deep Research"        />
                     <MenuItem href="/dashboard" onClick={() => setMenuOpen(false)} label={t('nav.dashboard')}   />
                     <MenuItem href="/pricing"   onClick={() => setMenuOpen(false)} label={t('nav.pricing')}     />
 
