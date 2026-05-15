@@ -12,6 +12,7 @@
 
 import { useState, useRef } from 'react'
 import { Nav }               from '@/components/Nav'
+import { useLanguage }        from '@/lib/i18n/LanguageContext'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,7 @@ const SENTIMENT_LABEL: Record<string, string> = {
 // ── Loader animation ──────────────────────────────────────────────────────────
 
 function ResearchLoader({ query }: { query: string }) {
+  const { t } = useLanguage()
   return (
     <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
       <div style={{
@@ -92,10 +94,10 @@ function ResearchLoader({ query }: { query: string }) {
       }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: '#9CA3AF', margin: 0 }}>
-        Araştırılıyor: <strong style={{ color: '#0C0C0E' }}>{query}</strong>
+        {t('research.searching')} <strong style={{ color: '#0C0C0E' }}>{query}</strong>
       </p>
       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#C4C4CC', marginTop: '0.5rem' }}>
-        Tavily + Serper paralel tarama yapıyor…
+        {t('research.searching2')}
       </p>
     </div>
   )
@@ -169,6 +171,7 @@ function SectionCard({ section }: { section: ReportSection }) {
 // ── Image gallery ─────────────────────────────────────────────────────────────
 
 function ImageGallery({ images }: { images: ResearchImage[] }) {
+  const { t } = useLanguage()
   const [failed, setFailed] = useState<Set<string>>(new Set())
   const visible = images.filter(img => !failed.has(img.url)).slice(0, 9)
   if (visible.length === 0) return null
@@ -176,7 +179,7 @@ function ImageGallery({ images }: { images: ResearchImage[] }) {
   return (
     <div>
       <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
-        Kaynaklardan Görseller
+        {t('research.images')}
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
         {visible.map((img, i) => (
@@ -261,6 +264,7 @@ function SourceRow({ source, index }: { source: Source; index: number }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function ResearchPage() {
+  const { t } = useLanguage()
   const [query,   setQuery]   = useState('')
   const [context, setContext] = useState('')
   const [loading, setLoading] = useState(false)
@@ -268,6 +272,12 @@ export default function ResearchPage() {
   const [error,   setError]   = useState('')
   const [showSources, setShowSources] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  const SENTIMENT_LABEL_I18N: Record<string, string> = {
+    bullish: t('research.positive'),
+    bearish: t('research.negative'),
+    neutral: t('research.neutral'),
+  }
 
   async function runResearch(e?: React.FormEvent) {
     e?.preventDefault()
@@ -333,7 +343,7 @@ export default function ResearchPage() {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void runResearch() } }}
-                placeholder="Araştırmak istediğiniz konuyu yazın… (ör: Türkiye e-ticaret sektörü 2026, TikTok reklam maliyetleri, Shopify vs WooCommerce karşılaştırması)"
+                placeholder={t('research.placeholder')}
                 rows={3}
                 style={{
                   width:          '100%',
@@ -370,7 +380,7 @@ export default function ResearchPage() {
                   transition:   'background 0.15s',
                 }}
               >
-                {loading ? '…' : 'ARAŞTIR'}
+                {loading ? '…' : t('research.searchBtn')}
               </button>
             </div>
 
@@ -379,7 +389,7 @@ export default function ResearchPage() {
               type="text"
               value={context}
               onChange={e => setContext(e.target.value)}
-              placeholder="Ek bağlam (opsiyonel): sektör, bölge, ürün türü…"
+              placeholder={t('research.contextPlaceholder')}
               style={{
                 width:        '100%',
                 padding:      '0.6rem 1rem',
@@ -451,19 +461,17 @@ export default function ResearchPage() {
           <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
             <div style={{ fontSize: 48, marginBottom: '1rem' }}>📊</div>
             <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.5rem' }}>
-              Derin Pazar Araştırması
+              {t('research.title')}
             </h2>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: '#9CA3AF', maxWidth: 480, margin: '0 auto' }}>
-              Tavily + Serper çift arama motoru ile gerçek zamanlı web verisi çekilir,
-              Groq 70B ile yapılandırılmış istihbarat raporu üretilir.
-              Sonuçlar gerçek kaynaklardan alınan görsellerle desteklenir.
+              {t('research.subtitle')}
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '2rem' }}>
               {[
-                { icon: '🔎', label: 'Canlı Web Araması' },
-                { icon: '🖼️', label: 'Gerçek Görseller' },
-                { icon: '📈', label: 'Piyasa Analizi' },
-                { icon: '📚', label: 'Kaynak Doğrulama' },
+                { icon: '🔎', label: t('research.searching2').split('…')[0] },
+                { icon: '🖼️', label: t('research.images') },
+                { icon: '📈', label: t('research.market') },
+                { icon: '📚', label: t('research.sources') },
               ].map(f => (
                 <div key={f.label} style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 28, marginBottom: '0.25rem' }}>{f.icon}</div>
@@ -500,7 +508,7 @@ export default function ResearchPage() {
                 }}>
                   <div>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', margin: '0 0 2px' }}>
-                      Piyasa Duyarlılığı
+                      {t('research.market')}
                     </p>
                     <span style={{
                       fontFamily: 'Inter, sans-serif',
@@ -508,13 +516,13 @@ export default function ResearchPage() {
                       fontWeight: 700,
                       color:      SENTIMENT_COLOR[sentiment],
                     }}>
-                      {SENTIMENT_LABEL[sentiment]}
+                      {SENTIMENT_LABEL_I18N[sentiment]}
                     </span>
                   </div>
                   <div style={{ width: 1, height: 32, background: 'rgba(0,0,0,0.08)' }} />
                   <div>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', margin: '0 0 2px' }}>
-                      Güven
+                      {t('research.confidence')}
                     </p>
                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', fontWeight: 700, color: '#0C0C0E' }}>
                       {confidence}%
@@ -547,7 +555,7 @@ export default function ResearchPage() {
                 {report.keyFindings?.length > 0 && (
                   <div>
                     <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
-                      Temel Bulgular
+                      {t('research.keyFindings')}
                     </h3>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.625rem' }}>
                       {report.keyFindings.map((f, i) => (
@@ -561,7 +569,7 @@ export default function ResearchPage() {
                 {report.sections?.length > 0 && (
                   <div>
                     <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
-                      Detaylı Analiz
+                      {t('research.sections')}
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {report.sections.map((section, i) => (
@@ -575,7 +583,7 @@ export default function ResearchPage() {
                 {report.competitorInsights?.length > 0 && (
                   <div>
                     <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
-                      Rakip İstihbaratı
+                      {t('research.competitors')}
                     </h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem' }}>
                       {report.competitorInsights.map((c, i) => (
@@ -597,7 +605,7 @@ export default function ResearchPage() {
                 {report.actionableRecommendations?.length > 0 && (
                   <div>
                     <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
-                      Eylem Önerileri
+                      {t('research.recommendations')}
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                       {report.actionableRecommendations.map((rec, i) => (
@@ -649,15 +657,15 @@ export default function ResearchPage() {
                   padding:      '1rem 1.125rem',
                 }}>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.625rem' }}>
-                    Arama Detayları
+                    {t('research.queriesUsed')}
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     {[
-                      { label: 'Provider', value: report.provider?.toUpperCase() },
-                      { label: 'Kaynak', value: `${report.sources?.length ?? 0} sonuç` },
-                      { label: 'Görsel', value: `${report.images?.length ?? 0} adet` },
-                      { label: 'Eski Kaynak', value: `${report.staleSourceCount ?? 0} adet (>12ay)` },
-                      { label: 'Zaman Dilimi', value: report.marketSnapshot?.timeframe },
+                      { label: t('research.provider'), value: report.provider?.toUpperCase() },
+                      { label: t('research.sources'), value: `${report.sources?.length ?? 0}` },
+                      { label: t('research.images'), value: `${report.images?.length ?? 0}` },
+                      { label: t('research.stale'), value: `${report.staleSourceCount ?? 0}` },
+                      { label: t('research.timeframe'), value: report.marketSnapshot?.timeframe },
                     ].map(row => (
                       <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#9CA3AF' }}>{row.label}</span>
@@ -676,7 +684,7 @@ export default function ResearchPage() {
                     padding:      '1rem 1.125rem',
                   }}>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.625rem' }}>
-                      Arama Vektörleri
+                      {t('walk.queryVectors')}
                     </p>
                     {report.queriesUsed.map((q, i) => (
                       <p key={i} style={{
@@ -720,7 +728,7 @@ export default function ResearchPage() {
                   }}
                 >
                   <span>{showSources ? '▼' : '▶'}</span>
-                  Tüm Kaynaklar ({report.sources.length})
+                  {showSources ? t('research.hideSources') : t('research.showSources')} ({report.sources.length})
                 </button>
 
                 {showSources && (

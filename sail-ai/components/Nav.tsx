@@ -93,7 +93,7 @@ export function Nav() {
               textDecoration:'none',
             }}
           >
-            Research
+            {t('nav.research')}
           </Link>
           <Link
             href="/pricing"
@@ -174,7 +174,7 @@ export function Nav() {
                     </div>
 
                     <MenuItem href="/chat"      onClick={() => setMenuOpen(false)} label={t('nav.chartCourse')} />
-                    <MenuItem href="/research"  onClick={() => setMenuOpen(false)} label="Deep Research"        />
+                    <MenuItem href="/research"  onClick={() => setMenuOpen(false)} label={t('nav.research')}     />
                     <MenuItem href="/dashboard" onClick={() => setMenuOpen(false)} label={t('nav.dashboard')}   />
                     <MenuItem href="/pricing"   onClick={() => setMenuOpen(false)} label={t('nav.pricing')}     />
 

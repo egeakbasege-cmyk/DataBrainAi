@@ -144,10 +144,11 @@ async function parseFile(file: File): Promise<Attachment> {
 const WELCOME_DISMISSED_KEY = 'sail_welcome_dismissed_v1'
 
 function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
+  const { t } = useLanguage()
   const steps = [
-    { icon: '1', text: 'Describe your business situation in plain language' },
-    { icon: '2', text: 'Choose an analysis mode (Upwind = fast plan, SAIL = adaptive)' },
-    { icon: '3', text: 'Get a benchmark-grounded strategy with live web data' },
+    { icon: '1', text: t('chat.welcomeStep1') },
+    { icon: '2', text: t('chat.welcomeStep2') },
+    { icon: '3', text: t('chat.welcomeStep3') },
   ]
   return (
     <div style={{
@@ -164,7 +165,7 @@ function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
         <div style={{ flex: 1 }}>
           <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#FFFFFF', margin: '0 0 0.75rem', lineHeight: 1.3 }}>
-            Welcome to SAIL AI — here's how to get started
+            {t('chat.welcomeTitle')}
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             {steps.map(s => (
@@ -189,11 +190,11 @@ function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
             <a href="/research" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: '#C9A96E', textDecoration: 'none', letterSpacing: '0.06em' }}>
-              Try Deep Research →
+              {t('chat.welcomeResearch')}
             </a>
             <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.7rem' }}>|</span>
             <a href="/#tutorial" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none', letterSpacing: '0.06em' }}>
-              Watch tutorial
+              {t('chat.welcomeTutorial')}
             </a>
           </div>
         </div>

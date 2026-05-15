@@ -12,6 +12,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 // ── YouTube video ID — boş bırakırsanız animasyonlu demo görünür ──────────────
 const YOUTUBE_VIDEO_ID = ''  // Örn: 'dQw4w9WgXcQ'
@@ -49,19 +50,10 @@ interface Slide {
   time:    string
 }
 
-const SLIDES: Slide[] = [
-  { id: 1, chapter: 'İş durumunuzu anlatın',        time: '0:00' },
-  { id: 2, chapter: 'Analiz modu seçin',             time: '0:12' },
-  { id: 3, chapter: 'SAIL AI analiz ediyor',         time: '0:25' },
-  { id: 4, chapter: 'Gerçek AI yanıtı',              time: '0:38' },
-  { id: 5, chapter: 'Deep Research + Görseller',     time: '0:58' },
-  { id: 6, chapter: 'Ücretsiz başlayın',             time: '1:12' },
-]
-
 // ── Yardımcı bileşenler ───────────────────────────────────────────────────────
 
-function BenchmarkBar({ label, value, target, unit, lowerIsBetter }: {
-  label: string; value: number; target: number; unit: string; lowerIsBetter?: boolean
+function BenchmarkBar({ label, value, target, unit, lowerIsBetter, sectorLabel }: {
+  label: string; value: number; target: number; unit: string; lowerIsBetter?: boolean; sectorLabel: string
 }) {
   const max  = Math.max(value, target) * 1.25
   const vPct = Math.round((value  / max) * 100)
@@ -77,7 +69,7 @@ function BenchmarkBar({ label, value, target, unit, lowerIsBetter }: {
         <div style={{ height: '100%', width: `${vPct}%`, background: worse ? '#F87171' : '#C9A96E', borderRadius: 2, transition: 'width 0.8s ease' }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>Sektör medyanı</span>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>{sectorLabel}</span>
         <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, flex: 1, margin: '0 8px', marginTop: 2 }}>
           <div style={{ height: '100%', width: `${tPct}%`, background: 'rgba(255,255,255,0.28)', borderRadius: 2 }} />
         </div>
@@ -90,6 +82,7 @@ function BenchmarkBar({ label, value, target, unit, lowerIsBetter }: {
 // ── Slide ekranları ───────────────────────────────────────────────────────────
 
 function Slide1_Input() {
+  const { t } = useLanguage()
   const [typed, setTyped] = useState('')
   const QUERY = 'Shopify mağazam var. Aylık satış 85K TL, ama dönüşüm oranım %1.3. Sektörün nerede olduğunu ve ne yapabileceğimi analiz et.'
 
@@ -144,7 +137,7 @@ function Slide1_Input() {
         {/* Send button */}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <div style={{ padding: '0.4rem 0.875rem', background: typed.length > 20 ? '#C9A96E' : 'rgba(201,169,110,0.2)', borderRadius: '5px', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: typed.length > 20 ? '#0C0C0E' : 'rgba(255,255,255,0.2)', transition: 'all 0.3s' }}>
-            Analiz Et →
+            {t('walk.analyzeBtnLabel')}
           </div>
         </div>
       </div>
@@ -153,6 +146,7 @@ function Slide1_Input() {
 }
 
 function Slide2_ModeSelect() {
+  const { t } = useLanguage()
   const [selected, setSelected] = useState('')
   useEffect(() => {
     const modes = ['Upwind', 'SAIL', 'Operator']
@@ -177,7 +171,7 @@ function Slide2_ModeSelect() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 0.25rem' }}>
-        Analiz modunu seç
+        {t('walk.selectModeLabel')}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', flex: 1 }}>
         {modes.map(m => {
@@ -206,7 +200,7 @@ function Slide2_ModeSelect() {
       </div>
       {selected && (
         <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.3)', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#C9A96E' }}>
-          ✓ <strong>{selected}</strong> modu seçildi — Analiz Et →
+          ✓ <strong>{selected}</strong> {t('walk.modeSelectedMsg')}
         </div>
       )}
     </div>
@@ -214,6 +208,7 @@ function Slide2_ModeSelect() {
 }
 
 function Slide3_Analyzing() {
+  const { t } = useLanguage()
   const [dotCount, setDotCount] = useState(0)
   const [step, setStep] = useState(0)
   const SEARCH_STEPS = [
@@ -244,7 +239,7 @@ function Slide3_Analyzing() {
           margin: '0 auto 0.75rem',
         }} />
         <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', color: '#FFFFFF', margin: 0 }}>
-          SAIL Intelligence analiz ediyor{''.padEnd(dotCount, '.')}
+          {t('walk.analyzing')}{''.padEnd(dotCount, '.')}
         </p>
       </div>
 
@@ -263,9 +258,9 @@ function Slide3_Analyzing() {
       {/* Stats */}
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         {[
-          { label: 'Kaynak tarandı', value: `${Math.min(step * 4, 20)}` },
-          { label: 'Sorgu vektörü', value: '3' },
-          { label: 'Model', value: 'Groq 70B' },
+          { label: t('walk.sourcesScanned'), value: `${Math.min(step * 4, 20)}` },
+          { label: t('walk.queryVectors'),   value: '3' },
+          { label: 'Model',                  value: 'Groq 70B' },
         ].map(s => (
           <div key={s.label} style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', padding: '0.5rem', textAlign: 'center' }}>
             <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 700, color: '#C9A96E', margin: 0 }}>{s.value}</p>
@@ -278,6 +273,7 @@ function Slide3_Analyzing() {
 }
 
 function Slide4_Response() {
+  const { t } = useLanguage()
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto' }}>
       {/* Response card header */}
@@ -295,7 +291,7 @@ function Slide4_Response() {
       </div>
 
       {/* Benchmark */}
-      <BenchmarkBar label="Dönüşüm oranı" value={1.3} target={2.3} unit="%" lowerIsBetter={false} />
+      <BenchmarkBar label="Dönüşüm oranı" value={1.3} target={2.3} unit="%" lowerIsBetter={false} sectorLabel={t('walk.sectorMedian')} />
 
       {/* Actions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -309,7 +305,7 @@ function Slide4_Response() {
 
       {/* 30-day target */}
       <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '6px' }}>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#10B981' }}>30 günlük hedef</span>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#10B981' }}>{t('walk.target30d')}</span>
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)', margin: '2px 0 0', lineHeight: 1.4 }}>
           CVR %1.3 → %1.8 — sektör medianesine %44 yaklaşmak
         </p>
@@ -319,6 +315,7 @@ function Slide4_Response() {
 }
 
 function Slide5_Research() {
+  const { t } = useLanguage()
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto' }}>
       {/* Page header */}
@@ -344,7 +341,7 @@ function Slide5_Research() {
 
       {/* Sources */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: 0 }}>Kaynaklar</p>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: 0 }}>{t('walk.sources')}</p>
         {REAL_SOURCES.map((s, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0.5rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '5px' }}>
             <div>
@@ -371,14 +368,15 @@ function Slide5_Research() {
 }
 
 function Slide6_Signup() {
+  const { t } = useLanguage()
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1rem' }}>
       <div style={{ textAlign: 'center' }}>
         <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.4rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.25rem', lineHeight: 1.2 }}>
-          Ücretsiz başlayın
+          {t('walk.slide6Chapter')}
         </p>
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
-          Kayıt 10 saniye sürer. Kredi kartı gerekmez.
+          {t('walk.ctaSub')}
         </p>
       </div>
 
@@ -391,27 +389,27 @@ function Slide6_Signup() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#0C0C0E' }}>Google ile devam et</span>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#0C0C0E' }}>{t('walk.signupGoogle')}</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>ya da</span>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>{t('walk.orEmail')}</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
         </div>
 
         <div style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', textAlign: 'center' }}>
-          E-posta ile kayıt ol
+          {t('walk.signupFree')}
         </div>
       </div>
 
       {/* Free tier badge */}
       <div style={{ textAlign: 'center', padding: '0.625rem', background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)', borderRadius: '8px', maxWidth: 280, margin: '0 auto', width: '100%' }}>
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#C9A96E', fontWeight: 600, margin: '0 0 0.25rem' }}>
-          Ücretsiz plan içeriyor:
+          {t('walk.freePlan')}
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', justifyContent: 'center' }}>
-          {['5 analiz/gün', 'Tüm modlar', 'Deep Research', 'Gerçek web verisi'].map(f => (
+          {[t('walk.feat1'), t('walk.feat2'), t('walk.feat3'), t('walk.feat4')].map(f => (
             <span key={f} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', padding: '2px 5px' }}>◆ {f}</span>
           ))}
         </div>
@@ -453,11 +451,22 @@ function YouTubeEmbed({ videoId }: { videoId: string }) {
 // ── Main exported component ───────────────────────────────────────────────────
 
 export function ProductWalkthrough() {
+  const { t } = useLanguage()
   const [current,   setCurrent]   = useState(1)
   const [paused,    setPaused]    = useState(false)
   const [progress,  setProgress]  = useState(0)
 
-  const totalSlides = SLIDES.length
+  // Build translated slides list inside component to use t()
+  const SLIDES_I18N: Slide[] = [
+    { id: 1, chapter: t('walk.slide1Chapter'), time: '0:00' },
+    { id: 2, chapter: t('walk.slide2Chapter'), time: '0:12' },
+    { id: 3, chapter: t('walk.slide3Chapter'), time: '0:25' },
+    { id: 4, chapter: t('walk.slide4Chapter'), time: '0:38' },
+    { id: 5, chapter: t('walk.slide5Chapter'), time: '0:58' },
+    { id: 6, chapter: t('walk.slide6Chapter'), time: '1:12' },
+  ]
+
+  const totalSlides = SLIDES_I18N.length
 
   const advance = useCallback(() => {
     setCurrent(c => c < totalSlides ? c + 1 : 1)
@@ -500,24 +509,24 @@ export function ProductWalkthrough() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#C9A96E' }}>
-                Ürün Turu
+                {t('walk.chapters')}
               </span>
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.06em', color: '#0C0C0E', background: '#C9A96E', padding: '1px 6px', borderRadius: '3px' }}>
                 {Math.round((SLIDE_DURATION * totalSlides) / 1000 / 60)}:{String(Math.round((SLIDE_DURATION * totalSlides / 1000) % 60)).padStart(2, '0')} dk
               </span>
             </div>
             <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', fontWeight: 600, color: '#FFFFFF', margin: 0, lineHeight: 1.2 }}>
-              SAIL AI&apos;ı 90 saniyede öğren
+              {t('welcome.heroTitle')}
             </h2>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.5rem', fontWeight: 300 }}>
-              Gerçek AI yanıtları · Canlı web verisi · Sektör benchmark&apos;ları
+              {t('welcome.heroSub')}
             </p>
           </div>
           <Link
             href="/welcome"
             style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.35)', borderRadius: '6px', padding: '0.5rem 1rem', textDecoration: 'none', flexShrink: 0 }}
           >
-            Ücretsiz Başla →
+            {t('walk.ctaBtn')}
           </Link>
         </div>
 
@@ -548,7 +557,7 @@ export function ProductWalkthrough() {
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)' }}>sail-ai.vercel.app</span>
                 </div>
                 {paused && (
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.55rem', color: '#C9A96E', letterSpacing: '0.05em' }}>⏸ duraklatıldı</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.55rem', color: '#C9A96E', letterSpacing: '0.05em' }}>⏸ {t('walk.pause')}</span>
                 )}
               </div>
 
@@ -566,9 +575,9 @@ export function ProductWalkthrough() {
             {/* ── Chapter list ─── */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '0.5rem' }}>
-                Bölümler
+                {t('walk.chapters')}
               </p>
-              {SLIDES.map((slide) => {
+              {SLIDES_I18N.map((slide) => {
                 const active = current === slide.id
                 const done   = current > slide.id
                 return (
@@ -619,7 +628,7 @@ export function ProductWalkthrough() {
               {/* CTA below chapters */}
               <div style={{ marginTop: '0.75rem', padding: '0.875rem', background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)', borderRadius: '8px' }}>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#C9A96E', fontWeight: 600, margin: '0 0 0.5rem', lineHeight: 1.4 }}>
-                  Hazır mısınız?
+                  {t('walk.ctaHeadline')}
                 </p>
                 <Link
                   href="/welcome"
@@ -638,10 +647,10 @@ export function ProductWalkthrough() {
                     textDecoration:'none',
                   }}
                 >
-                  Ücretsiz Başla →
+                  {t('walk.ctaBtn')}
                 </Link>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.3)', textAlign: 'center', margin: '0.4rem 0 0' }}>
-                  Kredi kartı gerekmez
+                  {t('walk.ctaSub')}
                 </p>
               </div>
             </div>
