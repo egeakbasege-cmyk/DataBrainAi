@@ -728,9 +728,12 @@ SCOPE RULES — NON-NEGOTIABLE:
   const streamingModes = new Set(['sail', 'operator', 'synergy', 'scenario'])
   const uncertaintySuffix = streamingModes.has(analysisMode) ? DATA_UNCERTAINTY_SUFFIX : ''
 
-  // Research context for JSON modes injected as a SYSTEM-level block (higher authority than user msg)
-  // so the LLM prioritises live data over the "sector estimates (est.)" instructions in mode prompts.
-  const researchSystemBlock = _hasSynthesisContext && !streamingModes.has(analysisMode)
+  // Research context injected as a SYSTEM-level block for ALL modes.
+  // Previously this was excluded for streaming modes (sail/operator/synergy/scenario),
+  // leaving research data only in the user message where the model deprioritised it
+  // and fell back to training-data hallucinations. System-level injection gives the
+  // research block the highest authority regardless of mode type.
+  const researchSystemBlock = _hasSynthesisContext
     ? `\n\nLIVE RESEARCH DATA — USE THIS FIRST:\n${body.ragContext ?? ''}\n`
     : ''
 
@@ -754,11 +757,11 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + researchSystemBlock + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
-        max_tokens:  1000,
+        max_tokens:  1200,
         temperature: 0.45,
         stream:      true,
       }),
@@ -826,7 +829,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + researchSystemBlock + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -932,7 +935,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + researchSystemBlock + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -1004,7 +1007,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + researchSystemBlock + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
