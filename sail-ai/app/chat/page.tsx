@@ -13,8 +13,8 @@ import { DailyCounter }                  from '@/components/DailyCounter'
 import { PaywallModal }                  from '@/components/PaywallModal'
 import { FeedbackModal }                 from '@/components/FeedbackModal'
 import { FileAttachmentPill }            from '@/components/FileAttachmentPill'
-import { ConnectorDock, useConnectorState } from '@/components/ConnectorDock'
-import { UserDataImport, useUserSources }   from '@/components/UserDataImport'
+import { useConnectorState } from '@/components/ConnectorDock'
+import { useUserSources }   from '@/components/UserDataImport'
 import type { Attachment }               from '@/components/FileAttachmentPill'
 import { ModeSelector }                  from '@/components/ModeSelector'
 import type { AnalysisMode }             from '@/components/ModeSelector'
@@ -286,6 +286,10 @@ export default function ChatPage() {
   const [autoError, setAutoError] = useState<string | null>(null)
   // Stores the original query text while the mood guide card is shown
   const pendingAutoTextRef = useRef<string>('')
+
+  // Vanishing mode grid state
+  const [showModeGrid, setShowModeGrid] = useState(true)
+  const [prevTurns, setPrevTurns] = useState<Array<{q:string; a:string; m:AnalysisMode}>>([])
 
   // Context toggle + inline paywall
   const [useProfileCtx,     setUseProfileCtx]    = useState(true)
@@ -763,6 +767,7 @@ export default function ChatPage() {
     if (!text) return
     if (!canAnalyse) { setShowInlinePaywall(true); return }
     setShowInlinePaywall(false)
+    setShowModeGrid(false)
 
     // AUTO mode: run gateway router before dispatching to any specific mode
     if (autoMode) {
@@ -832,6 +837,8 @@ export default function ChatPage() {
   }
 
   function handleReset() {
+    setShowModeGrid(true)
+    setPrevTurns([])
     sailAbortRef.current?.abort()
     setSailText('')
     setSailPhase('idle')
@@ -1007,13 +1014,86 @@ export default function ChatPage() {
                     {businessMode ? 'Business' : 'Free Chat'}
                   </span>
                 </button>
+                {!isPro && (
+                  <button
+                    onClick={triggerPaywall}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.3rem',
+                      padding: '0.25rem 0.75rem',
+                      background: 'linear-gradient(135deg, rgba(201,169,110,0.15), rgba(201,169,110,0.08))',
+                      border: '1.5px solid rgba(201,169,110,0.55)',
+                      borderRadius: '999px',
+                      cursor: 'pointer',
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: '#C9A96E',
+                      flexShrink: 0,
+                      boxShadow: '0 0 8px rgba(201,169,110,0.15)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    ✦ Upgrade Pro
+                  </button>
+                )}
               </div>
             ) : (
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#C4C4CC', letterSpacing: '0.03em' }}>
-                {t('chat.noContext')}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#C4C4CC', letterSpacing: '0.03em' }}>
+                  {t('chat.noContext')}
+                </span>
+                {!isPro && (
+                  <button
+                    onClick={triggerPaywall}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.3rem',
+                      padding: '0.25rem 0.75rem',
+                      background: 'linear-gradient(135deg, rgba(201,169,110,0.15), rgba(201,169,110,0.08))',
+                      border: '1.5px solid rgba(201,169,110,0.55)',
+                      borderRadius: '999px',
+                      cursor: 'pointer',
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: '#C9A96E',
+                      flexShrink: 0,
+                      boxShadow: '0 0 8px rgba(201,169,110,0.15)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    ✦ Upgrade Pro
+                  </button>
+                )}
+              </div>
             )}
             <DailyCounter used={usedToday} isPro={isPro} />
+            {!showModeGrid && (
+              <button
+                onClick={() => { handleReset() }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.35rem',
+                  padding: '0.25rem 0.75rem',
+                  background: 'rgba(201,169,110,0.08)',
+                  border: '1px solid rgba(201,169,110,0.35)',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: '#C9A96E',
+                  flexShrink: 0,
+                  transition: 'all 0.15s',
+                }}
+              >
+                ⊕ Select Mode
+              </button>
+            )}
           </div>
         </div>
 
@@ -1052,7 +1132,7 @@ export default function ChatPage() {
 
         {/* ── Input area ── */}
         <AnimatePresence mode="wait">
-          {(!isComplete || isConversing || state === 'ERROR') && (
+          {(true) && (
             <motion.div
               key="input"
               initial={{ opacity: 0, y: 8 }}
@@ -1095,75 +1175,68 @@ export default function ChatPage() {
                 )}
               </AnimatePresence>
 
-              {/* User Data Import drawer */}
-              <UserDataImport open={importOpen} onClose={() => setImportOpen(false)} />
-
-              {/* Connector Dock — hidden while active */}
-              {!isActive && (
-                <ConnectorDock
-                  enabledIds={enabledIds}
-                  analysisActive={analysisActive}
-                  onToggle={toggleConnector}
-                  onSetActive={setConnectorActive}
-                  onEnableAll={enableAllConnectors}
-                  onDisableAll={disableAllConnectors}
-                  onImportClick={() => setImportOpen(true)}
-                />
-              )}
-
-              {/* Mode selector — hidden while active */}
-              {!isActive && (
-                <div style={{ marginBottom: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {/* Auto mode hides the manual selector */}
-                  {!autoMode && (
-                    <ModeSelector
-                      mode={mode}
-                      onChange={setMode}
-                      synergyModes={synergyModes}
-                      onSynergyChange={setSynergyModes}
-                      brandName={brandConfig?.aiName ?? brandConfig?.companyName}
-                    />
-                  )}
-
-                  {/* ⊕ AUTO toggle */}
-                  <button
-                    onClick={() => { setAutoMode(m => !m); setAutoPhase('idle'); setMoodGuide(null); setAutoError(null) }}
-                    title={autoMode ? 'Switch to manual mode selection' : 'Let Aetheris pick the best mode automatically'}
-                    style={{
-                      display:       'flex',
-                      alignItems:    'center',
-                      gap:           '0.35rem',
-                      padding:       '0.3rem 0.75rem',
-                      borderRadius:  '999px',
-                      background:    autoMode ? 'rgba(201,169,110,0.12)' : 'rgba(0,0,0,0.04)',
-                      border:        `1px solid ${autoMode ? 'rgba(201,169,110,0.45)' : 'rgba(0,0,0,0.1)'}`,
-                      cursor:        'pointer',
-                      transition:    'all 0.18s',
-                      flexShrink:    0,
-                      marginLeft:    autoMode ? 0 : 'auto',
-                    }}
-                  >
-                    <span style={{
-                      fontFamily:    'Inter, sans-serif',
-                      fontSize:      '0.6rem',
-                      fontWeight:    700,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color:         autoMode ? '#C9A96E' : '#9CA3AF',
-                    }}>
-                      ⊕ AUTO
-                    </span>
-                    {autoMode && (
-                      <span style={{
-                        width:        5,
-                        height:       5,
-                        borderRadius: '50%',
-                        background:   '#C9A96E',
-                        flexShrink:   0,
-                      }} />
+              {/* Mode selector — hidden while active or after submit */}
+              {!isActive && showModeGrid && (
+                <motion.div
+                  key="mode-grid"
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6, height: 0 }}
+                  transition={{ duration: 0.22 }}
+                  style={{ marginBottom: '0.625rem' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {/* Auto mode hides the manual selector */}
+                    {!autoMode && (
+                      <ModeSelector
+                        mode={mode}
+                        onChange={setMode}
+                        synergyModes={synergyModes}
+                        onSynergyChange={setSynergyModes}
+                        brandName={brandConfig?.aiName ?? brandConfig?.companyName}
+                      />
                     )}
-                  </button>
-                </div>
+
+                    {/* ⊕ AUTO toggle */}
+                    <button
+                      onClick={() => { setAutoMode(m => !m); setAutoPhase('idle'); setMoodGuide(null); setAutoError(null) }}
+                      title={autoMode ? 'Switch to manual mode selection' : 'Let Aetheris pick the best mode automatically'}
+                      style={{
+                        display:       'flex',
+                        alignItems:    'center',
+                        gap:           '0.35rem',
+                        padding:       '0.3rem 0.75rem',
+                        borderRadius:  '999px',
+                        background:    autoMode ? 'rgba(201,169,110,0.12)' : 'rgba(0,0,0,0.04)',
+                        border:        `1px solid ${autoMode ? 'rgba(201,169,110,0.45)' : 'rgba(0,0,0,0.1)'}`,
+                        cursor:        'pointer',
+                        transition:    'all 0.18s',
+                        flexShrink:    0,
+                        marginLeft:    autoMode ? 0 : 'auto',
+                      }}
+                    >
+                      <span style={{
+                        fontFamily:    'Inter, sans-serif',
+                        fontSize:      '0.6rem',
+                        fontWeight:    700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color:         autoMode ? '#C9A96E' : '#9CA3AF',
+                      }}>
+                        ⊕ AUTO
+                      </span>
+                      {autoMode && (
+                        <span style={{
+                          width:        5,
+                          height:       5,
+                          borderRadius: '50%',
+                          background:   '#C9A96E',
+                          flexShrink:   0,
+                        }} />
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
               )}
 
               {/* Downwind conversation indicator */}
@@ -1537,6 +1610,31 @@ export default function ChatPage() {
           )}
         </AnimatePresence>
 
+        {/* ── Conversation history (past turns) ── */}
+        {prevTurns.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {prevTurns.map((turn, i) => (
+              <div key={i} style={{
+                background: 'rgba(0,0,0,0.025)',
+                border: '1px solid rgba(0,0,0,0.07)',
+                borderRadius: '10px',
+                padding: '0.75rem 1rem',
+                opacity: 0.7,
+              }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.375rem', lineHeight: 1.4 }}>
+                  {turn.q.slice(0, 140)}{turn.q.length > 140 ? '…' : ''}
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A', margin: 0, lineHeight: 1.55 }}>
+                  {turn.a.slice(0, 250)}{turn.a.length > 250 ? '…' : ''}
+                </p>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#C4C4CC', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {turn.m}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ── SAIL streaming result ── */}
         <AnimatePresence>
           {mode === 'sail' && (sailPhase === 'streaming' || sailPhase === 'complete') && (
@@ -1761,7 +1859,7 @@ export default function ChatPage() {
                   transition: 'all 0.15s',
                 }}
               >
-                <HelmSVG /> {t('chat.newAnalysis')}
+                <HelmSVG /> New Topic
               </button>
               {response && mode !== 'sail' && mode !== 'trim' && (
                 <button
