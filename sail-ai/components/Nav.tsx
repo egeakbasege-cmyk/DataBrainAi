@@ -96,20 +96,6 @@ export function Nav() {
             {t('nav.research')}
           </Link>
           <Link
-            href="/connectors"
-            style={{
-              fontFamily:    'Inter, sans-serif',
-              fontSize:      '0.6875rem',
-              fontWeight:    600,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color:         '#71717A',
-              textDecoration:'none',
-            }}
-          >
-            {t('conn.pageTitle')}
-          </Link>
-          <Link
             href="/data-lab"
             style={{
               fontFamily:    'Inter, sans-serif',
@@ -204,7 +190,6 @@ export function Nav() {
                     <MenuItem href="/chat"        onClick={() => setMenuOpen(false)} label={t('nav.chartCourse')} />
                     <MenuItem href="/research"   onClick={() => setMenuOpen(false)} label={t('nav.research')}    />
                     <MenuItem href="/data-lab"   onClick={() => setMenuOpen(false)} label="Data Lab"             />
-                    <MenuItem href="/connectors" onClick={() => setMenuOpen(false)} label={t('conn.pageTitle')}  />
                     <MenuItem href="/dashboard"  onClick={() => setMenuOpen(false)} label={t('nav.dashboard')}   />
                     <MenuItem href="/pricing"   onClick={() => setMenuOpen(false)} label={t('nav.pricing')}     />
 
