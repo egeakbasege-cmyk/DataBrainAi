@@ -297,12 +297,13 @@ export default function ChatPage() {
 
   // ── Unified chat thread (new architecture) ───────────────────────────────
   const {
-    messages:         chatMessages,
+    messages:          chatMessages,
     addUserMessage,
     startAssistantMessage,
     updateStreaming,
     finalizeMessage,
     clearThread,
+    compressedHistory,
   } = useChatMessages()
 
   // Follow-up chip handler — pre-fills input and submits
@@ -360,6 +361,16 @@ export default function ChatPage() {
     : undefined
 
   useEffect(() => { setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent)) }, [])
+
+  // ── Stream cleanup on unmount — abort all active SSE connections ────────────
+  useEffect(() => {
+    return () => {
+      sailAbortRef.current?.abort()
+      operatorAbortRef.current?.abort()
+      synergyAbortRef.current?.abort()
+      scenarioAbortRef.current?.abort()
+    }
+  }, [])
 
   // Welcome banner: show only on first visit, dismiss stores to localStorage
   useEffect(() => {
@@ -513,6 +524,10 @@ export default function ChatPage() {
       connector_ids: activeConnectorIds,
       user_urls:     userUrls,
     }
+    // ── A-01: inject compressed conversation history for multi-turn context ──
+    const history = compressedHistory({ keepTail: 6, maxTotalChars: 12_000 })
+    if (history.length > 0) body.messages = history
+
     const ctx = getContext()
     if (ctx)               body.context           = ctx
     if (apiKey)            body.apiKey            = apiKey

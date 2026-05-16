@@ -12,6 +12,7 @@ export function Nav() {
   const { t } = useLanguage()
   const [menuOpen, setMenuOpen] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError,   setPortalError]   = useState<string | null>(null)
 
   const initial = session?.user?.name?.[0]?.toUpperCase()
     ?? session?.user?.email?.[0]?.toUpperCase()
@@ -19,13 +20,15 @@ export function Nav() {
 
   async function handleManageSubscription() {
     setPortalLoading(true)
+    setPortalError(null)
     try {
       const res  = await fetch('/api/subscription/portal', { method: 'POST' })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       window.location.href = data.url
     } catch (err: any) {
-      alert(err.message)
+      // H-06: replace alert() with inline error — prevents browser dialog hijacking
+      setPortalError(err.message ?? 'Unable to open billing portal. Please try again.')
     } finally {
       setPortalLoading(false)
     }
@@ -212,6 +215,18 @@ export function Nav() {
                       >
                         {portalLoading ? t('nav.loading') : t('nav.manageSubscription')}
                       </button>
+                    )}
+
+                    {portalError && (
+                      <p style={{
+                        margin:     '0 1rem 0.4rem',
+                        fontSize:   '0.72rem',
+                        color:      '#DC2626',
+                        fontFamily: 'Inter, sans-serif',
+                        lineHeight: 1.35,
+                      }}>
+                        {portalError}
+                      </p>
                     )}
 
                     <div style={{ height: 1, background: 'rgba(12,12,14,0.07)', margin: '0.25rem 0' }} />

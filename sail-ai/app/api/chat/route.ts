@@ -301,6 +301,34 @@ function buildUserMessage(body: ExtendedPayload): string {
   return parts.join('\n\n')
 }
 
+// ── A-01: Multi-turn message builder ─────────────────────────────────────────
+// Prepends compressed conversation history (sent by the client) to the
+// standard [system, user] pair so every streaming mode has full turn context.
+//
+// history entries are { role: 'user'|'assistant', content: string } pairs
+// already truncated by the client-side compressedHistory() call.
+
+type GroqMessage = { role: 'system' | 'user' | 'assistant'; content: string }
+
+function buildGroqMessages(
+  systemContent: string,
+  userContent:   string,
+  history:       Array<{ role: string; content: string }> | undefined,
+): GroqMessage[] {
+  const system: GroqMessage = { role: 'system', content: systemContent }
+  const user:   GroqMessage = { role: 'user',   content: userContent   }
+
+  if (!history?.length) return [system, user]
+
+  // Clamp history entries to 800 chars each to avoid blowing the context window
+  const historyMsgs: GroqMessage[] = history.map(m => ({
+    role:    (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+    content: m.content.slice(0, 800),
+  }))
+
+  return [system, ...historyMsgs, user]
+}
+
 // ── Gateway Router ────────────────────────────────────────────────────────────
 // Ultra-fast preliminary LLM call (llama-3.1-8b-instant, 150 tokens, 3s timeout)
 // that classifies query intent and selects the optimal analysis mode.
@@ -476,29 +504,32 @@ async function runGatewayRouter(
   const abort = new AbortController()
   const timer = setTimeout(() => abort.abort(), 3_000)
 
-  try {
-    const userContent = context?.trim()
-      ? `Context: ${context.trim().slice(0, 300)}\n\nQuery: ${message.slice(0, 500)}`
-      : message.slice(0, 500)
+  const userContent = context?.trim()
+    ? `Context: ${context.trim().slice(0, 300)}\n\nQuery: ${message.slice(0, 500)}`
+    : message.slice(0, 500)
 
-    const res = await fetch(GROQ_URL, {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${keys[0]}`,
-        'Content-Type':  'application/json',
+  const reqBody = JSON.stringify({
+    model:           GROQ_MODEL_FALLBACK,   // llama-3.1-8b-instant — fast + high TPD
+    messages: [
+      { role: 'system', content: GATEWAY_ROUTER_PROMPT },
+      { role: 'user',   content: userContent },
+    ],
+    max_tokens:      150,
+    temperature:     0.1,
+    response_format: { type: 'json_object' },
+  })
+
+  try {
+    // Use groqFetch() so all keys rotate on 429 — previously only keys[0] was used
+    const res = await groqFetch(
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    reqBody,
+        signal:  abort.signal,
       },
-      body: JSON.stringify({
-        model:           GROQ_MODEL_FALLBACK,   // llama-3.1-8b-instant — fast + high TPD
-        messages: [
-          { role: 'system', content: GATEWAY_ROUTER_PROMPT },
-          { role: 'user',   content: userContent },
-        ],
-        max_tokens:      150,
-        temperature:     0.1,
-        response_format: { type: 'json_object' },
-      }),
-      signal: abort.signal,
-    })
+      byokKey,
+    )
 
     clearTimeout(timer)
     if (!res.ok) return null
@@ -722,10 +753,11 @@ SCOPE RULES — NON-NEGOTIABLE:
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model:       GROQ_MODEL,
-        messages: [
-          { role: 'system', content: domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
-          { role: 'user',   content: userMessage },
-        ],
+        messages: buildGroqMessages(
+          domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          userMessage,
+          body.messages,
+        ),
         max_tokens:  1000,
         temperature: 0.45,
         stream:      true,
@@ -793,10 +825,11 @@ SCOPE RULES — NON-NEGOTIABLE:
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model:       GROQ_MODEL,
-        messages: [
-          { role: 'system', content: domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
-          { role: 'user',   content: userMessage },
-        ],
+        messages: buildGroqMessages(
+          domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          userMessage,
+          body.messages,
+        ),
         max_tokens:  1200,
         temperature: 0.45,
         stream:      true,
@@ -898,13 +931,11 @@ SCOPE RULES — NON-NEGOTIABLE:
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model:       GROQ_MODEL,
-        messages: [
-          {
-            role:    'system',
-            content: buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
-          },
-          { role: 'user', content: userMessage },
-        ],
+        messages: buildGroqMessages(
+          domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          userMessage,
+          body.messages,
+        ),
         max_tokens:  1400,
         temperature: 0.5,
         stream:      true,
@@ -972,10 +1003,11 @@ SCOPE RULES — NON-NEGOTIABLE:
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model:       GROQ_MODEL,
-        messages: [
-          { role: 'system', content: domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix },
-          { role: 'user',   content: userMessage },
-        ],
+        messages: buildGroqMessages(
+          domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          userMessage,
+          body.messages,
+        ),
         max_tokens:  1200,
         temperature: 0.5,
         stream:      true,

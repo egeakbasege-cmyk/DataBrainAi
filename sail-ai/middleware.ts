@@ -104,12 +104,15 @@ export default auth((req: NextRequest & { auth?: any }) => {
 
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+    // 'unsafe-eval' removed — was an XSS attack vector. 'unsafe-inline' kept for
+    // Next.js hydration inline scripts until nonce-based CSP is adopted.
+    "script-src 'self' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' blob: data: https://*.googleusercontent.com",
-    "connect-src 'self' https://generativelanguage.googleapis.com https://api.stripe.com",
-    "frame-src https://js.stripe.com",
+    "img-src 'self' blob: data: https://*.googleusercontent.com https://images.unsplash.com",
+    // All API providers explicitly allowlisted
+    "connect-src 'self' https://api.groq.com https://api.tavily.com https://google.serper.dev https://generativelanguage.googleapis.com https://api.stripe.com https://*.sentry.io https://vitals.vercel-insights.com",
+    "frame-src https://js.stripe.com https://hooks.stripe.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
