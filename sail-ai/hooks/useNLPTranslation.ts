@@ -22,8 +22,8 @@
  * Falls back to the original text on any error — never breaks the UI.
  */
 
-import { useCallback, useRef, useState } from 'react'
-import { useLanguage }                   from '@/lib/i18n/LanguageContext'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLanguage }                              from '@/lib/i18n/LanguageContext'
 
 // ── Cache persistence ─────────────────────────────────────────────────────────
 
@@ -62,65 +62,73 @@ function hashString(str: string): string {
 export function useNLPTranslation() {
   const { locale } = useLanguage()
 
+  // A-04: store locale in a ref so all inner callbacks can read the *current*
+  // locale without being recreated on every render. This eliminates stale
+  // closures: functions memoised with [] always see the live locale value.
+  const localeRef  = useRef(locale)
+  useEffect(() => { localeRef.current = locale }, [locale])
+
   // L1: in-memory cache (Map<hash, translation>)
   const memCache   = useRef<Map<string, string>>(new Map())
   const [isTranslating, setIsTranslating] = useState(false)
 
   // ── Internal: lookup with both cache tiers ────────────────────────────────
 
-  function getCached(text: string): string | null {
+  const getCached = useCallback((text: string): string | null => {
+    const lc   = localeRef.current
     const hash = hashString(text)
 
     // L1 check
-    const mem = memCache.current.get(`${locale}:${hash}`)
+    const mem = memCache.current.get(`${lc}:${hash}`)
     if (mem) return mem
 
     // L2 check (only when locale ≠ en to avoid unnecessary reads)
-    if (locale !== 'en') {
+    if (lc !== 'en') {
       try {
         const store = loadCache()
-        const hit   = store[locale]?.[hash]
+        const hit   = store[lc]?.[hash]
         if (hit) {
-          memCache.current.set(`${locale}:${hash}`, hit)
+          memCache.current.set(`${lc}:${hash}`, hit)
           return hit
         }
       } catch { /* ignore */ }
     }
     return null
-  }
+  }, [])  // stable — reads locale via ref
 
-  function setCached(text: string, translation: string) {
+  const setCached = useCallback((text: string, translation: string) => {
+    const lc   = localeRef.current
     const hash = hashString(text)
-    memCache.current.set(`${locale}:${hash}`, translation)
+    memCache.current.set(`${lc}:${hash}`, translation)
 
     try {
       const store = loadCache()
-      if (!store[locale]) store[locale] = {}
+      if (!store[lc]) store[lc] = {}
 
       // Evict oldest if over limit
-      const entries = Object.entries(store[locale]!)
+      const entries = Object.entries(store[lc]!)
       if (entries.length >= MAX_CACHE_ENTRIES) {
         const toDelete = entries.slice(0, Math.floor(MAX_CACHE_ENTRIES / 4))
-        toDelete.forEach(([k]) => delete store[locale]![k])
+        toDelete.forEach(([k]) => delete store[lc]![k])
       }
 
-      store[locale]![hash] = translation
+      store[lc]![hash] = translation
       saveCache(store)
     } catch { /* ignore */ }
-  }
+  }, [])  // stable — reads locale via ref
 
   // ── Internal: network call ────────────────────────────────────────────────
 
-  async function fetchTranslations(texts: string[]): Promise<string[]> {
+  const fetchTranslations = useCallback(async (texts: string[]): Promise<string[]> => {
     const res = await fetch('/api/i18n/translate', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ texts, targetLocale: locale }),
+      body:    JSON.stringify({ texts, targetLocale: localeRef.current }),
     })
     if (!res.ok) return texts   // fallback
     const data = await res.json() as { translations: string[] }
     return data.translations.length === texts.length ? data.translations : texts
-  }
+  }, [])  // stable — reads locale via ref
 
   // ── Public API ────────────────────────────────────────────────────────────
 
@@ -131,7 +139,7 @@ export function useNLPTranslation() {
    * If locale is 'en', returns the original instantly.
    */
   const translateText = useCallback(async (text: string): Promise<string> => {
-    if (!text || locale === 'en') return text
+    if (!text || localeRef.current === 'en') return text
 
     const cached = getCached(text)
     if (cached) return cached
@@ -147,7 +155,7 @@ export function useNLPTranslation() {
     } finally {
       setIsTranslating(false)
     }
-  }, [locale])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getCached, setCached, fetchTranslations])  // all stable refs — no re-creation
 
   /**
    * Translate a batch of strings in one network round-trip.
@@ -156,7 +164,7 @@ export function useNLPTranslation() {
    * Returns an array in the same order as input.
    */
   const translateBatch = useCallback(async (texts: string[]): Promise<string[]> => {
-    if (texts.length === 0 || locale === 'en') return texts
+    if (texts.length === 0 || localeRef.current === 'en') return texts
 
     // Separate cache hits from misses
     const results: (string | null)[] = texts.map(t => getCached(t))
@@ -183,32 +191,33 @@ export function useNLPTranslation() {
     }
 
     return results.map((r, i) => r ?? texts[i]!)
-  }, [locale])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getCached, setCached, fetchTranslations])  // all stable refs — no re-creation
 
   /**
    * Synchronous cache-only check — useful for rendering without async.
    * Returns null if not cached.
    */
   const getCachedTranslation = useCallback((text: string): string | null => {
-    if (locale === 'en') return text
+    if (localeRef.current === 'en') return text
     return getCached(text)
-  }, [locale])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getCached])
 
   /** Wipe both cache tiers for the current locale (dev / testing utility). */
   const clearCache = useCallback(() => {
+    const lc = localeRef.current
     // Clear L1
     const keysToDelete: string[] = []
     memCache.current.forEach((_, key) => {
-      if (key.startsWith(`${locale}:`)) keysToDelete.push(key)
+      if (key.startsWith(`${lc}:`)) keysToDelete.push(key)
     })
     keysToDelete.forEach(k => memCache.current.delete(k))
     // Clear L2
     try {
       const store = loadCache()
-      delete store[locale]
+      delete store[lc]
       saveCache(store)
     } catch { /* ignore */ }
-  }, [locale])
+  }, [])
 
   return {
     translateText,

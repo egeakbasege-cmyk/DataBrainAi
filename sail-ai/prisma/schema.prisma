@@ -2,10 +2,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// LOCAL DEV: provider = "sqlite", DATABASE_URL = "file:./dev.db"
-// PRODUCTION: change provider back to "postgresql" + set DATABASE_URL
+// H-04: switched to PostgreSQL — SQLite crashes on Vercel serverless because
+// the filesystem is read-only. Set DATABASE_URL in Vercel env (Neon, Supabase,
+// or Railway all work). For local dev set DATABASE_URL to your local Postgres or
+// a Neon branch connection string.
+//
+// After changing DATABASE_URL run:
+//   npx prisma migrate dev --name init
+//   npx prisma generate
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -61,16 +67,15 @@ model VerificationToken {
 }
 
 // --- Sail AI Domain Models ---
-// NOTE: Role enum is String for SQLite compat (use "USER"|"ADMIN" values)
-// NOTE: metrics/output are stored as JSON strings in SQLite
+// PostgreSQL: metrics and output use native Json type instead of String
 
 model Analysis {
   id          String   @id @default(cuid())
   userId      String?
   isAnonymous Boolean  @default(false)
   sector      String
-  metrics     String   // JSON string (SQLite compat)
-  output      String   // JSON string (SQLite compat)
+  metrics     Json     // native PostgreSQL JSON — no more double-stringify
+  output      Json     // native PostgreSQL JSON — no more double-stringify
   createdAt   DateTime @default(now())
 
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)

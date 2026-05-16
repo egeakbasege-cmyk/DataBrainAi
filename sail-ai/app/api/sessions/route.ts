@@ -25,7 +25,8 @@ export async function GET() {
 
     const sessions = analyses.map(a => {
       let out: any = {}
-      try { out = typeof a.output === 'string' ? JSON.parse(a.output) : a.output } catch {}
+      // PostgreSQL Json type is already an object — no parse needed
+      out = (a.output && typeof a.output === 'object') ? a.output : {}
       const headline = out?.headline ?? out?.signal ?? 'Strategy analysis'
       const target   = out?.target30 ?? ''
       return {
@@ -64,8 +65,8 @@ export async function POST(req: NextRequest) {
         userId:      user.id,
         isAnonymous: false,
         sector:      sector ?? prompt ?? 'Unknown',
-        metrics:     JSON.stringify({}),
-        output:      JSON.stringify(output ?? { headline: summary, signal: summary }),
+        metrics:     {},
+        output:      output ?? { headline: summary, signal: summary },
       },
       select: { id: true },
     })

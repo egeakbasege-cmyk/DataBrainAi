@@ -2,29 +2,55 @@ import NextAuth             from 'next-auth'
 import { NextResponse }     from 'next/server'
 import type { NextRequest } from 'next/server'
 import { authConfig }       from './auth.config'
+import { Ratelimit }        from '@upstash/ratelimit'
+import { Redis }            from '@upstash/redis'
 
 const { auth } = NextAuth(authConfig)
 
-// ── Edge rate limiter ─────────────────────────────────────────────
-// Per-instance in-memory Map. Sufficient for single-region deployments.
+// ── Rate limiter ──────────────────────────────────────────────────────────────
 //
-// To upgrade to globally-consistent Upstash Redis limiting:
-//   1. npm install @upstash/ratelimit @upstash/redis
-//   2. Add UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to Vercel env
-//   3. Replace checkRate() body with the Upstash Ratelimit.slidingWindow() call
+// B-02: Two-tier rate limiting strategy:
+//   • Tier 1 (preferred): Upstash Redis — globally-consistent sliding window.
+//     Activates automatically when UPSTASH_REDIS_REST_URL and
+//     UPSTASH_REDIS_REST_TOKEN are set in Vercel env.
+//     Provision a free database at https://console.upstash.com
 //
-// NOTE: Next.js compiles middleware with the Edge Runtime bundler (SWC), which
-// hard-fails on any unresolved import specifier — even inside try/catch and even
-// with /* webpackIgnore */ comments. Packages must be installed before importing.
+//   • Tier 2 (fallback): per-instance in-memory Map — zero config, suitable
+//     for single-region / local development.  Not globally consistent across
+//     Vercel serverless instances but still protects against bursty abuse.
+//
+// To activate Upstash:
+//   1. Create a Redis database at console.upstash.com (free tier is sufficient)
+//   2. Copy REST_URL + REST_TOKEN → Vercel Environment Variables
+//   3. Redeploy — the middleware will automatically switch to Redis mode.
 
 const RATE_CONFIG: Record<string, { limit: number; window: number }> = {
   ai:   { limit: 10, window: 60_000 },   // AI routes: 10 req/min
   auth: { limit: 8,  window: 60_000 },   // Auth routes: 8 req/min (brute-force guard)
 }
 
+// ── Upstash Redis rate limiters (only instantiated when env vars are present) ─
+
+let upstashAi:   Ratelimit | null = null
+let upstashAuth: Ratelimit | null = null
+
+if (
+  process.env.UPSTASH_REDIS_REST_URL &&
+  process.env.UPSTASH_REDIS_REST_TOKEN
+) {
+  const redis = new Redis({
+    url:   process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  })
+  upstashAi   = new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(RATE_CONFIG.ai.limit,   '60 s'), prefix: 'rl:ai'   })
+  upstashAuth = new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(RATE_CONFIG.auth.limit, '60 s'), prefix: 'rl:auth' })
+}
+
+// ── In-memory fallback ────────────────────────────────────────────────────────
+
 const rateMap = new Map<string, { count: number; reset: number }>()
 
-function checkRate(key: string, tier: keyof typeof RATE_CONFIG): boolean {
+function checkRateMemory(key: string, tier: keyof typeof RATE_CONFIG): boolean {
   const { limit, window } = RATE_CONFIG[tier]
   const now   = Date.now()
   const entry = rateMap.get(key)
@@ -43,6 +69,20 @@ function checkRate(key: string, tier: keyof typeof RATE_CONFIG): boolean {
   return true
 }
 
+// ── Unified rate check (prefers Upstash, falls back to memory) ────────────────
+
+async function checkRate(
+  key:  string,
+  tier: keyof typeof RATE_CONFIG,
+): Promise<boolean> {
+  const limiter = tier === 'ai' ? upstashAi : upstashAuth
+  if (limiter) {
+    const { success } = await limiter.limit(key)
+    return success
+  }
+  return checkRateMemory(key, tier)
+}
+
 function getIdentity(req: NextRequest, session: any): string {
   if (session?.user?.email) return `email:${session.user.email}`
   const ip =
@@ -52,17 +92,17 @@ function getIdentity(req: NextRequest, session: any): string {
   return `ip:${ip}`
 }
 
-// ── Main middleware ───────────────────────────────────────────────
-export default auth((req: NextRequest & { auth?: any }) => {
+// ── Main middleware ───────────────────────────────────────────────────────────
+export default auth(async (req: NextRequest & { auth?: any }) => {
   const path = req.nextUrl.pathname
 
-  // ── Rate limiting ────────────────────────────────────────────
+  // ── Rate limiting ────────────────────────────────────────────────────────
   const identity = getIdentity(req, req.auth)
 
   const isAiRoute   = path.startsWith('/api/chat') || path.startsWith('/api/analyze')
   const isAuthRoute = path.startsWith('/api/auth/register')
 
-  if (isAiRoute && !checkRate(`ai:${identity}`, 'ai')) {
+  if (isAiRoute && !(await checkRate(`ai:${identity}`, 'ai'))) {
     return NextResponse.json(
       {
         statusCode: 429,
@@ -76,7 +116,7 @@ export default auth((req: NextRequest & { auth?: any }) => {
     )
   }
 
-  if (isAuthRoute && !checkRate(`auth:${identity}`, 'auth')) {
+  if (isAuthRoute && !(await checkRate(`auth:${identity}`, 'auth'))) {
     return NextResponse.json(
       {
         statusCode: 429,
@@ -90,7 +130,7 @@ export default auth((req: NextRequest & { auth?: any }) => {
     )
   }
 
-  // ── Auth guard for protected API endpoints ───────────────────
+  // ── Auth guard for protected API endpoints ───────────────────────────────
   const guarded = ['/api/chat', '/api/analyze', '/api/checkout']
   if (guarded.some((p) => path.startsWith(p)) && !req.auth) {
     return NextResponse.json(
@@ -99,7 +139,7 @@ export default auth((req: NextRequest & { auth?: any }) => {
     )
   }
 
-  // ── Security headers ─────────────────────────────────────────
+  // ── Security headers ─────────────────────────────────────────────────────
   const res = NextResponse.next()
 
   const csp = [
@@ -127,7 +167,7 @@ export default auth((req: NextRequest & { auth?: any }) => {
   res.headers.set('Referrer-Policy',          'strict-origin-when-cross-origin')
   res.headers.set('Permissions-Policy',       'camera=(), microphone=(), geolocation=()')
 
-  // ── CORS ─────────────────────────────────────────────────────
+  // ── CORS ─────────────────────────────────────────────────────────────────
   if (path.startsWith('/api/')) {
     const origin = process.env.NEXT_PUBLIC_APP_URL ?? process.env.AUTH_URL ?? 'http://localhost:3000'
     res.headers.set('Access-Control-Allow-Origin',  origin)
