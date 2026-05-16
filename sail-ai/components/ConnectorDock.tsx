@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { useLanguage }        from '@/lib/i18n/LanguageContext'
 
 // ── Connector definitions ────────────────────────────────────────────────────
 
@@ -38,13 +39,23 @@ export const ALL_CONNECTORS: ConnectorDef[] = [
   { id: 'real-estate',          label: 'Real Estate', domain: 'local',      letter:   '🏠',          accentColor: '#10B981' },
 ]
 
+// Domain → i18n key mapping
+const DOMAIN_LABEL_KEY: Record<string, string> = {
+  ecommerce:  'conn.groupEcommerce',
+  social:     'conn.groupSocial',
+  creator:    'conn.groupCreator',
+  secondhand: 'conn.groupResale',
+  analytics:  'conn.groupAnalytics',
+  local:      'conn.groupLocal',
+}
+
 const DOMAIN_GROUPS = [
-  { domain: 'ecommerce',  label: 'Marketplace' },
-  { domain: 'social',     label: 'Social & Ads' },
-  { domain: 'creator',    label: 'Creator' },
-  { domain: 'secondhand', label: 'Resale' },
-  { domain: 'analytics',  label: 'Analytics' },
-  { domain: 'local',      label: 'Real Estate' },
+  { domain: 'ecommerce'  },
+  { domain: 'social'     },
+  { domain: 'creator'    },
+  { domain: 'secondhand' },
+  { domain: 'analytics'  },
+  { domain: 'local'      },
 ]
 
 // ── Logo component ────────────────────────────────────────────────────────────
@@ -169,8 +180,10 @@ interface ConnectorDockProps {
 export function ConnectorDock({
   enabledIds, analysisActive, onToggle, onSetActive, onEnableAll, onDisableAll, onImportClick,
 }: ConnectorDockProps) {
+  const { t } = useLanguage()
   const grouped = DOMAIN_GROUPS.map(g => ({
     ...g,
+    label: t(DOMAIN_LABEL_KEY[g.domain] as any),
     connectors: ALL_CONNECTORS.filter(c => c.domain === g.domain),
   })).filter(g => g.connectors.length > 0)
 
@@ -219,18 +232,18 @@ export function ConnectorDock({
             }} />
           </button>
           <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: '#0C0C0E' }}>
-            Connector Analysis
+            {t('conn.analysis')}
           </span>
           <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#9CA3AF' }}>
-            — hangi platformları analiz etsin?
+            {t('conn.whichPlatforms')}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <button onClick={onEnableAll}   style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Tümünü aç</button>
+          <button onClick={onEnableAll}   style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{t('conn.enableAll')}</button>
           <span style={{ color: '#E5E7EB' }}>·</span>
-          <button onClick={onDisableAll}  style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Kapat</button>
+          <button onClick={onDisableAll}  style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{t('conn.disableAll')}</button>
           <span style={{ color: '#E5E7EB' }}>·</span>
-          <button onClick={onImportClick} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#C9A96E', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>+ Verim Ekle</button>
+          <button onClick={onImportClick} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#C9A96E', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{t('conn.addData')}</button>
         </div>
       </div>
 

@@ -24,7 +24,8 @@ export async function GET() {
     })
 
     const sessions = analyses.map(a => {
-      const out      = a.output as any
+      let out: any = {}
+      try { out = typeof a.output === 'string' ? JSON.parse(a.output) : a.output } catch {}
       const headline = out?.headline ?? out?.signal ?? 'Strategy analysis'
       const target   = out?.target30 ?? ''
       return {
@@ -63,8 +64,8 @@ export async function POST(req: NextRequest) {
         userId:      user.id,
         isAnonymous: false,
         sector:      sector ?? prompt ?? 'Unknown',
-        metrics:     {},
-        output:      output ?? { headline: summary, signal: summary },
+        metrics:     JSON.stringify({}),
+        output:      JSON.stringify(output ?? { headline: summary, signal: summary }),
       },
       select: { id: true },
     })

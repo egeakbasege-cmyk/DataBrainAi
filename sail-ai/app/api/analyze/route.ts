@@ -121,8 +121,8 @@ export async function POST(req: NextRequest) {
         userId:      session.user.id ?? null,
         isAnonymous: false,
         sector,
-        metrics:     (metrics ?? {}) as any,
-        output:      output as any,
+        metrics:     JSON.stringify(metrics ?? {}),
+        output:      JSON.stringify(output),
       },
     })
 
