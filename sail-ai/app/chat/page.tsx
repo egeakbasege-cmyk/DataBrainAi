@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence }       from 'framer-motion'
 import { Nav }                           from '@/components/Nav'
 import { BrandSetupModal, BrandNameplate, useBrandConfig } from '@/components/BrandSetupModal'
@@ -13,8 +13,8 @@ import { DailyCounter }                  from '@/components/DailyCounter'
 import { PaywallModal }                  from '@/components/PaywallModal'
 import { FeedbackModal }                 from '@/components/FeedbackModal'
 import { FileAttachmentPill }            from '@/components/FileAttachmentPill'
-import { useConnectorState } from '@/components/ConnectorDock'
-import { useUserSources }   from '@/components/UserDataImport'
+import { useConnectorState }             from '@/components/ConnectorDock'
+import { useUserSources }                from '@/components/UserDataImport'
 import type { Attachment }               from '@/components/FileAttachmentPill'
 import { ModeSelector }                  from '@/components/ModeSelector'
 import type { AnalysisMode }             from '@/components/ModeSelector'
@@ -38,6 +38,10 @@ import { SailAdapter }                    from '@/components/SailAdapter'
 import type { SailIntent }                from '@/lib/intent'
 import { MoodGuideCard }                  from '@/components/MoodGuideCard'
 import type { MoodGuideData }             from '@/components/MoodGuideCard'
+// ── New architecture imports ──────────────────────────────────────────────────
+import { ChatThread }                    from '@/components/ChatThread'
+import { InChatModeSwitcher }            from '@/components/InChatModeSwitcher'
+import { useChatMessages }               from '@/hooks/useChatMessages'
 
 // Placeholders are derived from translations — built inside the component
 const PLACEHOLDER_KEYS = [
@@ -291,6 +295,22 @@ export default function ChatPage() {
   const [showModeGrid, setShowModeGrid] = useState(true)
   const [prevTurns, setPrevTurns] = useState<Array<{q:string; a:string; m:AnalysisMode}>>([])
 
+  // ── Unified chat thread (new architecture) ───────────────────────────────
+  const {
+    messages:         chatMessages,
+    addUserMessage,
+    startAssistantMessage,
+    updateStreaming,
+    finalizeMessage,
+    clearThread,
+  } = useChatMessages()
+
+  // Follow-up chip handler — pre-fills input and submits
+  const handleFollowUp = useCallback((text: string) => {
+    setInput(text)
+    setTimeout(() => textareaRef.current?.focus(), 20)
+  }, [])
+
   // Context toggle + inline paywall
   const [useProfileCtx,     setUseProfileCtx]    = useState(true)
   const [showInlinePaywall, setShowInlinePaywall] = useState(false)
@@ -505,6 +525,9 @@ export default function ChatPage() {
   async function handleSailSubmit(text: string) {
     setSailError(null); setSailText(''); setSailPhase('streaming')
     sailAbortRef.current = new AbortController()
+    // ── Thread integration ───────────────────────────────────────────────
+    addUserMessage(text, 'sail')
+    const assistantId = startAssistantMessage('sail')
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -525,13 +548,17 @@ export default function ChatPage() {
         buf += decoder.decode(value, { stream: true })
         if (!metaDone) { const nl = buf.indexOf('\n'); if (nl !== -1) { try { const m = JSON.parse(buf.slice(0, nl)); if (m.__sailMeta?.intent) setSailIntent(m.__sailMeta.intent) } catch {} buf = buf.slice(nl + 1); metaDone = true } }
         setSailText(buf)
+        updateStreaming(assistantId, buf)
       }
       setSailPhase('complete')
+      finalizeMessage(assistantId, { type: 'text', text: buf })
       saveAnalysis(text, buf.slice(0, 120))
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
-      setSailError(err instanceof Error ? err.message : 'SAIL request failed.')
+      const msg = err instanceof Error ? err.message : 'SAIL request failed.'
+      setSailError(msg)
       setSailPhase('idle')
+      finalizeMessage(assistantId, { type: 'error', message: msg })
     }
   }
 
@@ -628,6 +655,8 @@ export default function ChatPage() {
   async function handleOperatorSubmit(text: string) {
     setOperatorError(null); setOperatorText(''); setOperatorPhase('streaming')
     operatorAbortRef.current = new AbortController()
+    addUserMessage(text, 'operator')
+    const assistantId = startAssistantMessage('operator')
     try {
       const res = await fetch('/api/chat', {
         method:  'POST',
@@ -647,13 +676,17 @@ export default function ChatPage() {
         if (done) break
         buf += decoder.decode(value, { stream: true })
         setOperatorText(buf)
+        updateStreaming(assistantId, buf)
       }
       setOperatorPhase('complete')
+      finalizeMessage(assistantId, { type: 'text', text: buf })
       saveAnalysis(text, buf.slice(0, 120))
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
-      setOperatorError(err instanceof Error ? err.message : 'OPERATOR request failed.')
+      const msg = err instanceof Error ? err.message : 'OPERATOR request failed.'
+      setOperatorError(msg)
       setOperatorPhase('idle')
+      finalizeMessage(assistantId, { type: 'error', message: msg })
     }
   }
 
@@ -839,6 +872,7 @@ export default function ChatPage() {
   function handleReset() {
     setShowModeGrid(true)
     setPrevTurns([])
+    clearThread()
     sailAbortRef.current?.abort()
     setSailText('')
     setSailPhase('idle')
@@ -1373,6 +1407,12 @@ export default function ChatPage() {
                       </motion.span>
                     )}
                   </div>
+                  {/* In-Chat Mode Switcher — compact dropdown next to Send */}
+                  <InChatModeSwitcher
+                    mode={mode}
+                    onChange={setMode}
+                    disabled={isActive}
+                  />
                   <HelmButton state={sailState} onClick={() => void handleSubmit()} disabled={isActive || !input.trim()} />
                 </div>
               </div>
@@ -1610,32 +1650,15 @@ export default function ChatPage() {
           )}
         </AnimatePresence>
 
-        {/* ── Conversation history (past turns) ── */}
-        {prevTurns.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {prevTurns.map((turn, i) => (
-              <div key={i} style={{
-                background: 'rgba(0,0,0,0.025)',
-                border: '1px solid rgba(0,0,0,0.07)',
-                borderRadius: '10px',
-                padding: '0.75rem 1rem',
-                opacity: 0.7,
-              }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.375rem', lineHeight: 1.4 }}>
-                  {turn.q.slice(0, 140)}{turn.q.length > 140 ? '…' : ''}
-                </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A', margin: 0, lineHeight: 1.55 }}>
-                  {turn.a.slice(0, 250)}{turn.a.length > 250 ? '…' : ''}
-                </p>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#C4C4CC', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  {turn.m}
-                </span>
-              </div>
-            ))}
-          </div>
+        {/* ── Unified Chat Thread (continuous multi-turn dialogue) ── */}
+        {chatMessages.length > 0 && (
+          <ChatThread
+            messages={chatMessages}
+            onFollowUp={handleFollowUp}
+          />
         )}
 
-        {/* ── SAIL streaming result ── */}
+        {/* ── SAIL streaming result (legacy — kept for downwind/upwind/trim/catamaran) ── */}
         <AnimatePresence>
           {mode === 'sail' && (sailPhase === 'streaming' || sailPhase === 'complete') && (
             <motion.div key="sail-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
