@@ -71,12 +71,6 @@ const SENTIMENT_COLOR: Record<string, string> = {
   neutral: '#F59E0B',
 }
 
-const SENTIMENT_LABEL: Record<string, string> = {
-  bullish: 'Pozitif ↑',
-  bearish: 'Negatif ↓',
-  neutral: 'Nötr →',
-}
-
 // ── Loader animation ──────────────────────────────────────────────────────────
 
 function ResearchLoader({ query }: { query: string }) {
@@ -186,7 +180,7 @@ function ImageGallery({ images, isMobile }: { images: ResearchImage[]; isMobile?
           <div key={i} style={{ position: 'relative', aspectRatio: '16/9', borderRadius: '8px', overflow: 'hidden', background: '#F3F4F6' }}>
             <img
               src={img.url}
-              alt={img.description ?? `Görsel ${i + 1}`}
+              alt={img.description ?? `${t('research.images')} ${i + 1}`}
               onError={() => setFailed(prev => new Set(prev).add(img.url))}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
@@ -305,7 +299,7 @@ export default function ResearchPage() {
       if (!res.ok) throw new Error(data.error ?? 'Research failed')
       setReport(data as ResearchReport)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu')
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -416,10 +410,10 @@ export default function ResearchPage() {
           {/* Example queries */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.875rem' }}>
             {[
-              'Amazon FBA karlılık analizi 2026',
-              'TikTok Shop Türkiye fiyatlandırma',
-              'Shopify vs Etsy komisyon karşılaştırması',
-              "eBay'de en çok satan ürünler",
+              t('research.exampleQ1'),
+              t('research.exampleQ2'),
+              t('research.exampleQ3'),
+              t('research.exampleQ4'),
             ].map(example => (
               <button
                 key={example}

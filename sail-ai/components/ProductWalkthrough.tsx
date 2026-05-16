@@ -20,22 +20,7 @@ const YOUTUBE_VIDEO_ID = ''  // Örn: 'dQw4w9WgXcQ'
 // ── Slide süresi (ms) ─────────────────────────────────────────────────────────
 const SLIDE_DURATION = 12000   // 12s × 7 slide ≈ 84s total
 
-// ── Gerçek AI yanıt verisi ────────────────────────────────────────────────────
-const REAL_INSIGHT = `Dönüşüm oranınız %1.3 ile Türkiye e-ticaret sektör ortalamasının (%2.3) 1 puan altında. En yüksek kaldıraç: checkout akışını 5 adımdan 3'e indirmek ve sepet terk e-postası kurmak. Bu iki adım, sektör verilerine göre 90 gün içinde 0.6–1.0 puanlık iyileşme sağlar.`
-
-const REAL_ACTIONS = [
-  'Checkout adımlarını 5\'ten 3\'e indirin — Baymard verisi: her ek adım %10 terk artışı yaratır',
-  'Sepet terk dizisi kurun: 1. saat / 24. saat / 72. saat (Klaviyo benchmark: %12–15 geri dönüş)',
-  'Ürün sayfasına sosyal kanıt ekleyin: ≥50 yorum hedefleyin, TrustPilot entegrasyonu öncelikli',
-]
-
-const REAL_FINDINGS = [
-  'Türkiye e-ticaret ortalaması: %2.3 CVR (Q1 2026, Statista)',
-  'Mobil checkout terk oranı: %72 (Baymard Institute)',
-  'E-posta kurtarma oranı: %12–15 (Klaviyo 2026 Benchmark)',
-  'Sosyal kanıt %18 dönüşüm artışı sağlıyor (Nielsen)',
-]
-
+// ── Demo sources (domain names — not translated) ──────────────────────────────
 const REAL_SOURCES = [
   { domain: 'statista.com',       title: 'E-commerce Conversion Rate Turkey 2026',       rel: 90 },
   { domain: 'baymard.com',        title: 'Mobile Checkout Abandonment Research 2026',    rel: 95 },
@@ -84,9 +69,10 @@ function BenchmarkBar({ label, value, target, unit, lowerIsBetter, sectorLabel }
 function Slide1_Input() {
   const { t } = useLanguage()
   const [typed, setTyped] = useState('')
-  const QUERY = 'Shopify mağazam var. Aylık satış 85K TL, ama dönüşüm oranım %1.3. Sektörün nerede olduğunu ve ne yapabileceğimi analiz et.'
+  const QUERY = t('walk.demoQuery')
 
   useEffect(() => {
+    setTyped('')
     let i = 0
     const iv = setInterval(() => {
       i++
@@ -94,7 +80,7 @@ function Slide1_Input() {
       if (i >= QUERY.length) clearInterval(iv)
     }, 32)
     return () => clearInterval(iv)
-  }, [])
+  }, [QUERY])
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -112,7 +98,7 @@ function Slide1_Input() {
       <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
         {/* Context badge */}
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {['E-Ticaret · Shopify', '85K TL/ay', 'Türkiye'].map(tag => (
+          {[t('walk.demoTag1'), t('walk.demoTag2'), t('walk.demoTag3')].map(tag => (
             <span key={tag} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#C9A96E', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.25)', borderRadius: '4px', padding: '2px 6px' }}>{tag}</span>
           ))}
         </div>
@@ -160,12 +146,12 @@ function Slide2_ModeSelect() {
   }, [])
 
   const modes = [
-    { name: 'Upwind',    badge: 'Hızlı Plan',      color: '#1A5276', desc: 'Benchmark + 3 eylem planı. Metrik bilenler için.' },
-    { name: 'SAIL',      badge: 'Adaptif AI',       color: '#7C3AED', desc: 'Niyetinizi okur — analitik mi koçluk mu otomatik seçer.' },
-    { name: 'Operator',  badge: 'Derin Analiz',     color: '#CC2200', desc: 'Çoklu domain, kapsamlı istihbarat, streaming.' },
-    { name: 'Downwind',  badge: 'Koçluk',           color: '#00695C', desc: 'Sokrates diyaloğu ile içgörü geliştirme.' },
-    { name: 'TRIM',      badge: '30/60/90 Gün',     color: '#B45309', desc: 'Milestone bazlı phased roadmap.' },
-    { name: 'Catamaran', badge: 'Çift Kanal',       color: '#D4AF37', desc: 'Büyüme + müşteri deneyimi aynı anda.' },
+    { name: 'Upwind',    badge: t('walk.demoMode1badge'), color: '#1A5276', desc: t('walk.demoMode1desc') },
+    { name: 'SAIL',      badge: t('walk.demoMode2badge'), color: '#7C3AED', desc: t('walk.demoMode2desc') },
+    { name: 'Operator',  badge: t('walk.demoMode3badge'), color: '#CC2200', desc: t('walk.demoMode3desc') },
+    { name: 'Downwind',  badge: t('walk.demoMode4badge'), color: '#00695C', desc: t('walk.demoMode4desc') },
+    { name: 'TRIM',      badge: t('walk.demoMode5badge'), color: '#B45309', desc: t('walk.demoMode5desc') },
+    { name: 'Catamaran', badge: t('walk.demoMode6badge'), color: '#D4AF37', desc: t('walk.demoMode6desc') },
   ]
 
   return (
@@ -212,13 +198,13 @@ function Slide3_Analyzing() {
   const [dotCount, setDotCount] = useState(0)
   const [step, setStep] = useState(0)
   const SEARCH_STEPS = [
-    'Tavily araması başlatılıyor…',
-    'Serper paralel taraması: Türkiye e-ticaret CVR 2026',
-    'Kaynak bulunan: statista.com (güvenilirlik %90)',
-    'Kaynak bulunan: baymard.com (güvenilirlik %95)',
-    'Kaynak bulunan: klaviyo.com (güvenilirlik %88)',
-    'Groq 70B — yanıt sentezleniyor…',
-    'Analiz tamamlandı ✓',
+    t('walk.demoStep1'),
+    t('walk.demoStep2'),
+    t('walk.demoStep3'),
+    t('walk.demoStep4'),
+    t('walk.demoStep5'),
+    t('walk.demoStep6'),
+    t('walk.demoStep7'),
   ]
 
   useEffect(() => {
@@ -274,28 +260,30 @@ function Slide3_Analyzing() {
 
 function Slide4_Response() {
   const { t } = useLanguage()
+  const DEMO_INSIGHT = t('walk.demoInsight')
+  const DEMO_ACTIONS = [t('walk.demoAction1'), t('walk.demoAction2'), t('walk.demoAction3')]
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto' }}>
       {/* Response card header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.625rem', background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)', borderRadius: '6px' }}>
         <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#C9A96E' }} />
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A96E' }}>SAIL AI — Upwind Analizi</span>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A96E' }}>SAIL AI — Upwind</span>
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)', marginLeft: 'auto' }}>Groq 70B · statista, baymard, klaviyo</span>
       </div>
 
       {/* Insight */}
       <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', padding: '0.75rem' }}>
         <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.82rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.65, margin: 0 }}>
-          {REAL_INSIGHT}
+          {DEMO_INSIGHT}
         </p>
       </div>
 
       {/* Benchmark */}
-      <BenchmarkBar label="Dönüşüm oranı" value={1.3} target={2.3} unit="%" lowerIsBetter={false} sectorLabel={t('walk.sectorMedian')} />
+      <BenchmarkBar label={t('walk.demoCvrLabel')} value={1.3} target={2.3} unit="%" lowerIsBetter={false} sectorLabel={t('walk.sectorMedian')} />
 
       {/* Actions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-        {REAL_ACTIONS.map((a, i) => (
+        {DEMO_ACTIONS.map((a, i) => (
           <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', padding: '0.4rem 0.6rem', background: 'rgba(255,255,255,0.025)', borderRadius: '5px', border: '1px solid rgba(255,255,255,0.06)' }}>
             <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.8rem', fontWeight: 700, color: '#C9A96E', flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.67rem', color: 'rgba(255,255,255,0.72)', lineHeight: 1.5, margin: 0 }}>{a}</p>
@@ -307,7 +295,7 @@ function Slide4_Response() {
       <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '6px' }}>
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#10B981' }}>{t('walk.target30d')}</span>
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)', margin: '2px 0 0', lineHeight: 1.4 }}>
-          CVR %1.3 → %1.8 — sektör medianesine %44 yaklaşmak
+          {t('walk.demo30dTarget')}
         </p>
       </div>
     </div>
@@ -316,6 +304,8 @@ function Slide4_Response() {
 
 function Slide5_Research() {
   const { t } = useLanguage()
+  const DEMO_FINDINGS = [t('walk.demoFinding1'), t('walk.demoFinding2'), t('walk.demoFinding3'), t('walk.demoFinding4')]
+  const IMAGE_LABELS  = [t('walk.demoChart'), t('walk.demoTrend'), t('walk.demoMap')]
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto' }}>
       {/* Page header */}
@@ -326,12 +316,12 @@ function Slide5_Research() {
       </div>
 
       <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF', margin: 0, lineHeight: 1.2 }}>
-        Türkiye E-Ticaret CVR Analizi 2026
+        {t('walk.demoResearchTitle')}
       </p>
 
       {/* Key findings */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-        {REAL_FINDINGS.map((f, i) => (
+        {DEMO_FINDINGS.map((f, i) => (
           <div key={i} style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start', padding: '0.35rem 0.5rem', background: `rgba(${['201,169,110','16,185,129','99,102,241','245,158,11'][i]},0.08)`, borderLeft: `2px solid rgba(${['201,169,110','16,185,129','99,102,241','245,158,11'][i]},0.6)`, borderRadius: '0 4px 4px 0' }}>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', fontWeight: 700, color: `rgba(${['201,169,110','16,185,129','99,102,241','245,158,11'][i]},1)`, flexShrink: 0 }}>#{i+1}</span>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.4 }}>{f}</p>
@@ -357,7 +347,7 @@ function Slide5_Research() {
 
       {/* Image placeholders */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.35rem' }}>
-        {['📊 Grafik', '📈 Trend', '🗺️ Harita'].map(label => (
+        {IMAGE_LABELS.map(label => (
           <div key={label} style={{ aspectRatio: '16/9', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', color: 'rgba(255,255,255,0.3)' }}>{label}</span>
           </div>

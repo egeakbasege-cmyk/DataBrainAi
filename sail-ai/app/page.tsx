@@ -9,60 +9,7 @@ import { TopoBackground } from '@/components/TopoBackground'
 import { ProductWalkthrough } from '@/components/ProductWalkthrough'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
-/* ── Sample outcome cases ──────────────────────────── */
-const CASES = [
-  {
-    n:       '01',
-    sector:  'E-Commerce',
-    headline:'Structured checkout optimisation to close a 0.8-point conversion gap',
-    detail:  'Median sector CVR: 2.3% · Client starting point: 1.5% · 90-day horizon',
-    outcome: '+0.8pp CVR',
-  },
-  {
-    n:       '02',
-    sector:  'B2B SaaS',
-    headline:'Onboarding sequence redesign to reduce month-1 churn from 12% to below 8%',
-    detail:  'OpenView benchmark for sub-$2M ARR: 7–9% monthly churn · 60-day implementation',
-    outcome: '−4pp churn',
-  },
-  {
-    n:       '03',
-    sector:  'Professional Services',
-    headline:'Referral programme implementation targeting 20% of new clients from existing base',
-    detail:  'Industry average referral rate: 18–22% of new business · Standard payback: <45 days',
-    outcome: '+20% new clients',
-  },
-]
-
-const HOW = [
-  {
-    n:     '01',
-    title: 'Describe your situation',
-    body:  'Provide your sector, one or two key metrics, and the primary constraint you are working against. Plain language is sufficient.',
-  },
-  {
-    n:     '02',
-    title: 'Receive a benchmarked analysis',
-    body:  'The system retrieves relevant industry benchmarks, compares your position, and identifies the highest-leverage action available to you.',
-  },
-  {
-    n:     '03',
-    title: 'A clear, executable plan',
-    body:  'Three specific actions with defined timeframes, a realistic 30-day target, and the single risk most likely to undermine execution.',
-  },
-]
-
-const TRUST_CUES = [
-  'Baymard · McKinsey · OpenView · KPMG',
-  '12 verified data sources',
-  'Quarterly refresh',
-]
-
-const STAT_PILLS = [
-  '< 60s analysis',
-  'Live web data',
-  '5 free analyses',
-]
+/* ── Arrays moved inside LandingPage to use t() ─────── */
 
 /* ── Divider ─────────────────────────────────────── */
 function Rule() {
@@ -124,6 +71,22 @@ function ModeCard({
 
 export default function LandingPage() {
   const { t } = useLanguage()
+
+  const STAT_PILLS = [t('landing.stat1'), t('landing.stat2'), t('landing.stat3')]
+
+  const TRUST_CUES = [t('landing.trust1'), t('landing.trust2'), t('landing.trust3')]
+
+  const HOW = [
+    { n: '01', title: t('landing.how1title'), body: t('landing.how1body') },
+    { n: '02', title: t('landing.how2title'), body: t('landing.how2body') },
+    { n: '03', title: t('landing.how3title'), body: t('landing.how3body') },
+  ]
+
+  const CASES = [
+    { n: '01', sector: t('landing.case1sector'), headline: t('landing.case1headline'), detail: t('landing.case1detail'), outcome: t('landing.case1outcome') },
+    { n: '02', sector: t('landing.case2sector'), headline: t('landing.case2headline'), detail: t('landing.case2detail'), outcome: t('landing.case2outcome') },
+    { n: '03', sector: t('landing.case3sector'), headline: t('landing.case3headline'), detail: t('landing.case3detail'), outcome: t('landing.case3outcome') },
+  ]
 
   return (
     <main style={{ background: '#FAFAF8', paddingBottom: '6rem' }}>
@@ -223,14 +186,14 @@ export default function LandingPage() {
           {/* CTAs */}
           <div style={{ marginTop: '1.75rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <Link href="/welcome" className="btn-primary">
-              Begin free →
+              {t('landing.beginFree')}
             </Link>
             <a
               href="#tutorial"
               className="btn-ghost-white"
               style={{ textDecoration: 'none' }}
             >
-              Watch how it works
+              {t('landing.watchHow')}
             </a>
           </div>
 
@@ -266,7 +229,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3.5rem' }}>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#71717A' }}>
-              Methodology
+              {t('landing.methodology')}
             </span>
             <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.09)' }} />
           </div>
@@ -313,7 +276,7 @@ export default function LandingPage() {
                 paddingBottom: '2px',
               }}
             >
-              Start now →
+              {t('landing.startNow')}
             </Link>
           </div>
         </div>
@@ -331,19 +294,19 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '0.625rem' }}>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#71717A' }}>
-              Intelligence Modes
+              {t('landing.intelligenceModes')}
             </span>
             <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.09)' }} />
           </div>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.825rem', color: '#71717A', fontWeight: 300, marginBottom: '2.5rem', maxWidth: '52ch' }}>
-            Seven specialist engines. Three of the most common starting points are shown below.
+            {t('landing.modesCount')}
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
 
             {/* Upwind */}
             <ModeCard
-              badge="Direct"
+              badge={t('landing.upwindBadge')}
               name="Upwind"
               color="#1A5276"
               bg="rgba(26,82,118,0.05)"
@@ -356,13 +319,13 @@ export default function LandingPage() {
                   <path d="M5 19Q12 22 19 19" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
                 </svg>
               }
-              desc="Feed your numbers and get an instant, benchmark-grounded action plan. No clarifying questions — sparse data is filled from sector medians and labelled."
-              detail="Best for: operators who know their metrics and need fast execution clarity."
+              desc={t('landing.upwindDesc')}
+              detail={t('landing.upwindDetail')}
             />
 
             {/* SAIL */}
             <ModeCard
-              badge="AI+"
+              badge={t('landing.sailBadge')}
               name="SAIL"
               color="#7C3AED"
               bg="rgba(124,58,237,0.05)"
@@ -376,13 +339,13 @@ export default function LandingPage() {
                   <circle cx="5" cy="6" r="1.8" fill="#7C3AED" opacity="0.6"/>
                 </svg>
               }
-              desc="Adaptive intelligence that reads your intent and chooses between analytical depth and coaching dialogue automatically — no mode selection required."
-              detail="Best for: users who move between strategic and operational thinking within the same session."
+              desc={t('landing.sailDesc')}
+              detail={t('landing.sailDetail')}
             />
 
             {/* Operator */}
             <ModeCard
-              badge="Universal"
+              badge={t('landing.operatorBadge')}
               name="Operator"
               color="#CC2200"
               bg="rgba(204,34,0,0.04)"
@@ -397,8 +360,8 @@ export default function LandingPage() {
                   <line x1="17" y1="12" x2="21" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               }
-              desc="Domain-agnostic intelligence — real estate, law, medicine, finance, logistics. The same benchmark discipline applied to any question, streamed in real time."
-              detail="Best for: cross-domain operators and consultants who switch contexts rapidly."
+              desc={t('landing.operatorDesc')}
+              detail={t('landing.operatorDetail')}
             />
           </div>
 
@@ -416,7 +379,7 @@ export default function LandingPage() {
                 letterSpacing: '0.03em',
               }}
             >
-              Explore all 7 modes →
+              {t('landing.exploreAllModes')}
             </Link>
           </div>
         </div>
@@ -481,7 +444,7 @@ export default function LandingPage() {
           ))}
 
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', lineHeight: 1.6, marginTop: '1.25rem', maxWidth: '60ch' }}>
-            Projections are indicative, based on published industry benchmarks. Individual results depend on execution quality and market conditions.
+            {t('landing.disclaimer')}
           </p>
         </div>
       </section>
@@ -496,14 +459,14 @@ export default function LandingPage() {
           <div style={{ paddingTop: '3rem', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap' }}>
             <div>
               <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', color: '#FFFFFF', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
-                Your first five analyses are complimentary.
+                {t('landing.ctaHeadline')}
               </h2>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: 'rgba(255,255,255,0.38)', fontWeight: 300 }}>
-                Zero friction. No payment details. Professional-grade strategy, validated by data.
+                {t('landing.ctaBody')}
               </p>
             </div>
             <Link href="/welcome" className="btn-ghost-white" style={{ flexShrink: 0 }}>
-              Begin →
+              {t('landing.beginBtn')}
             </Link>
           </div>
         </div>
@@ -522,16 +485,16 @@ export default function LandingPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
             <Link href="/chat" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', textDecoration: 'none', letterSpacing: '0.05em' }}>
-              Chat
+              {t('landing.footerChat')}
             </Link>
             <Link href="/research" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', textDecoration: 'none', letterSpacing: '0.05em' }}>
-              Research
+              {t('landing.footerResearch')}
             </Link>
             <Link href="/dashboard" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', textDecoration: 'none', letterSpacing: '0.05em' }}>
-              Dashboard
+              {t('landing.footerDashboard')}
             </Link>
             <Link href="/pricing" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', textDecoration: 'none', letterSpacing: '0.05em' }}>
-              Pricing
+              {t('landing.footerPricing')}
             </Link>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#A1A1AA', letterSpacing: '0.04em' }}>
               © {new Date().getFullYear()} Sail AI

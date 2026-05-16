@@ -228,9 +228,9 @@ export default function DashboardPage() {
           {history.length === 0 ? (
             <div style={{ padding: '2.5rem', textAlign: 'center' }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#A1A1AA', margin: 0 }}>
-                No analyses yet. Head to{' '}
-                <a href="/chat" style={{ color: '#C9A96E', textDecoration: 'none', fontWeight: 500 }}>Chat →</a>
-                {' '}to get started.
+                {t('dash.noAnalysesMsg')}{' '}
+                <a href="/chat" style={{ color: '#C9A96E', textDecoration: 'none', fontWeight: 500 }}>{t('dash.headToChatLink')}</a>
+                {' '}{t('dash.toGetStarted')}
               </p>
             </div>
           ) : (
@@ -253,7 +253,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#A1A1AA', margin: 0, flexShrink: 0 }}>
-                      {new Date(entry.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      {new Date(entry.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                     </p>
                   </div>
                 </div>
@@ -272,7 +272,7 @@ export default function DashboardPage() {
               }}
               style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
             >
-              Clear history
+              {t('dash.clearHistory')}
             </button>
           </div>
         )}
