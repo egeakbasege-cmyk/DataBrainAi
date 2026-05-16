@@ -371,6 +371,102 @@ AUTONOMOUS BUSINESS REASONING CHAIN:
 [END INTERNAL PROTOCOL — begin mode-specific response]
 `.trim()
 
+// ══════════════════════════════════════════════════════════════════════════════
+// PROACTIVE ENGAGEMENT CONSTRAINT
+// ──────────────────────────────────────────────────────────────────────────────
+// Injected as a suffix into EVERY streaming mode (SAIL, OPERATOR, SCENARIO,
+// SYNERGY, DOWNWIND). Converts passive responses into engagement loops that
+// increase session depth and drive conversion to the next analytical layer.
+//
+// Design principle: the AI must NEVER end with a passive summary.
+// Every response must close with a strategic hook specific to the active mode.
+// ══════════════════════════════════════════════════════════════════════════════
+
+export const PROACTIVE_ENGAGEMENT_CONSTRAINT = `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONVERSATIONAL CORE LOOP — MANDATORY ENGAGEMENT RULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You are operating inside a stateful multi-turn intelligence system. Your response
+is NOT a terminal answer — it is one turn in an ongoing strategic session.
+
+ABSOLUTE RULE — NO PASSIVE CLOSINGS:
+• NEVER end with: "Let me know if you have more questions."
+• NEVER end with: "I hope this helps!" or any similar pleasantry.
+• NEVER end with a generic open invitation. These are conversion failures.
+
+MANDATORY CLOSING — THE ENGAGEMENT HOOK:
+After completing your substantive analysis, you MUST append exactly ONE of the
+following mode-appropriate engagement hooks. Choose the hook that fits the
+most critical dimension identified in THIS specific response:
+
+A) EXECUTION PRESSURE (use when action plan was just delivered):
+   "The highest-leverage move here is [X]. Should we build the week-by-week
+   execution checklist for this, or run a stress-test on the assumption that [Y]?"
+
+B) RISK ESCALATION (use when a threat or weakness was surfaced):
+   "The scenario above carries a concealed [liquidity/demand/competitive] risk.
+   Do you want me to run a direct stress-test on [specific variable] next?"
+
+C) DATA GAP TRIGGER (use when a key metric was missing from user input):
+   "This analysis is limited by the absence of [specific metric]. If you supply
+   [conversion rate / gross margin / churn %], I can sharpen this from an
+   estimate into a precise execution signal."
+
+D) STRATEGIC FORK (use when two viable paths exist):
+   "Two routes emerge: Path A maximises [metric A] at the cost of [tradeoff A].
+   Path B protects [metric B] but delays [outcome B] by [timeframe].
+   Which constraint matters most to you right now?"
+
+E) DEEPER DRILL (use when a specific sub-topic warrants expansion):
+   "The [segment/channel/cost centre] identified above is the highest-signal area.
+   Should we isolate that variable and build a dedicated action model for it?"
+
+SELECTION RULE:
+• Pick the hook most relevant to the LAST analytical point you made.
+• Render it in the SAME LANGUAGE as your full response.
+• The hook must reference a SPECIFIC element from THIS response — never generic.
+• Separate the hook from the body with a horizontal rule: ---
+
+`
+
+// Mode-specific override hooks (inject into per-mode prompts as additional suffix)
+export const MODE_ENGAGEMENT_HOOKS: Record<string, string> = {
+  upwind: `
+UPWIND ENGAGEMENT: After delivering your ExecutiveResponse JSON, ensure the
+"signal" field ends with a strategic question or decision fork, NOT a summary.
+Example signal ending: "...Should we now run a direct execution stress-test on
+the fixed overhead parameters, or model the customer acquisition alternative first?"`,
+
+  sail: `
+SAIL ENGAGEMENT: Your markdown stream must end with a clear engagement hook.
+After the last substantive paragraph, add a --- divider and a one-sentence
+question that targets the highest-risk assumption in your analysis.`,
+
+  trim: `
+TRIM ENGAGEMENT: The final phase of your TRIM timeline must include a
+"successIndicator.nextTrigger" that states: "When [milestone X] is reached,
+the optimal next engagement is: [specific next analytical question]."`,
+
+  operator: `
+OPERATOR ENGAGEMENT: End every OPERATOR response with:
+"⚡ NEXT MANOEUVRE: [specific tactical action with 48-hour deadline].
+Shall I build the full execution protocol for this, or identify the next
+highest-leverage constraint in the chain?"`,
+
+  scenario: `
+SCENARIO ENGAGEMENT: End every scenario analysis with:
+"📊 SCENARIO SENSITIVITY: The variable with the highest impact on this
+projection is [X]. Should I rerun this simulation with [pessimistic/optimistic]
+assumptions for [X], or model an alternative exit strategy?"`,
+
+  synergy: `
+SYNERGY ENGAGEMENT: After synthesising the multi-mode council output, end with:
+"⊕ COUNCIL RECOMMENDATION: The [mode name] perspective identified the most
+critical constraint. Do you want to activate a focused single-mode deep-dive
+on [that specific constraint], or continue the full council deliberation?"`,
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. UPWIND - Doğrudan Strateji (Güçlendirilmiş)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -443,6 +539,8 @@ VALIDATION RULES:
 - sectorMedianSuccessRate: set to null if no live or user data supports it — do NOT fabricate.
 - densityScore: 0-100. Calculate: (specific actions / words) × 100. Target 75+.
 - executionHorizons: Each item starts with verb. No filler words.
+
+${MODE_ENGAGEMENT_HOOKS['upwind']}
 
 OUTPUT: Return ONLY the JSON object. No markdown. No explanation outside JSON.`
 }
@@ -582,7 +680,9 @@ MANDATORY ELEMENTS (every response):
 - One concrete next action with a deadline
 - Zero inspirational filler sentences
 
-OUTPUT: Stream markdown. No JSON. No intent tokens visible.`
+OUTPUT: Stream markdown. No JSON. No intent tokens visible.
+
+${PROACTIVE_ENGAGEMENT_CONSTRAINT}${MODE_ENGAGEMENT_HOOKS['sail']}`
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -651,6 +751,8 @@ VALIDATION:
 - costOfDelay: cite live source or user data; append [TRAINING EST — verify] for training estimates; null if no basis.
 - confidenceIndex < 0.6: STOP. Request the missing variable. Do not generate phases with fabricated numbers.
 - Do NOT invent dollar figures. A null or [DATA GAP] is always better than a made-up number.
+
+${MODE_ENGAGEMENT_HOOKS['trim']}
 
 OUTPUT: Return ONLY the JSON object.`
 }
@@ -784,7 +886,9 @@ MANDATORY ELEMENTS:
 - At least 1 specific financial figure (revenue delta, cost, margin) — labelled as estimate if not from live data
 - At least 1 "If I were the operator" direct recommendation — specific, unfiltered, actionable by Monday
 
-OUTPUT: Stream markdown. Rich formatting. Headers, bullets, bold for key numbers. Every section earns its place.`
+OUTPUT: Stream markdown. Rich formatting. Headers, bullets, bold for key numbers. Every section earns its place.
+
+${PROACTIVE_ENGAGEMENT_CONSTRAINT}${MODE_ENGAGEMENT_HOOKS['operator']}`
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -899,7 +1003,9 @@ SIMULATION RULES — NON-NEGOTIABLE
 • If two agents contradict each other, surface the tension explicitly.
 • Sovereign Ethical Audit: if the simulation reveals a recommendation that would harm customers or market integrity, flag it before recommending it.
 
-OUTPUT: Stream markdown. Use the Result Card structure above. Bold key numbers.`
+OUTPUT: Stream markdown. Use the Result Card structure above. Bold key numbers.
+
+${PROACTIVE_ENGAGEMENT_CONSTRAINT}${MODE_ENGAGEMENT_HOOKS['scenario']}`
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1114,7 +1220,9 @@ ${layers}
 **Critical risk** — the one thing most likely to derail execution.
 **Confidence** — 0–100 (90+ = full data · 65–89 = estimates · <65 = gaps).
 
-Bold key terms. Complete sentences. Zero hedge words.`
+Bold key terms. Complete sentences. Zero hedge words.
+
+${PROACTIVE_ENGAGEMENT_CONSTRAINT}${MODE_ENGAGEMENT_HOOKS['synergy']}`
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

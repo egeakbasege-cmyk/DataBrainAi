@@ -1027,35 +1027,84 @@ export default function ChatPage() {
                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 500 }}>History</span>
                   </button>
                 )}
-                <button
+                {/* ── Profile Context toggle — emerald glow CTA ── */}
+                <motion.button
                   onClick={toggleProfileCtx}
                   title={useProfileCtx ? 'Profile context active' : 'Profile context disabled'}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.55rem', cursor: 'pointer', background: useProfileCtx ? 'rgba(201,169,110,0.1)' : 'rgba(0,0,0,0.04)', border: `1px solid ${useProfileCtx ? 'rgba(201,169,110,0.35)' : 'rgba(0,0,0,0.08)'}`, borderRadius: '5px', transition: 'all 0.15s' }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  animate={useProfileCtx ? {
+                    boxShadow: ['0 0 6px rgba(16,185,129,0.15)', '0 0 14px rgba(16,185,129,0.3)', '0 0 6px rgba(16,185,129,0.15)'],
+                  } : { boxShadow: '0 0 0px rgba(0,0,0,0)' }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.3rem',
+                    padding: '0.2rem 0.6rem',
+                    cursor: 'pointer',
+                    background: useProfileCtx
+                      ? 'linear-gradient(135deg, rgba(6,78,59,0.55) 0%, rgba(16,185,129,0.12) 100%)'
+                      : 'rgba(0,0,0,0.04)',
+                    border: `1px solid ${useProfileCtx ? 'rgba(16,185,129,0.45)' : 'rgba(0,0,0,0.08)'}`,
+                    borderRadius: '6px',
+                    transition: 'background 0.2s, border-color 0.2s',
+                  }}
                 >
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: useProfileCtx ? '#C9A96E' : '#D4D4D8', transition: 'background 0.15s' }} />
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 500, color: useProfileCtx ? '#B8935A' : '#9CA3AF' }}>
+                  {/* Shield icon */}
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={useProfileCtx ? '#10B981' : '#9CA3AF'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <polyline points="9 12 11 14 15 10"/>
+                  </svg>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: useProfileCtx ? '#34D399' : '#9CA3AF', letterSpacing: '0.01em' }}>
                     {t('chat.useProfileContext')}
                   </span>
-                </button>
-                {/* Business / Free-chat mode toggle */}
-                <button
+                </motion.button>
+                {/* ── Business / Free-chat mode — emerald glow CTA ── */}
+                <motion.button
                   onClick={() => setBusinessMode(v => !v)}
                   title={businessMode ? 'Business mode active — click for free chat' : 'Free chat mode — click for business intelligence'}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.55rem', cursor: 'pointer', background: businessMode ? 'rgba(99,102,241,0.12)' : 'rgba(0,0,0,0.04)', border: `1px solid ${businessMode ? 'rgba(99,102,241,0.35)' : 'rgba(0,0,0,0.08)'}`, borderRadius: '5px', transition: 'all 0.15s' }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  animate={businessMode ? {
+                    boxShadow: ['0 0 6px rgba(16,185,129,0.12)', '0 0 16px rgba(16,185,129,0.28)', '0 0 6px rgba(16,185,129,0.12)'],
+                  } : { boxShadow: '0 0 0px rgba(0,0,0,0)' }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.3rem',
+                    padding: '0.2rem 0.6rem',
+                    cursor: 'pointer',
+                    background: businessMode
+                      ? 'linear-gradient(135deg, rgba(6,78,59,0.55) 0%, rgba(16,185,129,0.12) 100%)'
+                      : 'rgba(0,0,0,0.04)',
+                    border: `1px solid ${businessMode ? 'rgba(16,185,129,0.45)' : 'rgba(0,0,0,0.08)'}`,
+                    borderRadius: '6px',
+                    transition: 'background 0.2s, border-color 0.2s',
+                  }}
                 >
                   <span style={{ fontSize: '0.58rem', lineHeight: 1, flexShrink: 0 }}>{businessMode ? '💼' : '💬'}</span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 500, color: businessMode ? '#818CF8' : '#9CA3AF' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: businessMode ? '#34D399' : '#9CA3AF' }}>
                     {businessMode ? 'Business' : 'Free Chat'}
                   </span>
-                </button>
+                </motion.button>
+                {/* ── Upgrade Pro — gold shimmer CTA ── */}
                 {!isPro && (
-                  <button
+                  <motion.button
                     onClick={triggerPaywall}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.96 }}
+                    animate={{
+                      boxShadow: [
+                        '0 0 8px rgba(16,185,129,0.12), 0 0 0px rgba(201,169,110,0)',
+                        '0 0 18px rgba(16,185,129,0.28), 0 0 10px rgba(201,169,110,0.15)',
+                        '0 0 8px rgba(16,185,129,0.12), 0 0 0px rgba(201,169,110,0)',
+                      ],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                     style={{
+                      position: 'relative',
                       display: 'flex', alignItems: 'center', gap: '0.3rem',
-                      padding: '0.25rem 0.75rem',
-                      background: 'linear-gradient(135deg, rgba(201,169,110,0.15), rgba(201,169,110,0.08))',
-                      border: '1.5px solid rgba(201,169,110,0.55)',
+                      padding: '0.28rem 0.85rem',
+                      background: 'linear-gradient(135deg, #064E3B 0%, #065F46 45%, #0F2417 100%)',
+                      border: '1.5px solid rgba(16,185,129,0.55)',
                       borderRadius: '999px',
                       cursor: 'pointer',
                       fontFamily: 'Inter, sans-serif',
@@ -1063,14 +1112,26 @@ export default function ChatPage() {
                       fontWeight: 700,
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
-                      color: '#C9A96E',
+                      color: '#6EE7B7',
                       flexShrink: 0,
-                      boxShadow: '0 0 8px rgba(201,169,110,0.15)',
-                      transition: 'all 0.15s',
+                      overflow: 'hidden',
                     }}
                   >
-                    ✦ Upgrade Pro
-                  </button>
+                    {/* Shimmer sweep */}
+                    <motion.span
+                      animate={{ x: ['-120%', '220%'] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 1.5 }}
+                      style={{
+                        position: 'absolute', inset: 0,
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(110,231,183,0.2) 50%, transparent 100%)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#6EE7B7" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, position: 'relative' }}>
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    <span style={{ position: 'relative' }}>Upgrade Pro</span>
+                  </motion.button>
                 )}
               </div>
             ) : (
@@ -1079,13 +1140,24 @@ export default function ChatPage() {
                   {t('chat.noContext')}
                 </span>
                 {!isPro && (
-                  <button
+                  <motion.button
                     onClick={triggerPaywall}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.96 }}
+                    animate={{
+                      boxShadow: [
+                        '0 0 8px rgba(16,185,129,0.12)',
+                        '0 0 18px rgba(16,185,129,0.28)',
+                        '0 0 8px rgba(16,185,129,0.12)',
+                      ],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                     style={{
+                      position: 'relative',
                       display: 'flex', alignItems: 'center', gap: '0.3rem',
-                      padding: '0.25rem 0.75rem',
-                      background: 'linear-gradient(135deg, rgba(201,169,110,0.15), rgba(201,169,110,0.08))',
-                      border: '1.5px solid rgba(201,169,110,0.55)',
+                      padding: '0.28rem 0.85rem',
+                      background: 'linear-gradient(135deg, #064E3B 0%, #065F46 45%, #0F2417 100%)',
+                      border: '1.5px solid rgba(16,185,129,0.55)',
                       borderRadius: '999px',
                       cursor: 'pointer',
                       fontFamily: 'Inter, sans-serif',
@@ -1093,14 +1165,25 @@ export default function ChatPage() {
                       fontWeight: 700,
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
-                      color: '#C9A96E',
+                      color: '#6EE7B7',
                       flexShrink: 0,
-                      boxShadow: '0 0 8px rgba(201,169,110,0.15)',
-                      transition: 'all 0.15s',
+                      overflow: 'hidden',
                     }}
                   >
-                    ✦ Upgrade Pro
-                  </button>
+                    <motion.span
+                      animate={{ x: ['-120%', '220%'] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 1.5 }}
+                      style={{
+                        position: 'absolute', inset: 0,
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(110,231,183,0.2) 50%, transparent 100%)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#6EE7B7" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, position: 'relative' }}>
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    <span style={{ position: 'relative' }}>Upgrade Pro</span>
+                  </motion.button>
                 )}
               </div>
             )}
