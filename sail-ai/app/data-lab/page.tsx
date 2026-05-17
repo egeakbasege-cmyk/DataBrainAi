@@ -626,6 +626,23 @@ export default function DataLabPage() {
       <main style={{minHeight:'100vh',background:'#FAFAF8',paddingTop:'2.5rem',paddingBottom:'6rem'}}>
         <div style={{maxWidth:900,margin:'0 auto',padding:'0 1.25rem'}}>
 
+          {/* ── KAIROS Banner ─────────────────────────────────────── */}
+          <Link
+            href="/data-lab/kairos"
+            style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'1rem',padding:'0.875rem 1.125rem',borderRadius:12,background:'linear-gradient(135deg,rgba(99,102,241,0.1),rgba(168,85,247,0.08))',border:'1.5px solid rgba(99,102,241,0.25)',marginBottom:'1.5rem',textDecoration:'none',cursor:'pointer',transition:'border-color 0.15s'}}
+          >
+            <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
+              <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg,#6366f1,#a855f7)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <div>
+                <p style={{fontFamily:'Inter,sans-serif',fontSize:'0.75rem',fontWeight:700,color:'#a5b4fc',margin:'0 0 0.1rem'}}>KAIROS Intelligence</p>
+                <p style={{fontFamily:'Inter,sans-serif',fontSize:'0.65rem',color:'#6366f1',margin:0}}>Spy on any Shopify or Amazon competitor — AI battle plans in 90 seconds</p>
+              </div>
+            </div>
+            <span style={{fontFamily:'Inter,sans-serif',fontSize:'0.65rem',fontWeight:600,color:'#818cf8',background:'rgba(99,102,241,0.1)',padding:'0.25rem 0.75rem',borderRadius:999,border:'1px solid rgba(99,102,241,0.2)',whiteSpace:'nowrap'}}>Open →</span>
+          </Link>
+
           {/* ── Page Header ───────────────────────────────────────── */}
           <div style={{marginBottom:'2rem'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'0.75rem',marginBottom:'0.625rem'}}>

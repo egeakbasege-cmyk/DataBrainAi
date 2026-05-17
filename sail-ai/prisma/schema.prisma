@@ -26,9 +26,10 @@ model User {
   role          String    @default("USER")
   isPro         Boolean   @default(false)
   stripeEmail   String?
-  accounts      Account[]
-  sessions      Session[]
-  analyses      Analysis[]
+  accounts        Account[]
+  sessions        Session[]
+  analyses        Analysis[]
+  kairosAnalyses  KairosAnalysis[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -88,4 +89,55 @@ model AnonymousUsage {
   usageCount    Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// --- KAIROS Data Lab Models ---
+
+enum KairosPlatform {
+  SHOPIFY
+  AMAZON
+}
+
+enum KairosStatus {
+  PENDING
+  SCRAPING
+  ANALYZING
+  COMPLETE
+  ERROR
+}
+
+model KairosAnalysis {
+  id         String         @id @default(cuid())
+  userId     String?
+  platform   KairosPlatform
+  targetUrl  String
+  targetName String         @default("")
+  status     KairosStatus   @default(PENDING)
+  rawData    Json           @default("{}")
+  aiAnalysis Json           @default("{}")
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  user       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([platform])
+  @@index([createdAt(sort: Desc)])
+}
+
+model KairosCachedProduct {
+  id                    String         @id @default(cuid())
+  asinOrHandle          String         @unique
+  platform              KairosPlatform
+  title                 String
+  price                 Float?
+  imageUrl              String?
+  supplierEstimatedCost Float?
+  rating                Float?
+  reviewCount           Int?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  @@index([asinOrHandle])
+  @@index([platform])
 }
