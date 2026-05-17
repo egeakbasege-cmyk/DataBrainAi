@@ -1,9 +1,53 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import type { ShopifyRawData, AmazonRawData, KairosAIAnalysis, KairosPlatform, SupplierEstimate } from '../types'
 import { estimateSupplierCosts } from '../workers/shopifyWorker'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const GROQ_URL   = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_MODEL = 'llama-3.3-70b-versatile'
+
+// ── Groq fetch with key rotation (mirrors Sail AI pattern) ───────────────────
+
+function getGroqKeys(): string[] {
+  return [
+    process.env.GROQ_API_KEY,
+    process.env.GROQ_API_KEY_2,
+    process.env.GROQ_API_KEY_3,
+    process.env.GROQ_API_KEY_4,
+    process.env.GROQ_API_KEY_5,
+  ].filter(Boolean) as string[]
+}
+
+async function groqComplete(systemPrompt: string, userPrompt: string): Promise<string> {
+  const keys = getGroqKeys()
+  if (keys.length === 0) throw new Error('No GROQ_API_KEY configured')
+
+  const body = JSON.stringify({
+    model:       GROQ_MODEL,
+    temperature: 0.3,
+    max_tokens:  4096,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user',   content: userPrompt },
+    ],
+  })
+
+  let lastError = ''
+  for (const key of keys) {
+    const res = await fetch(GROQ_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      body,
+    })
+    if (res.status === 429) { lastError = '429'; continue }
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(`Groq error ${res.status}: ${err.slice(0, 200)}`)
+    }
+    const data = await res.json() as any
+    return data.choices?.[0]?.message?.content ?? ''
+  }
+  throw new Error(`All Groq keys rate-limited: ${lastError}`)
+}
 
 // ── Zod validation schema ─────────────────────────────────────────────────────
 
@@ -40,6 +84,8 @@ const AIAnalysisSchema = z.object({
 
 // ── Prompt builders ───────────────────────────────────────────────────────────
 
+const SYSTEM_PROMPT = `You are KAIROS — a world-class e-commerce intelligence analyst. You respond ONLY with valid JSON. No markdown fences, no extra text, no explanations — raw JSON only.`
+
 function buildShopifyPrompt(data: ShopifyRawData, supplierMatrix: SupplierEstimate[]): string {
   const topProductsSummary = data.topProducts.slice(0, 5).map(p => ({
     title:    p.title,
@@ -49,7 +95,7 @@ function buildShopifyPrompt(data: ShopifyRawData, supplierMatrix: SupplierEstima
   }))
   const tagList = Object.entries(data.tagFrequency).slice(0, 15).map(([t, c]) => `${t}(${c})`).join(', ')
 
-  return `You are KAIROS — a world-class e-commerce intelligence analyst. Perform a deep competitive analysis of this Shopify store.
+  return `Perform a deep competitive analysis of this Shopify store and return the result as a single JSON object.
 
 ## STORE DATA
 - Domain: ${data.storeDomain}
@@ -64,23 +110,46 @@ ${JSON.stringify(topProductsSummary, null, 2)}
 ## SUPPLIER COST MATRIX
 ${supplierMatrix.map(s => `- ${s.productTitle}: Retail $${s.retailPrice} | Est. Cost $${s.estimatedCost} | Margin ${s.grossMarginPct}%`).join('\n')}
 
-## INSTRUCTIONS
-1. Identify market positioning, target customer, and pricing strategy.
-2. Find specific vulnerabilities: pricing gaps, missing variants, stale inventory.
-3. Generate a precise 5-step battle plan for a competitor to beat this store.
-4. Identify 8-10 SEO keywords this store targets that a competitor could hijack.
-5. Write a high-converting TikTok ad script targeting the store's weaknesses.
-6. Score this competitor's threat level (0–100).
+## REQUIRED JSON SCHEMA
+{
+  "summary": "2-3 sentence executive summary",
+  "marketPositioning": {
+    "strengths": ["..."],
+    "weaknesses": ["..."],
+    "pricePosition": "premium|mid-market|budget|unknown",
+    "targetAudience": "..."
+  },
+  "vulnerabilities": [
+    { "category": "...", "finding": "...", "severity": "HIGH|MEDIUM|LOW", "opportunity": "..." }
+  ],
+  "actionableBattlePlan": [
+    { "step": 1, "title": "...", "description": "...", "timeframe": "Week 1-2", "effort": "HIGH|MEDIUM|LOW" }
+  ],
+  "seoKeywordsToTarget": ["keyword1", "keyword2"],
+  "adCreativeScript": {
+    "platform": "TikTok|Instagram|YouTube Shorts",
+    "hook": "...",
+    "script": "...",
+    "cta": "..."
+  },
+  "competitorScore": 0
+}
 
-Return ONLY valid JSON. No markdown, no extra text.`
+Instructions:
+1. Identify market positioning, target customer, pricing strategy.
+2. Find 3-5 specific vulnerabilities: pricing gaps, missing variants, stale inventory.
+3. Generate exactly 5 battle plan steps.
+4. List 8-10 SEO keywords.
+5. Write a high-converting TikTok ad script targeting weaknesses.
+6. Score threat level 0-100.`
 }
 
 function buildAmazonPrompt(data: AmazonRawData): string {
-  const reviewSample = data.reviews.slice(0, 20)
-    .map(r => `[${r.rating}★] "${r.title}": ${r.body.slice(0, 200)}`)
+  const reviewSample = data.reviews.slice(0, 15)
+    .map(r => `[${r.rating}★] "${r.title}": ${r.body.slice(0, 150)}`)
     .join('\n')
 
-  return `You are KAIROS — a world-class Amazon marketplace intelligence analyst.
+  return `Analyse this Amazon product and return the result as a single JSON object.
 
 ## PRODUCT DATA
 - ASIN: ${data.asin}
@@ -93,19 +162,42 @@ function buildAmazonPrompt(data: AmazonRawData): string {
 ## BULLET POINTS
 ${data.bulletPoints.slice(0, 6).map((b, i) => `${i + 1}. ${b}`).join('\n')}
 
-## CUSTOMER REVIEWS (sample)
+## CUSTOMER REVIEWS
 ${reviewSample}
 
-## INSTRUCTIONS
-1. Identify market positioning and customer persona.
-2. Mine reviews for: top 3 product flaws, top 3 feature requests, sentiment gaps.
-3. Generate a precise 5-step battle plan to launch a better product.
-4. Identify 8-10 Amazon/SEO keywords to target.
-5. Write a TikTok ad script exposing the competitor's weaknesses.
-6. Score this competitor's threat level (0–100).
+## REQUIRED JSON SCHEMA
+{
+  "summary": "2-3 sentence executive summary",
+  "marketPositioning": {
+    "strengths": ["..."],
+    "weaknesses": ["..."],
+    "pricePosition": "premium|mid-market|budget|unknown",
+    "targetAudience": "..."
+  },
+  "vulnerabilities": [
+    { "category": "...", "finding": "...", "severity": "HIGH|MEDIUM|LOW", "opportunity": "..." }
+  ],
+  "actionableBattlePlan": [
+    { "step": 1, "title": "...", "description": "...", "timeframe": "Week 1-2", "effort": "HIGH|MEDIUM|LOW" }
+  ],
+  "seoKeywordsToTarget": ["keyword1", "keyword2"],
+  "adCreativeScript": {
+    "platform": "TikTok|Instagram|YouTube Shorts",
+    "hook": "...",
+    "script": "...",
+    "cta": "..."
+  },
+  "competitorScore": 0
+}
 
-For supplierMatrix, estimate manufacturing costs at 12-20% of retail.
-Return ONLY valid JSON. No markdown, no extra text.`
+Instructions:
+1. Identify market positioning and customer persona.
+2. Mine reviews for top 3 flaws, top 3 feature requests, sentiment gaps.
+3. Generate exactly 5 battle plan steps.
+4. List 8-10 Amazon/SEO keywords.
+5. Write a TikTok ad script exposing competitor weaknesses.
+6. Score threat level 0-100.
+7. For supplierMatrix (outside schema, included separately), costs are 12-20% of retail.`
 }
 
 // ── Main engine ───────────────────────────────────────────────────────────────
@@ -115,12 +207,12 @@ export async function runAnalysisEngine(
   rawData:  ShopifyRawData | AmazonRawData,
 ): Promise<KairosAIAnalysis> {
   let supplierMatrix: SupplierEstimate[] = []
-  let prompt: string
+  let userPrompt: string
 
   if (platform === 'SHOPIFY') {
     const shopifyData = rawData as ShopifyRawData
     supplierMatrix    = estimateSupplierCosts(shopifyData.products)
-    prompt            = buildShopifyPrompt(shopifyData, supplierMatrix)
+    userPrompt        = buildShopifyPrompt(shopifyData, supplierMatrix)
   } else {
     const amazonData  = rawData as AmazonRawData
     const retailPrice = amazonData.price ?? 0
@@ -131,24 +223,18 @@ export async function runAnalysisEngine(
       grossMargin:    Math.round(retailPrice * 0.85 * 100) / 100,
       grossMarginPct: 85,
     }]
-    prompt = buildAmazonPrompt(amazonData)
+    userPrompt = buildAmazonPrompt(amazonData)
   }
 
-  const message = await client.messages.create({
-    model:       'claude-opus-4-5',
-    max_tokens:  4096,
-    temperature: 0.3,
-    messages:    [{ role: 'user', content: prompt }],
-  })
-
-  const text = message.content[0].type === 'text' ? message.content[0].text : ''
+  const text = await groqComplete(SYSTEM_PROMPT, userPrompt)
 
   let parsed: z.infer<typeof AIAnalysisSchema>
   try {
+    // Strip any accidental markdown fences
     const jsonText = text.replace(/^```(?:json)?\s*/m, '').replace(/\s*```$/m, '').trim()
     parsed = AIAnalysisSchema.parse(JSON.parse(jsonText))
   } catch (err: any) {
-    throw new Error(`AI returned invalid JSON: ${err.message}. Raw: ${text.slice(0, 500)}`)
+    throw new Error(`Groq returned invalid JSON: ${err.message}. Raw: ${text.slice(0, 500)}`)
   }
 
   return { ...parsed, supplierMatrix, generatedAt: new Date().toISOString() }
