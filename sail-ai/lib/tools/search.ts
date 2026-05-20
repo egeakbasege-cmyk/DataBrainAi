@@ -201,54 +201,99 @@ interface TavilyResponse {
 // so executeDeepSearch() can include them in DeepSearchResponse.
 let _tavilyImagesAccum: SearchImage[] = []
 
+// ── Key pool helpers ──────────────────────────────────────────────────────────
+
+/**
+ * getTavilyKeys
+ * Reads TAVILY_API_KEY, TAVILY_API_KEY_2 … TAVILY_API_KEY_5 from env.
+ * Returns all non-empty keys in order — rotation happens on quota/rate errors.
+ */
+function getTavilyKeys(): string[] {
+  return [
+    process.env.TAVILY_API_KEY,
+    process.env.TAVILY_API_KEY_2,
+    process.env.TAVILY_API_KEY_3,
+    process.env.TAVILY_API_KEY_4,
+    process.env.TAVILY_API_KEY_5,
+  ].filter(Boolean) as string[]
+}
+
+/**
+ * getSerperKeys
+ * Reads SERPER_API_KEY, SERPER_API_KEY_2 … SERPER_API_KEY_5 from env.
+ */
+function getSerperKeys(): string[] {
+  return [
+    process.env.SERPER_API_KEY,
+    process.env.SERPER_API_KEY_2,
+    process.env.SERPER_API_KEY_3,
+    process.env.SERPER_API_KEY_4,
+    process.env.SERPER_API_KEY_5,
+  ].filter(Boolean) as string[]
+}
+
 async function searchTavily(
   query:         string,
   signal?:       AbortSignal,
   depth:         'basic' | 'advanced' = 'basic',
   captureImages  = false,              // true only for the first query
 ): Promise<SearchResult[]> {
-  const apiKey = process.env.TAVILY_API_KEY
-  if (!apiKey) return []
+  const keys = getTavilyKeys()
+  if (keys.length === 0) return []
 
-  let res: Response
-  try {
-    res = await fetch('https://api.tavily.com/search', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        api_key:                    apiKey,
-        query,
-        search_depth:               depth,
-        max_results:                20,
-        include_raw_content:        false,
-        include_images:             captureImages,
-        include_image_descriptions: captureImages,
-      }),
-      signal,
-    })
-  } catch { return [] }
+  const body = JSON.stringify({
+    query,
+    search_depth:               depth,
+    max_results:                20,
+    include_raw_content:        false,
+    include_images:             captureImages,
+    include_image_descriptions: captureImages,
+  })
 
-  if (!res.ok) return []
-  const data = await res.json().catch(() => ({})) as TavilyResponse
+  // Rotate through keys — skip on 429 (rate limit) or quota-exceeded 200 responses
+  for (const apiKey of keys) {
+    let res: Response
+    try {
+      res = await fetch('https://api.tavily.com/search', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body,
+        signal,
+      })
+    } catch { continue }
 
-  // Capture images from first query (if requested)
-  if (captureImages && data.images?.length) {
-    _tavilyImagesAccum = (data.images as Array<string | TavilyImageResult>)
-      .map(img => typeof img === 'string'
-        ? { url: img }
-        : { url: img.url, description: img.description ?? undefined })
-      .filter(img => img.url?.startsWith('http'))
-      .slice(0, 12)
+    // 429 rate-limited → try next key
+    if (res.status === 429) continue
+
+    // Non-2xx → try next key
+    if (!res.ok) continue
+
+    const data = await res.json().catch(() => ({})) as TavilyResponse
+
+    // Quota-exceeded returns 200 with { detail: { error: "..." } } — no results array
+    if (!data.results?.length && (data as any).detail?.error) continue
+
+    // Capture images from first query (if requested)
+    if (captureImages && data.images?.length) {
+      _tavilyImagesAccum = (data.images as Array<string | TavilyImageResult>)
+        .map(img => typeof img === 'string'
+          ? { url: img }
+          : { url: img.url, description: img.description ?? undefined })
+        .filter(img => img.url?.startsWith('http'))
+        .slice(0, 12)
+    }
+
+    return (data.results ?? []).map(r => ({
+      url:              r.url,
+      title:            r.title,
+      content:          pruneContent(r.content ?? ''),
+      publishedDate:    r.published_date,
+      domain:           domainOf(r.url),
+      reliabilityScore: reliabilityOf(r.url),
+    }))
   }
 
-  return (data.results ?? []).map(r => ({
-    url:              r.url,
-    title:            r.title,
-    content:          pruneContent(r.content ?? ''),
-    publishedDate:    r.published_date,
-    domain:           domainOf(r.url),
-    reliabilityScore: reliabilityOf(r.url),
-  }))
+  return [] // all keys exhausted
 }
 
 // ── Serper provider ───────────────────────────────────────────────────────────
@@ -279,35 +324,40 @@ async function searchSerper(
   signal?: AbortSignal,
   lang     = 'en',
 ): Promise<SearchResult[]> {
-  const apiKey = process.env.SERPER_API_KEY
-  if (!apiKey) return []
+  const keys = getSerperKeys()
+  if (keys.length === 0) return []
 
   const locale = SERPER_LOCALE[lang] ?? SERPER_LOCALE['en']
+  const body   = JSON.stringify({ q: query, num: 20, gl: locale.gl, hl: locale.hl })
 
-  let res: Response
-  try {
-    res = await fetch('https://google.serper.dev/search', {
-      method:  'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY':    apiKey,
-      },
-      body: JSON.stringify({ q: query, num: 20, gl: locale.gl, hl: locale.hl }),
-      signal,
-    })
-  } catch { return [] }
+  // Rotate through keys on 429 (rate limit) or 403 (quota exceeded)
+  for (const apiKey of keys) {
+    let res: Response
+    try {
+      res = await fetch('https://google.serper.dev/search', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-KEY': apiKey },
+        body,
+        signal,
+      })
+    } catch { continue }
 
-  if (!res.ok) return []
-  const data = await res.json().catch(() => ({})) as SerperResponse
+    if (res.status === 429 || res.status === 403) continue
+    if (!res.ok) continue
 
-  return (data.organic ?? []).map(r => ({
-    url:              r.link,
-    title:            r.title,
-    content:          pruneContent(r.snippet ?? ''),
-    publishedDate:    r.date,
-    domain:           domainOf(r.link),
-    reliabilityScore: reliabilityOf(r.link),
-  }))
+    const data = await res.json().catch(() => ({})) as SerperResponse
+
+    return (data.organic ?? []).map(r => ({
+      url:              r.link,
+      title:            r.title,
+      content:          pruneContent(r.snippet ?? ''),
+      publishedDate:    r.date,
+      domain:           domainOf(r.link),
+      reliabilityScore: reliabilityOf(r.link),
+    }))
+  }
+
+  return [] // all keys exhausted
 }
 
 // ── High-inflation economy detector ──────────────────────────────────────────
@@ -392,6 +442,10 @@ function stripFillerWords(text: string): string {
 // Direct approach: search is derived straight from the user's message.
 // No intent classification, no templates — what the user asks is what we search.
 
+// Price/cost intent detector — used by decomposeToSearchQueries to decide
+// whether Q3 should anchor on TL price data or topic-specific enrichment.
+const PRICE_INTENT_PATTERN = /\b(kira|fiyat|maliyet|ücret|maaş|tutar|bedel|masraf|gider|harcama|bütçe|ödeme|ne\s+kadar|kaç\s+(para|lira|tl)|asgari\s+ücret|faiz|kur|döviz|altın|konut|metrekare|m²|price|cost|rent|salary|wage|fee|rate|expense|budget|afford|minimum\s+wage|interest\s+rate|exchange\s+rate)/i
+
 /**
  * decomposeToSearchQueries
  *
@@ -400,10 +454,12 @@ function stripFillerWords(text: string): string {
  * categories or template substitution.
  *
  * Strategy:
- *   Q1 — User's exact message + year (in their own language, regional sources)
- *   Q2 — Stripped key terms in English + year (international authority sources)
- *   Q3 — Enrichment suffix for data freshness (volatile economy → TL price anchor;
- *         non-English → native stats/analysis; English → analysis data report)
+ *   Q1 — User's exact message + year (native language, regional sources)
+ *   Q2 — Stripped key terms + year (international / authority sources)
+ *   Q3 — Topic-aware enrichment:
+ *         • Price/cost query in volatile economy → TL current price anchor
+ *         • Any other topic → domain-specific enrichment (strategy, data, analysis…)
+ *         This prevents rent/price search results from bleeding into unrelated topics.
  */
 export function decomposeToSearchQueries(
   message:  string,
@@ -413,23 +469,34 @@ export function decomposeToSearchQueries(
   const year         = new Date().getFullYear()
   const detectedLang = language !== 'en' ? language : detectQueryLanguage(message)
   const isVolatile   = isHighInflationEconomy(detectedLang)
+  const isPriceQuery = PRICE_INTENT_PATTERN.test(message)
   const keyTerms     = stripFillerWords(message)
   const nativeMsg    = message.slice(0, 120).trim()
 
   // Q1 — User's exact question in their language + year
-  const q1 = isVolatile
+  // For volatile economies with price queries, add "güncel" (current) signal
+  const q1 = (isVolatile && isPriceQuery)
     ? `${nativeMsg} ${year} güncel`
     : `${nativeMsg} ${year}`
 
-  // Q2 — English key terms for global / authoritative sources
+  // Q2 — Key terms in English for global / authoritative sources
   const q2 = `${keyTerms} ${year}`
 
-  // Q3 — Enrichment based on language/economy context
-  const q3 = isVolatile
-    ? `${keyTerms} ${year} TL güncel fiyat veri`
-    : detectedLang !== 'en'
-      ? `${nativeMsg} ${year} istatistik veri analiz`
-      : `${keyTerms} ${year} analysis data report`
+  // Q3 — Topic-aware enrichment (NOT always "TL fiyat veri")
+  let q3: string
+  if (isVolatile && isPriceQuery) {
+    // Price/cost query in high-inflation economy → anchor on current TL figures
+    q3 = `${keyTerms} ${year} TL güncel veri`
+  } else if (detectedLang === 'tr') {
+    // Turkish non-price query → topic enrichment (strategy, market, analysis)
+    q3 = `${keyTerms} ${year} araştırma analiz rapor`
+  } else if (detectedLang !== 'en') {
+    // Other non-English → stats and analysis in native language
+    q3 = `${nativeMsg} ${year} istatistik veri analiz`
+  } else {
+    // English → research report enrichment
+    q3 = `${keyTerms} ${year} analysis data report`
+  }
 
   return Array.from(new Set([q1, q2, q3].filter(q => q.length > 5))).slice(0, 3)
 }
@@ -607,8 +674,10 @@ export async function executeDeepSearch(
   const abort  = new AbortController()
   const timer  = setTimeout(() => abort.abort(), SEARCH_TIMEOUT_MS)
 
-  const hasTavily = Boolean(process.env.TAVILY_API_KEY)
-  const hasSerper = Boolean(process.env.SERPER_API_KEY)
+  const tavilyKeys = getTavilyKeys()
+  const serperKeys = getSerperKeys()
+  const hasTavily  = tavilyKeys.length > 0
+  const hasSerper  = serperKeys.length > 0
 
   if (!hasTavily && !hasSerper) {
     clearTimeout(timer)

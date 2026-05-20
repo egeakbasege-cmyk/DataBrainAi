@@ -18,6 +18,9 @@ import NextAuth              from 'next-auth'
 import { authConfig }        from '@/auth.config'
 import type { AetherisPayload } from '@/types/architecture'
 import { SOVEREIGN_COGNITIVE_DIRECTIVE } from '@/lib/ai-prompt'
+// [SAIL-PIPELINE] 5-layer stateful pipeline
+import { runPipeline }       from '@/lib/pipeline'
+import type { PipelineConfig } from '@/lib/pipeline'
 import {
   buildUpwindSystemPrompt,
   buildDownwindSystemPrompt as buildEnhancedDownwindPrompt,
@@ -263,15 +266,18 @@ function stripUrlsFromJson(val: unknown): unknown {
 function buildUserMessage(body: ExtendedPayload): string {
   const parts: string[] = []
 
-  if (body.context?.trim()) {
-    parts.push(`BUSINESS CONTEXT\n${body.context.trim()}`)
+  // Live research context injected FIRST in the user message — immediately before the
+  // query — so the model has the live data in full attention focus when it reads the question.
+  // This double-injection (system + user) ensures the model cannot miss the live data.
+  if (body.ragContext?.trim()) {
+    parts.push(
+      `📡 LIVE SEARCH DATA (fetched right now — use these figures, not training memory):\n` +
+      body.ragContext.trim()
+    )
   }
 
-  // Live research context — injected by the research loop when requiresResearch() is true.
-  // Also accepts Pinecone/Weaviate RAG chunks in the same field (future expansion).
-  // Format is already <research_context>…</research_context> via encodeResearchContext().
-  if (body.ragContext?.trim()) {
-    parts.push(body.ragContext.trim())
+  if (body.context?.trim()) {
+    parts.push(`BUSINESS CONTEXT\n${body.context.trim()}`)
   }
 
   parts.push(`QUERY\n${body.message.trim()}`)
@@ -728,14 +734,28 @@ SCOPE RULES — NON-NEGOTIABLE:
   const streamingModes = new Set(['sail', 'operator', 'synergy', 'scenario'])
   const uncertaintySuffix = streamingModes.has(analysisMode) ? DATA_UNCERTAINTY_SUFFIX : ''
 
-  // Research context injected as a SYSTEM-level block for ALL modes.
-  // Previously this was excluded for streaming modes (sail/operator/synergy/scenario),
-  // leaving research data only in the user message where the model deprioritised it
-  // and fell back to training-data hallucinations. System-level injection gives the
-  // research block the highest authority regardless of mode type.
+  // Research context — injected at the VERY TOP of every system prompt so the model
+  // reads live data before any other directive. Positioning research AFTER long prompt
+  // blocks causes "lost in the middle" attention decay where LLaMA deprioritises it
+  // and silently falls back to stale training-data figures.
+  //
+  // Structure: researchPriorityBlock + domainPrefix + modePrompt + ...
+  // The SEARCH_FAILED_WARNING variant ensures the model knows search ran but found nothing,
+  // preventing silent training-data fallback.
   const researchSystemBlock = _hasSynthesisContext
-    ? `\n\nLIVE RESEARCH DATA — USE THIS FIRST:\n${body.ragContext ?? ''}\n`
-    : ''
+    ? `⚡ LIVE WEB SEARCH DATA — READ THIS BEFORE EVERYTHING ELSE ⚡\n` +
+      `The following data was retrieved right now from the live web. ` +
+      `You MUST use this as your primary source. ` +
+      `NEVER replace or override these figures with your training memory.\n\n` +
+      `${body.ragContext ?? ''}\n\n` +
+      `END OF LIVE DATA — The instructions below govern how to use it.\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
+    : _researchAttempted
+      ? `⚠️ WEB SEARCH RAN BUT RETURNED NO RESULTS FOR THIS QUERY.\n` +
+        `Your response must be based entirely on training data — which may be significantly outdated.\n` +
+        `Label EVERY numerical figure with [EĞİTİM VERİSİ — doğrulayın] before stating it.\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
+      : ''
 
   // [SAIL-INTELLIGENCE-UPGRADE] Synthesis suffix — appended when live research was retrieved.
   // [SAIL-UNIVERSAL-INTELLIGENCE-V2] For non-English queries, also injects UNIVERSAL_LANGUAGE_DIRECTIVE.
@@ -757,7 +777,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + researchSystemBlock + uncertaintySuffix + synthesisSuffix,
+          researchSystemBlock + domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -829,7 +849,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + researchSystemBlock + uncertaintySuffix + synthesisSuffix,
+          researchSystemBlock + domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -935,7 +955,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + researchSystemBlock + uncertaintySuffix + synthesisSuffix,
+          researchSystemBlock + domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -1007,7 +1027,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + researchSystemBlock + uncertaintySuffix + synthesisSuffix,
+          researchSystemBlock + domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -1079,7 +1099,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
+            { role: 'system', content: researchSystemBlock + domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1125,7 +1145,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + researchSystemBlock + synthesisSuffix },
+            { role: 'system', content: researchSystemBlock + domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1169,16 +1189,20 @@ SCOPE RULES — NON-NEGOTIABLE:
     }
   }
 
-  // ── Upwind / Downwind: ExecutiveResponse JSON ─────────────────────────────
-  // NOTE: downwind uses buildEnhancedDownwindPrompt (Socratic coaching JSON schema).
-  // upwind uses buildUpwindSystemPrompt (precision analysis JSON schema).
-  // Both return JSON compatible with ExecutiveResponseCard via json_object mode.
+  // ── Upwind / Downwind: 5-Layer Stateful Pipeline ─────────────────────────
+  // [SAIL-PIPELINE] Both modes now route through the full pipeline:
+  //   Layer 1 (SemanticRouter) → Layer 2 (Orchestrator + Groq) →
+  //   Layer 3 (Validator + repair loop) → Layer 4 (Humanizer) → output
+  //
+  // Response shape: { prose, scopeMetadata, structuredData, __healthReport }
+  // The frontend uses prose for display and scopeMetadata for the AnalysisScopePanel.
+
   const cognitiveLoad = (body.state as { cognitiveLoadIndex?: number } | undefined)?.cognitiveLoadIndex ?? 0
 
-  // Build the session history string for downwind coaching continuity
+  // Build mode-specific system prompt (same as before; pipeline wraps it)
   const sessionHistoryBlock = analysisMode === 'downwind' && body.messages?.length
     ? (body.messages as Array<{ role: string; content: string }>)
-        .slice(-6)  // last 3 turns (user + assistant pairs)
+        .slice(-6)
         .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content.slice(0, 400)}`)
         .join('\n')
     : undefined
@@ -1187,52 +1211,43 @@ SCOPE RULES — NON-NEGOTIABLE:
     ? buildEnhancedDownwindPrompt(language, primaryConstraint, sessionHistoryBlock)
     : buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint)
 
-  let groqRes: Response
-  try {
-    groqRes = await groqFetch({
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model:           GROQ_MODEL,
-        messages: [
-          { role: 'system', content: domainPrefix + activeSystemPrompt + researchSystemBlock + synthesisSuffix },
-          { role: 'user',   content: userMessage },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens:      1200,
-        temperature:     analysisMode === 'downwind' ? 0.5 : 0.4,
-      }),
-    }, body.apiKey)
-  } catch {
-    return Response.json({ error: 'Unable to reach AI provider.' }, { status: 502 })
+  // Full system prompt (domain + mode-specific); pipeline prepends live research block
+  const pipelineSystemPrompt = domainPrefix + activeSystemPrompt + synthesisSuffix
+
+  const pipelineConfig: PipelineConfig = {
+    message:         body.message?.trim() ?? '',
+    sessionId:       body.sessionId ?? 'anon',
+    userId:          session.user?.email ?? 'anon',
+    language:        (language as import('@/types/architecture').SupportedLanguage),
+    analysisMode:    analysisMode as string,
+    systemPrompt:    pipelineSystemPrompt,
+    researchContext: body.ragContext ?? '',
+    groqKeys:        getKeyPool(body.apiKey),
   }
 
-  if (!groqRes.ok) {
-    const errBody = await groqRes.json().catch(() => ({})) as Record<string, unknown>
-    const groqMsg = (errBody?.error as Record<string, unknown>)?.message as string | undefined
-    const status  = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
-    const fallback = status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : `AI provider error: ${groqRes.status}`
-    return Response.json({ error: groqMsg ?? fallback }, { status })
-  }
-
-  let groqData: { choices?: Array<{ message?: { content?: string } }> }
   try {
-    groqData = await groqRes.json()
-  } catch {
-    return Response.json({ error: 'AI provider returned invalid response.' }, { status: 502 })
-  }
+    const pipelineOutput = await runPipeline(pipelineConfig)
 
-  const content = groqData?.choices?.[0]?.message?.content ?? ''
-
-  try {
-    const parsed = JSON.parse(content)
-    // [SAIL-NEW] Module 3 — health report in JSON response
-    // stripUrlsFromJson: remove any markdown hyperlinks the LLM may have embedded in string fields
-    return Response.json({ ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
+    return Response.json(
+      {
+        // Pipeline fields
+        prose:          pipelineOutput.prose,
+        scopeMetadata:  pipelineOutput.scopeMetadata,
+        structuredData: pipelineOutput.structuredData,
+        // Legacy compat: expose key structured fields at top level for existing card renderers
+        insight:        pipelineOutput.structuredData?.executiveSummary ?? pipelineOutput.prose,
+        recommendations: pipelineOutput.structuredData?.recommendations ?? [],
+        risks:           pipelineOutput.structuredData?.risks ?? [],
+        nextActions:     pipelineOutput.structuredData?.nextActions ?? [],
+        // Health report
+        __healthReport: healthReport,
+      },
+      { headers: { 'Cache-Control': 'no-store' } },
+    )
   } catch {
     return Response.json(
-      { insight: content || 'Analysis complete. Please review and try again.', __healthReport: healthReport },
-      { headers: { 'Cache-Control': 'no-store' } },
+      { error: 'Pipeline failed. Please try again.', __healthReport: healthReport },
+      { status: 502 },
     )
   }
 }

@@ -20,6 +20,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { Attachment }         from '@/components/FileAttachmentPill'
 import type { ExecutiveResponse }  from '@/types/architecture'
+import type { ScopeMetadata }      from '@/lib/pipeline/types'
 import {
   useAetherisStore,
   selectAgentMode,
@@ -42,10 +43,12 @@ export interface AetherisSubmitOptions {
 }
 
 export function useAetherisSubmit() {
-  const [state,    setState]    = useState<AetherisSubmitState>('IDLE')
-  const [response, setResponse] = useState<ExecutiveResponse | null>(null)
-  const [error,    setError]    = useState<string | null>(null)
-  const abortRef                = useRef<AbortController | null>(null)
+  const [state,         setState]         = useState<AetherisSubmitState>('IDLE')
+  const [response,      setResponse]      = useState<ExecutiveResponse | null>(null)
+  const [error,         setError]         = useState<string | null>(null)
+  const [scopeMetadata, setScopeMetadata] = useState<ScopeMetadata | null>(null)
+  const [prose,         setProse]         = useState<string | null>(null)
+  const abortRef                          = useRef<AbortController | null>(null)
 
   // Message cadence tracking for cognitive load computation
   const timestampsRef    = useRef<number[]>([])
@@ -131,6 +134,11 @@ export function useAetherisSubmit() {
       // The Aetheris endpoint returns JSON — no stream reader needed
       const raw = await res.json()
 
+      // [SAIL-PIPELINE] Extract pipeline-specific fields before schema validation
+      const rawRecord = raw as Record<string, unknown>
+      if (rawRecord.scopeMetadata) setScopeMetadata(rawRecord.scopeMetadata as ScopeMetadata)
+      if (typeof rawRecord.prose === 'string') setProse(rawRecord.prose)
+
       // Client-side schema enforcement (last line of defence)
       const validated = validateExecutiveResponse(raw)
         ? (raw as ExecutiveResponse)
@@ -165,7 +173,9 @@ export function useAetherisSubmit() {
     setState('IDLE')
     setResponse(null)
     setError(null)
+    setScopeMetadata(null)
+    setProse(null)
   }, [])
 
-  return { state, response, error, submit, reset }
+  return { state, response, error, submit, reset, scopeMetadata, prose }
 }

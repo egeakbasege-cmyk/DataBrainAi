@@ -34,6 +34,8 @@ function LoginForm() {
       setError(t('login.errLinked'))
     if (errorCode === 'OAuthSignin' || errorCode === 'OAuthCallback')
       setError(t('login.errGoogle'))
+    if (errorCode === 'Configuration' || errorCode === 'DATABASE_NOT_CONFIGURED')
+      setError('Veritabanı bağlantısı yapılandırılmamış. Lütfen DATABASE_URL ortam değişkenini ayarlayın.')
   }, [errorCode, t])
 
   function switchMode(m: Mode) {
@@ -82,7 +84,15 @@ function LoginForm() {
 
     setLoading(true)
     const result = await signIn('credentials', { email, password, redirect: false })
-    if (result?.error) { setError(t('login.errCredentials')); setLoading(false); return }
+    if (result?.error) {
+      if (result.error === 'DATABASE_NOT_CONFIGURED') {
+        setError('Veritabanı bağlantısı yapılandırılmamış. Lütfen .env.local dosyasına geçerli bir PostgreSQL DATABASE_URL ekleyin.')
+      } else {
+        setError(t('login.errCredentials'))
+      }
+      setLoading(false)
+      return
+    }
     router.push(callbackUrl)
   }
 
