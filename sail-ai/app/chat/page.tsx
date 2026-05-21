@@ -18,6 +18,8 @@ import { useUserSources }                from '@/components/UserDataImport'
 import type { Attachment }               from '@/components/FileAttachmentPill'
 import { ModeSelector }                  from '@/components/ModeSelector'
 import type { AnalysisMode }             from '@/components/ModeSelector'
+import { SovereignDashboard }            from '@/components/SovereignDashboard'
+import type { SovereignMode }            from '@/components/SovereignDashboard'
 import { VoiceInput }                    from '@/components/VoiceInput'
 import { ExportModal }                   from '@/components/ExportModal'
 import { AgentStatusBar }                from '@/components/AgentStatusBar'
@@ -295,6 +297,9 @@ export default function ChatPage() {
   const [showModeGrid, setShowModeGrid] = useState(true)
   const [prevTurns, setPrevTurns] = useState<Array<{q:string; a:string; m:AnalysisMode}>>([])
 
+  // Sovereign Dashboard — fullscreen mode picker shown before first message
+  const [showSovereign, setShowSovereign] = useState(true)
+
   // ── Unified chat thread (new architecture) ───────────────────────────────
   const {
     messages:          chatMessages,
@@ -305,6 +310,18 @@ export default function ChatPage() {
     clearThread,
     compressedHistory,
   } = useChatMessages()
+
+  // Sovereign Dashboard handler — mode selected → collapse into chat
+  const handleSovereignSelect = useCallback((sovereignMode: SovereignMode) => {
+    setMode(sovereignMode as AnalysisMode)
+    setShowSovereign(false)
+    setTimeout(() => textareaRef.current?.focus(), 120)
+  }, [])
+
+  // Auto-dismiss sovereign when a conversation has already started
+  useEffect(() => {
+    if (chatMessages.length > 0) setShowSovereign(false)
+  }, [chatMessages.length])
 
   // Follow-up chip handler — pre-fills input and submits
   const handleFollowUp = useCallback((text: string) => {
@@ -973,6 +990,28 @@ export default function ChatPage() {
     <AnimatePresence>
       {showBrandSetup && (
         <BrandSetupModal onComplete={handleBrandComplete} />
+      )}
+    </AnimatePresence>
+
+    {/* ── Sovereign Dashboard — fullscreen mode picker (pre-conversation) ── */}
+    <AnimatePresence>
+      {showSovereign && (
+        <motion.div
+          key="sovereign"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0, scale: 0.985 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          style={{ position: 'fixed', inset: 0, zIndex: 45 }}
+        >
+          <SovereignDashboard
+            initialMode={(['upwind','synergy','sail','trim','catamaran'] as SovereignMode[]).includes(mode as SovereignMode)
+              ? mode as SovereignMode
+              : 'upwind'
+            }
+            onModeSelect={handleSovereignSelect}
+            companyName={brandConfig?.aiName ?? brandConfig?.companyName}
+          />
+        </motion.div>
       )}
     </AnimatePresence>
 
