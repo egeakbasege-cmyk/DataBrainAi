@@ -32,10 +32,10 @@ function ModeCard({
   return (
     <div
       style={{
-        padding:      '1.75rem',
+        padding:      '2.25rem',
         background:   bg,
         border:       `1px solid ${border}`,
-        borderRadius: '10px',
+        borderRadius: '12px',
         display:      'flex',
         flexDirection:'column',
       }}
@@ -98,6 +98,18 @@ export default function LandingPage() {
       <section style={{ background: '#0C0C0E', paddingBottom: 0, position: 'relative', overflow: 'hidden' }}>
         <TopoBackground />
 
+        {/* sv-grid-bg overlay */}
+        <div
+          className="sv-grid-bg"
+          style={{
+            position:      'absolute',
+            inset:         0,
+            opacity:       0.6,
+            pointerEvents: 'none',
+            zIndex:        2,
+          }}
+        />
+
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/sail-vertical.jpg"
@@ -117,7 +129,7 @@ export default function LandingPage() {
           }}
         />
 
-        <div className="max-w-6xl mx-auto px-6 md:px-10 pt-20 md:pt-28" style={{ position: 'relative', zIndex: 10 }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10 pt-20 md:pt-28 pb-16 md:pb-24" style={{ position: 'relative', zIndex: 10 }}>
 
           {/* Eyebrow */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
@@ -213,6 +225,14 @@ export default function LandingPage() {
           {/* Decorative sailboat */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '3rem', opacity: 0.28, pointerEvents: 'none', transform: 'scale(1.1)', transformOrigin: 'right bottom' }}>
             <div style={{ position: 'relative' }}>
+              {/* Teal radial glow behind sailboat */}
+              <div style={{
+                position:     'absolute',
+                inset:        0,
+                borderRadius: '50%',
+                background:   'radial-gradient(circle 200px, rgba(20,184,166,0.15) 0%, transparent 70%)',
+                pointerEvents:'none',
+              }} />
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <CompassRose size={260} color="#C9A96E" opacity={0.4} />
               </div>
@@ -225,8 +245,10 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           SECTION 2: HOW IT WORKS
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.09)', borderBottom: '1px solid rgba(0,0,0,0.09)' }}>
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
+      <section style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #f8fffe 100%)', borderTop: '1px solid rgba(0,0,0,0.09)', borderBottom: '1px solid rgba(0,0,0,0.09)' }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-24">
+          {/* sv-brand-rule hairline above section header */}
+          <div className="sv-brand-rule" style={{ marginBottom: '2rem' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3.5rem' }}>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#71717A' }}>
               {t('landing.methodology')}
@@ -250,7 +272,7 @@ export default function LandingPage() {
                   <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '2.5rem', fontWeight: 700, color: 'rgba(0,0,0,0.06)', lineHeight: 1 }}>
                     {h.n}
                   </span>
-                  <div style={{ width: 24, height: 2, background: '#C9A96E', marginTop: '1rem' }} />
+                  <div style={{ width: 24, height: 2, background: 'var(--sv-teal)', marginTop: '1rem' }} />
                 </div>
                 <h4 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.15rem', fontWeight: 600, color: '#0C0C0E', marginBottom: '0.625rem' }}>
                   {h.title}
@@ -290,8 +312,18 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           SECTION 4: INTELLIGENCE MODES (simplified — 3 modes)
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#FAFAF8', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
+      <section style={{ background: '#FAFAF8', borderTop: '1px solid rgba(0,0,0,0.07)', position: 'relative', overflow: 'hidden' }}>
+        {/* Subtle sv-grid-bg overlay at 40% opacity */}
+        <div
+          className="sv-grid-bg"
+          style={{
+            position:      'absolute',
+            inset:         0,
+            opacity:       0.4,
+            pointerEvents: 'none',
+          }}
+        />
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-20" style={{ position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '0.625rem' }}>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#71717A' }}>
               {t('landing.intelligenceModes')}
@@ -305,64 +337,70 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
 
             {/* Upwind */}
-            <ModeCard
-              badge={t('landing.upwindBadge')}
-              name="Upwind"
-              color="#1A5276"
-              bg="rgba(26,82,118,0.05)"
-              border="rgba(26,82,118,0.18)"
-              icon={
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 3L12 19L4 19Z" fill="#1A5276" opacity="0.85"/>
-                  <path d="M12 3L12 19L20 12Z" fill="#1A5276" opacity="0.3"/>
-                  <line x1="12" y1="2" x2="12" y2="20" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M5 19Q12 22 19 19" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-                </svg>
-              }
-              desc={t('landing.upwindDesc')}
-              detail={t('landing.upwindDetail')}
-            />
+            <div className="mode-card-sv">
+              <ModeCard
+                badge={t('landing.upwindBadge')}
+                name="Upwind"
+                color="#1A5276"
+                bg="rgba(26,82,118,0.05)"
+                border="rgba(26,82,118,0.18)"
+                icon={
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3L12 19L4 19Z" fill="#1A5276" opacity="0.85"/>
+                    <path d="M12 3L12 19L20 12Z" fill="#1A5276" opacity="0.3"/>
+                    <line x1="12" y1="2" x2="12" y2="20" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M5 19Q12 22 19 19" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                  </svg>
+                }
+                desc={t('landing.upwindDesc')}
+                detail={t('landing.upwindDetail')}
+              />
+            </div>
 
             {/* SAIL */}
-            <ModeCard
-              badge={t('landing.sailBadge')}
-              name="SAIL"
-              color="#7C3AED"
-              bg="rgba(124,58,237,0.05)"
-              border="rgba(124,58,237,0.18)"
-              icon={
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 3C18 5 22 11 20 19L12 19Z" fill="#7C3AED" opacity="0.85"/>
-                  <path d="M12 8C16 9 18 14 17 19L12 19Z" fill="#7C3AED" opacity="0.4"/>
-                  <line x1="12" y1="2" x2="12" y2="20" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M5 19Q12 22 19 19" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-                  <circle cx="5" cy="6" r="1.8" fill="#7C3AED" opacity="0.6"/>
-                </svg>
-              }
-              desc={t('landing.sailDesc')}
-              detail={t('landing.sailDetail')}
-            />
+            <div className="mode-card-sv">
+              <ModeCard
+                badge={t('landing.sailBadge')}
+                name="SAIL"
+                color="#7C3AED"
+                bg="rgba(124,58,237,0.05)"
+                border="rgba(124,58,237,0.18)"
+                icon={
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3C18 5 22 11 20 19L12 19Z" fill="#7C3AED" opacity="0.85"/>
+                    <path d="M12 8C16 9 18 14 17 19L12 19Z" fill="#7C3AED" opacity="0.4"/>
+                    <line x1="12" y1="2" x2="12" y2="20" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M5 19Q12 22 19 19" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                    <circle cx="5" cy="6" r="1.8" fill="#7C3AED" opacity="0.6"/>
+                  </svg>
+                }
+                desc={t('landing.sailDesc')}
+                detail={t('landing.sailDetail')}
+              />
+            </div>
 
             {/* Operator */}
-            <ModeCard
-              badge={t('landing.operatorBadge')}
-              name="Operator"
-              color="#CC2200"
-              bg="rgba(204,34,0,0.04)"
-              border="rgba(204,34,0,0.2)"
-              icon={
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="9" stroke="#CC2200" strokeWidth="1.4" opacity="0.4"/>
-                  <circle cx="12" cy="12" r="3" fill="#CC2200" opacity="0.9"/>
-                  <line x1="12" y1="3" x2="12" y2="7" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                  <line x1="12" y1="17" x2="12" y2="21" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                  <line x1="3" y1="12" x2="7" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                  <line x1="17" y1="12" x2="21" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              }
-              desc={t('landing.operatorDesc')}
-              detail={t('landing.operatorDetail')}
-            />
+            <div className="mode-card-sv">
+              <ModeCard
+                badge={t('landing.operatorBadge')}
+                name="Operator"
+                color="#CC2200"
+                bg="rgba(204,34,0,0.04)"
+                border="rgba(204,34,0,0.2)"
+                icon={
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="#CC2200" strokeWidth="1.4" opacity="0.4"/>
+                    <circle cx="12" cy="12" r="3" fill="#CC2200" opacity="0.9"/>
+                    <line x1="12" y1="3" x2="12" y2="7" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="12" y1="17" x2="12" y2="21" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="3" y1="12" x2="7" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="17" y1="12" x2="21" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                }
+                desc={t('landing.operatorDesc')}
+                detail={t('landing.operatorDetail')}
+              />
+            </div>
           </div>
 
           <div style={{ marginTop: '2rem', textAlign: 'center' }}>
@@ -414,8 +452,8 @@ export default function LandingPage() {
                 borderBottom:        '1px solid rgba(0,0,0,0.07)',
               }}
             >
-              <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.8rem', color: '#D4D4D8', fontWeight: 600 }}>
-                {c.n}
+              <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.8rem', color: 'var(--sv-teal)', fontWeight: 600, paddingLeft: '0.5rem' }}>
+                ◈ {c.n}
               </span>
 
               <div>
@@ -454,6 +492,17 @@ export default function LandingPage() {
       ══════════════════════════════════════════════ */}
       <section style={{ background: '#0C0C0E', position: 'relative', overflow: 'hidden' }}>
         <TopoBackground />
+        {/* sv-grid-bg overlay at 35% opacity */}
+        <div
+          className="sv-grid-bg"
+          style={{
+            position:      'absolute',
+            inset:         0,
+            opacity:       0.35,
+            pointerEvents: 'none',
+            zIndex:        2,
+          }}
+        />
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-20" style={{ display: 'flex', flexDirection: 'column', gap: '0', position: 'relative', zIndex: 10 }}>
           <Rule />
           <div style={{ paddingTop: '3rem', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap' }}>
@@ -476,6 +525,8 @@ export default function LandingPage() {
           SECTION 7: FOOTER
       ══════════════════════════════════════════════ */}
       <footer style={{ background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.09)', padding: '1.75rem 0' }}>
+        {/* sv-brand-rule as first child */}
+        <div className="sv-brand-rule" />
         <div className="max-w-6xl mx-auto px-6 md:px-10" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Logo size={30} />

@@ -106,12 +106,32 @@ function LoginForm() {
   const isLoading = loading || googleLoading
 
   return (
-    <main style={{ minHeight: '100vh', background: '#FAFAF8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem 1.25rem' }}>
+    <main style={{
+      minHeight:       '100vh',
+      background:      'var(--sv-mint-bg)',
+      backgroundImage: 'linear-gradient(rgba(45,212,191,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(45,212,191,0.05) 1px, transparent 1px)',
+      backgroundSize:  '60px 60px',
+      display:         'flex',
+      flexDirection:   'column',
+      alignItems:      'center',
+      justifyContent:  'center',
+      padding:         '2rem 1.25rem',
+    }}>
 
-      <div style={{ width: '100%', maxWidth: '400px', background: '#FFFFFF', border: '1px solid rgba(12,12,14,0.09)', borderRadius: '4px', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', padding: '2.5rem 2rem' }}>
+      <div style={{
+        width:              '100%',
+        maxWidth:           '400px',
+        background:         'rgba(255,255,255,0.92)',
+        border:             '1px solid rgba(12,12,14,0.09)',
+        borderRadius:       '8px',
+        boxShadow:          '0 8px 48px rgba(20,184,166,0.10), 0 2px 12px rgba(0,0,0,0.06)',
+        padding:            '3rem 2.5rem',
+        backdropFilter:     'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}>
 
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2rem', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2.5rem', justifyContent: 'center' }}>
           <Logo size={42} />
           <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 600, letterSpacing: '0.08em', color: '#0C0C0E' }}>
             SAIL AI
@@ -129,7 +149,9 @@ function LoginForm() {
                 letterSpacing: '0.07em', textTransform: 'uppercase',
                 background: mode === m ? '#0C0C0E' : 'transparent',
                 color: mode === m ? '#FAFAF8' : '#71717A',
-                border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                border: 'none',
+                borderBottom: mode === m ? '2px solid #14B8A6' : undefined,
+                cursor: 'pointer', transition: 'all 0.15s',
               }}
             >
               {m === 'signin' ? t('login.signIn') : t('login.register')}
@@ -218,7 +240,7 @@ function LoginForm() {
 
           <button
             type="submit" disabled={isLoading}
-            style={{ width: '100%', padding: '0.8125rem', background: isLoading ? '#3A3A3C' : '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '3px', cursor: isLoading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', transition: 'background 0.15s' }}
+            style={{ width: '100%', padding: '0.8125rem', background: isLoading ? '#3A3A3C' : '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '4px', cursor: isLoading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', transition: 'background 0.15s' }}
           >
             {loading
               ? (mode === 'register' ? t('login.creating') : t('login.signingIn'))

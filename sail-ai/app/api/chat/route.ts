@@ -1,260 +1,172 @@
 /**
- * Aetheris Edge — Groq-only AI router
+ * app/api/chat/route.ts — Aetheris Edge Router v2
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Refactored from a 1551-line monolith into a clean orchestration entry-point.
+ * All key management, circuit breaking, and speculative fetch live in the Groq
+ * client. All multi-agent orchestration lives in the PersonalisedAI module.
  *
- * All modes route directly to Groq (llama-3.3-70b-versatile).
- * No external backend proxy.
+ * Module responsibilities:
+ *   /lib/clients/groq.ts                  → Pool, circuit breakers, schemas, speculative
+ *   /lib/orchestration/personalised-ai.ts → Chain of Draft, bespoke advisory synthesis
+ *   /app/api/chat/route.ts                → Auth, routing, mode dispatch, streaming
  *
- * analysisMode routing:
- *   upwind/downwind → ExecutiveResponse JSON
- *   sail            → SSE stream (first line __sailMeta JSON, then markdown)
- *   trim            → TrimResponse JSON { trimTitle, summary, phases[] }
- *   catamaran       → CatamaranResponse JSON
- *   operator        → SSE stream markdown
- *   synergy         → SSE stream markdown (multi-mode council)
+ * Mode routing:
+ *   upwind / downwind  → progressive JSON stream (meta chunk → result chunk)
+ *   sail               → SSE markdown stream
+ *   trim               → instant JSON (strict schema, no repair)
+ *   catamaran          → instant JSON (strict schema, no repair)
+ *   operator           → SSE markdown stream
+ *   scenario           → SSE markdown stream
+ *   personalised       → Chain of Draft + 70B synthesis stream
+ *   synergy            → alias → personalised (backward compatibility)
+ *   auto               → Gateway Router → re-dispatched mode
+ *
+ * New in v2:
+ *   • Speculative Execution  — 8B + 70B race for upwind/downwind; winner streams
+ *   • Strict JSON Schemas    — Groq enforces schema at generation; no repair step
+ *   • Circuit Breakers       — per-key in GroqClient; cascades prevented
+ *   • Critic Guardrail       — low-confidence research auto-enriched before LLM call
+ *   • C1 Bug Fixed           — cache hits now re-attach fresh scopeMetadata
  */
 
-import { type NextRequest } from 'next/server'
-import NextAuth              from 'next-auth'
-import { authConfig }        from '@/auth.config'
-import type { AetherisPayload } from '@/types/architecture'
+import { type NextRequest }                       from 'next/server'
+import NextAuth                                   from 'next-auth'
+import { authConfig }                             from '@/auth.config'
+import type { AetherisPayload }                   from '@/types/architecture'
+
+// ── Groq client (key pool, circuit breaker, schemas, speculative fetch) ───────
+import {
+  groqFetch,
+  buildKeyPool,
+  JSON_SCHEMAS,
+  GROQ_MODELS,
+  speculativeFetch,
+  extractGroqContent,
+} from '@/lib/clients/groq'
+import type { GroqMessage, GroqRequest }           from '@/lib/clients/groq'
+
+// ── PersonalisedAI orchestrator (replaces legacy Synergy) ────────────────────
+import {
+  executeChainOfDraft,
+  buildPersonalisedAISystemPrompt,
+  buildPersonalisedAIFallbackPrompt,
+} from '@/lib/orchestration/personalised-ai'
+
+// ── Prompt builders ───────────────────────────────────────────────────────────
 import {
   buildUpwindSystemPrompt,
-  buildDownwindSystemPrompt as buildEnhancedDownwindPrompt,
-  buildSailSystemPrompt as buildEnhancedSailPrompt,
-  buildTrimSystemPrompt as buildEnhancedTrimPrompt,
+  buildDownwindSystemPrompt  as buildEnhancedDownwindPrompt,
+  buildSailSystemPrompt      as buildEnhancedSailPrompt,
+  buildTrimSystemPrompt      as buildEnhancedTrimPrompt,
   buildCatamaranSystemPrompt as buildEnhancedCatamaranPrompt,
-  buildOperatorSystemPrompt as buildEnhancedOperatorPrompt,
-  buildSynergySystemPrompt,
-  buildSynergyAgentPrompt,
-  buildSynthesisSystemPrompt,
+  buildOperatorSystemPrompt  as buildEnhancedOperatorPrompt,
   buildScenarioSystemPrompt,
-  type SynergyAgentResult,
+  LIVE_DATA_SYSTEM_PREFIX,
+  DATA_UNCERTAINTY_SUFFIX,
+  SEARCH_FAILED_WARNING,
 } from '@/lib/prompts/enhanced-modes'
-// [SAIL-NEW] — DataShift governance layer
-import { selectSkillCards, buildSkillBlock }         from '@/lib/skills/skillCards'
-import type { SkillCard }                            from '@/lib/skills/skillCards'
-import { scrubPII }                                  from '@/lib/skills/piiScrubber'
+
+// ── Skill + governance layer ──────────────────────────────────────────────────
+import { selectSkillCards, buildSkillBlock }      from '@/lib/skills/skillCards'
+import type { SkillCard }                         from '@/lib/skills/skillCards'
+import { scrubPII }                               from '@/lib/skills/piiScrubber'
 import {
   buildDataHealthReport,
   GOVERNANCE_SYSTEM_SUFFIX,
-  // encodeHealthReport not imported — health report attached to JSON responses only, never streamed.
   type DataHealthReport,
 } from '@/lib/skills/dataHealthReport'
-// [SAIL-INTELLIGENCE-UPGRADE] — Groq-optimised real-time research layer
+
+// ── Research layer ────────────────────────────────────────────────────────────
 import {
   executeDeepSearch,
   encodeResearchContext,
   requiresResearch,
   decomposeToSearchQueries,
-  detectQueryLanguage,      // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
+  detectQueryLanguage,
   type SearchResult,
 } from '@/lib/tools/search'
-import {
-  DATA_UNCERTAINTY_SUFFIX,       // [SAIL-FACTUAL-TRIGGER] always-on training-data transparency
-  SEARCH_FAILED_WARNING,         // [SAIL-FACTUAL-TRIGGER] search ran but no results
-  LIVE_DATA_SYSTEM_PREFIX,       // [LIVE-DATA] injected at TOP of system prompt when search results exist
-} from '@/lib/prompts/enhanced-modes'
-// [PIPELINE-LITE] Layer 1 — SemanticRouter (deterministic, no LLM call)
+
+// ── Pipeline ──────────────────────────────────────────────────────────────────
 import { routeAndOptimize }    from '@/lib/pipeline/semanticRouter'
 import type { ScopeMetadata }  from '@/lib/pipeline/types'
-// [PIPELINE-LITE] Adaptive Model Selector — right-sizes model + token budget per request
 import { selectModel }         from '@/lib/pipeline/modelSelector'
 import type { ComplexityTier } from '@/lib/pipeline/modelSelector'
-// [CACHE] Semantic response cache + per-user rate limiter (Vercel KV — graceful degradation)
-import { getCachedResponse, setCachedResponse, CACHEABLE_MODES } from '@/lib/cache/responseCache'
-import { checkRateLimit } from '@/lib/cache/rateLimiter'
+
+// ── Cache ─────────────────────────────────────────────────────────────────────
+import {
+  getCachedResponse,
+  setCachedResponse,
+  CACHEABLE_MODES,
+} from '@/lib/cache/responseCache'
+import { checkRateLimit }      from '@/lib/cache/rateLimiter'
 
 const { auth } = NextAuth(authConfig)
-
 export const runtime = 'edge'
 
-const GROQ_URL            = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL_PRIMARY  = 'llama-3.3-70b-versatile'
-const GROQ_MODEL_FALLBACK = 'llama-3.1-8b-instant'   // 500K TPD — 5× higher daily limit
-const GROQ_MODEL          = GROQ_MODEL_PRIMARY
+// ── Extended payload type ─────────────────────────────────────────────────────
 
-// ── Key pool: rotate through up to 5 keys before falling back to a smaller model
-// Add GROQ_API_KEY_2 … GROQ_API_KEY_5 in Vercel env to multiply daily capacity.
-// byokKey: user-supplied BYOK key — appended after server keys so server capacity
-// is consumed first; BYOK is the last-resort fallback key.
-function getKeyPool(byokKey?: string): string[] {
-  const keys: string[] = []
-  const base = process.env.GROQ_API_KEY
-  if (base) keys.push(base)
-  // Support both _1,_2,_3... and _2,_3... naming conventions
-  for (let i = 1; i <= 5; i++) {
-    const k = process.env[`GROQ_API_KEY_${i}`]
-    if (k && !keys.includes(k)) keys.push(k)
-  }
-  // Include BYOK key as last-resort fallback (after all server keys)
-  if (byokKey && !keys.includes(byokKey)) keys.push(byokKey)
-  return keys
-}
-
-// ── Groq fetch: key rotation → model fallback on 429/503/500 ─────────────────
-// Retry strategy:
-//   1. Try each key with the primary model (llama-3.3-70b-versatile)
-//   2. If ALL keys return 429 → switch to fallback model (llama-3.1-8b-instant)
-//   3. If primary model returns 503/500/400 → immediately retry with fallback model
-//   4. On any other error → return the response as-is for caller to handle
-async function groqFetch(init: RequestInit, byokKey?: string): Promise<Response> {
-  const reqBody = JSON.parse(init.body as string) as Record<string, unknown>
-  const keys    = getKeyPool(byokKey)
-
-  const fallbackBody = JSON.stringify({ ...reqBody, model: GROQ_MODEL_FALLBACK })
-
-  // Try every key with the primary model first
-  let lastStatus = 0
-  for (const key of keys) {
-    const res = await fetch(GROQ_URL, {
-      ...init,
-      headers: { ...init.headers as Record<string, string>, 'Authorization': `Bearer ${key}` },
-    }).catch(() => null)
-
-    if (!res) continue
-    lastStatus = res.status
-
-    // 429 rate-limit → try next key
-    if (res.status === 429) continue
-
-    // 503 / 500 / 400 / 413 (context too long / TPM exceeded) → immediately fall back to smaller model
-    if (res.status === 503 || res.status === 500 || res.status === 400 || res.status === 413) {
-      const fallback = await fetch(GROQ_URL, {
-        ...init,
-        headers: { ...init.headers as Record<string, string>, 'Authorization': `Bearer ${key}` },
-        body: fallbackBody,
-      }).catch(() => null)
-      if (fallback && fallback.ok) return fallback
-      // If fallback also fails, return original error
-      return res
-    }
-
-    // 200 / 401 / any other → return as-is
-    return res
-  }
-
-  // All keys exhausted on 429 → retry all keys with fallback model
-  for (const key of keys) {
-    const res = await fetch(GROQ_URL, {
-      ...init,
-      headers: { ...init.headers as Record<string, string>, 'Authorization': `Bearer ${key}` },
-      body: fallbackBody,
-    }).catch(() => null)
-    if (res && res.status !== 429) return res
-  }
-
-  // All keys exhausted on rate limits — return 429 so handlers show the correct message
-  return new Response(
-    JSON.stringify({ error: { message: 'Rate limit reached. Please wait a moment and try again.' } }),
-    { status: 429, headers: { 'Content-Type': 'application/json' } },
-  )
-}
+type AnalysisMode =
+  | 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran'
+  | 'operator' | 'personalised' | 'synergy' | 'scenario' | 'auto'
 
 type ExtendedPayload = Omit<AetherisPayload, 'analysisMode'> & {
-  apiKey?:             string
-  primaryConstraint?:  string
-  /** 'auto' triggers the Gateway Router; other values select the mode directly. */
-  analysisMode?:       'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'scenario' | 'auto'
-  synergyModes?:       string[]
-  synergyName?:        string
-  /** Future RAG injection — populate with retrieved Pinecone/Weaviate chunks before calling this route. */
-  ragContext?:         string
-  /**
-   * businessMode = true  → domain-locked to business/market intelligence only
-   * businessMode = false → free chat, unrestricted topic scope
-   * Default: true
-   */
-  businessMode?:       boolean
-  /** Conversation history for downwind coaching continuity */
-  messages?:           Array<{ role: string; content: string }>
+  apiKey?:            string
+  primaryConstraint?: string
+  analysisMode?:      AnalysisMode
+  /** PersonalisedAI branded advisory name (e.g. "Acme AI") */
+  companyName?:       string
+  /** Legacy alias for companyName — still accepted for backward compat */
+  synergyName?:       string
+  /** Legacy field — ignored by PersonalisedAI (fixed specialists) */
+  synergyModes?:      string[]
+  ragContext?:        string
+  businessMode?:      boolean
+  messages?:          Array<{ role: string; content: string }>
 }
 
-// ── Stream URL hallucination stripper ────────────────────────────────────────
-// Defence-in-depth against URL citation hallucination in streaming modes.
-//
-// Problem: Even with strict prompt rules, LLaMA 3.3 70B sometimes emits
-// markdown hyperlinks ([text](url)) from training memory that were never
-// actually retrieved. These appear as clickable, authoritative-looking
-// citations for sources the system never visited.
-//
-// Fix: This class strips markdown hyperlink syntax from the stream at the
-// output layer — converting [text](url) → text — so fabricated links can
-// never reach the user regardless of LLM compliance with prompt instructions.
-//
-// Safe because:
-//   • Real sources injected via encodeResearchContext() are already plain
-//     text (e.g. "Source: https://example.com | Date: ..."), not markdown links.
-//   • Domain names are still visible as plain text — only the clickable
-//     hyperlink markup is removed.
-//   • Uses a rolling buffer to handle patterns split across SSE chunks.
-//
+// ── Stream URL hallucination stripper ─────────────────────────────────────────
+// Strips [text](url) markdown hyperlinks from SSE streams before delivery.
+// Defence-in-depth: real citations are injected as plain text by encodeResearchContext().
+
 class StreamUrlStripper {
   private buf = ''
 
-  /**
-   * Push a new streaming chunk. Returns any text that is safe to emit.
-   * May hold back a short tail when a URL pattern might be mid-stream.
-   */
   push(chunk: string): string {
     this.buf += chunk
-
-    // Strip double-bracket citation: [[display](url)] → display
     this.buf = this.buf.replace(
-      /\[\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)\]/g,
-      '$1',
+      /\[\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)\]/g, '$1',
     )
-    // Strip single-bracket markdown link: [display](url) → display
     this.buf = this.buf.replace(
-      /\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)/g,
-      '$1',
+      /\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)/g, '$1',
     )
-
-    // Hold back content from the last unmatched '[' so we don't emit a
-    // partial pattern that would leave a dangling bracket in the output.
     const lastOpen = this.buf.lastIndexOf('[')
     if (lastOpen !== -1 && lastOpen > this.buf.length - 500) {
       const safe = this.buf.slice(0, lastOpen)
       this.buf   = this.buf.slice(lastOpen)
       return safe
     }
-
-    const out  = this.buf
-    this.buf   = ''
+    const out = this.buf
+    this.buf  = ''
     return out
   }
 
-  /** Call after the stream ends to emit any held-back tail. */
   flush(): string {
-    // Apply substitutions one final time on anything still buffered
-    this.buf = this.buf.replace(
-      /\[\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)\]/g,
-      '$1',
-    )
-    this.buf = this.buf.replace(
-      /\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)/g,
-      '$1',
-    )
+    this.buf = this.buf
+      .replace(/\[\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)\]/g, '$1')
+      .replace(/\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)/g,    '$1')
     const out = this.buf
     this.buf  = ''
     return out
   }
 }
 
-/**
- * stripUrlsFromJson
- *
- * Recursively walks a parsed JSON object and strips markdown hyperlink syntax
- * from every string value. Covers JSON-mode responses (upwind/trim/catamaran)
- * where the LLM might embed [text](url) patterns inside string fields.
- *
- * [text](url)    → text
- * [[text](url)]  → text
- */
+// ── JSON URL stripper (for non-streaming responses) ───────────────────────────
+
 function stripUrlsFromJson(val: unknown): unknown {
   if (typeof val === 'string') {
     return val
       .replace(/\[\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)\]/g, '$1')
-      .replace(/\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)/g, '$1')
+      .replace(/\[([^\]\n]{1,150})\]\(https?:\/\/[^)\n]{1,400}\)/g,    '$1')
   }
   if (Array.isArray(val)) return val.map(stripUrlsFromJson)
   if (val !== null && typeof val === 'object') {
@@ -272,9 +184,6 @@ function stripUrlsFromJson(val: unknown): unknown {
 function buildUserMessage(body: ExtendedPayload): string {
   const parts: string[] = []
 
-  // Live research context injected FIRST in the user message — immediately before the
-  // query — so the model has the live data in full attention focus when it reads the question.
-  // This double-injection (system + user) ensures the model cannot miss the live data.
   if (body.ragContext?.trim()) {
     parts.push(
       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -284,34 +193,19 @@ function buildUserMessage(body: ExtendedPayload): string {
       `Cite the source URL and date for each figure you reference.\n` +
       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
       body.ragContext.trim() +
-      `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+      `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     )
   }
 
-  if (body.context?.trim()) {
-    parts.push(`BUSINESS CONTEXT\n${body.context.trim()}`)
-  }
-
+  if (body.context?.trim())     parts.push(`BUSINESS CONTEXT\n${body.context.trim()}`)
   parts.push(`QUERY\n${body.message.trim()}`)
-
-  if (body.fileContent?.trim()) {
-    parts.push(`ATTACHED DATA\n${body.fileContent.slice(0, 8000)}`)
-  }
-
-  if (body.imageBase64) {
-    parts.push('[Image attached — analyse the visual data in the context of the query.]')
-  }
-
-  if (body.agentMode && body.agentMode !== 'Auto') {
-    parts.push(`AGENT MODE: ${body.agentMode}`)
-  }
-
+  if (body.fileContent?.trim()) parts.push(`ATTACHED DATA\n${body.fileContent.slice(0, 8000)}`)
+  if (body.imageBase64)         parts.push('[Image attached — analyse the visual data in the context of the query.]')
+  if (body.agentMode && body.agentMode !== 'Auto') parts.push(`AGENT MODE: ${body.agentMode}`)
   if (body.analysisMode === 'downwind') {
     parts.push('MODE: Conversational deep-dive — expand on trade-offs and second-order effects.')
   }
 
-  // [SAIL-NEW] Module 1 — Expert Skill injection
-  // selectSkillCards scores every card by keyword hit count; returns [] on no match.
   const skillCards = selectSkillCards(body.message?.trim() ?? '')
   const skillBlock = buildSkillBlock(skillCards)
   if (skillBlock) parts.push(skillBlock)
@@ -319,14 +213,7 @@ function buildUserMessage(body: ExtendedPayload): string {
   return parts.join('\n\n')
 }
 
-// ── A-01: Multi-turn message builder ─────────────────────────────────────────
-// Prepends compressed conversation history (sent by the client) to the
-// standard [system, user] pair so every streaming mode has full turn context.
-//
-// history entries are { role: 'user'|'assistant', content: string } pairs
-// already truncated by the client-side compressedHistory() call.
-
-type GroqMessage = { role: 'system' | 'user' | 'assistant'; content: string }
+// ── Multi-turn message builder ────────────────────────────────────────────────
 
 function buildGroqMessages(
   systemContent: string,
@@ -335,112 +222,50 @@ function buildGroqMessages(
 ): GroqMessage[] {
   const system: GroqMessage = { role: 'system', content: systemContent }
   const user:   GroqMessage = { role: 'user',   content: userContent   }
-
   if (!history?.length) return [system, user]
-
-  // Clamp history entries to 800 chars each to avoid blowing the context window
   const historyMsgs: GroqMessage[] = history.map(m => ({
-    role:    (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+    role:    (m.role === 'assistant' ? 'assistant' : 'user') as GroqMessage['role'],
     content: m.content.slice(0, 800),
   }))
-
   return [system, ...historyMsgs, user]
 }
 
-// ── Parallel SYNERGY Agent Runner ────────────────────────────────────────────
-// Executes one specialist council member as an independent 8B LLM call.
-// Returns a compact SynergyAgentResult JSON or null on any failure.
-// 4.5s hard timeout prevents one slow agent from blocking synthesis.
+// ── Wabi-Sabi Critic Guardrail ────────────────────────────────────────────────
+// Active quality gate: if health report confidence < 0.85 and search results
+// are sparse, silently run a secondary targeted search before the LLM call.
+// The user never sees this — latency impact ≤ 800 ms on average.
 
-async function runSynergyAgent(
-  mode:              string,
+async function criticGuardrailSearch(
+  healthReport:      DataHealthReport,
+  query:             string,
   language:          string,
-  primaryConstraint: string | undefined,
-  userContent:       string,
-  groqKey:           string,
-  byokKey?:          string,
-): Promise<SynergyAgentResult | null> {
-  const systemPrompt = buildSynergyAgentPrompt(mode, language, primaryConstraint)
-  if (!systemPrompt) return null  // mode not in SYNERGY_COUNCIL
+  existingResults:   SearchResult[],
+  researchAttempted: boolean,
+): Promise<SearchResult[]> {
+  if (
+    healthReport.confidenceScore >= 0.85 ||   // confidence adequate
+    !researchAttempted                    ||   // no search was triggered
+    existingResults.length >= 4               // already have enough sources
+  ) return existingResults
 
-  const abort = new AbortController()
-  const timer = setTimeout(() => abort.abort(), 4_500)
+  // Enrich with explicit evidence/statistics signal
+  const enrichedQuery     = `${query.slice(0, 100).trim()} statistics evidence data report`
+  const secondaryQueries  = decomposeToSearchQueries(enrichedQuery, undefined, language).slice(0, 2)
+  const secondary         = await executeDeepSearch(secondaryQueries, language)
 
-  try {
-    const res = await groqFetch(
-      {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model:           GROQ_MODEL_FALLBACK,  // 8B — parallel-safe, 500K TPD budget
-          messages:        [
-            { role: 'system', content: systemPrompt },
-            { role: 'user',   content: userContent  },
-          ],
-          response_format: { type: 'json_object' },
-          max_tokens:      450,
-          temperature:     0.30,
-        }),
-        signal: abort.signal,
-      },
-      byokKey,
-    ).catch(() => null)
-
-    clearTimeout(timer)
-    if (!res?.ok) return null
-
-    const data    = await res.json().catch(() => null)
-    const content = (data as { choices?: Array<{ message?: { content?: string } }> })
-      ?.choices?.[0]?.message?.content ?? ''
-
-    return JSON.parse(content) as SynergyAgentResult
-  } catch {
-    clearTimeout(timer)
-    return null
-  }
-}
-
-// ── Light JSON repair (one-shot, 8B model) ────────────────────────────────────
-// Fires only when the primary LLM returns non-parseable or empty JSON.
-// Uses llama-3.1-8b-instant to keep repair fast (~0.5s) and within token budget.
-
-async function repairJsonResponse(
-  systemContent: string,
-  userContent:   string,
-  badContent:    string,
-  groqKey:       string,
-  byokKey?:      string,
-): Promise<{ content: string; repaired: boolean }> {
-  const res = await groqFetch({
-    method:  'POST',
-    headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: GROQ_MODEL_FALLBACK,
-      messages: [
-        { role: 'system',    content: systemContent },
-        { role: 'user',      content: userContent   },
-        { role: 'assistant', content: badContent     },
-        { role: 'user',      content: 'Your previous output was not valid JSON. Return ONLY the corrected JSON object — no markdown, no preamble, no explanation.' },
-      ],
-      response_format: { type: 'json_object' },
-      max_tokens:      700,
-      temperature:     0.15,
-    }),
-  }, byokKey).catch(() => null)
-
-  if (!res?.ok) return { content: badContent, repaired: false }
-  const data  = await res.json().catch(() => null)
-  const fixed = (data as { choices?: Array<{ message?: { content?: string } }> })
-    ?.choices?.[0]?.message?.content ?? ''
-  return { content: fixed || badContent, repaired: !!fixed }
+  const seen   = new Set(existingResults.map(r => r.url))
+  const fresh  = secondary.results.filter(r => !seen.has(r.url))
+  const merged = [...existingResults, ...fresh].slice(0, 60)
+  merged.sort((a, b) => b.reliabilityScore - a.reliabilityScore)
+  return merged
 }
 
 // ── Gateway Router ────────────────────────────────────────────────────────────
-// Ultra-fast preliminary LLM call (llama-3.1-8b-instant, 150 tokens, 3s timeout)
-// that classifies query intent and selects the optimal analysis mode.
-// Returns null on timeout or any error → caller falls back to 'upwind'.
 
-const VALID_MODES = ['upwind', 'downwind', 'sail', 'trim', 'catamaran', 'operator', 'synergy', 'scenario'] as const
+const VALID_MODES = [
+  'upwind', 'downwind', 'sail', 'trim', 'catamaran',
+  'operator', 'personalised', 'scenario',
+] as const
 type ValidMode  = typeof VALID_MODES[number]
 type RouterMood = 'analytical' | 'exploratory' | 'urgent' | 'planning' | 'creative'
 
@@ -456,93 +281,39 @@ interface RouterResult {
 const VALID_MODES_SET = new Set<string>(VALID_MODES)
 
 const ALTERNATIVE_MODE_MAP: Record<ValidMode, ValidMode> = {
-  upwind:    'sail',
-  sail:      'operator',
-  operator:  'synergy',
-  synergy:   'operator',
-  trim:      'operator',
-  catamaran: 'synergy',
-  downwind:  'sail',
-  scenario:  'sail',
+  upwind:       'sail',
+  sail:         'operator',
+  operator:     'personalised',
+  personalised: 'operator',
+  trim:         'operator',
+  catamaran:    'personalised',
+  downwind:     'sail',
+  scenario:     'sail',
 }
 
-// Fuzzy fallback — maps hallucinated/partial strings to the nearest valid mode
 const MODE_SIMILARITY: Record<string, ValidMode> = {
-  analysis:      'upwind',
-  analytics:     'upwind',
-  metric:        'upwind',
-  kpi:           'upwind',
-  strategy:      'sail',
-  strategic:     'sail',
-  adaptive:      'sail',
-  coaching:      'downwind',
-  conversation:  'downwind',
-  advisory:      'downwind',
-  timeline:      'trim',
-  roadmap:       'trim',
-  planning:      'trim',
-  schedule:      'trim',
-  deep:          'operator',
-  comprehensive: 'operator',
-  intelligence:  'operator',
-  universal:     'operator',
-  multi:         'synergy',
-  hybrid:        'synergy',
-  synergistic:   'synergy',
-  council:       'synergy',
-  growth:        'catamaran',
-  experience:    'catamaran',
+  analysis:      'upwind',      analytics:    'upwind',
+  metric:        'upwind',      kpi:          'upwind',
+  strategy:      'sail',        strategic:    'sail',
+  adaptive:      'sail',        coaching:     'downwind',
+  conversation:  'downwind',    advisory:     'personalised',
+  timeline:      'trim',        roadmap:      'trim',
+  planning:      'trim',        schedule:     'trim',
+  deep:          'operator',    comprehensive:'operator',
+  intelligence:  'operator',    universal:    'operator',
+  multi:         'personalised',hybrid:       'personalised',
+  synergistic:   'personalised',council:      'personalised',
+  bespoke:       'personalised',personalised: 'personalised',
+  growth:        'catamaran',   experience:   'catamaran',
 }
 
-const GATEWAY_ROUTER_PROMPT = `You are a query routing engine for a business intelligence platform. Analyze the user's message and route it to the optimal analysis mode.
-
-VAGUE QUERY RULE (check this first):
-If the query has NO specific business context (no company name, no product, no industry, no metric, no specific problem) AND reads like a vague personal or open-ended question (e.g. "What should I focus on?", "Bu ay neye odaklanmalıyım?", "What do I do?") → route to "downwind" mode. This triggers the context-collection questions before any analysis.
-
-Available modes:
-- "upwind"    → metric-driven financial/KPI analysis, benchmarks, data interpretation
-- "downwind"  → coaching, context collection, exploratory conversation when no business details are present
-- "sail"      → adaptive intelligence: blend analytic + coaching when SOME context is present
-- "trim"      → phased timeline planning, project roadmaps, execution schedules
-- "catamaran" → dual-track: market growth + customer experience simultaneously
-- "operator"  → comprehensive deep intelligence, multi-domain strategy
-- "synergy"   → war-room council: multiple specialist modules working in parallel
-
-Mood signals:
-- "analytical"  → user wants data, numbers, benchmarks
-- "exploratory" → user wants to think through options or lacks context
-- "urgent"      → time-sensitive decision or crisis management
-- "planning"    → user wants a roadmap or action plan
-- "creative"    → user wants brainstorming or unconventional approaches
-
-urgencyLevel: 0.0–1.0. Set ≥ 0.8 only for genuine crises or deadlines within 48 hours.
-
-Return ONLY this JSON (no markdown, no explanation):
-{"mode":"<mode>","confidence":<0.0-1.0>,"moodSignal":"<mood>","urgencyLevel":<0.0-1.0>,"reasoning":"<max 80 chars>","alternativeMode":"<mode>"}`
-
-// [SAIL-NEW] Module 4 — sanitizeRouterResult(string) overload
-// Validates a raw mode string from the LLM against the valid-modes list,
-// scores by substring overlap, and falls back to 'synergy' if no match.
-// Used by the adaptive domain-bias logic in runGatewayRouter().
-function sanitizeRouterResultStr(
-  raw: string,
-  validModes: readonly string[],
-): string {
+function sanitizeRouterResultStr(raw: string, validModes: readonly string[]): string {
   const lower = raw.toLowerCase().trim()
   if (validModes.includes(lower)) return lower
-
-  // Score each valid mode by bi-directional substring overlap
-  let bestMode  = 'synergy'
-  let bestScore = 0
+  let bestMode = 'personalised', bestScore = 0
   for (const vm of validModes) {
-    const score =
-      (lower.includes(vm)  ? vm.length  : 0) +
-      (vm.includes(lower)  ? lower.length : 0)
+    const score = (lower.includes(vm) ? vm.length : 0) + (vm.includes(lower) ? lower.length : 0)
     if (score > bestScore) { bestScore = score; bestMode = vm }
-  }
-
-  if (bestScore === 0) {
-    console.warn(`[SAIL-ROUTER] Invalid mode suggestion: "${raw}" — falling back to 'synergy'`)
   }
   return bestMode
 }
@@ -552,29 +323,23 @@ function sanitizeRouterResult(raw: Record<string, unknown>): RouterResult {
     if (typeof val !== 'string') return 'upwind'
     const lower = val.toLowerCase().trim()
     if (VALID_MODES_SET.has(lower)) return lower as ValidMode
-    // Fuzzy match: check if any similarity key appears in the value
     for (const [keyword, mode] of Object.entries(MODE_SIMILARITY)) {
       if (lower.includes(keyword)) return mode
     }
     return 'upwind'
   }
-
   const toFloat = (val: unknown, def: number): number => {
     const n = parseFloat(String(val))
     return isNaN(n) ? def : Math.min(1, Math.max(0, n))
   }
-
   const toMood = (val: unknown): RouterMood => {
-    const VALID_MOODS: RouterMood[] = ['analytical', 'exploratory', 'urgent', 'planning', 'creative']
-    if (typeof val === 'string' && VALID_MOODS.includes(val.toLowerCase() as RouterMood)) {
-      return val.toLowerCase() as RouterMood
-    }
-    return 'analytical'
+    const VALID: RouterMood[] = ['analytical', 'exploratory', 'urgent', 'planning', 'creative']
+    return typeof val === 'string' && VALID.includes(val.toLowerCase() as RouterMood)
+      ? val.toLowerCase() as RouterMood
+      : 'analytical'
   }
-
   const mode = toValidMode(raw.mode)
   const alt  = toValidMode(raw.alternativeMode)
-
   return {
     mode,
     confidence:      toFloat(raw.confidence,   0.7),
@@ -585,26 +350,43 @@ function sanitizeRouterResult(raw: Record<string, unknown>): RouterResult {
   }
 }
 
-// [SAIL-NEW] Module 4 — domain → mode bias map
-// Advisory only: active when analysisMode === 'auto'.
-// Raw bias strings are passed through sanitizeRouterResultStr() before use.
 const DOMAIN_MODE_BIAS: Partial<Record<SkillCard['domain'][number], string>> = {
-  financial_analysis:      'trim',
-  business_strategy:       'synergy',
-  risk_assessment:         'audit',     // sanitizes → 'synergy' (no overlap)
-  product_strategy:        'roadmap',   // sanitizes → 'synergy' (no overlap)
-  market_research:         'sail',
-  operations:              'operator',
-  competitive_intelligence:'upwind',
-  data_governance:         'operator',
+  financial_analysis:       'trim',
+  business_strategy:        'personalised',
+  risk_assessment:          'personalised',
+  product_strategy:         'personalised',
+  market_research:          'sail',
+  operations:               'operator',
+  competitive_intelligence: 'upwind',
+  data_governance:          'operator',
 }
+
+const GATEWAY_ROUTER_PROMPT = `You are a query routing engine for a business intelligence platform. Analyse the user message and route it to the optimal analysis mode.
+
+VAGUE QUERY RULE (check first): If the query has NO specific business context (no company, product, industry, metric, or concrete problem) → route to "downwind".
+
+Available modes:
+- "upwind"       → metric-driven financial/KPI analysis, benchmarks, data interpretation
+- "downwind"     → coaching, context collection, exploratory conversation without business details
+- "sail"         → adaptive intelligence when SOME context is present
+- "trim"         → phased timeline planning, project roadmaps, execution schedules
+- "catamaran"    → dual-track: market growth + customer experience simultaneously
+- "operator"     → comprehensive deep intelligence, multi-domain strategy
+- "personalised" → bespoke advisory: multi-specialist intelligence synthesised into a unified brief
+- "scenario"     → predictive simulation, what-if analysis
+
+Mood signals: "analytical" | "exploratory" | "urgent" | "planning" | "creative"
+urgencyLevel: 0.0–1.0. Set ≥ 0.8 only for genuine crises or 48-hour deadlines.
+
+Return ONLY this JSON:
+{"mode":"<mode>","confidence":<0-1>,"moodSignal":"<mood>","urgencyLevel":<0-1>,"reasoning":"<max 80 chars>","alternativeMode":"<mode>"}`
 
 async function runGatewayRouter(
   message:  string,
   context?: string,
   byokKey?: string,
 ): Promise<RouterResult | null> {
-  const keys = getKeyPool(byokKey)
+  const keys = buildKeyPool(byokKey)
   if (!keys.length) return null
 
   const abort = new AbortController()
@@ -614,25 +396,17 @@ async function runGatewayRouter(
     ? `Context: ${context.trim().slice(0, 300)}\n\nQuery: ${message.slice(0, 500)}`
     : message.slice(0, 500)
 
-  const reqBody = JSON.stringify({
-    model:           GROQ_MODEL_FALLBACK,   // llama-3.1-8b-instant — fast + high TPD
-    messages: [
-      { role: 'system', content: GATEWAY_ROUTER_PROMPT },
-      { role: 'user',   content: userContent },
-    ],
-    max_tokens:      150,
-    temperature:     0.1,
-    response_format: { type: 'json_object' },
-  })
-
   try {
-    // Use groqFetch() so all keys rotate on 429 — previously only keys[0] was used
     const res = await groqFetch(
       {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    reqBody,
-        signal:  abort.signal,
+        model:           GROQ_MODELS.FAST,
+        messages:        [
+          { role: 'system', content: GATEWAY_ROUTER_PROMPT },
+          { role: 'user',   content: userContent           },
+        ],
+        max_tokens:      150,
+        temperature:     0.1,
+        response_format: { type: 'json_object' },
       },
       byokKey,
     )
@@ -640,17 +414,14 @@ async function runGatewayRouter(
     clearTimeout(timer)
     if (!res.ok) return null
 
-    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
-    const raw  = JSON.parse(data.choices?.[0]?.message?.content ?? '{}') as Record<string, unknown>
+    const rawContent = await extractGroqContent(res)
+    const raw        = JSON.parse(rawContent) as Record<string, unknown>
 
-    // [SAIL-NEW] Module 4 — skill-card domain bias (advisory, auto mode only)
+    // Domain bias from matched skill card (advisory only, auto mode only)
     const topCard = selectSkillCards(message, 1)[0]
     if (topCard) {
       const biasedMode = DOMAIN_MODE_BIAS[topCard.domain[0]]
-      if (biasedMode) {
-        // Validate the biased suggestion; sanitizer maps invalid strings → 'synergy'
-        raw.mode = sanitizeRouterResultStr(biasedMode, VALID_MODES)
-      }
+      if (biasedMode) raw.mode = sanitizeRouterResultStr(biasedMode, VALID_MODES)
     }
 
     return sanitizeRouterResult(raw)
@@ -663,9 +434,9 @@ async function runGatewayRouter(
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // 1. Session guard — NextAuth v5 Edge-compatible check
-  const session = await auth()
 
+  // ── 1. Session guard ───────────────────────────────────────────────────────
+  const session = await auth()
   if (!session?.user?.email) {
     return Response.json(
       { error: 'Authentication required. Please sign in.' },
@@ -673,7 +444,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 2. Parse and validate payload
+  // ── 2. Parse payload ───────────────────────────────────────────────────────
   let body: ExtendedPayload
   try {
     body = (await req.json()) as ExtendedPayload
@@ -685,92 +456,92 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Message is required.' }, { status: 422 })
   }
 
-  const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'scenario' | 'auto' = body.analysisMode ?? 'upwind'
+  const analysisMode: AnalysisMode = body.analysisMode ?? 'upwind'
 
-  // 3. Groq key — first available key; groqFetch rotates through all keys internally.
-  const groqKey = getKeyPool(body.apiKey)[0]
-
-  if (!groqKey) {
+  // ── 3. Key availability ────────────────────────────────────────────────────
+  if (buildKeyPool(body.apiKey).length === 0) {
     return Response.json(
-      { error: 'AI provider not configured. Add a Groq API key in settings to continue.' },
+      { error: 'AI provider not configured. Add a Groq API key in settings.' },
       { status: 503 },
     )
   }
 
-  // ── Per-user rate limit check (Vercel KV — graceful no-op without KV) ────
-  // Protects the shared Groq key pool from abuse. Fails open on KV outage.
-  const userId    = body.userId ?? 'anonymous'
-  const rlResult  = await checkRateLimit(userId)
+  // ── 4. Per-user rate limit ─────────────────────────────────────────────────
+  const userId   = body.userId ?? 'anonymous'
+  const rlResult = await checkRateLimit(userId)
   if (!rlResult.allowed) {
     return Response.json(
-      { error: `Rate limit reached. You can make ${rlResult.limit} requests per minute. Resets in ${Math.ceil(rlResult.resetInMs / 1000)}s.` },
+      {
+        error: `Rate limit reached. You can make ${rlResult.limit} requests per minute. ` +
+               `Resets in ${Math.ceil(rlResult.resetInMs / 1000)}s.`,
+      },
       { status: 429 },
     )
   }
 
-  // ── AUTO mode: Gateway Router — intelligent dispatch ─────────────────────
-  // Runs a fast 8B-model call (3 s timeout) to classify query intent and return
-  // a __moodGuide payload. The frontend shows a routing card; high-urgency
-  // queries (urgencyLevel ≥ 0.8) are auto-proceeded without user confirmation.
+  // ── 5. AUTO mode: Gateway Router ───────────────────────────────────────────
   if (analysisMode === 'auto') {
-    const routerResult = await runGatewayRouter(
-      body.message ?? '',
-      body.context,
-      body.apiKey,
-    )
+    const routerResult = await runGatewayRouter(body.message ?? '', body.context, body.apiKey)
     return Response.json({
       __moodGuide: {
-        detectedMood:    routerResult?.moodSignal    ?? 'analytical',
-        selectedMode:    routerResult?.mode          ?? 'upwind',
+        detectedMood:    routerResult?.moodSignal     ?? 'analytical',
+        selectedMode:    routerResult?.mode           ?? 'upwind',
         alternativeMode: routerResult?.alternativeMode ?? 'sail',
-        reasoning:       routerResult?.reasoning     ?? '',
-        urgencyLevel:    routerResult?.urgencyLevel  ?? 0.3,
-        confidence:      routerResult?.confidence    ?? 0.7,
-        autoProceeding:  (routerResult?.urgencyLevel ?? 0) >= 0.8,
+        reasoning:       routerResult?.reasoning      ?? '',
+        urgencyLevel:    routerResult?.urgencyLevel   ?? 0.3,
+        confidence:      routerResult?.confidence     ?? 0.7,
+        autoProceeding:  (routerResult?.urgencyLevel  ?? 0) >= 0.8,
       },
     }, { headers: { 'Cache-Control': 'no-store' } })
   }
 
-  // ── Pipeline Layer 1: Semantic Router ─────────────────────────────────────
-  // Pure deterministic intent analysis — zero LLM calls, zero latency cost, ~1ms.
-  // Infers industry, revenue tier, goal, audience, timeframe, clarity score.
-  // Returns injectedDefaults (only the missing components) — surfaced in AnalysisScopePanel.
+  // ── 6. Semantic Router (deterministic, ~1 ms, no LLM) ─────────────────────
   const startedAt = Date.now()
   const intent    = routeAndOptimize(body.message ?? '', analysisMode)
 
-  // ── Cache check (JSON modes only, before research + LLM call) ────────────
-  // Returns the stored response immediately if a recent identical query exists.
-  // Skips research, prompt building, and Groq entirely — ~5ms vs ~3000ms.
+  // ── 7. Cache check (JSON modes — C1 bug fixed: re-attaches scopeMetadata) ──
   const cacheQueryText = body.message?.trim() ?? ''
   const cacheLang      = body.language ?? 'en'
+
   if (CACHEABLE_MODES.has(analysisMode)) {
     const cached = await getCachedResponse(cacheQueryText, analysisMode, cacheLang)
     if (cached) {
-      // Re-attach fresh healthReport + scopeMetadata (they contain timestamps)
+      const cacheHitScope: ScopeMetadata = {
+        domain:            intent.detectedDomain,
+        segment:           intent.inferredAudience,
+        optimizationGoal:  intent.inferredGoal,
+        clarityScore:      intent.clarityScore,
+        revenueTier:       intent.revenueTier,
+        inferredIndustry:  intent.inferredIndustry,
+        inferredTimeframe: intent.inferredTimeframe,
+        injectedDefaults:  intent.injectedDefaults,
+        analysisMode,
+        processingMs:      Date.now() - startedAt,
+        validationPassed:  true,
+        repairIterations:  0,
+        liveDataUsed:      true,   // only live-data responses are ever cached
+        confidenceScore:   intent.clarityScore,
+        modelTier:         'STANDARD',
+      }
       return Response.json(
-        { ...cached, __cacheHit: true },
+        { ...cached, __cacheHit: true, scopeMetadata: cacheHitScope },
         { headers: { 'Cache-Control': 'no-store' } },
       )
     }
   }
 
-  // [SAIL-NEW] Module 2 — PII scrubbing (fileContent only; message/context never stored)
+  // ── 8. PII scrubbing (fileContent only) ───────────────────────────────────
   let piiRedactedCount = 0
   let piiTags: string[] = []
   if (body.fileContent) {
     const { scrubbedText, redactedCount, tags } = scrubPII(body.fileContent)
-    body.fileContent    = scrubbedText
-    piiRedactedCount    = redactedCount
-    piiTags             = tags
+    body.fileContent = scrubbedText
+    piiRedactedCount = redactedCount
+    piiTags          = tags
   }
 
-  // [SAIL-INTELLIGENCE-UPGRADE] Module 2 — Parallel research loop
-  // [SAIL-UNIVERSAL-INTELLIGENCE-V2] Language-aware: detects query language first so
-  // decomposeToSearchQueries() can produce bilingual vectors (EN global + native) for
-  // non-English queries.
-  const queryText   = body.message?.trim() ?? ''
-  // Prefer explicit body.language (set by frontend locale) over heuristic detection.
-  // detectQueryLanguage() is the heuristic fallback when body.language is absent or 'en'.
+  // ── 9. Research loop ───────────────────────────────────────────────────────
+  const queryText      = body.message?.trim() ?? ''
   const _queryLanguage = (body.language && body.language !== 'en')
     ? body.language
     : detectQueryLanguage(queryText)
@@ -778,66 +549,75 @@ export async function POST(req: NextRequest) {
   let _searchResults: SearchResult[] = []
   let _researchQueries: string[]     = []
   let _hasSynthesisContext            = false
-  let _researchAttempted              = false   // [SAIL-FACTUAL-TRIGGER] search was triggered
+  let _researchAttempted              = false
   let _staleSourceCount: number | undefined
 
   if (requiresResearch(queryText)) {
     _researchAttempted = true
-    // Pass detected language so bilingual vectors are generated for non-English queries
-    _researchQueries = decomposeToSearchQueries(queryText, body.context, _queryLanguage)
+    _researchQueries   = decomposeToSearchQueries(queryText, body.context, _queryLanguage)
     const searchResponse = await executeDeepSearch(_researchQueries, _queryLanguage)
     _searchResults     = searchResponse.results
-    _staleSourceCount  = searchResponse.staleSourceCount  // [SAIL-DATA-VERACITY]
+    _staleSourceCount  = searchResponse.staleSourceCount
 
-    // Diagnostic log — visible in Vercel Function Logs under /api/chat
     console.error(
       `[SEARCH] mode=${analysisMode} lang=${_queryLanguage} ` +
       `results=${_searchResults.length} provider=${searchResponse.provider} ` +
-      `queries=${JSON.stringify(_researchQueries)}`
+      `queries=${JSON.stringify(_researchQueries)}`,
     )
 
     if (_searchResults.length > 0) {
-      // Inject into body.ragContext so buildUserMessage() wraps it in the prompt
-      body.ragContext     = encodeResearchContext(searchResponse)
+      body.ragContext      = encodeResearchContext(searchResponse)
       _hasSynthesisContext = true
     }
   }
 
-  const language           = body.language ?? 'en'
-  const primaryConstraint  = body.primaryConstraint
+  // ── 10. Adaptive model selection ──────────────────────────────────────────
+  const contextChars   = (body.ragContext?.length ?? 0) + (body.fileContent?.length ?? 0)
+  const modelSelection = selectModel(queryText, analysisMode, contextChars)
+  const language       = body.language ?? 'en'
+  const primaryConstraint = body.primaryConstraint
 
-  // ── Adaptive Model Selection ───────────────────────────────────────────────
-  // contextChars measures injected data volume — large context = more complexity.
-  // Called AFTER the research loop so body.ragContext reflects live search results.
-  const contextChars    = (body.ragContext?.length ?? 0) + (body.fileContent?.length ?? 0)
-  const modelSelection  = selectModel(queryText, analysisMode, contextChars)
+  // ── 11. Build user message (skill injection + research context) ────────────
+  const userMessage = buildUserMessage(body)
 
-  const userMessage        = buildUserMessage(body)   // skill + research injection happens inside
-
-  // [SAIL-NEW] Module 3 — Wabi-Sabi Health Report pre-computation
-  // Computed once here; stream handlers embed it as the first chunk.
-  const _appliedCards     = selectSkillCards(queryText)
-  const _matchedKeywords  = _appliedCards.map((card) =>
-    card.triggerKeywords.filter((kw) => queryText.toLowerCase().includes(kw)),
+  // ── 12. Wabi-Sabi Health Report (pre-compute) ─────────────────────────────
+  const _appliedCards    = selectSkillCards(queryText)
+  const _matchedKeywords = _appliedCards.map(card =>
+    card.triggerKeywords.filter(kw => queryText.toLowerCase().includes(kw)),
   )
-  const _bodyFields: [string, string | undefined][] = [
-    ['message',  body.message],
-    ['context',  body.context],
-  ]
   const healthReport: DataHealthReport = buildDataHealthReport({
     redactedCount:    piiRedactedCount,
     piiTags,
     appliedCards:     _appliedCards,
     matchedKeywords:  _matchedKeywords,
-    bodyFields:       _bodyFields,
+    bodyFields:       [['message', body.message], ['context', body.context]],
     searchResults:    _searchResults,
     researchQueries:  _researchQueries,
-    queryLanguage:    _queryLanguage,    // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
-    staleSourceCount: _staleSourceCount, // [SAIL-DATA-VERACITY]
+    queryLanguage:    _queryLanguage,
+    staleSourceCount: _staleSourceCount,
   })
 
-  // ── Scope metadata base (shared across all modes) ─────────────────────────
-  // processingMs, validationPassed, repairIterations, confidenceScore filled per-mode.
+  // ── 13. Critic Guardrail: silent secondary search on low confidence ────────
+  if (_researchAttempted) {
+    _searchResults = await criticGuardrailSearch(
+      healthReport, queryText, _queryLanguage, _searchResults, _researchAttempted,
+    )
+    // If guardrail retrieved new sources, rebuild ragContext
+    if (_searchResults.length > (_hasSynthesisContext ? (_researchQueries.length * 10) : 0)) {
+      const enrichedResponse = {
+        results:          _searchResults,
+        images:           [],
+        queriesUsed:      _researchQueries,
+        searchedAt:       new Date().toISOString(),
+        provider:         'tavily' as const,
+        staleSourceCount: _staleSourceCount ?? 0,
+      }
+      body.ragContext      = encodeResearchContext(enrichedResponse)
+      _hasSynthesisContext = _searchResults.length > 0
+    }
+  }
+
+  // ── 14. ScopeMetadata builder (closure — needs intent + modelSelection) ────
   function buildScopeMeta(
     validationPassed: boolean,
     repairIterations: number,
@@ -863,52 +643,28 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Business / Free-chat domain prefix ──────────────────────────────────
-  // businessMode=true (default): lock AI to business & market intelligence scope.
-  // businessMode=false: free chat — no domain restriction, answer any topic naturally.
-  //
-  // Note: SOVEREIGN_COGNITIVE_DIRECTIVE was removed from here — every mode prompt
-  // already contains DEEP_RESEARCH_DIRECTIVE which covers reasoning quality, confidence
-  // calibration, and data transparency. Double-injecting it wasted ~461 tokens/request.
-  const isBusinessMode = body.businessMode !== false  // default true
-  const domainPrefix = (isBusinessMode
+  // ── 15. Shared prompt components ───────────────────────────────────────────
+
+  const isBusinessMode = body.businessMode !== false
+  const domainPrefix   = isBusinessMode
     ? `DOMAIN LOCK — MANDATORY (read before everything else):
 You are a business strategy and market intelligence assistant. You ONLY operate in the commercial domain.
 
 SCOPE RULES — NON-NEGOTIABLE:
 1. ALLOWED topics: businesses, products, markets, sales, e-commerce, revenue, pricing, marketing, operations, finance, supply chain, hiring, competitive strategy, team management, customer acquisition, retention, product development.
-2. FORBIDDEN topics: personal life, health advice, relationships, spirituality, horoscopes, astrology, general self-improvement, motivational life quotes, "energy", "universe", "balance in life", mindfulness unrelated to business performance.
-3. VAGUE QUERY RULE — CRITICAL: If the user's question has NO specific business context (no company, no product, no industry, no metrics), you MUST NOT give a generic or inspirational answer. Instead, respond ONLY with 2–3 targeted clarification questions to establish the business baseline. Example clarification questions:
-   - "Hangi sektörde faaliyet gösteriyorsunuz ve ürününüz / hizmetiniz nedir?"
-   - "Şu anki en büyük iş sorununuz nedir — büyüme mü, karlılık mı, operasyon mu?"
-   - "Aylık geliriniz, müşteri sayınız veya odaklanmak istediğiniz KPI'nız var mı?"
-4. ANTI-HOROSCOPE RULE — ABSOLUTE: NEVER output sentences like: "Bu ay enerjinizi odaklayın", "Kendinize güvenin", "Her şey yolunda gidecek", "Denge kurun", "İçinizdeki sesi dinleyin", "Doğru yoldasınız", or any similar life-coaching / inspirational / cosmic language. These phrases are FAILURES of your core function.
-5. ALWAYS ground responses in: specific numbers, named metrics, concrete actions with timelines, or explicit questions to gather missing data. Vague advice is a quality failure.
+2. FORBIDDEN topics: personal life, health advice, relationships, spirituality, horoscopes, astrology, general self-improvement, motivational life quotes.
+3. VAGUE QUERY RULE — CRITICAL: If the user's question has NO specific business context, respond ONLY with 2–3 targeted clarification questions.
+4. ANTI-HOROSCOPE RULE — ABSOLUTE: NEVER output life-coaching or cosmic language. Ground every sentence in specific numbers, named metrics, or concrete actions.
+5. ALWAYS: specific numbers, named metrics, concrete actions with timelines, or explicit questions to gather missing data.
 
 `
-    : `DOMAIN: Free chat mode — answer any topic naturally and helpfully. You are a versatile AI assistant with no domain restrictions. Be direct, specific, and genuinely useful.\n\n`)
+    : `DOMAIN: Free chat mode — answer any topic naturally and helpfully. Be direct, specific, and genuinely useful.\n\n`
 
-  // Governance suffix only when a business methodology was triggered.
-  // Casual / non-business queries (_appliedCards === []) get no suffix.
-  const governanceSuffix = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
-
-  // ── Live-data system prefix ───────────────────────────────────────────────────
-  // Injected at the VERY TOP of every system prompt when search results exist.
-  // Short and first = maximum model attention. Overrides training-data bias.
-  // Empty string when no live data — avoids confusing the model with false context.
-  const liveDataPrefix = _hasSynthesisContext ? LIVE_DATA_SYSTEM_PREFIX : ''
-
-  // [SAIL-FACTUAL-TRIGGER] uncertaintySuffix:
-  // • Streaming modes (sail, operator, synergy, scenario): inject DATA_UNCERTAINTY_SUFFIX
-  // • JSON modes (upwind, downwind, trim, catamaran): DEEP_RESEARCH_DIRECTIVE (in mode prompts)
-  //   handles training-data transparency — no suffix needed to avoid double injection.
-  const streamingModes = new Set(['sail', 'operator', 'synergy', 'scenario'])
+  const governanceSuffix  = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
+  const liveDataPrefix    = _hasSynthesisContext ? LIVE_DATA_SYSTEM_PREFIX : ''
+  const streamingModes    = new Set(['sail', 'operator', 'personalised', 'synergy', 'scenario'])
   const uncertaintySuffix = streamingModes.has(analysisMode) ? DATA_UNCERTAINTY_SUFFIX : ''
-
-  // Synthesis suffix — end-of-prompt reinforcement when live data is present.
-  // Both the prefix (liveDataPrefix) and this suffix bracket the system prompt,
-  // exploiting the model's primacy + recency attention bias to maximise compliance.
-  const synthesisSuffix = _hasSynthesisContext
+  const synthesisSuffix   = _hasSynthesisContext
     ? `\n\n⚡ REMINDER — LIVE DATA ACTIVE: The user message contains fresh web search results ` +
       `inside ━━ REAL-TIME WEB SEARCH RESULTS ━━. ` +
       `Using training-memory estimates for any metric covered by those results is a quality failure. ` +
@@ -916,89 +672,74 @@ SCOPE RULES — NON-NEGOTIABLE:
       (_queryLanguage !== 'en' ? ` Respond entirely in ${_queryLanguage}.` : '')
     : (_researchAttempted ? SEARCH_FAILED_WARNING : '')
 
-  // ── SYNERGY mode: Parallel Multi-Agent War Room ──────────────────────────
-  //
-  // Architecture:
-  //   Phase 1 — N specialist agents run in parallel (8B, JSON, 450 tok each)
-  //             Each agent analyses the query through its own lens exclusively.
-  //             Promise.allSettled → partial success is acceptable.
-  //   Phase 2 — 70B synthesis engine receives structured agent results,
-  //             produces the final unified War Room brief as a stream.
-  //   Fallback — if ALL agents fail, falls back to the legacy single-prompt path.
-  //
-  // Token budget impact vs legacy:
-  //   Legacy:    1 × 70B @ 1300 tok output = 1300 70B TPM
-  //   Parallel:  N × 8B @ 450 tok + 1 × 70B @ 1300 tok synthesis
-  //              8B has its own 500K TPD pool → 70B TPM unchanged
-  //
-  if (analysisMode === 'synergy') {
-    const modes       = body.synergyModes ?? ['upwind', 'sail']
-    const synergyName = body.synergyName
+  const encoder = new TextEncoder()
 
-    // ── Phase 1: Parallel specialist agents ─────────────────────────────────
-    const agentPromises = modes.slice(0, 4).map(mode =>
-      runSynergyAgent(mode, language, primaryConstraint, userMessage, groqKey, body.apiKey),
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PERSONALISED AI (replaces legacy Synergy)
+  // Also handles mode='synergy' for backward compatibility
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  if (analysisMode === 'personalised' || analysisMode === 'synergy') {
+    const companyName = body.companyName ?? body.synergyName
+
+    // Phase 1 — Chain of Draft: 3 specialist 8B agents, 2 s total timeout
+    const draftResult = await executeChainOfDraft(
+      userMessage,
+      language,
+      primaryConstraint,
+      body.apiKey,
     )
-    const agentSettled = await Promise.allSettled(agentPromises)
-    const agentResults: SynergyAgentResult[] = agentSettled
-      .filter((r): r is PromiseFulfilledResult<SynergyAgentResult> =>
-        r.status === 'fulfilled' && r.value !== null,
-      )
-      .map(r => r.value)
 
-    // ── Phase 2: Synthesis (70B, streaming) ─────────────────────────────────
-    // Falls back to legacy single-prompt if all agents failed (network issues etc.)
-    const synthesisSystemPrompt = agentResults.length > 0
-      ? liveDataPrefix + buildSynthesisSystemPrompt(agentResults, language, synergyName, primaryConstraint)
-      : liveDataPrefix + domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix
+    // Phase 2 — 70B synthesis (streaming)
+    const synthesisSystemPrompt = draftResult.parallelMode
+      ? liveDataPrefix +
+        buildPersonalisedAISystemPrompt(
+          draftResult.drafts, language, companyName, primaryConstraint,
+        ) + synthesisSuffix
+      : liveDataPrefix +
+        buildPersonalisedAIFallbackPrompt(language, companyName, primaryConstraint) +
+        uncertaintySuffix + synthesisSuffix
 
-    const synRes = await groqFetch({
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: GROQ_MODEL_PRIMARY,  // Always 70B for synthesis — quality is non-negotiable
-        messages: buildGroqMessages(
-          agentResults.length > 0
-            ? synthesisSystemPrompt + synthesisSuffix
-            : synthesisSystemPrompt,
-          userMessage,
-          body.messages,
-        ),
-        max_tokens:  1300,
+    const synthRes = await groqFetch(
+      {
+        model:       GROQ_MODELS.PRIMARY,
+        messages:    buildGroqMessages(synthesisSystemPrompt, userMessage, body.messages),
+        max_tokens:  1200,
         temperature: 0.40,
         stream:      true,
-      }),
-    }, body.apiKey).catch(() => null)
+      },
+      body.apiKey,
+    ).catch(() => null)
 
-    if (!synRes?.ok) {
-      const synStatus = synRes?.status === 401 ? 401 : synRes?.status === 429 ? 429 : 502
+    if (!synthRes?.ok) {
+      const st = synthRes?.status === 401 ? 401 : synthRes?.status === 429 ? 429 : 502
       return Response.json(
-        { error: synStatus === 401 ? 'Invalid API key.' : synStatus === 429 ? 'Rate limit reached.' : 'AI provider error.' },
-        { status: synStatus },
+        { error: st === 401 ? 'Invalid API key.' : st === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status: st },
       )
     }
 
-    const encoder  = new TextEncoder()
+    // Meta line — backward-compat format (__synMeta) so existing frontend works
     const metaLine = JSON.stringify({
       __synMeta: {
-        modes,
-        companyName:  synergyName ?? null,
+        modes:         ['financial', 'strategic', 'operational'],
+        companyName:   companyName ?? null,
         healthReport,
         scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore),
-        // Surface which agents ran and their confidence — for frontend insight cards
-        agentSummary: agentResults.map(a => ({ layer: a.layer, confidence: a.confidence })),
-        parallelMode: agentResults.length > 0,
+        agentSummary:  draftResult.drafts.map(d => ({ layer: d.lens, confidence: d.confidence })),
+        parallelMode:  draftResult.parallelMode,
+        elapsedMs:     draftResult.elapsedMs,
       },
     }) + '\n'
-    const groqBody = synRes.body!
 
-    const stream = new ReadableStream({
+    const groqBody = synthRes.body!
+    const stream   = new ReadableStream({
       async start(ctrl) {
         ctrl.enqueue(encoder.encode(metaLine))
         const reader   = groqBody.getReader()
         const decoder  = new TextDecoder()
         const stripper = new StreamUrlStripper()
-        let   buf      = ''
+        let buf = ''
         try {
           while (true) {
             const { done, value } = await reader.read()
@@ -1029,47 +770,53 @@ SCOPE RULES — NON-NEGOTIABLE:
     })
 
     return new Response(stream, {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' },
+      headers: {
+        'Content-Type':      'text/plain; charset=utf-8',
+        'Cache-Control':     'no-store',
+        'X-Accel-Buffering': 'no',
+      },
     })
   }
 
-  // ── SAIL mode: streaming markdown response ────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SAIL — adaptive streaming markdown
+  // ═══════════════════════════════════════════════════════════════════════════
+
   if (analysisMode === 'sail') {
-    const sailRes = await groqFetch({
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const sailRes = await groqFetch(
+      {
         model:       modelSelection.model,
-        messages: buildGroqMessages(
-          liveDataPrefix + domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+        messages:    buildGroqMessages(
+          liveDataPrefix + domainPrefix +
+          buildEnhancedSailPrompt(language, primaryConstraint) +
+          governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
         max_tokens:  modelSelection.maxTokens,
         temperature: modelSelection.temperature,
         stream:      true,
-      }),
-    }, body.apiKey).catch(() => null)
+      },
+      body.apiKey,
+    ).catch(() => null)
 
     if (!sailRes?.ok) {
-      const sailStatus = sailRes?.status === 401 ? 401 : sailRes?.status === 429 ? 429 : 502
+      const st = sailRes?.status === 401 ? 401 : sailRes?.status === 429 ? 429 : 502
       return Response.json(
-        { error: sailStatus === 401 ? 'Invalid API key.' : sailStatus === 429 ? 'Rate limit reached.' : 'AI provider error.' },
-        { status: sailStatus },
+        { error: st === 401 ? 'Invalid API key.' : st === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status: st },
       )
     }
 
-    const encoder   = new TextEncoder()
-    const sailBody  = sailRes.body!
-
-    const stream = new ReadableStream({
+    const sailBody = sailRes.body!
+    const stream   = new ReadableStream({
       async start(ctrl) {
         const reader        = sailBody.getReader()
         const decoder       = new TextDecoder()
         const stripper      = new StreamUrlStripper()
-        let   sseBuf        = ''
-        let   contentBuf    = ''
-        let   intentEmitted = false
+        let sseBuf        = ''
+        let contentBuf    = ''
+        let intentEmitted = false
 
         try {
           while (true) {
@@ -1094,8 +841,9 @@ SCOPE RULES — NON-NEGOTIABLE:
                   if (nl !== -1) {
                     const match      = contentBuf.slice(0, nl).trim().match(/\[INTENT:(analytic|coaching)\]/)
                     const sailIntent = match ? (match[1] as 'analytic' | 'coaching') : 'analytic'
-                    // [SAIL-NEW] Module 3 — health report embedded in __sailMeta
-                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: sailIntent, healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n'))
+                    ctrl.enqueue(encoder.encode(
+                      JSON.stringify({ __sailMeta: { intent: sailIntent, healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n',
+                    ))
                     const rest = contentBuf.slice(nl + 1)
                     if (rest) {
                       const clean = stripper.push(rest)
@@ -1104,8 +852,9 @@ SCOPE RULES — NON-NEGOTIABLE:
                     contentBuf    = ''
                     intentEmitted = true
                   } else if (contentBuf.length > 120) {
-                    // [SAIL-NEW] Module 3 — health report in fallback meta
-                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n'))
+                    ctrl.enqueue(encoder.encode(
+                      JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n',
+                    ))
                     const clean = stripper.push(contentBuf)
                     if (clean) ctrl.enqueue(encoder.encode(clean))
                     contentBuf    = ''
@@ -1115,20 +864,18 @@ SCOPE RULES — NON-NEGOTIABLE:
                   const clean = stripper.push(delta)
                   if (clean) ctrl.enqueue(encoder.encode(clean))
                 }
-              } catch { /* ignore parse errors */ }
+              } catch { /* ignore */ }
             }
           }
-        } catch { /* stream ended abruptly */ } finally {
+        } catch { /* stream ended */ } finally {
           const tail = stripper.flush()
           if (!intentEmitted) {
-            // [SAIL-NEW] Module 3 — health report in finally-block fallback
-            ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n'))
-            const clean = contentBuf + tail
-            if (clean) ctrl.enqueue(encoder.encode(clean))
-          } else {
-            const clean = contentBuf + tail
-            if (clean) ctrl.enqueue(encoder.encode(clean))
+            ctrl.enqueue(encoder.encode(
+              JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n',
+            ))
           }
+          const remaining = contentBuf + tail
+          if (remaining) ctrl.enqueue(encoder.encode(remaining))
           ctrl.close()
         }
       },
@@ -1139,114 +886,46 @@ SCOPE RULES — NON-NEGOTIABLE:
     })
   }
 
-  // ── SCENARIO mode: Mirofish predictive simulation — streaming markdown ──────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SCENARIO — predictive simulation streaming markdown
+  // ═══════════════════════════════════════════════════════════════════════════
+
   if (analysisMode === 'scenario') {
-    const scenarioRes = await groqFetch({
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const scenarioRes = await groqFetch(
+      {
         model:       modelSelection.model,
-        messages: buildGroqMessages(
-          liveDataPrefix + domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+        messages:    buildGroqMessages(
+          liveDataPrefix + domainPrefix +
+          buildScenarioSystemPrompt(language, primaryConstraint) +
+          governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
         max_tokens:  modelSelection.maxTokens,
         temperature: modelSelection.temperature,
         stream:      true,
-      }),
-    }, body.apiKey).catch(() => null)
+      },
+      body.apiKey,
+    ).catch(() => null)
 
     if (!scenarioRes?.ok) {
-      const scStatus = scenarioRes?.status === 401 ? 401 : scenarioRes?.status === 429 ? 429 : 502
+      const st = scenarioRes?.status === 401 ? 401 : scenarioRes?.status === 429 ? 429 : 502
       return Response.json(
-        { error: scStatus === 401 ? 'Invalid API key.' : scStatus === 429 ? 'Rate limit reached.' : 'AI provider error.' },
-        { status: scStatus },
+        { error: st === 401 ? 'Invalid API key.' : st === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status: st },
       )
     }
 
-    const encoder   = new TextEncoder()
-    const scBody    = scenarioRes.body!
-
+    const scBody = scenarioRes.body!
     const stream = new ReadableStream({
       async start(ctrl) {
-        // [SAIL-NEW] Module 3 — scenario meta line with health report
-        const metaLine = JSON.stringify({ __scenarioMeta: { healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n'
-        ctrl.enqueue(encoder.encode(metaLine))
+        ctrl.enqueue(encoder.encode(
+          JSON.stringify({ __scenarioMeta: { healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n',
+        ))
         const reader   = scBody.getReader()
         const decoder  = new TextDecoder()
         const stripper = new StreamUrlStripper()
-        let   buf      = ''
-        try {
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-            buf += decoder.decode(value, { stream: true })
-            const lines = buf.split('\n')
-            buf = lines.pop() ?? ''
-            for (const line of lines) {
-              if (!line.startsWith('data: ')) continue
-              const raw = line.slice(6).trim()
-              if (raw === '[DONE]') continue
-              try {
-                const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
-                  .choices?.[0]?.delta?.content ?? ''
-                if (delta) {
-                  const clean = stripper.push(delta)
-                  if (clean) ctrl.enqueue(encoder.encode(clean))
-                }
-              } catch { /* ignore parse errors */ }
-            }
-          }
-        } catch { /* stream ended abruptly */ } finally {
-          const tail = stripper.flush()
-          if (tail) ctrl.enqueue(encoder.encode(tail))
-          ctrl.close()
-        }
-      },
-    })
-
-    return new Response(stream, {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' },
-    })
-  }
-
-  // ── Operator mode: universal deep-intelligence streaming ─────────────────
-  if (analysisMode === 'operator') {
-    const operatorRes = await groqFetch({
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model:       modelSelection.model,
-        messages: buildGroqMessages(
-          liveDataPrefix + domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
-          userMessage,
-          body.messages,
-        ),
-        max_tokens:  modelSelection.maxTokens,
-        temperature: modelSelection.temperature,
-        stream:      true,
-      }),
-    }, body.apiKey).catch(() => null)
-
-    if (!operatorRes?.ok) {
-      const opStatus = operatorRes?.status === 401 ? 401 : operatorRes?.status === 429 ? 429 : 502
-      return Response.json(
-        { error: opStatus === 401 ? 'Invalid API key.' : opStatus === 429 ? 'Rate limit reached.' : 'AI provider error.' },
-        { status: opStatus },
-      )
-    }
-
-    const encoder    = new TextEncoder()
-    const opBody     = operatorRes.body!
-
-    const stream = new ReadableStream({
-      async start(ctrl) {
-        // Health report is attached to JSON responses only; not streamed as visible text
-        const reader   = opBody.getReader()
-        const decoder  = new TextDecoder()
-        const stripper = new StreamUrlStripper()
-        let   buf      = ''
+        let buf = ''
         try {
           while (true) {
             const { done, value } = await reader.read()
@@ -1268,7 +947,7 @@ SCOPE RULES — NON-NEGOTIABLE:
               } catch { /* ignore */ }
             }
           }
-        } catch { /* stream ended abruptly */ } finally {
+        } catch { /* stream ended */ } finally {
           const tail = stripper.flush()
           if (tail) ctrl.enqueue(encoder.encode(tail))
           ctrl.close()
@@ -1281,122 +960,197 @@ SCOPE RULES — NON-NEGOTIABLE:
     })
   }
 
-  // ── TRIM mode: phased timeline JSON ──────────────────────────────────────
-  if (analysisMode === 'trim') {
-    let trimRes: Response
-    try {
-      trimRes = await groqFetch({
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model:           modelSelection.model,
-          messages: buildGroqMessages(
-            liveDataPrefix + domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix,
-            userMessage,
-            body.messages,
-          ),
-          response_format: { type: 'json_object' },
-          max_tokens:      modelSelection.maxTokens,
-          temperature:     modelSelection.temperature,
-        }),
-      }, body.apiKey)
-    } catch {
-      return Response.json({ error: 'TRIM request failed.' }, { status: 502 })
-    }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OPERATOR — deep intelligence streaming markdown
+  // ═══════════════════════════════════════════════════════════════════════════
 
-    if (!trimRes.ok) {
-      const status = trimRes.status === 401 ? 401 : trimRes.status === 429 ? 429 : 502
+  if (analysisMode === 'operator') {
+    const operatorRes = await groqFetch(
+      {
+        model:       modelSelection.model,
+        messages:    buildGroqMessages(
+          liveDataPrefix + domainPrefix +
+          buildEnhancedOperatorPrompt(language, primaryConstraint) +
+          governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          userMessage,
+          body.messages,
+        ),
+        max_tokens:  modelSelection.maxTokens,
+        temperature: modelSelection.temperature,
+        stream:      true,
+      },
+      body.apiKey,
+    ).catch(() => null)
+
+    if (!operatorRes?.ok) {
+      const st = operatorRes?.status === 401 ? 401 : operatorRes?.status === 429 ? 429 : 502
       return Response.json(
-        { error: status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : 'AI provider error.' },
-        { status },
+        { error: st === 401 ? 'Invalid API key.' : st === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status: st },
       )
     }
 
-    const trimData: { choices?: Array<{ message?: { content?: string } }> } = await trimRes.json().catch(() => ({}))
-    const trimContent = trimData?.choices?.[0]?.message?.content ?? '{}'
+    const opBody = operatorRes.body!
+    const stream = new ReadableStream({
+      async start(ctrl) {
+        const reader   = opBody.getReader()
+        const decoder  = new TextDecoder()
+        const stripper = new StreamUrlStripper()
+        let buf = ''
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buf += decoder.decode(value, { stream: true })
+            const lines = buf.split('\n')
+            buf = lines.pop() ?? ''
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue
+              const raw = line.slice(6).trim()
+              if (raw === '[DONE]') continue
+              try {
+                const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
+                  .choices?.[0]?.delta?.content ?? ''
+                if (delta) {
+                  const clean = stripper.push(delta)
+                  if (clean) ctrl.enqueue(encoder.encode(clean))
+                }
+              } catch { /* ignore */ }
+            }
+          }
+        } catch { /* stream ended */ } finally {
+          const tail = stripper.flush()
+          if (tail) ctrl.enqueue(encoder.encode(tail))
+          ctrl.close()
+        }
+      },
+    })
 
+    return new Response(stream, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' },
+    })
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TRIM — phased timeline JSON (strict schema)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  if (analysisMode === 'trim') {
+    const trimRes = await groqFetch(
+      {
+        model:           modelSelection.model,
+        messages:        buildGroqMessages(
+          liveDataPrefix + domainPrefix +
+          buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix,
+          userMessage,
+          body.messages,
+        ),
+        response_format: JSON_SCHEMAS.trim,
+        max_tokens:      modelSelection.maxTokens,
+        temperature:     modelSelection.temperature,
+      },
+      body.apiKey,
+    ).catch(() => null)
+
+    if (!trimRes?.ok) {
+      const st = trimRes?.status === 401 ? 401 : trimRes?.status === 429 ? 429 : 502
+      return Response.json(
+        { error: st === 401 ? 'Invalid API key.' : st === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status: st },
+      )
+    }
+
+    const content = await extractGroqContent(trimRes)
     try {
-      const parsed    = JSON.parse(trimContent)
-      const trimResp  = { ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) }
+      const parsed   = JSON.parse(content)
+      const trimResp = {
+        ...(stripUrlsFromJson(parsed) as object),
+        __healthReport: healthReport,
+        scopeMetadata:  buildScopeMeta(true, 0, intent.clarityScore),
+      }
       void setCachedResponse(cacheQueryText, analysisMode, cacheLang, trimResp as Record<string, unknown>, _hasSynthesisContext)
       return Response.json(trimResp, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
+      // JSON Schema strict mode should prevent this — graceful fallback
       return Response.json(
-        { trimTitle: 'Strategic Plan', summary: trimContent, phases: [], __healthReport: healthReport, scopeMetadata: buildScopeMeta(false, 0, intent.clarityScore) },
+        { trimTitle: 'Strategic Plan', summary: content, phases: [], __healthReport: healthReport, scopeMetadata: buildScopeMeta(false, 0, intent.clarityScore) },
         { headers: { 'Cache-Control': 'no-store' } },
       )
     }
   }
 
-  // ── CATAMARAN mode: dual-track system overhaul ────────────────────────────
-  if (analysisMode === 'catamaran') {
-    let catRes: Response
-    try {
-      catRes = await groqFetch({
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model:           modelSelection.model,
-          messages: buildGroqMessages(
-            liveDataPrefix + domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix,
-            userMessage,
-            body.messages,
-          ),
-          response_format: { type: 'json_object' },
-          max_tokens:      modelSelection.maxTokens,
-          temperature:     modelSelection.temperature,
-        }),
-      }, body.apiKey)
-    } catch {
-      return Response.json({ error: 'AI provider unreachable.' }, { status: 502 })
-    }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CATAMARAN — dual-track JSON (strict schema)
+  // ═══════════════════════════════════════════════════════════════════════════
 
-    if (!catRes.ok) {
-      const status = catRes.status === 401 ? 401 : catRes.status === 429 ? 429 : 502
+  if (analysisMode === 'catamaran') {
+    const catRes = await groqFetch(
+      {
+        model:           modelSelection.model,
+        messages:        buildGroqMessages(
+          liveDataPrefix + domainPrefix +
+          buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix,
+          userMessage,
+          body.messages,
+        ),
+        response_format: JSON_SCHEMAS.catamaran,
+        max_tokens:      modelSelection.maxTokens,
+        temperature:     modelSelection.temperature,
+      },
+      body.apiKey,
+    ).catch(() => null)
+
+    if (!catRes?.ok) {
+      const st = catRes?.status === 401 ? 401 : catRes?.status === 429 ? 429 : 502
       return Response.json(
-        { error: status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : 'AI provider error.' },
-        { status },
+        { error: st === 401 ? 'Invalid API key.' : st === 429 ? 'Rate limit reached.' : 'AI provider error.' },
+        { status: st },
       )
     }
 
-    const catData: { choices?: Array<{ message?: { content?: string } }> } = await catRes.json().catch(() => ({}))
-    const catContent = catData?.choices?.[0]?.message?.content ?? '{}'
-
+    const content = await extractGroqContent(catRes)
     try {
-      const parsed   = JSON.parse(catContent)
-      const catResp  = { ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) }
+      const parsed  = JSON.parse(content)
+      const catResp = {
+        ...(stripUrlsFromJson(parsed) as object),
+        __healthReport: healthReport,
+        scopeMetadata:  buildScopeMeta(true, 0, intent.clarityScore),
+      }
       void setCachedResponse(cacheQueryText, analysisMode, cacheLang, catResp as Record<string, unknown>, _hasSynthesisContext)
       return Response.json(catResp, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       return Response.json(
         {
-          catamaranTitle: 'System Overhaul Plan',
-          marketGrowth: { actions: [], target: '' },
+          catamaranTitle:     'System Overhaul Plan',
+          marketGrowth:       { actions: [], target: '' },
           customerExperience: { actions: [], target: '' },
-          unifiedStrategy: '',
-          thirtyDayTarget: '',
-          greatestRisk: '',
-          __healthReport: healthReport,
-          scopeMetadata: buildScopeMeta(false, 0, intent.clarityScore),
+          unifiedStrategy:    '',
+          thirtyDayTarget:    '',
+          greatestRisk:       '',
+          __healthReport:     healthReport,
+          scopeMetadata:      buildScopeMeta(false, 0, intent.clarityScore),
         },
         { headers: { 'Cache-Control': 'no-store' } },
       )
     }
   }
 
-  // ── Upwind / Downwind: meta-first streaming → JSON result ────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // UPWIND / DOWNWIND — Progressive JSON stream with Speculative Execution
   //
-  // Architecture (progressive rendering):
-  //   Chunk 1 — __streamMeta  : emitted immediately (~10ms after request)
-  //             Contains scopeMetadata + healthReport so the UI scope panel
-  //             populates while the LLM is still generating.
-  //   Chunk 2 — __result      : emitted when Groq completes (~2–4s later)
-  //             Full parsed + repaired JSON response.
-  //   Chunk 2 — __error       : emitted on any failure (Groq error / parse fail)
+  // Architecture:
+  //   Chunk 1 — __streamMeta  : emitted immediately (~5 ms)
+  //             Scope panel populates while Groq is generating.
+  //   Chunk 2 — __result      : emitted when Groq completes
+  //             Full parsed + schema-validated JSON response.
+  //   Chunk 2 — __error       : emitted on any failure
   //
-  // Cache hits (Response.json) are instant and bypass this stream entirely —
-  // the frontend differentiates via Content-Type (text/plain vs application/json).
-  //
+  // Speculative execution:
+  //   • High clarity (≥ 0.75) → only 70B fires; 8B request skipped
+  //   • Low clarity  (< 0.35) → only 8B fires;  70B request skipped
+  //   • Mid clarity           → both fire; winner streamed, loser aborted
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const cognitiveLoad = (body.state as { cognitiveLoadIndex?: number } | undefined)?.cognitiveLoadIndex ?? 0
 
   const sessionHistoryBlock = analysisMode === 'downwind' && body.messages?.length
@@ -1410,34 +1164,45 @@ SCOPE RULES — NON-NEGOTIABLE:
     ? buildEnhancedDownwindPrompt(language, primaryConstraint, sessionHistoryBlock)
     : buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint)
 
-  // Start Groq fetch immediately — runs concurrently with stream setup so the
-  // meta line reaches the client while the LLM is already generating.
-  const groqResPromise = groqFetch({
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model:           modelSelection.model,
-      messages: [
-        { role: 'system', content: liveDataPrefix + domainPrefix + activeSystemPrompt + synthesisSuffix },
-        { role: 'user',   content: userMessage },
-      ],
-      response_format: { type: 'json_object' },
-      max_tokens:      modelSelection.maxTokens,
-      temperature:     modelSelection.temperature,
-    }),
-  }, body.apiKey)
+  const responseSchema = analysisMode === 'downwind'
+    ? JSON_SCHEMAS.downwind
+    : JSON_SCHEMAS.executive
 
-  const encoder      = new TextEncoder()
+  const fullSystemPrompt = liveDataPrefix + domainPrefix + activeSystemPrompt + synthesisSuffix
+  const groqMessages     = buildGroqMessages(fullSystemPrompt, userMessage, undefined)
+
+  // Fire speculative fetch — both models start simultaneously
+  const groqResPromise = speculativeFetch(
+    {
+      simpleRequest: {
+        model:           GROQ_MODELS.FAST,
+        messages:        groqMessages,
+        response_format: responseSchema,
+        max_tokens:      680,
+        temperature:     modelSelection.temperature,
+      },
+      complexRequest: {
+        model:           modelSelection.model,
+        messages:        groqMessages,
+        response_format: responseSchema,
+        max_tokens:      modelSelection.maxTokens,
+        temperature:     modelSelection.temperature,
+      },
+      clarityScore: intent.clarityScore,
+    },
+    body.apiKey,
+  )
+
   const immediateMeta = buildScopeMeta(true, 0, intent.clarityScore)
 
   const stream = new ReadableStream({
     async start(ctrl) {
-      // ── Chunk 1: meta — emitted before Groq responds ───────────────────
+      // ── Chunk 1: meta (immediate — before Groq responds) ──────────────────
       ctrl.enqueue(encoder.encode(
         JSON.stringify({ __streamMeta: { scopeMetadata: immediateMeta, healthReport } }) + '\n',
       ))
 
-      // ── Await Groq ─────────────────────────────────────────────────────
+      // ── Await speculative result ───────────────────────────────────────────
       let groqRes: Response
       try {
         groqRes = await groqResPromise
@@ -1450,8 +1215,8 @@ SCOPE RULES — NON-NEGOTIABLE:
       }
 
       if (!groqRes.ok) {
-        const errBody = await groqRes.json().catch(() => ({})) as Record<string, unknown>
-        const groqMsg = (errBody?.error as Record<string, unknown>)?.message as string | undefined
+        const errBody = await groqRes.json().catch(() => ({}) as Record<string, unknown>) as Record<string, unknown>
+        const groqMsg = (errBody?.error as Record<string, unknown> | undefined)?.message as string | undefined
         const status  = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
         ctrl.enqueue(encoder.encode(
           JSON.stringify({
@@ -1463,79 +1228,53 @@ SCOPE RULES — NON-NEGOTIABLE:
         return
       }
 
-      let groqData: { choices?: Array<{ message?: { content?: string } }> }
+      const rawContent = await extractGroqContent(groqRes)
+
+      // JSON_SCHEMAS strict mode guarantees valid JSON — parse fallback is an edge guard
+      let parsedResponse: unknown
       try {
-        groqData = await groqRes.json()
+        parsedResponse = JSON.parse(rawContent)
       } catch {
         ctrl.enqueue(encoder.encode(
-          JSON.stringify({ __error: 'AI provider returned invalid response.', __status: 502 }) + '\n',
+          JSON.stringify({
+            __result: {
+              insight:        rawContent || 'Analysis complete.',
+              __healthReport: healthReport,
+              scopeMetadata:  buildScopeMeta(false, 0, intent.clarityScore),
+            },
+          }) + '\n',
         ))
         ctrl.close()
         return
       }
 
-      const rawContent = groqData?.choices?.[0]?.message?.content ?? ''
-
-      // ── Light repair + scopeMetadata ────────────────────────────────────
-      let finalContent     = rawContent
-      let repairIterations = 0
-      let parsedResponse:  unknown
-
-      try {
-        parsedResponse = JSON.parse(finalContent)
-      } catch {
-        // Primary parse failed — one repair attempt with 8B model
-        const repair = await repairJsonResponse(
-          liveDataPrefix + domainPrefix + activeSystemPrompt + synthesisSuffix,
-          userMessage,
-          finalContent,
-          groqKey,
-          body.apiKey,
-        )
-        finalContent = repair.content
-        if (repair.repaired) repairIterations = 1
-        try {
-          parsedResponse = JSON.parse(finalContent)
-        } catch {
-          // Still invalid — emit best-effort fallback as result
-          ctrl.enqueue(encoder.encode(
-            JSON.stringify({
-              __result: {
-                insight:        finalContent || 'Analysis complete.',
-                __healthReport: healthReport,
-                scopeMetadata:  buildScopeMeta(false, repairIterations, intent.clarityScore),
-              },
-            }) + '\n',
-          ))
-          ctrl.close()
-          return
-        }
-      }
-
+      // Extract confidence from the parsed response (supports both formats)
+      const parsedRecord = parsedResponse as Record<string, unknown>
+      const ciField      = parsedRecord.confidenceIndex
       const confidenceScore =
-        typeof (parsedResponse as Record<string, unknown>).confidenceIndex === 'number'
-          ? (parsedResponse as Record<string, unknown>).confidenceIndex as number
+        ciField !== null && typeof ciField === 'object'
+          ? (typeof (ciField as Record<string, unknown>).score === 'number'
+              ? (ciField as Record<string, unknown>).score as number
+              : intent.clarityScore)
+          : typeof ciField === 'number'
+          ? ciField as number
           : intent.clarityScore
 
       const finalResp = {
         ...(stripUrlsFromJson(parsedResponse) as object),
         __healthReport: healthReport,
-        scopeMetadata:  buildScopeMeta(repairIterations === 0, repairIterations, confidenceScore),
+        scopeMetadata:  buildScopeMeta(true, 0, confidenceScore),
       }
 
-      // Cache fire-and-forget
+      // Fire-and-forget cache write
       void setCachedResponse(
-        cacheQueryText,
-        analysisMode,
-        cacheLang,
+        cacheQueryText, analysisMode, cacheLang,
         finalResp as Record<string, unknown>,
         _hasSynthesisContext,
       )
 
-      // ── Chunk 2: full result ────────────────────────────────────────────
-      ctrl.enqueue(encoder.encode(
-        JSON.stringify({ __result: finalResp }) + '\n',
-      ))
+      // ── Chunk 2: full result ───────────────────────────────────────────────
+      ctrl.enqueue(encoder.encode(JSON.stringify({ __result: finalResp }) + '\n'))
       ctrl.close()
     },
   })

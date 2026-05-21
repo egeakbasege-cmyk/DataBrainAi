@@ -43,7 +43,7 @@ export function Nav() {
         background:  'rgba(250,250,248,0.95)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        borderBottom:'1px solid rgba(0,0,0,0.09)',
+        borderBottom:'none',
       }}
     >
       <div
@@ -68,8 +68,8 @@ export function Nav() {
               fontSize:      '0.55rem',
               fontWeight:    700,
               letterSpacing: '0.06em',
-              color:         '#1E293B',
-              background:    'rgba(148,163,184,0.85)',
+              color:         '#FFFFFF',
+              background:    'linear-gradient(135deg, rgba(20,184,166,0.8), rgba(14,165,148,0.9))',
               padding:       '1px 5px',
               borderRadius:  '3px',
               filter:        'drop-shadow(0 0 4px rgba(148,163,184,0.5))',
@@ -94,6 +94,8 @@ export function Nav() {
               textTransform: 'uppercase',
               color:         '#C9A96E',
               textDecoration:'none',
+              borderBottom:  '1px solid rgba(20,184,166,0.4)',
+              paddingBottom: '1px',
             }}
           >
             {t('nav.research')}
@@ -258,6 +260,8 @@ export function Nav() {
           )}
         </nav>
       </div>
+      {/* Gradient bottom border replacing solid border */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(20,184,166,0.25) 30%, rgba(201,169,110,0.3) 70%, transparent 100%)' }} />
     </header>
   )
 }

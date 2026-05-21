@@ -92,13 +92,18 @@ export default function PricingPage() {
   }
 
   return (
-    <main style={{ background: '#FAFAF8' }}>
+    <main
+      className="sv-grid-bg"
+      style={{ background: 'var(--sv-mint-bg)', backgroundSize: '80px 80px' }}
+    >
       <Nav />
 
-      <section className="max-w-5xl mx-auto px-6 md:px-10 pt-20 pb-32">
+      <section className="max-w-5xl mx-auto px-6 md:px-10 pb-32" style={{ paddingTop: '2rem' }}>
 
         {/* Header */}
-        <div style={{ marginBottom: '3.5rem' }}>
+        <div style={{ marginBottom: '4.5rem' }}>
+          {/* sv-brand-rule above eyebrow label */}
+          <div className="sv-brand-rule" style={{ marginBottom: '1.5rem' }} />
           <span className="label-caps" style={{ display: 'block', marginBottom: '1rem' }}>{t('pricing.membership')}</span>
           <h1
             style={{
@@ -127,10 +132,19 @@ export default function PricingPage() {
               key={tier.key}
               style={{
                 padding:     '2.25rem',
-                background:  tier.accent ? '#0C0C0E' : '#FFFFFF',
+                background:  tier.accent
+                  ? '#0C0C0E'
+                  : tier.key === 'advisory'
+                    ? 'linear-gradient(160deg, #FFFFFF 0%, #f8fffe 100%)'
+                    : '#FFFFFF',
                 border:      '1px solid rgba(0,0,0,0.1)',
                 borderLeft:  i === 0 ? '1px solid rgba(0,0,0,0.1)' : 'none',
                 position:    'relative',
+                boxShadow:   tier.accent
+                  ? '0 0 0 1px rgba(20,184,166,0.15), 0 20px 60px rgba(0,0,0,0.25)'
+                  : tier.key === 'advisory'
+                    ? '0 4px 24px rgba(20,184,166,0.06)'
+                    : undefined,
               }}
             >
               {/* Champagne top rule for Pro */}
@@ -167,7 +181,7 @@ export default function PricingPage() {
               <ul style={{ listStyle: 'none', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                 {tier.features.map(f => (
                   <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.7)' : '#3A3A3C', lineHeight: 1.4 }}>
-                    <span style={{ color: '#C9A96E', fontSize: '0.55rem', flexShrink: 0, marginTop: '0.35rem' }}>◆</span>
+                    <span style={{ color: tier.accent ? '#C9A96E' : 'var(--sv-teal)', fontSize: '0.55rem', flexShrink: 0, marginTop: '0.35rem' }}>◆</span>
                     {f}
                   </li>
                 ))}
@@ -251,7 +265,7 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ */}
-        <div style={{ marginTop: '5rem' }}>
+        <div style={{ marginTop: '6.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem' }}>
             <span className="label-caps">{t('pricing.commonQ')}</span>
             <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.09)' }} />
@@ -260,9 +274,10 @@ export default function PricingPage() {
           {FAQ.map((faq) => (
             <div
               key={faq.q}
-              style={{ padding: '1.25rem 0', borderBottom: '1px solid rgba(0,0,0,0.07)' }}
+              style={{ padding: '1.5rem 0', borderBottom: '1px solid rgba(0,0,0,0.07)' }}
             >
               <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600, fontSize: '1.1rem', color: '#0C0C0E', marginBottom: '0.375rem' }}>
+                <span style={{ color: 'var(--sv-teal)', marginRight: '0.5rem', fontSize: '0.7rem' }}>◈</span>
                 {faq.q}
               </p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.7, color: '#71717A', fontWeight: 300 }}>

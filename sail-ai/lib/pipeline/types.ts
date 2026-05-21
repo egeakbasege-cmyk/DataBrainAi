@@ -155,6 +155,70 @@ export interface ScopeMetadata {
   modelTier?:        'SIMPLE' | 'STANDARD' | 'COMPLEX' | 'CRITICAL'
 }
 
+// ── Personalised AI Engine types ─────────────────────────────────────────────
+// Canonical interfaces importable by both the orchestration layer and the
+// frontend. Kept here (not in personalised-ai.ts) so the pipeline/types barrel
+// remains the single source of truth for all cross-layer contracts.
+
+/** The three fixed specialist domains in the Chain of Draft engine. */
+export type PersonalisedAISpecialistId = 'financial' | 'strategic' | 'operational'
+
+/**
+ * Compact intelligence brief returned by each parallel 8B specialist agent.
+ * Schema-enforced via Groq Structured Outputs (JSON_SCHEMAS.specialist_draft).
+ */
+export interface SpecialistDraft {
+  /** Specialist label, e.g. "◈ FINANCIAL LENS". */
+  lens:                  string
+  /** 2–3 precise sentences carrying at least one specific figure. */
+  coreInsight:           string
+  /** Single most important metric or number; labelled [est.] if estimated. */
+  criticalFigure:        string
+  /** One high-leverage action, imperative voice, tied to a metric. */
+  primaryRecommendation: string
+  /** Agent self-reported confidence (0.0–1.0). */
+  confidence:            number
+  /** Origin of the data used to produce the draft. */
+  dataSource:            'live-research' | 'training-estimate' | 'user-provided' | 'mixed'
+}
+
+/**
+ * Result of the `executeChainOfDraft()` parallel phase.
+ * Partial success (1–2 agents returning drafts) is acceptable.
+ */
+export interface ChainOfDraftResult {
+  /** All drafts that completed within the 2-second wall-clock timeout. */
+  drafts:       SpecialistDraft[]
+  /** Wall-clock time for the entire parallel phase, in milliseconds. */
+  elapsedMs:    number
+  /** True when at least one specialist returned a valid draft. */
+  parallelMode: boolean
+}
+
+/**
+ * Per-agent summary emitted in the `__synMeta` SSE event for the frontend.
+ * Maintains backward compatibility with the legacy Synergy `agentSummary` shape.
+ */
+export interface PersonalisedAIAgentSummary {
+  /** Lens label, e.g. "◈ FINANCIAL LENS". Maps to legacy `layer` field. */
+  layer:      string
+  /** Agent self-reported confidence (0.0–1.0). */
+  confidence: number
+}
+
+/**
+ * Full metadata payload emitted as `__synMeta` in the SSE stream.
+ * Frontend reads this to populate the agent attribution panel.
+ */
+export interface PersonalisedAIMeta {
+  companyName:   string | null
+  healthReport:  unknown
+  scopeMetadata: unknown
+  agentSummary:  PersonalisedAIAgentSummary[]
+  parallelMode:  boolean
+  elapsedMs:     number
+}
+
 // ── Final pipeline output ─────────────────────────────────────────────────────
 
 export interface PipelineOutput {

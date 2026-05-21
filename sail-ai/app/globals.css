@@ -674,3 +674,148 @@ input { outline: none; font-family: 'Inter', sans-serif; }
 .corner-bracket--tr { top:0; right:0; border-top:  1px solid var(--red-accent); border-right:1px solid var(--red-accent); }
 .corner-bracket--bl { bottom:0; left:0;  border-bottom:1px solid var(--red-accent); border-left: 1px solid var(--red-accent); }
 .corner-bracket--br { bottom:0; right:0; border-bottom:1px solid var(--red-accent); border-right:1px solid var(--red-accent); }
+
+/* ═══════════════════════════════════════════════════════════════
+   SOVEREIGN DESIGN SYSTEM — Teal Precision Layer
+   Extends existing tokens with the SovereignDashboard palette.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Sovereign teal ─────────────────────────── */
+  --sv-teal:          #14B8A6;
+  --sv-teal-bright:   #2DD4BF;
+  --sv-teal-dim:      rgba(20,184,166,0.10);
+  --sv-teal-rule:     rgba(20,184,166,0.16);
+  --sv-teal-glow:     rgba(45,212,191,0.22);
+  --sv-teal-wash:     rgba(20,184,166,0.06);
+
+  /* ── Mint backgrounds ───────────────────────── */
+  --sv-mint-bg:       #f0fdfb;
+  --sv-mint-hero:     linear-gradient(135deg, #d4f5f0 0%, #edfaf8 45%, #e2eef9 100%);
+
+  /* ── Glass surfaces ─────────────────────────── */
+  --sv-glass:         rgba(255,255,255,0.86);
+  --sv-glass-border:  rgba(255,255,255,0.68);
+  --sv-glass-shadow:  0 8px 40px rgba(20,184,166,0.08), 0 2px 10px rgba(0,0,0,0.05);
+
+  /* ── Architectural grid ─────────────────────── */
+  --sv-grid:          rgba(45,212,191,0.065);
+  --sv-grid-size:     60px;
+
+  /* ── Brand gradient — champagne ⟶ teal ──────── */
+  --sv-brand-grad:    linear-gradient(135deg, #C9A96E 0%, #14B8A6 100%);
+}
+
+/* ── Sovereign glass card ─────────────────────────────────────── */
+.sv-card {
+  background:               var(--sv-glass);
+  border:                   1px solid var(--sv-glass-border);
+  backdrop-filter:          blur(20px) saturate(160%);
+  -webkit-backdrop-filter:  blur(20px) saturate(160%);
+  box-shadow:               var(--sv-glass-shadow);
+}
+
+/* ── Mint section background ──────────────────────────────────── */
+.bg-sv {
+  background: var(--sv-mint-hero);
+}
+
+/* ── Architectural grid overlay ───────────────────────────────── */
+.sv-grid-bg {
+  background-image:
+    linear-gradient(var(--sv-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sv-grid) 1px, transparent 1px);
+  background-size: var(--sv-grid-size) var(--sv-grid-size);
+}
+
+/* ── Teal top hairline accent ─────────────────────────────────── */
+.sv-top-rule {
+  position: relative;
+}
+.sv-top-rule::before {
+  content:    '';
+  position:   absolute;
+  top:        0;
+  left:       0;
+  right:      0;
+  height:     1px;
+  background: linear-gradient(90deg, transparent 0%, var(--sv-teal) 50%, transparent 100%);
+  opacity:    0.55;
+}
+
+/* ── Brand gradient hairline ──────────────────────────────────── */
+.sv-brand-rule {
+  height:     1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--champagne) 30%,
+    var(--sv-teal)   70%,
+    transparent 100%
+  );
+  opacity: 0.4;
+}
+
+/* ── Sovereign button — teal CTA ──────────────────────────────── */
+.btn-sv {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            0.5rem;
+  padding:        0.875rem 2rem;
+  background:     var(--sv-teal);
+  color:          #FFFFFF;
+  font-family:    'Inter', sans-serif;
+  font-size:      0.72rem;
+  font-weight:    700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border:         none;
+  cursor:         pointer;
+  text-decoration:none;
+  transition:     opacity 0.2s, transform 0.15s;
+  border-radius:  0;
+}
+.btn-sv:hover {
+  opacity:   0.9;
+  transform: translateY(-1px);
+}
+
+/* ── Teal badge ───────────────────────────────────────────────── */
+.sv-badge {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            5px;
+  padding:        3px 10px;
+  background:     var(--sv-teal-dim);
+  border:         1px solid var(--sv-teal-rule);
+  font-family:    'Inter', sans-serif;
+  font-size:      0.55rem;
+  font-weight:    700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color:          var(--sv-teal);
+  white-space:    nowrap;
+}
+
+/* ── Premium section spacer ───────────────────────────────────── */
+.py-sovereign { padding-top: 7rem;  padding-bottom: 7rem;  }
+.pt-sovereign { padding-top: 7rem;  }
+.pb-sovereign { padding-bottom: 7rem; }
+.py-sovereign-lg { padding-top: 9rem; padding-bottom: 9rem; }
+
+/* ── Sovereign teal text ──────────────────────────────────────── */
+.text-sv { color: var(--sv-teal); }
+
+/* ── Mode pill hover — teal border appears on hover ──────────── */
+.mode-card-sv {
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.mode-card-sv:hover {
+  border-color: var(--sv-teal-rule) !important;
+  box-shadow:   0 0 0 3px var(--sv-teal-wash), 0 4px 20px rgba(0,0,0,0.06) !important;
+}
+
+/* ── Teal focus ring (overrides existing champagne for non-chat contexts) ── */
+.sv-focus-ring:focus-visible {
+  outline:        2px solid var(--sv-teal);
+  outline-offset: 2px;
+}
