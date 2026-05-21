@@ -51,8 +51,11 @@ import {
   SEARCH_FAILED_WARNING,         // [SAIL-FACTUAL-TRIGGER] search ran but no results
 } from '@/lib/prompts/enhanced-modes'
 // [PIPELINE-LITE] Layer 1 — SemanticRouter (deterministic, no LLM call)
-import { routeAndOptimize }   from '@/lib/pipeline/semanticRouter'
-import type { ScopeMetadata } from '@/lib/pipeline/types'
+import { routeAndOptimize }    from '@/lib/pipeline/semanticRouter'
+import type { ScopeMetadata }  from '@/lib/pipeline/types'
+// [PIPELINE-LITE] Adaptive Model Selector — right-sizes model + token budget per request
+import { selectModel }         from '@/lib/pipeline/modelSelector'
+import type { ComplexityTier } from '@/lib/pipeline/modelSelector'
 
 const { auth } = NextAuth(authConfig)
 
@@ -702,6 +705,13 @@ export async function POST(req: NextRequest) {
 
   const language           = body.language ?? 'en'
   const primaryConstraint  = body.primaryConstraint
+
+  // ── Adaptive Model Selection ───────────────────────────────────────────────
+  // contextChars measures injected data volume — large context = more complexity.
+  // Called AFTER the research loop so body.ragContext reflects live search results.
+  const contextChars    = (body.ragContext?.length ?? 0) + (body.fileContent?.length ?? 0)
+  const modelSelection  = selectModel(queryText, analysisMode, contextChars)
+
   const userMessage        = buildUserMessage(body)   // skill + research injection happens inside
 
   // [SAIL-NEW] Module 3 — Wabi-Sabi Health Report pre-computation
@@ -732,6 +742,7 @@ export async function POST(req: NextRequest) {
     validationPassed: boolean,
     repairIterations: number,
     confidenceScore:  number,
+    tier?:            ComplexityTier,
   ): ScopeMetadata {
     return {
       domain:            intent.detectedDomain,
@@ -748,6 +759,7 @@ export async function POST(req: NextRequest) {
       repairIterations,
       liveDataUsed:      _hasSynthesisContext,
       confidenceScore,
+      modelTier:         tier ?? modelSelection.tier,
     }
   }
 
@@ -811,14 +823,14 @@ SCOPE RULES — NON-NEGOTIABLE:
       method: 'POST',
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:       GROQ_MODEL,
+        model:       modelSelection.model,
         messages: buildGroqMessages(
           domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
-        max_tokens:  1200,
-        temperature: 0.45,
+        max_tokens:  modelSelection.maxTokens,
+        temperature: modelSelection.temperature,
         stream:      true,
       }),
     }, body.apiKey).catch(() => null)
@@ -883,14 +895,14 @@ SCOPE RULES — NON-NEGOTIABLE:
       method: 'POST',
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:       GROQ_MODEL,
+        model:       modelSelection.model,
         messages: buildGroqMessages(
           domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
-        max_tokens:  1200,
-        temperature: 0.45,
+        max_tokens:  modelSelection.maxTokens,
+        temperature: modelSelection.temperature,
         stream:      true,
       }),
     }, body.apiKey).catch(() => null)
@@ -989,14 +1001,14 @@ SCOPE RULES — NON-NEGOTIABLE:
       method: 'POST',
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:       GROQ_MODEL,
+        model:       modelSelection.model,
         messages: buildGroqMessages(
           domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
-        max_tokens:  1400,
-        temperature: 0.5,
+        max_tokens:  modelSelection.maxTokens,
+        temperature: modelSelection.temperature,
         stream:      true,
       }),
     }, body.apiKey).catch(() => null)
@@ -1061,14 +1073,14 @@ SCOPE RULES — NON-NEGOTIABLE:
       method: 'POST',
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:       GROQ_MODEL,
+        model:       modelSelection.model,
         messages: buildGroqMessages(
           domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
-        max_tokens:  1200,
-        temperature: 0.5,
+        max_tokens:  modelSelection.maxTokens,
+        temperature: modelSelection.temperature,
         stream:      true,
       }),
     }, body.apiKey).catch(() => null)
@@ -1133,15 +1145,15 @@ SCOPE RULES — NON-NEGOTIABLE:
         method: 'POST',
         headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model:           GROQ_MODEL,
+          model:           modelSelection.model,
           messages: buildGroqMessages(
             domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix,
             userMessage,
             body.messages,
           ),
           response_format: { type: 'json_object' },
-          max_tokens:      900,
-          temperature:     0.4,
+          max_tokens:      modelSelection.maxTokens,
+          temperature:     modelSelection.temperature,
         }),
       }, body.apiKey)
     } catch {
@@ -1180,15 +1192,15 @@ SCOPE RULES — NON-NEGOTIABLE:
         method: 'POST',
         headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model:           GROQ_MODEL,
+          model:           modelSelection.model,
           messages: buildGroqMessages(
             domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix,
             userMessage,
             body.messages,
           ),
           response_format: { type: 'json_object' },
-          max_tokens:      1100,
-          temperature:     0.35,
+          max_tokens:      modelSelection.maxTokens,
+          temperature:     modelSelection.temperature,
         }),
       }, body.apiKey)
     } catch {
@@ -1248,14 +1260,14 @@ SCOPE RULES — NON-NEGOTIABLE:
       method: 'POST',
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:           GROQ_MODEL,
+        model:           modelSelection.model,
         messages: [
           { role: 'system', content: domainPrefix + activeSystemPrompt + synthesisSuffix },
           { role: 'user',   content: userMessage },
         ],
         response_format: { type: 'json_object' },
-        max_tokens:      1200,
-        temperature:     analysisMode === 'downwind' ? 0.5 : 0.4,
+        max_tokens:      modelSelection.maxTokens,
+        temperature:     modelSelection.temperature,
       }),
     }, body.apiKey)
   } catch {

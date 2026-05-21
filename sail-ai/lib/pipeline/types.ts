@@ -151,6 +151,8 @@ export interface ScopeMetadata {
   repairIterations:  number
   liveDataUsed:      boolean
   confidenceScore:   number
+  /** Adaptive model tier selected for this request (from modelSelector). */
+  modelTier?:        'SIMPLE' | 'STANDARD' | 'COMPLEX' | 'CRITICAL'
 }
 
 // ── Final pipeline output ─────────────────────────────────────────────────────
