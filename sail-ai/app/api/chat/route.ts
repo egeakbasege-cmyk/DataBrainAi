@@ -1369,7 +1369,19 @@ SCOPE RULES — NON-NEGOTIABLE:
     }
   }
 
-  // ── Upwind / Downwind: direct Groq JSON call ─────────────────────────────
+  // ── Upwind / Downwind: meta-first streaming → JSON result ────────────────
+  //
+  // Architecture (progressive rendering):
+  //   Chunk 1 — __streamMeta  : emitted immediately (~10ms after request)
+  //             Contains scopeMetadata + healthReport so the UI scope panel
+  //             populates while the LLM is still generating.
+  //   Chunk 2 — __result      : emitted when Groq completes (~2–4s later)
+  //             Full parsed + repaired JSON response.
+  //   Chunk 2 — __error       : emitted on any failure (Groq error / parse fail)
+  //
+  // Cache hits (Response.json) are instant and bypass this stream entirely —
+  // the frontend differentiates via Content-Type (text/plain vs application/json).
+  //
   const cognitiveLoad = (body.state as { cognitiveLoadIndex?: number } | undefined)?.cognitiveLoadIndex ?? 0
 
   const sessionHistoryBlock = analysisMode === 'downwind' && body.messages?.length
@@ -1383,99 +1395,141 @@ SCOPE RULES — NON-NEGOTIABLE:
     ? buildEnhancedDownwindPrompt(language, primaryConstraint, sessionHistoryBlock)
     : buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint)
 
-  let groqRes: Response
-  try {
-    groqRes = await groqFetch({
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model:           modelSelection.model,
-        messages: [
-          { role: 'system', content: domainPrefix + activeSystemPrompt + synthesisSuffix },
-          { role: 'user',   content: userMessage },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens:      modelSelection.maxTokens,
-        temperature:     modelSelection.temperature,
-      }),
-    }, body.apiKey)
-  } catch {
-    return Response.json({ error: 'Unable to reach AI provider.' }, { status: 502 })
-  }
+  // Start Groq fetch immediately — runs concurrently with stream setup so the
+  // meta line reaches the client while the LLM is already generating.
+  const groqResPromise = groqFetch({
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model:           modelSelection.model,
+      messages: [
+        { role: 'system', content: domainPrefix + activeSystemPrompt + synthesisSuffix },
+        { role: 'user',   content: userMessage },
+      ],
+      response_format: { type: 'json_object' },
+      max_tokens:      modelSelection.maxTokens,
+      temperature:     modelSelection.temperature,
+    }),
+  }, body.apiKey)
 
-  if (!groqRes.ok) {
-    const errBody = await groqRes.json().catch(() => ({})) as Record<string, unknown>
-    const groqMsg = (errBody?.error as Record<string, unknown>)?.message as string | undefined
-    const status  = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
-    return Response.json(
-      { error: groqMsg ?? (status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : `AI provider error: ${groqRes.status}`) },
-      { status },
-    )
-  }
+  const encoder      = new TextEncoder()
+  const immediateMeta = buildScopeMeta(true, 0, intent.clarityScore)
 
-  let groqData: { choices?: Array<{ message?: { content?: string } }> }
-  try {
-    groqData = await groqRes.json()
-  } catch {
-    return Response.json({ error: 'AI provider returned invalid response.' }, { status: 502 })
-  }
+  const stream = new ReadableStream({
+    async start(ctrl) {
+      // ── Chunk 1: meta — emitted before Groq responds ───────────────────
+      ctrl.enqueue(encoder.encode(
+        JSON.stringify({ __streamMeta: { scopeMetadata: immediateMeta, healthReport } }) + '\n',
+      ))
 
-  const rawContent = groqData?.choices?.[0]?.message?.content ?? ''
+      // ── Await Groq ─────────────────────────────────────────────────────
+      let groqRes: Response
+      try {
+        groqRes = await groqResPromise
+      } catch {
+        ctrl.enqueue(encoder.encode(
+          JSON.stringify({ __error: 'Unable to reach AI provider.', __status: 502 }) + '\n',
+        ))
+        ctrl.close()
+        return
+      }
 
-  // ── Light repair + scopeMetadata ─────────────────────────────────────────
-  // Attempt JSON parse. On failure: one repair call with 8B model, then retry.
-  // scopeMetadata surfaces intent metadata in the AnalysisScopePanel UI.
-  let finalContent     = rawContent
-  let repairIterations = 0
+      if (!groqRes.ok) {
+        const errBody = await groqRes.json().catch(() => ({})) as Record<string, unknown>
+        const groqMsg = (errBody?.error as Record<string, unknown>)?.message as string | undefined
+        const status  = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
+        ctrl.enqueue(encoder.encode(
+          JSON.stringify({
+            __error:  groqMsg ?? (status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : `AI provider error: ${groqRes.status}`),
+            __status: status,
+          }) + '\n',
+        ))
+        ctrl.close()
+        return
+      }
 
-  let parsedResponse: unknown
-  try {
-    parsedResponse = JSON.parse(finalContent)
-  } catch {
-    // Primary parse failed — fire one repair attempt
-    const repair = await repairJsonResponse(
-      domainPrefix + activeSystemPrompt + synthesisSuffix,
-      userMessage,
-      finalContent,
-      groqKey,
-      body.apiKey,
-    )
-    finalContent = repair.content
-    if (repair.repaired) repairIterations = 1
-    try {
-      parsedResponse = JSON.parse(finalContent)
-    } catch {
-      // Still invalid — return best-effort fallback with metadata
-      return Response.json(
-        {
-          insight:       finalContent || 'Analysis complete.',
-          __healthReport: healthReport,
-          scopeMetadata: buildScopeMeta(false, repairIterations, intent.clarityScore),
-        },
-        { headers: { 'Cache-Control': 'no-store' } },
+      let groqData: { choices?: Array<{ message?: { content?: string } }> }
+      try {
+        groqData = await groqRes.json()
+      } catch {
+        ctrl.enqueue(encoder.encode(
+          JSON.stringify({ __error: 'AI provider returned invalid response.', __status: 502 }) + '\n',
+        ))
+        ctrl.close()
+        return
+      }
+
+      const rawContent = groqData?.choices?.[0]?.message?.content ?? ''
+
+      // ── Light repair + scopeMetadata ────────────────────────────────────
+      let finalContent     = rawContent
+      let repairIterations = 0
+      let parsedResponse:  unknown
+
+      try {
+        parsedResponse = JSON.parse(finalContent)
+      } catch {
+        // Primary parse failed — one repair attempt with 8B model
+        const repair = await repairJsonResponse(
+          domainPrefix + activeSystemPrompt + synthesisSuffix,
+          userMessage,
+          finalContent,
+          groqKey,
+          body.apiKey,
+        )
+        finalContent = repair.content
+        if (repair.repaired) repairIterations = 1
+        try {
+          parsedResponse = JSON.parse(finalContent)
+        } catch {
+          // Still invalid — emit best-effort fallback as result
+          ctrl.enqueue(encoder.encode(
+            JSON.stringify({
+              __result: {
+                insight:        finalContent || 'Analysis complete.',
+                __healthReport: healthReport,
+                scopeMetadata:  buildScopeMeta(false, repairIterations, intent.clarityScore),
+              },
+            }) + '\n',
+          ))
+          ctrl.close()
+          return
+        }
+      }
+
+      const confidenceScore =
+        typeof (parsedResponse as Record<string, unknown>).confidenceIndex === 'number'
+          ? (parsedResponse as Record<string, unknown>).confidenceIndex as number
+          : intent.clarityScore
+
+      const finalResp = {
+        ...(stripUrlsFromJson(parsedResponse) as object),
+        __healthReport: healthReport,
+        scopeMetadata:  buildScopeMeta(repairIterations === 0, repairIterations, confidenceScore),
+      }
+
+      // Cache fire-and-forget
+      void setCachedResponse(
+        cacheQueryText,
+        analysisMode,
+        cacheLang,
+        finalResp as Record<string, unknown>,
+        _hasSynthesisContext,
       )
-    }
-  }
 
-  const confidenceScore =
-    typeof (parsedResponse as Record<string, unknown>).confidenceIndex === 'number'
-      ? (parsedResponse as Record<string, unknown>).confidenceIndex as number
-      : intent.clarityScore
+      // ── Chunk 2: full result ────────────────────────────────────────────
+      ctrl.enqueue(encoder.encode(
+        JSON.stringify({ __result: finalResp }) + '\n',
+      ))
+      ctrl.close()
+    },
+  })
 
-  const finalResp = {
-    ...(stripUrlsFromJson(parsedResponse) as object),
-    __healthReport: healthReport,
-    scopeMetadata:  buildScopeMeta(repairIterations === 0, repairIterations, confidenceScore),
-  }
-
-  // Cache the response for future identical queries (fire-and-forget)
-  void setCachedResponse(
-    cacheQueryText,
-    analysisMode,
-    cacheLang,
-    finalResp as Record<string, unknown>,
-    _hasSynthesisContext,
-  )
-
-  return Response.json(finalResp, { headers: { 'Cache-Control': 'no-store' } })
+  return new Response(stream, {
+    headers: {
+      'Content-Type':      'text/plain; charset=utf-8',
+      'Cache-Control':     'no-store',
+      'X-Accel-Buffering': 'no',
+    },
+  })
 }

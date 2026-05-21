@@ -131,21 +131,86 @@ export function useAetherisSubmit() {
         throw new Error(apiMsg ?? 'Request failed. Please try again.')
       }
 
-      // The Aetheris endpoint returns JSON — no stream reader needed
-      const raw = await res.json()
+      // ── Response routing: streaming (upwind/downwind) vs JSON (cache hit / others) ──
+      //
+      // upwind/downwind return text/plain with 2 newline-delimited JSON chunks:
+      //   Line 1 — { __streamMeta: { scopeMetadata, healthReport } }  ← arrives immediately
+      //   Line 2 — { __result: <full response> }                       ← arrives after LLM
+      //   Line 2 — { __error: string, __status: number }              ← on any failure
+      //
+      // Cache hits and error responses return application/json (handled below).
+      //
+      const contentType = res.headers.get('Content-Type') ?? ''
 
-      // [SAIL-PIPELINE] Extract pipeline-specific fields before schema validation
-      const rawRecord = raw as Record<string, unknown>
-      if (rawRecord.scopeMetadata) setScopeMetadata(rawRecord.scopeMetadata as ScopeMetadata)
-      if (typeof rawRecord.prose === 'string') setProse(rawRecord.prose)
+      if (contentType.includes('text/plain')) {
+        // ── Streaming path ──────────────────────────────────────────────────
+        const reader  = res.body!.getReader()
+        const decoder = new TextDecoder()
+        let buf            = ''
+        let resultReceived = false
+        let streamError:   Error | null = null
 
-      // Client-side schema enforcement (last line of defence)
-      const validated = validateExecutiveResponse(raw)
-        ? (raw as ExecutiveResponse)
-        : sanitiseExecutiveResponse(raw)
+        outer: while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buf += decoder.decode(value, { stream: true })
+          const lines = buf.split('\n')
+          buf = lines.pop() ?? ''
 
-      setResponse(validated)
-      setState('COMPLETE')
+          for (const line of lines) {
+            if (!line.trim()) continue
+            let parsed: Record<string, unknown>
+            try { parsed = JSON.parse(line) as Record<string, unknown> } catch { continue }
+
+            if (parsed.__streamMeta) {
+              // Chunk 1: scope panel populates while LLM is still generating
+              const meta = parsed.__streamMeta as { scopeMetadata?: ScopeMetadata }
+              if (meta.scopeMetadata) setScopeMetadata(meta.scopeMetadata)
+
+            } else if (parsed.__result) {
+              // Chunk 2: full response
+              resultReceived = true
+              const rawResult = parsed.__result as Record<string, unknown>
+              if (rawResult.scopeMetadata) setScopeMetadata(rawResult.scopeMetadata as ScopeMetadata)
+              if (typeof rawResult.prose === 'string') setProse(rawResult.prose)
+              const validated = validateExecutiveResponse(rawResult)
+                ? (rawResult as ExecutiveResponse)
+                : sanitiseExecutiveResponse(rawResult)
+              setResponse(validated)
+              setState('COMPLETE')
+              break outer
+
+            } else if (parsed.__error) {
+              const errMsg = String(parsed.__error ?? 'Request failed. Please try again.')
+              const status = typeof parsed.__status === 'number' ? parsed.__status : 500
+              if (status === 429) streamError = new Error(errMsg || 'RATE_LIMIT')
+              else if (status === 401) streamError = new Error(errMsg || 'Invalid API key.')
+              else streamError = new Error(errMsg)
+              break outer
+            }
+          }
+        }
+
+        if (streamError) throw streamError
+        if (!resultReceived && !streamError) throw new Error('Response incomplete. Please try again.')
+
+      } else {
+        // ── JSON path: cache hits return application/json instantly ─────────
+        const raw = await res.json()
+
+        // [SAIL-PIPELINE] Extract pipeline-specific fields before schema validation
+        const rawRecord = raw as Record<string, unknown>
+        if (rawRecord.scopeMetadata) setScopeMetadata(rawRecord.scopeMetadata as ScopeMetadata)
+        if (typeof rawRecord.prose === 'string') setProse(rawRecord.prose)
+
+        // Client-side schema enforcement (last line of defence)
+        const validated = validateExecutiveResponse(raw)
+          ? (raw as ExecutiveResponse)
+          : sanitiseExecutiveResponse(raw)
+
+        setResponse(validated)
+        setState('COMPLETE')
+      }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
 
