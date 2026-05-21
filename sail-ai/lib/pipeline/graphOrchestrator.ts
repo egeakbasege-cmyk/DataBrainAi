@@ -131,15 +131,16 @@ async function runAnalysisNode(
 ): Promise<void> {
   setStatus(state, 'LLM_ANALYSIS', 'RUNNING')
 
+  // Repair calls keep research context — the repair LLM needs the live data
+  // to correctly assign source fields (LIVE vs TRAINING_EST) on rebuilt metrics.
   const userContent = buildUserMessage(
     state.intent.optimizedPrompt,
-    repairNote ? '' : researchContext,  // don't re-inject research on repair calls
+    researchContext,
     repairNote,
   )
 
-  let attempt = 0
-  while (attempt < MAX_RETRIES) {
-    attempt++
+  let lastErr: unknown
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       const raw = await groqComplete(
         [
@@ -154,14 +155,15 @@ async function runAnalysisNode(
       setStatus(state, 'LLM_ANALYSIS', 'COMPLETE')
       return
     } catch (err) {
-      const tries = incrementRetry(state, 'LLM_ANALYSIS')
-      if (tries >= MAX_RETRIES) {
-        recordError(state, 'LLM_ANALYSIS', 'MAX_RETRIES', String(err))
-        throw err
+      lastErr = err
+      if (attempt < MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, 200 * attempt))
       }
-      await new Promise(r => setTimeout(r, 200 * tries))
     }
   }
+  // All attempts exhausted — record and throw so orchestrate() can degrade gracefully
+  recordError(state, 'LLM_ANALYSIS', 'MAX_RETRIES', String(lastErr))
+  throw lastErr
 }
 
 // ── Node: Validator ───────────────────────────────────────────────────────────

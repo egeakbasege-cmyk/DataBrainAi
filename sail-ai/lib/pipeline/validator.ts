@@ -136,14 +136,15 @@ function checkBoundaries(data: ValidatedOutput): BoundaryCheckResult {
     }
   })
 
-  // 5. nextActions: at least 1 actionable (contains verb or number)
-  const hasActionable = data.nextActions.some(a => /\b(implement|create|build|launch|test|measure|review|define|set|track|deploy|establish|monitor|run|send|schedule|hire|configure)\b/i.test(a))
+  // 5. nextActions: at least 1 actionable (EN + TR verbs — bilingual system)
+  const ACTIONABLE_RE = /\b(implement|create|build|launch|test|measure|review|define|set|track|deploy|establish|monitor|run|send|schedule|hire|configure|increase|reduce|optimize|analyze|evaluate|develop|execute|start|stop|fix|update|migrate|integrate|automate|uygula|başlat|ölç|izle|kur|yapılandır|analiz|geliştir|artır|azalt|gönder|zamanla|test\s*et|başla|durdur|düzelt|güncelle|entegre|otomat|optimize\s*et|değerlendir|yürüt|oluştur|belirle|takip\s*et|dağıt|kur|işe\s*al)\b/i
+  const hasActionable = data.nextActions.some(a => ACTIONABLE_RE.test(a))
   if (data.nextActions.length > 0 && !hasActionable) {
     violations.push({
       field:    'nextActions',
-      rule:     'at least one action must contain an actionable verb',
+      rule:     'at least one action must contain an actionable verb (EN or TR)',
       received: data.nextActions[0],
-      expected: 'e.g. "Implement X", "Launch Y within Z days"',
+      expected: 'e.g. "Implement X", "Launch Y within Z days", "Uygula X", "Başlat Y"',
     })
   }
 

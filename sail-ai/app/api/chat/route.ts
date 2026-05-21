@@ -587,15 +587,10 @@ export async function POST(req: NextRequest) {
 
   const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'scenario' | 'auto' = body.analysisMode ?? 'upwind'
 
-  // 3. Groq — single AI provider
-  // Fall back through numbered keys (GROQ_API_KEY_1 … _5) so Vercel envs with only
-  // numbered keys still pass the guard. getKeyPool() already collects all of them.
-  const groqKey =
-    process.env.GROQ_API_KEY ??
-    process.env.GROQ_API_KEY_1 ??
-    process.env.GROQ_API_KEY_2 ??
-    process.env.GROQ_API_KEY_3 ??
-    body.apiKey
+  // 3. Groq — use getKeyPool() as single source of truth for key availability.
+  // groqKey is kept for legacy non-pool calls (streaming modes that pass it in headers directly).
+  const _keyPool = getKeyPool(body.apiKey)
+  const groqKey  = _keyPool[0]  // first available key; groqFetch rotates through all
 
   if (!groqKey) {
     return Response.json(
@@ -734,28 +729,9 @@ SCOPE RULES — NON-NEGOTIABLE:
   const streamingModes = new Set(['sail', 'operator', 'synergy', 'scenario'])
   const uncertaintySuffix = streamingModes.has(analysisMode) ? DATA_UNCERTAINTY_SUFFIX : ''
 
-  // Research context — injected at the VERY TOP of every system prompt so the model
-  // reads live data before any other directive. Positioning research AFTER long prompt
-  // blocks causes "lost in the middle" attention decay where LLaMA deprioritises it
-  // and silently falls back to stale training-data figures.
-  //
-  // Structure: researchPriorityBlock + domainPrefix + modePrompt + ...
-  // The SEARCH_FAILED_WARNING variant ensures the model knows search ran but found nothing,
-  // preventing silent training-data fallback.
-  const researchSystemBlock = _hasSynthesisContext
-    ? `⚡ LIVE WEB SEARCH DATA — READ THIS BEFORE EVERYTHING ELSE ⚡\n` +
-      `The following data was retrieved right now from the live web. ` +
-      `You MUST use this as your primary source. ` +
-      `NEVER replace or override these figures with your training memory.\n\n` +
-      `${body.ragContext ?? ''}\n\n` +
-      `END OF LIVE DATA — The instructions below govern how to use it.\n` +
-      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
-    : _researchAttempted
-      ? `⚠️ WEB SEARCH RAN BUT RETURNED NO RESULTS FOR THIS QUERY.\n` +
-        `Your response must be based entirely on training data — which may be significantly outdated.\n` +
-        `Label EVERY numerical figure with [EĞİTİM VERİSİ — doğrulayın] before stating it.\n` +
-        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
-      : ''
+  // Research is injected into the USER message via buildUserMessage() (body.ragContext at top).
+  // It is NOT placed in system prompts — doing so caused double-injection and 413 TPM errors.
+  // The "search failed" warning is appended via synthesisSuffix below when needed.
 
   // [SAIL-INTELLIGENCE-UPGRADE] Synthesis suffix — appended when live research was retrieved.
   // [SAIL-UNIVERSAL-INTELLIGENCE-V2] For non-English queries, also injects UNIVERSAL_LANGUAGE_DIRECTIVE.
@@ -1197,25 +1173,22 @@ SCOPE RULES — NON-NEGOTIABLE:
   // Response shape: { prose, scopeMetadata, structuredData, __healthReport }
   // The frontend uses prose for display and scopeMetadata for the AnalysisScopePanel.
 
-  const cognitiveLoad = (body.state as { cognitiveLoadIndex?: number } | undefined)?.cognitiveLoadIndex ?? 0
-
-  // Build mode-specific system prompt (same as before; pipeline wraps it)
-  const sessionHistoryBlock = analysisMode === 'downwind' && body.messages?.length
-    ? (body.messages as Array<{ role: string; content: string }>)
+  // Pipeline behavioral prompt — behavioral instructions only, NO JSON schema.
+  // Using buildUpwindSystemPrompt() here would cause schema conflict:
+  // that prompt defines its own JSON format (insight, confidenceIndex...)
+  // which clashes with ValidatedOutput → LLM picks wrong format → validation always fails.
+  //
+  // Conversation history for downwind: embed last 3 turns directly into the prompt.
+  const sessionHistory = analysisMode === 'downwind' && body.messages?.length
+    ? '\n\nCONVERSATION HISTORY (last 3 turns):\n' +
+      (body.messages as Array<{ role: string; content: string }>)
         .slice(-6)
         .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content.slice(0, 400)}`)
         .join('\n')
-    : undefined
+    : ''
 
-  const activeSystemPrompt = analysisMode === 'downwind'
-    ? buildEnhancedDownwindPrompt(language, primaryConstraint, sessionHistoryBlock)
-    : buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint)
-
-  // Pipeline behavioral prompt — NO JSON format here (pipeline orchestrator adds schema).
-  // Passing buildUpwindSystemPrompt() would conflict: it defines its own JSON schema
-  // (insight, confidenceIndex...) which clashes with ValidatedOutput → validation always fails.
   const pipelineSystemPrompt = analysisMode === 'downwind'
-    ? `You are a business coaching advisor. Analyze the user's situation with depth and empathy. Focus on: underlying root causes, key leverage points, progressive discovery, and clear next actions. Balance strategic insight with practical actionability.${isBusinessMode ? ' Stay within the commercial domain.' : ''} Respond in the same language the user writes in.`
+    ? `You are a business coaching advisor. Analyze the user's situation with depth and empathy. Focus on: underlying root causes, key leverage points, progressive discovery, and clear next actions. Balance strategic insight with practical actionability.${isBusinessMode ? ' Stay within the commercial domain.' : ''} Respond in the same language the user writes in.${sessionHistory}`
     : `You are a precision business analysis engine. Analyze the situation with rigor: identify specific root causes, quantify business impact, provide evidence-based recommendations with clear priorities and realistic timeframes, assess risks with concrete mitigation strategies. Be direct and specific — no generic advice.${isBusinessMode ? ' Stay within the commercial domain.' : ''} Respond in the same language the user writes in.`
 
   const pipelineConfig: PipelineConfig = {
