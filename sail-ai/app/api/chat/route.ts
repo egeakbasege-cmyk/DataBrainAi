@@ -111,8 +111,8 @@ async function groqFetch(init: RequestInit, byokKey?: string): Promise<Response>
     // 429 rate-limit → try next key
     if (res.status === 429) continue
 
-    // 503 / 500 / 400 (context too long) → immediately fall back to smaller model
-    if (res.status === 503 || res.status === 500 || res.status === 400) {
+    // 503 / 500 / 400 / 413 (context too long / TPM exceeded) → immediately fall back to smaller model
+    if (res.status === 503 || res.status === 500 || res.status === 400 || res.status === 413) {
       const fallback = await fetch(GROQ_URL, {
         ...init,
         headers: { ...init.headers as Record<string, string>, 'Authorization': `Bearer ${key}` },
@@ -1211,8 +1211,10 @@ SCOPE RULES — NON-NEGOTIABLE:
     ? buildEnhancedDownwindPrompt(language, primaryConstraint, sessionHistoryBlock)
     : buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint)
 
-  // Full system prompt (domain + mode-specific); pipeline prepends live research block
-  const pipelineSystemPrompt = domainPrefix + activeSystemPrompt + synthesisSuffix
+  // Pipeline system prompt — mode-specific only (no SOVEREIGN_COGNITIVE_DIRECTIVE to stay under TPM).
+  // The pipeline's graphOrchestrator prepends the live research block and JSON schema enforcement.
+  // Trim synthesisSuffix here too — it's re-injected via researchContext block in the orchestrator.
+  const pipelineSystemPrompt = activeSystemPrompt.slice(0, 3000)
 
   const pipelineConfig: PipelineConfig = {
     message:         body.message?.trim() ?? '',

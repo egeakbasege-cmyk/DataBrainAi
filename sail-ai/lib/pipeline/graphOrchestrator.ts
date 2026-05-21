@@ -31,7 +31,7 @@ const GROQ_PRIMARY    = 'llama-3.3-70b-versatile'
 const GROQ_FALLBACK   = 'llama-3.1-8b-instant'
 const MAX_RETRIES     = 3
 const MAX_REPAIR_ITER = 2
-const ANALYSIS_TOKENS = 2400
+const ANALYSIS_TOKENS = 1200  // keep under 12k TPM limit on on_demand tier
 const TEMPERATURE     = 0.35
 
 // ── State helpers ─────────────────────────────────────────────────────────────
@@ -76,8 +76,8 @@ async function groqComplete(
     lastStatus = res.status
     if (res.status === 429) continue
 
-    // 503/500/400 → try fallback model immediately on this key
-    if (res.status === 503 || res.status === 500 || res.status === 400) {
+    // 503/500/400/413 (TPM exceeded / context too long) → try fallback model immediately
+    if (res.status === 503 || res.status === 500 || res.status === 400 || res.status === 413) {
       const fallback = await fetch(GROQ_URL, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
