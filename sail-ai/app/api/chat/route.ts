@@ -276,8 +276,14 @@ function buildUserMessage(body: ExtendedPayload): string {
   // This double-injection (system + user) ensures the model cannot miss the live data.
   if (body.ragContext?.trim()) {
     parts.push(
-      `📡 LIVE SEARCH DATA (fetched right now — use these figures, not training memory):\n` +
-      body.ragContext.trim()
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `📡 REAL-TIME WEB SEARCH RESULTS — RETRIEVED NOW\n` +
+      `MANDATORY: Use the figures below as PRIMARY source.\n` +
+      `Do NOT use training-memory estimates when this data is present.\n` +
+      `Cite the source URL and date for each figure you reference.\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      body.ragContext.trim() +
+      `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
     )
   }
 
@@ -781,6 +787,13 @@ export async function POST(req: NextRequest) {
     const searchResponse = await executeDeepSearch(_researchQueries, _queryLanguage)
     _searchResults     = searchResponse.results
     _staleSourceCount  = searchResponse.staleSourceCount  // [SAIL-DATA-VERACITY]
+
+    // Diagnostic log — visible in Vercel Function Logs under /api/chat
+    console.error(
+      `[SEARCH] mode=${analysisMode} lang=${_queryLanguage} ` +
+      `results=${_searchResults.length} provider=${searchResponse.provider} ` +
+      `queries=${JSON.stringify(_researchQueries)}`
+    )
 
     if (_searchResults.length > 0) {
       // Inject into body.ragContext so buildUserMessage() wraps it in the prompt

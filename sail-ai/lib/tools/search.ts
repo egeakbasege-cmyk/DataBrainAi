@@ -268,10 +268,15 @@ async function searchTavily(
     // Non-2xx → try next key
     if (!res.ok) continue
 
-    const data = await res.json().catch(() => ({})) as TavilyResponse
+    // Null on JSON parse failure → continue to next key (don't silently return [])
+    const data = await res.json().catch(() => null) as TavilyResponse | null
+    if (!data) continue
 
     // Quota-exceeded returns 200 with { detail: { error: "..." } } — no results array
     if (!data.results?.length && (data as any).detail?.error) continue
+
+    // Empty results with no error → try next key (avoid returning [] from exhausted key)
+    if (!data.results?.length) continue
 
     // Capture images from first query (if requested)
     if (captureImages && data.images?.length) {
