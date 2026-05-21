@@ -18,9 +18,6 @@ import NextAuth              from 'next-auth'
 import { authConfig }        from '@/auth.config'
 import type { AetherisPayload } from '@/types/architecture'
 import { SOVEREIGN_COGNITIVE_DIRECTIVE } from '@/lib/ai-prompt'
-// [SAIL-PIPELINE] 5-layer stateful pipeline
-import { runPipeline }       from '@/lib/pipeline'
-import type { PipelineConfig } from '@/lib/pipeline'
 import {
   buildUpwindSystemPrompt,
   buildDownwindSystemPrompt as buildEnhancedDownwindPrompt,
@@ -1165,66 +1162,69 @@ SCOPE RULES — NON-NEGOTIABLE:
     }
   }
 
-  // ── Upwind / Downwind: 5-Layer Stateful Pipeline ─────────────────────────
-  // [SAIL-PIPELINE] Both modes now route through the full pipeline:
-  //   Layer 1 (SemanticRouter) → Layer 2 (Orchestrator + Groq) →
-  //   Layer 3 (Validator + repair loop) → Layer 4 (Humanizer) → output
-  //
-  // Response shape: { prose, scopeMetadata, structuredData, __healthReport }
-  // The frontend uses prose for display and scopeMetadata for the AnalysisScopePanel.
+  // ── Upwind / Downwind: direct Groq JSON call ─────────────────────────────
+  const cognitiveLoad = (body.state as { cognitiveLoadIndex?: number } | undefined)?.cognitiveLoadIndex ?? 0
 
-  // Pipeline behavioral prompt — behavioral instructions only, NO JSON schema.
-  // Using buildUpwindSystemPrompt() here would cause schema conflict:
-  // that prompt defines its own JSON format (insight, confidenceIndex...)
-  // which clashes with ValidatedOutput → LLM picks wrong format → validation always fails.
-  //
-  // Conversation history for downwind: embed last 3 turns directly into the prompt.
-  const sessionHistory = analysisMode === 'downwind' && body.messages?.length
-    ? '\n\nCONVERSATION HISTORY (last 3 turns):\n' +
-      (body.messages as Array<{ role: string; content: string }>)
+  const sessionHistoryBlock = analysisMode === 'downwind' && body.messages?.length
+    ? (body.messages as Array<{ role: string; content: string }>)
         .slice(-6)
         .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content.slice(0, 400)}`)
         .join('\n')
-    : ''
+    : undefined
 
-  const pipelineSystemPrompt = analysisMode === 'downwind'
-    ? `You are a business coaching advisor. Analyze the user's situation with depth and empathy. Focus on: underlying root causes, key leverage points, progressive discovery, and clear next actions. Balance strategic insight with practical actionability.${isBusinessMode ? ' Stay within the commercial domain.' : ''} Respond in the same language the user writes in.${sessionHistory}`
-    : `You are a precision business analysis engine. Analyze the situation with rigor: identify specific root causes, quantify business impact, provide evidence-based recommendations with clear priorities and realistic timeframes, assess risks with concrete mitigation strategies. Be direct and specific — no generic advice.${isBusinessMode ? ' Stay within the commercial domain.' : ''} Respond in the same language the user writes in.`
+  const activeSystemPrompt = analysisMode === 'downwind'
+    ? buildEnhancedDownwindPrompt(language, primaryConstraint, sessionHistoryBlock)
+    : buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint)
 
-  const pipelineConfig: PipelineConfig = {
-    message:         body.message?.trim() ?? '',
-    sessionId:       body.sessionId ?? 'anon',
-    userId:          session.user?.email ?? 'anon',
-    language:        (language as import('@/types/architecture').SupportedLanguage),
-    analysisMode:    analysisMode as string,
-    systemPrompt:    pipelineSystemPrompt,
-    researchContext: body.ragContext ?? '',
-    groqKeys:        getKeyPool(body.apiKey),
+  let groqRes: Response
+  try {
+    groqRes = await groqFetch({
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model:           GROQ_MODEL,
+        messages: [
+          { role: 'system', content: domainPrefix + activeSystemPrompt + synthesisSuffix },
+          { role: 'user',   content: userMessage },
+        ],
+        response_format: { type: 'json_object' },
+        max_tokens:      1200,
+        temperature:     analysisMode === 'downwind' ? 0.5 : 0.4,
+      }),
+    }, body.apiKey)
+  } catch {
+    return Response.json({ error: 'Unable to reach AI provider.' }, { status: 502 })
   }
 
-  try {
-    const pipelineOutput = await runPipeline(pipelineConfig)
-
+  if (!groqRes.ok) {
+    const errBody = await groqRes.json().catch(() => ({})) as Record<string, unknown>
+    const groqMsg = (errBody?.error as Record<string, unknown>)?.message as string | undefined
+    const status  = groqRes.status === 401 ? 401 : groqRes.status === 429 ? 429 : 502
     return Response.json(
-      {
-        // Pipeline fields
-        prose:          pipelineOutput.prose,
-        scopeMetadata:  pipelineOutput.scopeMetadata,
-        structuredData: pipelineOutput.structuredData,
-        // Legacy compat: expose key structured fields at top level for existing card renderers
-        insight:        pipelineOutput.structuredData?.executiveSummary ?? pipelineOutput.prose,
-        recommendations: pipelineOutput.structuredData?.recommendations ?? [],
-        risks:           pipelineOutput.structuredData?.risks ?? [],
-        nextActions:     pipelineOutput.structuredData?.nextActions ?? [],
-        // Health report
-        __healthReport: healthReport,
-      },
+      { error: groqMsg ?? (status === 401 ? 'Invalid API key.' : status === 429 ? 'Rate limit reached.' : `AI provider error: ${groqRes.status}`) },
+      { status },
+    )
+  }
+
+  let groqData: { choices?: Array<{ message?: { content?: string } }> }
+  try {
+    groqData = await groqRes.json()
+  } catch {
+    return Response.json({ error: 'AI provider returned invalid response.' }, { status: 502 })
+  }
+
+  const content = groqData?.choices?.[0]?.message?.content ?? ''
+
+  try {
+    const parsed = JSON.parse(content)
+    return Response.json(
+      { ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   } catch {
     return Response.json(
-      { error: 'Pipeline failed. Please try again.', __healthReport: healthReport },
-      { status: 502 },
+      { insight: content || 'Analysis complete.', __healthReport: healthReport },
+      { headers: { 'Cache-Control': 'no-store' } },
     )
   }
 }
