@@ -1211,10 +1211,14 @@ SCOPE RULES — NON-NEGOTIABLE:
     ? buildEnhancedDownwindPrompt(language, primaryConstraint, sessionHistoryBlock)
     : buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint)
 
-  // Pipeline system prompt — mode-specific only (no SOVEREIGN_COGNITIVE_DIRECTIVE to stay under TPM).
-  // The pipeline's graphOrchestrator prepends the live research block and JSON schema enforcement.
-  // Trim synthesisSuffix here too — it's re-injected via researchContext block in the orchestrator.
-  const pipelineSystemPrompt = activeSystemPrompt.slice(0, 3000)
+  // Pipeline system prompt: mode-specific prompt WITHOUT SOVEREIGN_COGNITIVE_DIRECTIVE.
+  // SOVEREIGN is ~3,600 tokens alone — the pipeline's validator+humanizer layers enforce
+  // quality structurally. Research goes into the USER turn via pipelineConfig.researchContext.
+  // Token budget: compact domain lock (~150t) + mode prompt (~800t) + JSON schema (~300t) ≈ 1,250t
+  const compactDomainLock = isBusinessMode
+    ? `You are a business strategy and market intelligence assistant. Stay strictly within the commercial domain: businesses, markets, revenue, pricing, operations, marketing, finance, competitive strategy. Respond only in the language the user writes in.\n\n`
+    : `You are a versatile AI assistant. Answer any topic directly and helpfully.\n\n`
+  const pipelineSystemPrompt = compactDomainLock + activeSystemPrompt
 
   const pipelineConfig: PipelineConfig = {
     message:         body.message?.trim() ?? '',

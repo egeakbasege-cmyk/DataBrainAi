@@ -31,7 +31,7 @@ const GROQ_PRIMARY    = 'llama-3.3-70b-versatile'
 const GROQ_FALLBACK   = 'llama-3.1-8b-instant'
 const MAX_RETRIES     = 3
 const MAX_REPAIR_ITER = 2
-const ANALYSIS_TOKENS = 1200  // keep under 12k TPM limit on on_demand tier
+const ANALYSIS_TOKENS = 1800  // balanced: quality output within on_demand TPM budget
 const TEMPERATURE     = 0.35
 
 // ── State helpers ─────────────────────────────────────────────────────────────
@@ -123,16 +123,19 @@ function extractContent(json: unknown): string {
 // ── Node: LLM Analysis ────────────────────────────────────────────────────────
 
 async function runAnalysisNode(
-  state:        PipelineState,
-  systemPrompt: string,
-  repairNote:   string,
-  groqKeys:     string[],
+  state:           PipelineState,
+  systemPrompt:    string,
+  researchContext: string,
+  repairNote:      string,
+  groqKeys:        string[],
 ): Promise<void> {
   setStatus(state, 'LLM_ANALYSIS', 'RUNNING')
 
-  const userContent = repairNote
-    ? `${repairNote}\n\n---\n\nOriginal query: ${state.intent.optimizedPrompt}`
-    : state.intent.optimizedPrompt
+  const userContent = buildUserMessage(
+    state.intent.optimizedPrompt,
+    repairNote ? '' : researchContext,  // don't re-inject research on repair calls
+    repairNote,
+  )
 
   let attempt = 0
   while (attempt < MAX_RETRIES) {
@@ -156,8 +159,6 @@ async function runAnalysisNode(
         recordError(state, 'LLM_ANALYSIS', 'MAX_RETRIES', String(err))
         throw err
       }
-      // brief back-off before retry (edge-compatible: no setTimeout in edge)
-      // Use a busy-wait micro-delay (acceptable on edge for <5ms)
       await new Promise(r => setTimeout(r, 200 * tries))
     }
   }
@@ -226,56 +227,78 @@ async function runHumanizerNode(
   }
 }
 
-// ── System prompt builder ─────────────────────────────────────────────────────
-// Wraps the caller-supplied prompt with JSON output enforcement.
+// ── Prompt builders ───────────────────────────────────────────────────────────
+//
+// Token budget strategy (keeps total well under 12k TPM on on_demand tier):
+//   System = mode instructions + JSON schema     ≈  800–1200 tokens
+//   User   = research context (if any) + query   ≈  200–3000 tokens
+//   Output =                                      ≈  1800 tokens
+//   Total  =                                      ≈  2800–6000 tokens  ✓
+//
+// Research in the USER turn (not system) gives the model maximum attention on
+// live data — it's the last thing read before generating the answer.
 
-function wrapWithJSONEnforcement(
-  callerSystemPrompt: string,
-  researchContext:    string,
-  state:              PipelineState,
-): string {
-  const jsonSchema = `
-Return ONLY a JSON object with this exact structure (no markdown, no extra text):
+const JSON_SCHEMA_BLOCK = `
+Return ONLY a valid JSON object — no markdown fences, no extra text before or after.
+Schema (all fields required unless marked optional):
 {
-  "executiveSummary": "string (≥50 chars)",
-  "keyFindings": ["string", ...],
-  "recommendations": [
-    {
-      "title": "string",
-      "rationale": "string",
-      "priority": "HIGH" | "MEDIUM" | "LOW",
-      "timeframe": "string",
-      "effort": "HIGH" | "MEDIUM" | "LOW"
-    }
-  ],
-  "metrics": [
-    { "name": "string", "value": "string", "benchmark": "string (optional)", "source": "LIVE" | "TRAINING_EST" | "USER_PROVIDED" }
-  ],
-  "risks": [
-    { "title": "string", "severity": "HIGH" | "MEDIUM" | "LOW", "mitigation": "string" }
-  ],
-  "nextActions": ["string", ...],
+  "executiveSummary": "string (≥50 chars, plain prose)",
+  "keyFindings":      ["string", ...],
+  "recommendations": [{
+    "title":     "string",
+    "rationale": "string",
+    "priority":  "HIGH"|"MEDIUM"|"LOW",
+    "timeframe": "string",
+    "effort":    "HIGH"|"MEDIUM"|"LOW"
+  }],
+  "metrics": [{
+    "name": "string", "value": "string",
+    "benchmark": "string (optional)",
+    "source": "LIVE"|"TRAINING_EST"|"USER_PROVIDED"
+  }],
+  "risks": [{ "title": "string", "severity": "HIGH"|"MEDIUM"|"LOW", "mitigation": "string" }],
+  "nextActions":     ["string", ...],
   "confidenceScore": 0.0–1.0,
-  "revenueTier": "${state.intent.revenueTier}",
-  "timeHorizon": "${state.intent.inferredTimeframe}"
+  "revenueTier":     "string",
+  "timeHorizon":     "string"
 }
-Set "source" to "LIVE" only for data from the live search context below.
-Set "source" to "USER_PROVIDED" for data the user explicitly stated.
-Set "source" to "TRAINING_EST" for estimated data from training.
-`.trim()
+source rules: LIVE = from search data below · USER_PROVIDED = stated by user · TRAINING_EST = estimated`.trim()
 
-  const blocks: string[] = []
+function buildSystemPrompt(callerSystemPrompt: string, state: PipelineState): string {
+  return [
+    callerSystemPrompt.trim(),
+    ``,
+    `━━━ CONTEXT ━━━`,
+    `Industry: ${state.intent.inferredIndustry} | Goal: ${state.intent.inferredGoal}`,
+    `Revenue tier: ${state.intent.revenueTier} | Horizon: ${state.intent.inferredTimeframe}`,
+    ``,
+    `━━━ OUTPUT FORMAT (MANDATORY) ━━━`,
+    JSON_SCHEMA_BLOCK,
+  ].join('\n')
+}
+
+function buildUserMessage(
+  query:           string,
+  researchContext: string,
+  repairNote:      string,
+): string {
+  const parts: string[] = []
+
+  if (repairNote) {
+    parts.push(repairNote)
+    parts.push(`━━━`)
+  }
 
   if (researchContext.trim()) {
-    blocks.push(
-      `⚡ LIVE WEB SEARCH DATA — USE THIS AS PRIMARY SOURCE ⚡\n${researchContext.trim()}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    parts.push(
+      `⚡ LIVE WEB SEARCH DATA — use these figures as primary source, not training memory:\n` +
+      researchContext.trim() +
+      `\n━━━ END LIVE DATA ━━━`,
     )
   }
 
-  blocks.push(callerSystemPrompt.trim())
-  blocks.push(`\n━━━ OUTPUT FORMAT (MANDATORY) ━━━\n${jsonSchema}`)
-
-  return blocks.join('\n\n')
+  parts.push(query)
+  return parts.join('\n\n')
 }
 
 // ── Pipeline state factory ────────────────────────────────────────────────────
@@ -309,49 +332,53 @@ export async function orchestrate(
 ): Promise<PipelineOutput> {
   const state = createPipelineState(config)
 
-  const liveDataUsed   = !!config.researchContext?.trim()
-  const fullSystemPrompt = wrapWithJSONEnforcement(
-    config.systemPrompt,
-    config.researchContext ?? '',
-    state,
-  )
+  const researchContext = config.researchContext?.trim() ?? ''
+  const liveDataUsed    = !!researchContext
+
+  // System prompt: mode instructions + JSON schema (compact, no research data here)
+  const analysisSystemPrompt = buildSystemPrompt(config.systemPrompt, state)
+
+  // Repair system prompt: minimal — just enough context to fix violations
+  const repairSystemPrompt = [
+    `You are a JSON repair assistant. Fix the schema violations listed in the user message.`,
+    `Return the complete corrected JSON object — no markdown, no extra text.`,
+    ``,
+    `━━━ OUTPUT FORMAT (MANDATORY) ━━━`,
+    JSON_SCHEMA_BLOCK,
+  ].join('\n')
 
   // ── Analysis + Validate + Repair loop ──────────────────────────────────────
-  let analysisSystemPrompt = fullSystemPrompt
 
   while (true) {
     // Node 1: LLM Analysis
+    const isRepair      = state.repairIterations > 0
+    const systemPrompt  = isRepair ? repairSystemPrompt : analysisSystemPrompt
+    const repairNote    = state.repairPayload?.repairInstruction ?? ''
+
     try {
       await runAnalysisNode(
         state,
-        analysisSystemPrompt,
-        state.repairPayload?.repairInstruction ?? '',
+        systemPrompt,
+        researchContext,
+        repairNote,
         config.groqKeys,
       )
     } catch {
-      // Analysis failed past retries — return graceful degraded output
       return buildDegradedOutput(state, 'LLM analysis node failed after max retries')
     }
 
     // Node 2: Validate
     const validationOutcome = runValidatorNode(state)
 
-    if (validationOutcome === 'PASS') break  // exit repair loop
+    if (validationOutcome === 'PASS') break
 
     if (validationOutcome === 'FAIL') {
       return buildDegradedOutput(state, 'Validation failed and max repair iterations exceeded')
     }
 
-    // REPAIR: inject repair instruction and loop back
+    // REPAIR: loop back with repair instruction
     state.repairIterations++
-    state.rawLLMOutput = null  // reset for re-analysis
-
-    // For repair call: use a minimal system prompt + repair instruction
-    analysisSystemPrompt = [
-      `You previously returned invalid JSON. Fix ONLY the schema violations listed below.`,
-      `Return the corrected complete JSON object — no extra text, no markdown fences.`,
-      `\nOriginal system context:\n${config.systemPrompt.slice(0, 500)}`,
-    ].join('\n')
+    state.rawLLMOutput = null
   }
 
   // ── Node 3: Humanize ───────────────────────────────────────────────────────
