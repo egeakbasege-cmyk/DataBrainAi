@@ -777,7 +777,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          researchSystemBlock + domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -849,7 +849,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          researchSystemBlock + domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -955,7 +955,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          researchSystemBlock + domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -1027,7 +1027,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          researchSystemBlock + domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -1099,7 +1099,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: researchSystemBlock + domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix },
+            { role: 'system', content: domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1145,7 +1145,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         body: JSON.stringify({
           model:           GROQ_MODEL,
           messages: [
-            { role: 'system', content: researchSystemBlock + domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix },
+            { role: 'system', content: domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix },
             { role: 'user',   content: userMessage },
           ],
           response_format: { type: 'json_object' },
@@ -1211,14 +1211,12 @@ SCOPE RULES — NON-NEGOTIABLE:
     ? buildEnhancedDownwindPrompt(language, primaryConstraint, sessionHistoryBlock)
     : buildUpwindSystemPrompt(cognitiveLoad, language, primaryConstraint)
 
-  // Pipeline system prompt: mode-specific prompt WITHOUT SOVEREIGN_COGNITIVE_DIRECTIVE.
-  // SOVEREIGN is ~3,600 tokens alone — the pipeline's validator+humanizer layers enforce
-  // quality structurally. Research goes into the USER turn via pipelineConfig.researchContext.
-  // Token budget: compact domain lock (~150t) + mode prompt (~800t) + JSON schema (~300t) ≈ 1,250t
-  const compactDomainLock = isBusinessMode
-    ? `You are a business strategy and market intelligence assistant. Stay strictly within the commercial domain: businesses, markets, revenue, pricing, operations, marketing, finance, competitive strategy. Respond only in the language the user writes in.\n\n`
-    : `You are a versatile AI assistant. Answer any topic directly and helpfully.\n\n`
-  const pipelineSystemPrompt = compactDomainLock + activeSystemPrompt
+  // Pipeline behavioral prompt — NO JSON format here (pipeline orchestrator adds schema).
+  // Passing buildUpwindSystemPrompt() would conflict: it defines its own JSON schema
+  // (insight, confidenceIndex...) which clashes with ValidatedOutput → validation always fails.
+  const pipelineSystemPrompt = analysisMode === 'downwind'
+    ? `You are a business coaching advisor. Analyze the user's situation with depth and empathy. Focus on: underlying root causes, key leverage points, progressive discovery, and clear next actions. Balance strategic insight with practical actionability.${isBusinessMode ? ' Stay within the commercial domain.' : ''} Respond in the same language the user writes in.`
+    : `You are a precision business analysis engine. Analyze the situation with rigor: identify specific root causes, quantify business impact, provide evidence-based recommendations with clear priorities and realistic timeframes, assess risks with concrete mitigation strategies. Be direct and specific — no generic advice.${isBusinessMode ? ' Stay within the commercial domain.' : ''} Respond in the same language the user writes in.`
 
   const pipelineConfig: PipelineConfig = {
     message:         body.message?.trim() ?? '',
