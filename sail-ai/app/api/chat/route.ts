@@ -52,6 +52,7 @@ import {
 import {
   DATA_UNCERTAINTY_SUFFIX,       // [SAIL-FACTUAL-TRIGGER] always-on training-data transparency
   SEARCH_FAILED_WARNING,         // [SAIL-FACTUAL-TRIGGER] search ran but no results
+  LIVE_DATA_SYSTEM_PREFIX,       // [LIVE-DATA] injected at TOP of system prompt when search results exist
 } from '@/lib/prompts/enhanced-modes'
 // [PIPELINE-LITE] Layer 1 — SemanticRouter (deterministic, no LLM call)
 import { routeAndOptimize }    from '@/lib/pipeline/semanticRouter'
@@ -891,27 +892,28 @@ SCOPE RULES — NON-NEGOTIABLE:
   // Casual / non-business queries (_appliedCards === []) get no suffix.
   const governanceSuffix = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
 
+  // ── Live-data system prefix ───────────────────────────────────────────────────
+  // Injected at the VERY TOP of every system prompt when search results exist.
+  // Short and first = maximum model attention. Overrides training-data bias.
+  // Empty string when no live data — avoids confusing the model with false context.
+  const liveDataPrefix = _hasSynthesisContext ? LIVE_DATA_SYSTEM_PREFIX : ''
+
   // [SAIL-FACTUAL-TRIGGER] uncertaintySuffix:
   // • Streaming modes (sail, operator, synergy, scenario): inject DATA_UNCERTAINTY_SUFFIX
-  //   — LLM can freely add "(eğitim verisi)" labels inside markdown text.
-  // • JSON modes (upwind, downwind, trim, catamaran): do NOT inject DATA_UNCERTAINTY_SUFFIX.
-  //   JSON format prevents free-text labels. Schemas now have dataSource / null fields instead.
-  //   DEEP_RESEARCH_DIRECTIVE (already in mode prompts) handles training-data transparency.
-  // downwind falls through to the same JSON handler as upwind (buildUpwindSystemPrompt)
+  // • JSON modes (upwind, downwind, trim, catamaran): DEEP_RESEARCH_DIRECTIVE (in mode prompts)
+  //   handles training-data transparency — no suffix needed to avoid double injection.
   const streamingModes = new Set(['sail', 'operator', 'synergy', 'scenario'])
   const uncertaintySuffix = streamingModes.has(analysisMode) ? DATA_UNCERTAINTY_SUFFIX : ''
 
-  // Research is injected into the USER message via buildUserMessage() (body.ragContext at top).
-  // It is NOT placed in system prompts — doing so caused double-injection and 413 TPM errors.
-  // The "search failed" warning is appended via synthesisSuffix below when needed.
-
-  // Synthesis suffix — compact reminder injected when live research was retrieved.
-  // Replaces the previous ~2,200-token triple-directive block — mode prompts already
-  // contain DEEP_RESEARCH_DIRECTIVE which handles source attribution rules.
-  // [SAIL-FACTUAL-TRIGGER] SEARCH_FAILED_WARNING injected when search was triggered but empty.
+  // Synthesis suffix — end-of-prompt reinforcement when live data is present.
+  // Both the prefix (liveDataPrefix) and this suffix bracket the system prompt,
+  // exploiting the model's primacy + recency attention bias to maximise compliance.
   const synthesisSuffix = _hasSynthesisContext
-    ? `\n\nLIVE DATA PRIORITY: The user message contains real-time search results. Use those figures as primary source — do NOT substitute training-memory estimates. Cite only claims backed by the provided data.` +
-      (_queryLanguage !== 'en' ? ` Respond in the user's language (${_queryLanguage}).` : '')
+    ? `\n\n⚡ REMINDER — LIVE DATA ACTIVE: The user message contains fresh web search results ` +
+      `inside ━━ REAL-TIME WEB SEARCH RESULTS ━━. ` +
+      `Using training-memory estimates for any metric covered by those results is a quality failure. ` +
+      `Cite source URL + date for every live figure.` +
+      (_queryLanguage !== 'en' ? ` Respond entirely in ${_queryLanguage}.` : '')
     : (_researchAttempted ? SEARCH_FAILED_WARNING : '')
 
   // ── SYNERGY mode: Parallel Multi-Agent War Room ──────────────────────────
@@ -947,8 +949,8 @@ SCOPE RULES — NON-NEGOTIABLE:
     // ── Phase 2: Synthesis (70B, streaming) ─────────────────────────────────
     // Falls back to legacy single-prompt if all agents failed (network issues etc.)
     const synthesisSystemPrompt = agentResults.length > 0
-      ? buildSynthesisSystemPrompt(agentResults, language, synergyName, primaryConstraint)
-      : domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix
+      ? liveDataPrefix + buildSynthesisSystemPrompt(agentResults, language, synergyName, primaryConstraint)
+      : liveDataPrefix + domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix
 
     const synRes = await groqFetch({
       method: 'POST',
@@ -1039,7 +1041,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       modelSelection.model,
         messages: buildGroqMessages(
-          domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          liveDataPrefix + domainPrefix + buildEnhancedSailPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -1145,7 +1147,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       modelSelection.model,
         messages: buildGroqMessages(
-          domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          liveDataPrefix + domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -1217,7 +1219,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       modelSelection.model,
         messages: buildGroqMessages(
-          domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          liveDataPrefix + domainPrefix + buildEnhancedOperatorPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -1289,7 +1291,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         body: JSON.stringify({
           model:           modelSelection.model,
           messages: buildGroqMessages(
-            domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix,
+            liveDataPrefix + domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix,
             userMessage,
             body.messages,
           ),
@@ -1336,7 +1338,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         body: JSON.stringify({
           model:           modelSelection.model,
           messages: buildGroqMessages(
-            domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix,
+            liveDataPrefix + domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix,
             userMessage,
             body.messages,
           ),
@@ -1416,7 +1418,7 @@ SCOPE RULES — NON-NEGOTIABLE:
     body: JSON.stringify({
       model:           modelSelection.model,
       messages: [
-        { role: 'system', content: domainPrefix + activeSystemPrompt + synthesisSuffix },
+        { role: 'system', content: liveDataPrefix + domainPrefix + activeSystemPrompt + synthesisSuffix },
         { role: 'user',   content: userMessage },
       ],
       response_format: { type: 'json_object' },
@@ -1484,7 +1486,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       } catch {
         // Primary parse failed — one repair attempt with 8B model
         const repair = await repairJsonResponse(
-          domainPrefix + activeSystemPrompt + synthesisSuffix,
+          liveDataPrefix + domainPrefix + activeSystemPrompt + synthesisSuffix,
           userMessage,
           finalContent,
           groqKey,

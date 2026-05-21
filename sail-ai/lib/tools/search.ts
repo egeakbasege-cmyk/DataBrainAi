@@ -347,10 +347,12 @@ async function searchSerper(
       })
     } catch { continue }
 
-    if (res.status === 429 || res.status === 403) continue
+    // 429 = rate limit, 402 = payment/quota, 403 = forbidden/quota → rotate key
+    if (res.status === 429 || res.status === 402 || res.status === 403) continue
     if (!res.ok) continue
 
-    const data = await res.json().catch(() => ({})) as SerperResponse
+    const data = await res.json().catch(() => null) as SerperResponse | null
+    if (!data || !data.organic?.length) continue  // null or empty → try next key
 
     return (data.organic ?? []).map(r => ({
       url:              r.link,

@@ -96,7 +96,13 @@ export async function getCachedResponse(
 
 /**
  * Store a response in the cache.
- * No-ops silently on KV unavailability or any error.
+ * No-ops silently on KV unavailability, any error, or when no live research was used.
+ *
+ * WHY only cache when hasResearch=true:
+ *   Responses without live data contain training-memory estimates which become stale.
+ *   Caching them would serve outdated training data to users who ask the same question
+ *   later, even after fresh search results become available. Training-only responses
+ *   are cheap to regenerate (no search overhead) and should always go to the LLM fresh.
  */
 export async function setCachedResponse(
   query:          string,
@@ -105,15 +111,18 @@ export async function setCachedResponse(
   response:       Record<string, unknown>,
   hasResearch:    boolean,
 ): Promise<void> {
-  if (!kvAvailable() || !CACHEABLE_MODES.has(mode)) return
+  // Only cache responses backed by live web search — never cache training estimates
+  if (!kvAvailable() || !CACHEABLE_MODES.has(mode) || !hasResearch) return
   try {
     const key = buildCacheKey(query, mode, language)
-    const ttl = hasResearch ? TTL_WITH_RESEARCH : TTL_WITHOUT_RESEARCH
-    // Strip __healthReport from cached value — it contains timestamps that would
-    // become stale. It is re-attached on cache hit from the current request context.
-    const { __healthReport: _hr, scopeMetadata: _sm, ...cacheable } = response
-    void _hr; void _sm
-    await kv.set(key, cacheable, { ex: ttl })
+    // With research: 5-minute TTL (data is fresh but time-sensitive)
+    // TTL_WITHOUT_RESEARCH path is removed — we never reach it now
+    await kv.set(key, (() => {
+      // Strip __healthReport + scopeMetadata — they contain timestamps and become stale
+      const { __healthReport: _hr, scopeMetadata: _sm, ...cacheable } = response
+      void _hr; void _sm
+      return cacheable
+    })(), { ex: TTL_WITH_RESEARCH })
   } catch {
     // Cache write failure is non-fatal — the response was already sent to the user
   }

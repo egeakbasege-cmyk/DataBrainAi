@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  analyses  AnalysisResult[]
+
+  @@index([email])
+}
+
+model AnalysisResult {
+  id         String   @id @default(cuid())
+  userId     String?
+  platform   Platform
+  targetUrl  String
+  targetName String   @default("")
+  status     Status   @default(PENDING)
+  rawData    Json     @default("{}")
+  aiAnalysis Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([platform])
+  @@index([createdAt(sort: Desc)])
+}
+
+model CachedProduct {
+  id                    String   @id @default(cuid())
+  asinOrHandle          String   @unique
+  platform              Platform
+  title                 String
+  price                 Float?
+  imageUrl              String?
+  supplierEstimatedCost Float?
+  rating                Float?
+  reviewCount           Int?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([asinOrHandle])
+  @@index([platform])
+}
+
+enum Platform {
+  SHOPIFY
+  AMAZON
+}
+
+enum Status {
+  PENDING
+  SCRAPING
+  ANALYZING
+  COMPLETE
+  ERROR
+}

@@ -41,56 +41,45 @@ Language drift is a quality failure, not a stylistic choice. Zero exceptions.
 // ══════════════════════════════════════════════════════════════════════════════
 // DEEP RESEARCH 2.0 — data rationality filter, injected into every mode
 // ══════════════════════════════════════════════════════════════════════════════
-export const DEEP_RESEARCH_DIRECTIVE = `DATA ACCURACY & RATIONALITY PROTOCOL — MANDATORY:
+export const DEEP_RESEARCH_DIRECTIVE = `━━ DATA VERACITY PROTOCOL — NON-NEGOTIABLE ━━
 
-1. DATA SOURCE HIERARCHY (strict priority order):
-   1st: Live research context in <research_context> tags → cite domain + date → AUTHORITATIVE
-   2nd: User-provided figures → mark [USER DATA] → treat as ground truth
-   3rd: Your training knowledge → ALWAYS mark [TRAINING EST — verify] → never present as current fact
+SOURCE HIERARCHY (enforce strictly, in order):
+  1. <research_context> block  → AUTHORITATIVE — cite domain + date for every figure you use
+  2. User-supplied figures      → [USER DATA] — treat as ground truth
+  3. Training-memory estimates  → [TRAINING EST] — NEVER present as a current market fact
 
-2. TEMPORAL HONESTY — ABSOLUTE RULE:
-   • You do NOT know current prices, exchange rates, rents, salaries, or market valuations.
-   • Your training data has a cutoff. Market conditions change monthly.
-   • If no live data is in <research_context> for a requested metric:
-     STATE THE GAP: "Bu metrik için canlı veri bulunamadı / Live data for [metric] was not retrieved."
-     Then if you provide a training estimate, you MUST follow rule 3-A below.
-   • NEVER present a training-derived number as a current market figure without this label.
-   • Mark user-supplied data: [USER DATA] · Mark live-retrieved data: (source, date)
+TEMPORAL HONESTY:
+You do NOT know current prices, rents, salaries, exchange rates, or market valuations.
+Your training reflects 2022–2023 levels. Markets change monthly.
+• If live data covers a metric → use it and cite it.
+• If live data is absent for a metric → say so: "Bu metrik için canlı veri bulunamadı."
+  Then provide a training estimate labelled [TRAINING EST — verify before acting].
 
-3. PLAUSIBILITY CHECK (execute before every figure you state):
-   → If a figure comes from <research_context>, cite it. If it seems extreme, note the source.
-   → If a figure comes from training only and seems implausible, flag it explicitly.
-   → If a margin claim exceeds sector median by >2× → flag [MARGIN ANOMALY].
-   → If an occupancy or conversion rate exceeds physical maximum → flag [RATE ANOMALY].
+⚠ VOLATILE ECONOMY — MANDATORY INFLATION WARNING (Turkey / TRY):
+Cumulative Turkish CPI 2022–2026 ≈ 200–300%. Training-era TL figures are badly stale.
+When citing ANY TRY figure from training memory you MUST append:
+  "⚠ Enflasyon uyarısı: Bu rakam 2022–2023 verisidir; gerçek 2025–2026 değeri 2–4× yüksek olabilir.
+   Doğrulama: sahibinden.com · hepsiemlak.com · sektör derneği · belediye"
+Training-era example gaps: commercial rent 5.000 TL/m² → now ~15.000–40.000 TL/m²
 
-3-A. ⚠ VOLATILE ECONOMY INFLATION PENALTY — CRITICAL RULE:
-   Turkey (TRY), Argentina (ARS), Venezuela (VES), Egypt (EGP) and similar high-inflation
-   economies have experienced cumulative CPI of 150–300%+ since 2022.
-   Your training data reflects 2022–2023 price levels.
+NEVER invent or hallucinate a URL. Only cite URLs present verbatim in <research_context>.
+To recommend a source: describe the type — "TCMB sitesi", not a fabricated https://...
 
-   MANDATORY: When citing ANY TRY-denominated figure from training data, you MUST add:
-   "⚠ ENFLASYON UYARISI: Bu rakam 2022–2023 eğitim verisinden alınmıştır.
-    Türkiye'nin kümülatif enflasyonu (2022–2026 arası ~%200–300) nedeniyle
-    gerçek 2025–2026 değeri bu tahminin 2–4 katı olabilir.
-    Doğrulama için: sahibinden.com, hepsiemlak.com, sektör derneği veya belediye."
+`
 
-   EXAMPLES of the inflation gap:
-   • 2022 commercial rent 5.000 TL/m² → likely 15.000–40.000 TL/m² in 2025–2026
-   • 2022 industrial equipment 50.000 TL → likely 150.000–400.000 TL in 2025–2026
-   • 2022 minimum wage 5.500 TL → was 22.000 TL by late 2024
-   These multipliers are approximate. Always recommend live price verification.
+// ── Live-data system prefix — injected at TOP of system prompt when search results exist ──────
+// Placed FIRST so the model processes it before any other instruction.
+// Short and punchy by design — long buried directives get lost in large prompts.
+export const LIVE_DATA_SYSTEM_PREFIX = `🚨 LIVE DATA MODE — READ THIS FIRST, BEFORE EVERYTHING ELSE:
+Real-time web search results have been retrieved for this request.
+They appear in the user message inside the ━━ REAL-TIME WEB SEARCH RESULTS ━━ block.
 
-4. CONSISTENCY CHECK:
-   • Cross-reference business plan assumptions: payback periods, COGS, and opex must be
-     internally consistent with stated market, team size, and revenue model.
-   • Do NOT generate internally contradictory figures.
-
-5. NEVER:
-   • Present a training-era price as a current market price without [TRAINING EST — verify].
-   • Generate a specific TRY figure for 2025–2026 from training data without the inflation warning.
-   • Output a business plan that contains internally contradictory figures.
-   • Invent or recall a URL/link from memory — only cite URLs that appear verbatim in <research_context>.
-     To suggest where to look: describe source TYPE. "Belediye resmi sitesi" not "https://..."
+MANDATORY RULES — violation = quality failure:
+  1. USE the search-result figures for ALL prices, rents, rates, costs, and market data.
+  2. DO NOT substitute training-memory estimates when the search block covers the metric.
+  3. CITE the source URL and date for each figure you take from the search block.
+  4. If the search block does not cover a specific metric, say so explicitly, then label
+     any training estimate: [TRAINING EST — verify].
 
 `
 
