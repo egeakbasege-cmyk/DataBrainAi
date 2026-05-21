@@ -1229,5 +1229,106 @@ ${PROACTIVE_ENGAGEMENT_CONSTRAINT}${MODE_ENGAGEMENT_HOOKS['synergy']}`
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 8. PARALLEL SYNERGY — Multi-Agent Architecture
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// True parallel multi-agent execution:
+//   Phase 1 → N specialist agents run simultaneously (8B model, JSON output)
+//   Phase 2 → Synthesis engine fuses agent results (70B model, streaming)
+//
+// Advantages over legacy single-prompt approach:
+//   • Each agent has undivided attention on its domain
+//   • 8B agents use separate TPD budget (500K/day) → 70B TPM is preserved
+//   • Agent failures are isolated — partial success still produces synthesis
+//   • Synthesis model receives structured, high-signal inputs → higher quality
+
+/** Compact JSON shape each parallel specialist agent returns. */
+export interface SynergyAgentResult {
+  layer:          string   // e.g. "▸ STRIKE"
+  keyInsight:     string   // 2–3 sentence core finding
+  criticalNumber: string   // single most important metric (est. label if estimated)
+  topAction:      string   // single highest-leverage action
+  confidence:     number   // 0.0 – 1.0
+}
+
+/**
+ * Builds the system prompt for one parallel specialist agent.
+ * Each agent receives only its own council directive — no cross-contamination.
+ */
+export function buildSynergyAgentPrompt(
+  mode:              string,
+  language         = 'en',
+  primaryConstraint?: string,
+): string {
+  const council = SYNERGY_COUNCIL[mode]
+  if (!council) return ''
+
+  const langAnchor  = buildLanguageAnchor(language)
+  const constraint  = primaryConstraint
+    ? `CONSTRAINT: "${primaryConstraint}" must shape your analysis.\n\n`
+    : ''
+
+  return `${langAnchor}${constraint}You are the ${council.layer} specialist in a multi-agent strategic war room.
+
+YOUR DIRECTIVE:
+${council.directive}
+
+Analyse the query from this single perspective. Return ONLY this JSON — no markdown, no preamble:
+{
+  "layer":          "${council.layer}",
+  "keyInsight":     "Your core finding in 2–3 precise sentences. Cite a specific number.",
+  "criticalNumber": "The single most important metric or figure (label as est. if estimated)",
+  "topAction":      "Single highest-leverage action from your specialist perspective",
+  "confidence":     0.0–1.0
+}`
+}
+
+/**
+ * Builds the 70B synthesis system prompt from collected agent results.
+ * Called after all parallel agents complete (or time out).
+ */
+export function buildSynthesisSystemPrompt(
+  agentResults:      SynergyAgentResult[],
+  language         = 'en',
+  companyName?:      string,
+  primaryConstraint?: string,
+): string {
+  const langAnchor  = buildLanguageAnchor(language)
+  const name        = companyName ? `${companyName} AI` : 'Aetheris'
+  const constraint  = primaryConstraint
+    ? `CONSTRAINT: "${primaryConstraint}" must be central to the synthesis.\n\n`
+    : ''
+
+  const agentSection = agentResults
+    .map(a => [
+      `### ${a.layer}`,
+      `Insight: ${a.keyInsight}`,
+      `Key figure: ${a.criticalNumber}`,
+      `Top action: ${a.topAction}`,
+      `Confidence: ${Math.round(a.confidence * 100)}%`,
+    ].join('\n'))
+    .join('\n\n')
+
+  return `${langAnchor}${constraint}You are ${name} WAR ROOM SYNTHESIS ENGINE — ${agentResults.length} specialist agents have independently analysed the query. Fuse their findings into a unified strategic brief.
+
+Use the ▸ character (U+25B8) exactly as shown for every section header.
+
+AGENT ANALYSIS:
+${agentSection}
+
+SYNTHESIS RULES:
+1. For each agent, write ### [their layer header] then expand their finding with 1–2 concrete sentences and a specific number.
+2. After all agent sections, write ### ▸ WAR ROOM SYNTHESIS:
+   **Decisive move** — the single highest-leverage convergent action all agents point toward
+   **30-day proof** — exact metric confirming it is working
+   **Critical risk** — the one factor most likely to derail execution
+   **Confidence** — 0–100 (90+ = verified data · 65–89 = estimates · <65 = data gaps)
+
+Bold key terms. Complete sentences. Zero hedge words. Under 650 words total.
+
+${PROACTIVE_ENGAGEMENT_CONSTRAINT}`
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // EXPORT (all functions already exported above)
 // ═══════════════════════════════════════════════════════════════════════════════

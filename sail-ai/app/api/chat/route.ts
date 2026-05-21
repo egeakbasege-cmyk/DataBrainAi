@@ -25,7 +25,10 @@ import {
   buildCatamaranSystemPrompt as buildEnhancedCatamaranPrompt,
   buildOperatorSystemPrompt as buildEnhancedOperatorPrompt,
   buildSynergySystemPrompt,
+  buildSynergyAgentPrompt,
+  buildSynthesisSystemPrompt,
   buildScenarioSystemPrompt,
+  type SynergyAgentResult,
 } from '@/lib/prompts/enhanced-modes'
 // [SAIL-NEW] — DataShift governance layer
 import { selectSkillCards, buildSkillBlock }         from '@/lib/skills/skillCards'
@@ -332,6 +335,59 @@ function buildGroqMessages(
   }))
 
   return [system, ...historyMsgs, user]
+}
+
+// ── Parallel SYNERGY Agent Runner ────────────────────────────────────────────
+// Executes one specialist council member as an independent 8B LLM call.
+// Returns a compact SynergyAgentResult JSON or null on any failure.
+// 4.5s hard timeout prevents one slow agent from blocking synthesis.
+
+async function runSynergyAgent(
+  mode:              string,
+  language:          string,
+  primaryConstraint: string | undefined,
+  userContent:       string,
+  groqKey:           string,
+  byokKey?:          string,
+): Promise<SynergyAgentResult | null> {
+  const systemPrompt = buildSynergyAgentPrompt(mode, language, primaryConstraint)
+  if (!systemPrompt) return null  // mode not in SYNERGY_COUNCIL
+
+  const abort = new AbortController()
+  const timer = setTimeout(() => abort.abort(), 4_500)
+
+  try {
+    const res = await groqFetch(
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model:           GROQ_MODEL_FALLBACK,  // 8B — parallel-safe, 500K TPD budget
+          messages:        [
+            { role: 'system', content: systemPrompt },
+            { role: 'user',   content: userContent  },
+          ],
+          response_format: { type: 'json_object' },
+          max_tokens:      450,
+          temperature:     0.30,
+        }),
+        signal: abort.signal,
+      },
+      byokKey,
+    ).catch(() => null)
+
+    clearTimeout(timer)
+    if (!res?.ok) return null
+
+    const data    = await res.json().catch(() => null)
+    const content = (data as { choices?: Array<{ message?: { content?: string } }> })
+      ?.choices?.[0]?.message?.content ?? ''
+
+    return JSON.parse(content) as SynergyAgentResult
+  } catch {
+    clearTimeout(timer)
+    return null
+  }
 }
 
 // ── Light JSON repair (one-shot, 8B model) ────────────────────────────────────
@@ -815,22 +871,56 @@ SCOPE RULES — NON-NEGOTIABLE:
       (_queryLanguage !== 'en' ? ` Respond in the user's language (${_queryLanguage}).` : '')
     : (_researchAttempted ? SEARCH_FAILED_WARNING : '')
 
-  // ── SYNERGY mode: War Room Council — streaming markdown ──────────────────
+  // ── SYNERGY mode: Parallel Multi-Agent War Room ──────────────────────────
+  //
+  // Architecture:
+  //   Phase 1 — N specialist agents run in parallel (8B, JSON, 450 tok each)
+  //             Each agent analyses the query through its own lens exclusively.
+  //             Promise.allSettled → partial success is acceptable.
+  //   Phase 2 — 70B synthesis engine receives structured agent results,
+  //             produces the final unified War Room brief as a stream.
+  //   Fallback — if ALL agents fail, falls back to the legacy single-prompt path.
+  //
+  // Token budget impact vs legacy:
+  //   Legacy:    1 × 70B @ 1300 tok output = 1300 70B TPM
+  //   Parallel:  N × 8B @ 450 tok + 1 × 70B @ 1300 tok synthesis
+  //              8B has its own 500K TPD pool → 70B TPM unchanged
+  //
   if (analysisMode === 'synergy') {
-    const modes        = body.synergyModes ?? ['upwind', 'sail']
-    const synergyName  = body.synergyName
+    const modes       = body.synergyModes ?? ['upwind', 'sail']
+    const synergyName = body.synergyName
+
+    // ── Phase 1: Parallel specialist agents ─────────────────────────────────
+    const agentPromises = modes.slice(0, 4).map(mode =>
+      runSynergyAgent(mode, language, primaryConstraint, userMessage, groqKey, body.apiKey),
+    )
+    const agentSettled = await Promise.allSettled(agentPromises)
+    const agentResults: SynergyAgentResult[] = agentSettled
+      .filter((r): r is PromiseFulfilledResult<SynergyAgentResult> =>
+        r.status === 'fulfilled' && r.value !== null,
+      )
+      .map(r => r.value)
+
+    // ── Phase 2: Synthesis (70B, streaming) ─────────────────────────────────
+    // Falls back to legacy single-prompt if all agents failed (network issues etc.)
+    const synthesisSystemPrompt = agentResults.length > 0
+      ? buildSynthesisSystemPrompt(agentResults, language, synergyName, primaryConstraint)
+      : domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix
+
     const synRes = await groqFetch({
       method: 'POST',
       headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:       modelSelection.model,
+        model: GROQ_MODEL_PRIMARY,  // Always 70B for synthesis — quality is non-negotiable
         messages: buildGroqMessages(
-          domainPrefix + buildSynergySystemPrompt(modes, language, synergyName, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          agentResults.length > 0
+            ? synthesisSystemPrompt + synthesisSuffix
+            : synthesisSystemPrompt,
           userMessage,
           body.messages,
         ),
-        max_tokens:  modelSelection.maxTokens,
-        temperature: modelSelection.temperature,
+        max_tokens:  1300,
+        temperature: 0.40,
         stream:      true,
       }),
     }, body.apiKey).catch(() => null)
@@ -843,10 +933,19 @@ SCOPE RULES — NON-NEGOTIABLE:
       )
     }
 
-    const encoder   = new TextEncoder()
-    // [SAIL-NEW] Module 3 — health report embedded in meta (frontend splits independently)
-    const metaLine  = JSON.stringify({ __synMeta: { modes, companyName: synergyName ?? null, healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n'
-    const groqBody  = synRes.body!
+    const encoder  = new TextEncoder()
+    const metaLine = JSON.stringify({
+      __synMeta: {
+        modes,
+        companyName:  synergyName ?? null,
+        healthReport,
+        scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore),
+        // Surface which agents ran and their confidence — for frontend insight cards
+        agentSummary: agentResults.map(a => ({ layer: a.layer, confidence: a.confidence })),
+        parallelMode: agentResults.length > 0,
+      },
+    }) + '\n'
+    const groqBody = synRes.body!
 
     const stream = new ReadableStream({
       async start(ctrl) {
