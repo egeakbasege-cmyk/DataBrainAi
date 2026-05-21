@@ -17,7 +17,6 @@ import { type NextRequest } from 'next/server'
 import NextAuth              from 'next-auth'
 import { authConfig }        from '@/auth.config'
 import type { AetherisPayload } from '@/types/architecture'
-import { SOVEREIGN_COGNITIVE_DIRECTIVE } from '@/lib/ai-prompt'
 import {
   buildUpwindSystemPrompt,
   buildDownwindSystemPrompt as buildEnhancedDownwindPrompt,
@@ -48,9 +47,6 @@ import {
   type SearchResult,
 } from '@/lib/tools/search'
 import {
-  ANALYTIC_SYNTHESIS_DIRECTIVE,
-  UNIVERSAL_LANGUAGE_DIRECTIVE,  // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
-  UNIVERSAL_VERACITY_DIRECTIVE,  // [SAIL-GLOBAL-VERACITY-PATCH]
   DATA_UNCERTAINTY_SUFFIX,       // [SAIL-FACTUAL-TRIGGER] always-on training-data transparency
   SEARCH_FAILED_WARNING,         // [SAIL-FACTUAL-TRIGGER] search ran but no results
 } from '@/lib/prompts/enhanced-modes'
@@ -134,10 +130,10 @@ async function groqFetch(init: RequestInit, byokKey?: string): Promise<Response>
     if (res && res.status !== 429) return res
   }
 
-  // Complete failure — return synthetic 503
+  // All keys exhausted on rate limits — return 429 so handlers show the correct message
   return new Response(
-    JSON.stringify({ error: { message: `All Groq keys exhausted (last status: ${lastStatus})` } }),
-    { status: 503, headers: { 'Content-Type': 'application/json' } },
+    JSON.stringify({ error: { message: 'Rate limit reached. Please wait a moment and try again.' } }),
+    { status: 429, headers: { 'Content-Type': 'application/json' } },
   )
 }
 
@@ -584,10 +580,8 @@ export async function POST(req: NextRequest) {
 
   const analysisMode: 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran' | 'operator' | 'synergy' | 'scenario' | 'auto' = body.analysisMode ?? 'upwind'
 
-  // 3. Groq — use getKeyPool() as single source of truth for key availability.
-  // groqKey is kept for legacy non-pool calls (streaming modes that pass it in headers directly).
-  const _keyPool = getKeyPool(body.apiKey)
-  const groqKey  = _keyPool[0]  // first available key; groqFetch rotates through all
+  // 3. Groq key — first available key; groqFetch rotates through all keys internally.
+  const groqKey = getKeyPool(body.apiKey)[0]
 
   if (!groqKey) {
     return Response.json(
@@ -691,11 +685,11 @@ export async function POST(req: NextRequest) {
   // businessMode=true (default): lock AI to business & market intelligence scope.
   // businessMode=false: free chat — no domain restriction, answer any topic naturally.
   //
-  // SOVEREIGN_COGNITIVE_DIRECTIVE is ALWAYS prepended — it is the core "thinking
-  // mechanism" that enforces deep reasoning, second-order analysis, confidence
-  // calibration, and self-correction before every response regardless of mode.
+  // Note: SOVEREIGN_COGNITIVE_DIRECTIVE was removed from here — every mode prompt
+  // already contains DEEP_RESEARCH_DIRECTIVE which covers reasoning quality, confidence
+  // calibration, and data transparency. Double-injecting it wasted ~461 tokens/request.
   const isBusinessMode = body.businessMode !== false  // default true
-  const domainPrefix = SOVEREIGN_COGNITIVE_DIRECTIVE + '\n\n' + (isBusinessMode
+  const domainPrefix = (isBusinessMode
     ? `DOMAIN LOCK — MANDATORY (read before everything else):
 You are a business strategy and market intelligence assistant. You ONLY operate in the commercial domain.
 
@@ -730,14 +724,13 @@ SCOPE RULES — NON-NEGOTIABLE:
   // It is NOT placed in system prompts — doing so caused double-injection and 413 TPM errors.
   // The "search failed" warning is appended via synthesisSuffix below when needed.
 
-  // [SAIL-INTELLIGENCE-UPGRADE] Synthesis suffix — appended when live research was retrieved.
-  // [SAIL-UNIVERSAL-INTELLIGENCE-V2] For non-English queries, also injects UNIVERSAL_LANGUAGE_DIRECTIVE.
-  // [SAIL-GLOBAL-VERACITY-PATCH] UNIVERSAL_VERACITY_DIRECTIVE enforces strict source traceability.
+  // Synthesis suffix — compact reminder injected when live research was retrieved.
+  // Replaces the previous ~2,200-token triple-directive block — mode prompts already
+  // contain DEEP_RESEARCH_DIRECTIVE which handles source attribution rules.
   // [SAIL-FACTUAL-TRIGGER] SEARCH_FAILED_WARNING injected when search was triggered but empty.
   const synthesisSuffix = _hasSynthesisContext
-    ? ANALYTIC_SYNTHESIS_DIRECTIVE
-      + UNIVERSAL_VERACITY_DIRECTIVE
-      + (_queryLanguage !== 'en' ? UNIVERSAL_LANGUAGE_DIRECTIVE : '')
+    ? `\n\nLIVE DATA PRIORITY: The user message contains real-time search results. Use those figures as primary source — do NOT substitute training-memory estimates. Cite only claims backed by the provided data.` +
+      (_queryLanguage !== 'en' ? ` Respond in the user's language (${_queryLanguage}).` : '')
     : (_researchAttempted ? SEARCH_FAILED_WARNING : '')
 
   // ── SYNERGY mode: War Room Council — streaming markdown ──────────────────
@@ -928,7 +921,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       body: JSON.stringify({
         model:       GROQ_MODEL,
         messages: buildGroqMessages(
-          domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint, body.context) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          domainPrefix + buildScenarioSystemPrompt(language, primaryConstraint) + governanceSuffix + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -1071,10 +1064,11 @@ SCOPE RULES — NON-NEGOTIABLE:
         headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model:           GROQ_MODEL,
-          messages: [
-            { role: 'system', content: domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix },
-            { role: 'user',   content: userMessage },
-          ],
+          messages: buildGroqMessages(
+            domainPrefix + buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix,
+            userMessage,
+            body.messages,
+          ),
           response_format: { type: 'json_object' },
           max_tokens:      900,
           temperature:     0.4,
@@ -1117,10 +1111,11 @@ SCOPE RULES — NON-NEGOTIABLE:
         headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model:           GROQ_MODEL,
-          messages: [
-            { role: 'system', content: domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix },
-            { role: 'user',   content: userMessage },
-          ],
+          messages: buildGroqMessages(
+            domainPrefix + buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix,
+            userMessage,
+            body.messages,
+          ),
           response_format: { type: 'json_object' },
           max_tokens:      1100,
           temperature:     0.35,
