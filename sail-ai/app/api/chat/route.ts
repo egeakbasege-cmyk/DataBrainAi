@@ -59,6 +59,9 @@ import type { ScopeMetadata }  from '@/lib/pipeline/types'
 // [PIPELINE-LITE] Adaptive Model Selector — right-sizes model + token budget per request
 import { selectModel }         from '@/lib/pipeline/modelSelector'
 import type { ComplexityTier } from '@/lib/pipeline/modelSelector'
+// [CACHE] Semantic response cache + per-user rate limiter (Vercel KV — graceful degradation)
+import { getCachedResponse, setCachedResponse, CACHEABLE_MODES } from '@/lib/cache/responseCache'
+import { checkRateLimit } from '@/lib/cache/rateLimiter'
 
 const { auth } = NextAuth(authConfig)
 
@@ -687,6 +690,17 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // ── Per-user rate limit check (Vercel KV — graceful no-op without KV) ────
+  // Protects the shared Groq key pool from abuse. Fails open on KV outage.
+  const userId    = body.userId ?? 'anonymous'
+  const rlResult  = await checkRateLimit(userId)
+  if (!rlResult.allowed) {
+    return Response.json(
+      { error: `Rate limit reached. You can make ${rlResult.limit} requests per minute. Resets in ${Math.ceil(rlResult.resetInMs / 1000)}s.` },
+      { status: 429 },
+    )
+  }
+
   // ── AUTO mode: Gateway Router — intelligent dispatch ─────────────────────
   // Runs a fast 8B-model call (3 s timeout) to classify query intent and return
   // a __moodGuide payload. The frontend shows a routing card; high-urgency
@@ -716,6 +730,22 @@ export async function POST(req: NextRequest) {
   // Returns injectedDefaults (only the missing components) — surfaced in AnalysisScopePanel.
   const startedAt = Date.now()
   const intent    = routeAndOptimize(body.message ?? '', analysisMode)
+
+  // ── Cache check (JSON modes only, before research + LLM call) ────────────
+  // Returns the stored response immediately if a recent identical query exists.
+  // Skips research, prompt building, and Groq entirely — ~5ms vs ~3000ms.
+  const cacheQueryText = body.message?.trim() ?? ''
+  const cacheLang      = body.language ?? 'en'
+  if (CACHEABLE_MODES.has(analysisMode)) {
+    const cached = await getCachedResponse(cacheQueryText, analysisMode, cacheLang)
+    if (cached) {
+      // Re-attach fresh healthReport + scopeMetadata (they contain timestamps)
+      return Response.json(
+        { ...cached, __cacheHit: true },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
+    }
+  }
 
   // [SAIL-NEW] Module 2 — PII scrubbing (fileContent only; message/context never stored)
   let piiRedactedCount = 0
@@ -1271,10 +1301,10 @@ SCOPE RULES — NON-NEGOTIABLE:
     const trimContent = trimData?.choices?.[0]?.message?.content ?? '{}'
 
     try {
-      const parsed = JSON.parse(trimContent)
-      // [SAIL-NEW] Module 3 — health report in JSON response
-      // stripUrlsFromJson: remove any markdown hyperlinks the LLM may have embedded in string fields
-      return Response.json({ ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) }, { headers: { 'Cache-Control': 'no-store' } })
+      const parsed    = JSON.parse(trimContent)
+      const trimResp  = { ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) }
+      void setCachedResponse(cacheQueryText, analysisMode, cacheLang, trimResp as Record<string, unknown>, _hasSynthesisContext)
+      return Response.json(trimResp, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       return Response.json(
         { trimTitle: 'Strategic Plan', summary: trimContent, phases: [], __healthReport: healthReport, scopeMetadata: buildScopeMeta(false, 0, intent.clarityScore) },
@@ -1318,10 +1348,10 @@ SCOPE RULES — NON-NEGOTIABLE:
     const catContent = catData?.choices?.[0]?.message?.content ?? '{}'
 
     try {
-      const parsed = JSON.parse(catContent)
-      // [SAIL-NEW] Module 3 — health report in JSON response
-      // stripUrlsFromJson: remove any markdown hyperlinks embedded in string fields
-      return Response.json({ ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) }, { headers: { 'Cache-Control': 'no-store' } })
+      const parsed   = JSON.parse(catContent)
+      const catResp  = { ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) }
+      void setCachedResponse(cacheQueryText, analysisMode, cacheLang, catResp as Record<string, unknown>, _hasSynthesisContext)
+      return Response.json(catResp, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       return Response.json(
         {
@@ -1432,12 +1462,20 @@ SCOPE RULES — NON-NEGOTIABLE:
       ? (parsedResponse as Record<string, unknown>).confidenceIndex as number
       : intent.clarityScore
 
-  return Response.json(
-    {
-      ...(stripUrlsFromJson(parsedResponse) as object),
-      __healthReport: healthReport,
-      scopeMetadata:  buildScopeMeta(repairIterations === 0, repairIterations, confidenceScore),
-    },
-    { headers: { 'Cache-Control': 'no-store' } },
+  const finalResp = {
+    ...(stripUrlsFromJson(parsedResponse) as object),
+    __healthReport: healthReport,
+    scopeMetadata:  buildScopeMeta(repairIterations === 0, repairIterations, confidenceScore),
+  }
+
+  // Cache the response for future identical queries (fire-and-forget)
+  void setCachedResponse(
+    cacheQueryText,
+    analysisMode,
+    cacheLang,
+    finalResp as Record<string, unknown>,
+    _hasSynthesisContext,
   )
+
+  return Response.json(finalResp, { headers: { 'Cache-Control': 'no-store' } })
 }
