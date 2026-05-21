@@ -50,6 +50,9 @@ import {
   DATA_UNCERTAINTY_SUFFIX,       // [SAIL-FACTUAL-TRIGGER] always-on training-data transparency
   SEARCH_FAILED_WARNING,         // [SAIL-FACTUAL-TRIGGER] search ran but no results
 } from '@/lib/prompts/enhanced-modes'
+// [PIPELINE-LITE] Layer 1 — SemanticRouter (deterministic, no LLM call)
+import { routeAndOptimize }   from '@/lib/pipeline/semanticRouter'
+import type { ScopeMetadata } from '@/lib/pipeline/types'
 
 const { auth } = NextAuth(authConfig)
 
@@ -326,6 +329,41 @@ function buildGroqMessages(
   }))
 
   return [system, ...historyMsgs, user]
+}
+
+// ── Light JSON repair (one-shot, 8B model) ────────────────────────────────────
+// Fires only when the primary LLM returns non-parseable or empty JSON.
+// Uses llama-3.1-8b-instant to keep repair fast (~0.5s) and within token budget.
+
+async function repairJsonResponse(
+  systemContent: string,
+  userContent:   string,
+  badContent:    string,
+  groqKey:       string,
+  byokKey?:      string,
+): Promise<{ content: string; repaired: boolean }> {
+  const res = await groqFetch({
+    method:  'POST',
+    headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: GROQ_MODEL_FALLBACK,
+      messages: [
+        { role: 'system',    content: systemContent },
+        { role: 'user',      content: userContent   },
+        { role: 'assistant', content: badContent     },
+        { role: 'user',      content: 'Your previous output was not valid JSON. Return ONLY the corrected JSON object — no markdown, no preamble, no explanation.' },
+      ],
+      response_format: { type: 'json_object' },
+      max_tokens:      700,
+      temperature:     0.15,
+    }),
+  }, byokKey).catch(() => null)
+
+  if (!res?.ok) return { content: badContent, repaired: false }
+  const data  = await res.json().catch(() => null)
+  const fixed = (data as { choices?: Array<{ message?: { content?: string } }> })
+    ?.choices?.[0]?.message?.content ?? ''
+  return { content: fixed || badContent, repaired: !!fixed }
 }
 
 // ── Gateway Router ────────────────────────────────────────────────────────────
@@ -613,6 +651,13 @@ export async function POST(req: NextRequest) {
     }, { headers: { 'Cache-Control': 'no-store' } })
   }
 
+  // ── Pipeline Layer 1: Semantic Router ─────────────────────────────────────
+  // Pure deterministic intent analysis — zero LLM calls, zero latency cost, ~1ms.
+  // Infers industry, revenue tier, goal, audience, timeframe, clarity score.
+  // Returns injectedDefaults (only the missing components) — surfaced in AnalysisScopePanel.
+  const startedAt = Date.now()
+  const intent    = routeAndOptimize(body.message ?? '', analysisMode)
+
   // [SAIL-NEW] Module 2 — PII scrubbing (fileContent only; message/context never stored)
   let piiRedactedCount = 0
   let piiTags: string[] = []
@@ -680,6 +725,31 @@ export async function POST(req: NextRequest) {
     queryLanguage:    _queryLanguage,    // [SAIL-UNIVERSAL-INTELLIGENCE-V2]
     staleSourceCount: _staleSourceCount, // [SAIL-DATA-VERACITY]
   })
+
+  // ── Scope metadata base (shared across all modes) ─────────────────────────
+  // processingMs, validationPassed, repairIterations, confidenceScore filled per-mode.
+  function buildScopeMeta(
+    validationPassed: boolean,
+    repairIterations: number,
+    confidenceScore:  number,
+  ): ScopeMetadata {
+    return {
+      domain:            intent.detectedDomain,
+      segment:           intent.inferredAudience,
+      optimizationGoal:  intent.inferredGoal,
+      clarityScore:      intent.clarityScore,
+      revenueTier:       intent.revenueTier,
+      inferredIndustry:  intent.inferredIndustry,
+      inferredTimeframe: intent.inferredTimeframe,
+      injectedDefaults:  intent.injectedDefaults,
+      analysisMode,
+      processingMs:      Date.now() - startedAt,
+      validationPassed,
+      repairIterations,
+      liveDataUsed:      _hasSynthesisContext,
+      confidenceScore,
+    }
+  }
 
   // ── Business / Free-chat domain prefix ──────────────────────────────────
   // businessMode=true (default): lock AI to business & market intelligence scope.
@@ -763,7 +833,7 @@ SCOPE RULES — NON-NEGOTIABLE:
 
     const encoder   = new TextEncoder()
     // [SAIL-NEW] Module 3 — health report embedded in meta (frontend splits independently)
-    const metaLine  = JSON.stringify({ __synMeta: { modes, companyName: synergyName ?? null, healthReport } }) + '\n'
+    const metaLine  = JSON.stringify({ __synMeta: { modes, companyName: synergyName ?? null, healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n'
     const groqBody  = synRes.body!
 
     const stream = new ReadableStream({
@@ -866,10 +936,10 @@ SCOPE RULES — NON-NEGOTIABLE:
                   contentBuf += delta
                   const nl = contentBuf.indexOf('\n')
                   if (nl !== -1) {
-                    const match  = contentBuf.slice(0, nl).trim().match(/\[INTENT:(analytic|coaching)\]/)
-                    const intent = match ? (match[1] as 'analytic' | 'coaching') : 'analytic'
+                    const match      = contentBuf.slice(0, nl).trim().match(/\[INTENT:(analytic|coaching)\]/)
+                    const sailIntent = match ? (match[1] as 'analytic' | 'coaching') : 'analytic'
                     // [SAIL-NEW] Module 3 — health report embedded in __sailMeta
-                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent, healthReport } }) + '\n'))
+                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: sailIntent, healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n'))
                     const rest = contentBuf.slice(nl + 1)
                     if (rest) {
                       const clean = stripper.push(rest)
@@ -879,7 +949,7 @@ SCOPE RULES — NON-NEGOTIABLE:
                     intentEmitted = true
                   } else if (contentBuf.length > 120) {
                     // [SAIL-NEW] Module 3 — health report in fallback meta
-                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport } }) + '\n'))
+                    ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n'))
                     const clean = stripper.push(contentBuf)
                     if (clean) ctrl.enqueue(encoder.encode(clean))
                     contentBuf    = ''
@@ -896,7 +966,7 @@ SCOPE RULES — NON-NEGOTIABLE:
           const tail = stripper.flush()
           if (!intentEmitted) {
             // [SAIL-NEW] Module 3 — health report in finally-block fallback
-            ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport } }) + '\n'))
+            ctrl.enqueue(encoder.encode(JSON.stringify({ __sailMeta: { intent: 'analytic', healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n'))
             const clean = contentBuf + tail
             if (clean) ctrl.enqueue(encoder.encode(clean))
           } else {
@@ -945,7 +1015,7 @@ SCOPE RULES — NON-NEGOTIABLE:
     const stream = new ReadableStream({
       async start(ctrl) {
         // [SAIL-NEW] Module 3 — scenario meta line with health report
-        const metaLine = JSON.stringify({ __scenarioMeta: { healthReport } }) + '\n'
+        const metaLine = JSON.stringify({ __scenarioMeta: { healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) } }) + '\n'
         ctrl.enqueue(encoder.encode(metaLine))
         const reader   = scBody.getReader()
         const decoder  = new TextDecoder()
@@ -1093,10 +1163,10 @@ SCOPE RULES — NON-NEGOTIABLE:
       const parsed = JSON.parse(trimContent)
       // [SAIL-NEW] Module 3 — health report in JSON response
       // stripUrlsFromJson: remove any markdown hyperlinks the LLM may have embedded in string fields
-      return Response.json({ ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
+      return Response.json({ ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) }, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       return Response.json(
-        { trimTitle: 'Strategic Plan', summary: trimContent, phases: [], __healthReport: healthReport },
+        { trimTitle: 'Strategic Plan', summary: trimContent, phases: [], __healthReport: healthReport, scopeMetadata: buildScopeMeta(false, 0, intent.clarityScore) },
         { headers: { 'Cache-Control': 'no-store' } },
       )
     }
@@ -1140,7 +1210,7 @@ SCOPE RULES — NON-NEGOTIABLE:
       const parsed = JSON.parse(catContent)
       // [SAIL-NEW] Module 3 — health report in JSON response
       // stripUrlsFromJson: remove any markdown hyperlinks embedded in string fields
-      return Response.json({ ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport }, { headers: { 'Cache-Control': 'no-store' } })
+      return Response.json({ ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport, scopeMetadata: buildScopeMeta(true, 0, intent.clarityScore) }, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       return Response.json(
         {
@@ -1150,7 +1220,8 @@ SCOPE RULES — NON-NEGOTIABLE:
           unifiedStrategy: '',
           thirtyDayTarget: '',
           greatestRisk: '',
-          __healthReport: healthReport,  // [SAIL-NEW]
+          __healthReport: healthReport,
+          scopeMetadata: buildScopeMeta(false, 0, intent.clarityScore),
         },
         { headers: { 'Cache-Control': 'no-store' } },
       )
@@ -1208,18 +1279,54 @@ SCOPE RULES — NON-NEGOTIABLE:
     return Response.json({ error: 'AI provider returned invalid response.' }, { status: 502 })
   }
 
-  const content = groqData?.choices?.[0]?.message?.content ?? ''
+  const rawContent = groqData?.choices?.[0]?.message?.content ?? ''
 
+  // ── Light repair + scopeMetadata ─────────────────────────────────────────
+  // Attempt JSON parse. On failure: one repair call with 8B model, then retry.
+  // scopeMetadata surfaces intent metadata in the AnalysisScopePanel UI.
+  let finalContent     = rawContent
+  let repairIterations = 0
+
+  let parsedResponse: unknown
   try {
-    const parsed = JSON.parse(content)
-    return Response.json(
-      { ...(stripUrlsFromJson(parsed) as object), __healthReport: healthReport },
-      { headers: { 'Cache-Control': 'no-store' } },
-    )
+    parsedResponse = JSON.parse(finalContent)
   } catch {
-    return Response.json(
-      { insight: content || 'Analysis complete.', __healthReport: healthReport },
-      { headers: { 'Cache-Control': 'no-store' } },
+    // Primary parse failed — fire one repair attempt
+    const repair = await repairJsonResponse(
+      domainPrefix + activeSystemPrompt + synthesisSuffix,
+      userMessage,
+      finalContent,
+      groqKey,
+      body.apiKey,
     )
+    finalContent = repair.content
+    if (repair.repaired) repairIterations = 1
+    try {
+      parsedResponse = JSON.parse(finalContent)
+    } catch {
+      // Still invalid — return best-effort fallback with metadata
+      return Response.json(
+        {
+          insight:       finalContent || 'Analysis complete.',
+          __healthReport: healthReport,
+          scopeMetadata: buildScopeMeta(false, repairIterations, intent.clarityScore),
+        },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
+    }
   }
+
+  const confidenceScore =
+    typeof (parsedResponse as Record<string, unknown>).confidenceIndex === 'number'
+      ? (parsedResponse as Record<string, unknown>).confidenceIndex as number
+      : intent.clarityScore
+
+  return Response.json(
+    {
+      ...(stripUrlsFromJson(parsedResponse) as object),
+      __healthReport: healthReport,
+      scopeMetadata:  buildScopeMeta(repairIterations === 0, repairIterations, confidenceScore),
+    },
+    { headers: { 'Cache-Control': 'no-store' } },
+  )
 }
