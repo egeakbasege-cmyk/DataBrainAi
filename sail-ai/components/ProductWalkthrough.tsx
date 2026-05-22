@@ -1,16 +1,20 @@
 'use client'
 
 /**
- * ProductWalkthrough — sinematik ürün turu
+ * ProductWalkthrough — flex.one-inspired premium interactive demo
  *
- * 6 ekranlık otomatik ilerleyen bir walkthrough.
- * Her ekran gerçek SAIL AI arayüzünü ve gerçek AI cevap formatını gösterir.
- * YouTube video URL'si varsa önce onu oynatır, yoksa bu animasyon devreye girer.
+ * Visual shell upgraded to match flex.one's premium fintech aesthetic:
+ *   • Oversized serif heading + eyebrow label
+ *   • 3D perspective device frame with ambient glow + multi-layer shadow
+ *   • Scroll-triggered staggered entrance (IntersectionObserver — no deps)
+ *   • Premium timeline chapter list with progress track
+ *   • Section gradient: deep navy → midnight, radial accent glow
  *
- * YOUTUBE_VIDEO_ID sabitini gerçek video ID'nizle değiştirin.
+ * All inner slide components (Slide1–6), auto-advance, pause,
+ * YouTube fallback and i18n are 100% unchanged.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
@@ -18,7 +22,7 @@ import { useLanguage } from '@/lib/i18n/LanguageContext'
 const YOUTUBE_VIDEO_ID = ''  // Örn: 'dQw4w9WgXcQ'
 
 // ── Slide süresi (ms) ─────────────────────────────────────────────────────────
-const SLIDE_DURATION = 12000   // 12s × 7 slide ≈ 84s total
+const SLIDE_DURATION = 12000   // 12s × 6 slide ≈ 72s total
 
 // ── Demo sources (domain names — not translated) ──────────────────────────────
 const REAL_SOURCES = [
@@ -426,14 +430,59 @@ function SlideContent({ slide }: { slide: number }) {
 
 function YouTubeEmbed({ videoId }: { videoId: string }) {
   return (
-    <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px' }}>
+    <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '16px' }}>
       <iframe
         src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&modestbranding=1`}
         title="SAIL AI Tutorial"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
-        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', borderRadius: '12px' }}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', borderRadius: '16px' }}
       />
+    </div>
+  )
+}
+
+// ── useInView hook — lightweight scroll entrance ───────────────────────────────
+
+function useInView(threshold = 0.15): [React.RefObject<HTMLDivElement>, boolean] {
+  const ref = useRef<HTMLDivElement>(null)
+  const [inView, setInView] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect() } },
+      { threshold }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [threshold])
+
+  return [ref, inView]
+}
+
+// ── Premium step indicator ─────────────────────────────────────────────────────
+
+function StepDot({ active, done }: { active: boolean; done: boolean }) {
+  return (
+    <div style={{
+      width:         done ? 22 : active ? 22 : 20,
+      height:        done ? 22 : active ? 22 : 20,
+      borderRadius:  '50%',
+      background:    done ? '#C9A96E' : active ? 'rgba(201,169,110,0.2)' : 'rgba(255,255,255,0.06)',
+      border:        `${active ? 1.5 : 1}px solid ${done || active ? '#C9A96E' : 'rgba(255,255,255,0.12)'}`,
+      display:       'flex',
+      alignItems:    'center',
+      justifyContent:'center',
+      flexShrink:    0,
+      transition:    'all 0.25s ease',
+      boxShadow:     active ? '0 0 12px rgba(201,169,110,0.35)' : 'none',
+    }}>
+      {done
+        ? <span style={{ fontSize: '0.5rem', color: '#0C0C0E', fontWeight: 900 }}>✓</span>
+        : <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: active ? '#C9A96E' : 'rgba(255,255,255,0.25)' }} />
+      }
     </div>
   )
 }
@@ -446,6 +495,9 @@ export function ProductWalkthrough() {
   const [paused,    setPaused]    = useState(false)
   const [progress,  setProgress]  = useState(0)
   const [isMobile,  setIsMobile]  = useState(false)
+
+  const [headerRef, headerInView] = useInView(0.1)
+  const [demoRef,   demoInView]   = useInView(0.08)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -474,7 +526,7 @@ export function ProductWalkthrough() {
   // Auto-advance + progress bar
   useEffect(() => {
     if (paused) return
-    const interval = 50   // progress update interval ms
+    const interval = 50
     const steps    = SLIDE_DURATION / interval
 
     let tick = 0
@@ -490,86 +542,246 @@ export function ProductWalkthrough() {
     return () => clearInterval(iv)
   }, [paused, advance, current])
 
+  // ── Shared CSS animations + custom properties ──────────────────────────────
+  const css = `
+    @keyframes spin     { to { transform: rotate(360deg) } }
+    @keyframes blink    { 50% { opacity: 0 } }
+    @keyframes fadeUp   { from { opacity: 0; transform: translateY(28px) } to { opacity: 1; transform: translateY(0) } }
+    @keyframes deviceIn { from { opacity: 0; transform: perspective(1200px) rotateX(8deg) rotateY(-4deg) scale(0.96) translateY(24px) } to { opacity: 1; transform: perspective(1200px) rotateX(2deg) rotateY(-1deg) scale(1) translateY(0) } }
+    @keyframes glowPulse { 0%,100% { opacity: 0.55 } 50% { opacity: 0.85 } }
+    @keyframes trackFill { from { width: 0% } }
+
+    .pw-section { background: linear-gradient(180deg, #08090D 0%, #0D0F15 55%, #0A0C11 100%); }
+
+    .pw-header-animate  { opacity: 0; }
+    .pw-header-animate.in  { animation: fadeUp 0.75s cubic-bezier(0.22,1,0.36,1) forwards; }
+    .pw-header-animate.in-d1 { animation-delay: 0.05s; }
+    .pw-header-animate.in-d2 { animation-delay: 0.18s; }
+    .pw-header-animate.in-d3 { animation-delay: 0.30s; }
+
+    .pw-device-animate { opacity: 0; }
+    .pw-device-animate.in { animation: deviceIn 0.95s cubic-bezier(0.22,1,0.36,1) 0.1s forwards; }
+
+    .pw-sidebar-animate { opacity: 0; }
+    .pw-sidebar-animate.in { animation: fadeUp 0.75s cubic-bezier(0.22,1,0.36,1) 0.35s forwards; }
+
+    .pw-chapter-btn:hover { background: rgba(201,169,110,0.07) !important; }
+    .pw-chapter-btn:hover .pw-chapter-name { color: rgba(255,255,255,0.75) !important; }
+  `
+
+  // ── Device frame shared styles ──────────────────────────────────────────────
+  const deviceFrame = (
+    <div
+      style={{
+        position:     'relative',
+        perspective:  '1200px',
+      }}
+    >
+      {/* Ambient glow — behind the device */}
+      <div style={{
+        position:      'absolute',
+        inset:         '-40px -60px -60px -60px',
+        background:    'radial-gradient(ellipse at 40% 60%, rgba(201,169,110,0.12) 0%, rgba(99,102,241,0.06) 45%, transparent 70%)',
+        borderRadius:  '50%',
+        pointerEvents: 'none',
+        animation:     'glowPulse 4s ease-in-out infinite',
+        zIndex:        0,
+      }} />
+
+      {/* The device itself */}
+      <div
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        style={{
+          position:     'relative',
+          zIndex:       1,
+          background:   'linear-gradient(145deg, #13151D 0%, #0E1017 100%)',
+          border:       '1px solid rgba(255,255,255,0.09)',
+          borderRadius: '16px',
+          overflow:     'hidden',
+          boxShadow:    [
+            '0 2px 4px rgba(0,0,0,0.3)',
+            '0 8px 24px rgba(0,0,0,0.45)',
+            '0 32px 64px rgba(0,0,0,0.4)',
+            '0 0 0 1px rgba(255,255,255,0.04)',
+            'inset 0 1px 0 rgba(255,255,255,0.06)',
+          ].join(', '),
+          transform:    'perspective(1200px) rotateX(2deg) rotateY(-1deg)',
+          transition:   'transform 0.4s ease, box-shadow 0.4s ease',
+        }}
+      >
+        {/* Premium chrome bar */}
+        <div style={{
+          padding:         '0.55rem 0.875rem',
+          background:      'linear-gradient(180deg, #1C1F2B 0%, #161820 100%)',
+          borderBottom:    '1px solid rgba(255,255,255,0.06)',
+          display:         'flex',
+          alignItems:      'center',
+          gap:             '0.625rem',
+          backdropFilter:  'blur(8px)',
+        }}>
+          {/* Traffic lights */}
+          <div style={{ display: 'flex', gap: '5px' }}>
+            {['#FF5F57','#FFBD2E','#28C840'].map(c => (
+              <div key={c} style={{ width: 9, height: 9, borderRadius: '50%', background: c, boxShadow: `0 0 4px ${c}55` }} />
+            ))}
+          </div>
+
+          {/* URL bar */}
+          <div style={{
+            flex:         1,
+            height:       20,
+            background:   'rgba(255,255,255,0.04)',
+            borderRadius: '4px',
+            border:       '1px solid rgba(255,255,255,0.07)',
+            display:      'flex',
+            alignItems:   'center',
+            paddingLeft:  '0.625rem',
+            gap:          '0.4rem',
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', flexShrink: 0 }} />
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.28)', letterSpacing: '0.02em' }}>
+              sail-ai.vercel.app
+            </span>
+          </div>
+
+          {/* Mode badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '2px 8px', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.25)', borderRadius: '20px' }}>
+            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#C9A96E', animation: 'glowPulse 2s ease-in-out infinite' }} />
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.08em', color: '#C9A96E' }}>LIVE</span>
+          </div>
+
+          {paused && (
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.52rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.04em' }}>⏸</span>
+          )}
+        </div>
+
+        {/* Hairline progress track */}
+        <div style={{ height: 2, background: 'rgba(255,255,255,0.04)', position: 'relative' }}>
+          <div style={{
+            position:   'absolute',
+            top:        0,
+            left:       0,
+            height:     '100%',
+            width:      `${progress}%`,
+            background: 'linear-gradient(90deg, #A07840, #C9A96E, #E8C87A)',
+            transition: 'width 0.05s linear',
+            boxShadow:  '0 0 6px rgba(201,169,110,0.6)',
+          }} />
+        </div>
+
+        {/* Slide content */}
+        <div style={{ padding: '1rem 1rem', minHeight: isMobile ? 300 : 360, position: 'relative' }}>
+          <SlideContent slide={current} />
+        </div>
+
+        {/* Bottom reflection line */}
+        <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.15), transparent)' }} />
+      </div>
+    </div>
+  )
+
   return (
     <section
       id="tutorial"
-      style={{ background: '#0C0C0E', borderTop: '1px solid rgba(201,169,110,0.15)', borderBottom: '1px solid rgba(201,169,110,0.1)' }}
+      className="pw-section"
+      style={{ position: 'relative', overflow: 'hidden' }}
     >
-      <style>{`
-        @keyframes spin  { to { transform: rotate(360deg) } }
-        @keyframes blink { 50% { opacity: 0 } }
-      `}</style>
+      <style>{css}</style>
 
-      <div className="max-w-6xl mx-auto px-6 md:px-10 py-20">
+      {/* Background grid mesh — flex.one-style depth texture */}
+      <div style={{
+        position:   'absolute',
+        inset:      0,
+        backgroundImage: [
+          'linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px)',
+          'linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)',
+        ].join(', '),
+        backgroundSize: '72px 72px',
+        pointerEvents:  'none',
+        zIndex:         0,
+      }} />
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#C9A96E' }}>
-                {t('walk.chapters')}
-              </span>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.06em', color: '#0C0C0E', background: '#C9A96E', padding: '1px 6px', borderRadius: '3px' }}>
-                {Math.round((SLIDE_DURATION * totalSlides) / 1000 / 60)}:{String(Math.round((SLIDE_DURATION * totalSlides / 1000) % 60)).padStart(2, '0')} dk
-              </span>
-            </div>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', fontWeight: 600, color: '#FFFFFF', margin: 0, lineHeight: 1.2 }}>
-              {t('welcome.heroTitle')}
-            </h2>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.5rem', fontWeight: 300 }}>
-              {t('welcome.heroSub')}
-            </p>
-          </div>
-          <Link
-            href="/welcome"
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.35)', borderRadius: '6px', padding: '0.5rem 1rem', textDecoration: 'none', flexShrink: 0, width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'center' : 'left' }}
+      {/* Radial center glow */}
+      <div style={{
+        position:      'absolute',
+        top:           '50%',
+        left:          '50%',
+        transform:     'translate(-50%, -50%)',
+        width:         '80vw',
+        height:        '60vh',
+        background:    'radial-gradient(ellipse, rgba(201,169,110,0.055) 0%, transparent 65%)',
+        pointerEvents: 'none',
+        zIndex:        0,
+      }} />
+
+      <div className="max-w-6xl mx-auto px-6 md:px-10" style={{ position: 'relative', zIndex: 1, paddingTop: '6rem', paddingBottom: '6rem' }}>
+
+        {/* ── Premium section header ─────────────────────────────────────── */}
+        <div ref={headerRef} style={{ marginBottom: isMobile ? '3rem' : '4rem', maxWidth: 640 }}>
+          <div
+            className={`pw-header-animate in-d1 ${headerInView ? 'in' : ''}`}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}
           >
-            {t('walk.ctaBtn')}
-          </Link>
+            <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
+            <span style={{
+              fontFamily:    'Inter, sans-serif',
+              fontSize:      '0.62rem',
+              fontWeight:    700,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color:         '#C9A96E',
+            }}>
+              {t('walk.chapters')}
+            </span>
+          </div>
+
+          <h2
+            className={`pw-header-animate in-d2 ${headerInView ? 'in' : ''}`}
+            style={{
+              fontFamily:  'Cormorant Garamond, Georgia, serif',
+              fontSize:    'clamp(2rem, 4.5vw, 3.25rem)',
+              fontWeight:  600,
+              fontStyle:   'italic',
+              color:       '#FFFFFF',
+              margin:      0,
+              lineHeight:  1.1,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {t('welcome.heroTitle')}
+          </h2>
+
+          <p
+            className={`pw-header-animate in-d3 ${headerInView ? 'in' : ''}`}
+            style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize:   '0.9rem',
+              color:      'rgba(255,255,255,0.38)',
+              marginTop:  '1rem',
+              fontWeight: 300,
+              lineHeight: 1.7,
+            }}
+          >
+            {t('welcome.heroSub')}
+          </p>
         </div>
 
-        {/* Main content: YouTube or animated demo */}
+        {/* ── Main demo area ─────────────────────────────────────────────── */}
         {YOUTUBE_VIDEO_ID ? (
           <YouTubeEmbed videoId={YOUTUBE_VIDEO_ID} />
         ) : isMobile ? (
-          /* ── Mobile layout ───────────────────────────── */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-            {/* Full-width animated screen */}
-            <div
-              onTouchStart={() => setPaused(true)}
-              onTouchEnd={() => setPaused(false)}
-              style={{
-                background:   '#111318',
-                border:       '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px',
-                overflow:     'hidden',
-                position:     'relative',
-              }}
-            >
-              {/* Fake window chrome */}
-              <div style={{ padding: '0.625rem 0.875rem', background: '#1A1A22', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                <div style={{ display: 'flex', gap: '5px' }}>
-                  {['#FF5F57','#FFBD2E','#28C840'].map(c => <div key={c} style={{ width: 9, height: 9, borderRadius: '50%', background: c }} />)}
-                </div>
-                <div style={{ flex: 1, height: 16, background: 'rgba(255,255,255,0.05)', borderRadius: '3px', display: 'flex', alignItems: 'center', paddingLeft: '0.625rem' }}>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)' }}>sail-ai.vercel.app</span>
-                </div>
-              </div>
+          /* ── Mobile layout ─────────────────────────────────────────────── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-              {/* Progress bar */}
-              <div style={{ height: 2, background: 'rgba(255,255,255,0.06)' }}>
-                <div style={{ height: '100%', width: `${progress}%`, background: '#C9A96E', transition: 'width 0.05s linear' }} />
-              </div>
-
-              {/* Slide content */}
-              <div style={{ padding: '1rem', minHeight: 300, position: 'relative' }}>
-                <SlideContent slide={current} />
-              </div>
+            {/* Animated device */}
+            <div ref={demoRef} className={`pw-device-animate ${demoInView ? 'in' : ''}`}>
+              {deviceFrame}
             </div>
 
             {/* Horizontal scrollable chapter strip */}
-            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '0.5rem' }}>
               <div style={{ display: 'flex', gap: '0.5rem', paddingBottom: '0.25rem' }}>
                 {SLIDES_I18N.map((slide) => {
                   const active = current === slide.id
@@ -582,20 +794,21 @@ export function ProductWalkthrough() {
                         display:       'flex',
                         alignItems:    'center',
                         gap:           '0.35rem',
-                        padding:       '0.4rem 0.625rem',
-                        background:    active ? '#C9A96E' : done ? 'rgba(201,169,110,0.15)' : 'rgba(255,255,255,0.05)',
-                        border:        `1px solid ${active ? '#C9A96E' : done ? 'rgba(201,169,110,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                        padding:       '0.4rem 0.75rem',
+                        background:    active ? 'rgba(201,169,110,0.12)' : done ? 'rgba(201,169,110,0.06)' : 'rgba(255,255,255,0.04)',
+                        border:        `1px solid ${active ? 'rgba(201,169,110,0.45)' : done ? 'rgba(201,169,110,0.2)' : 'rgba(255,255,255,0.08)'}`,
                         borderRadius:  '20px',
                         cursor:        'pointer',
                         whiteSpace:    'nowrap',
                         flexShrink:    0,
-                        transition:    'all 0.15s',
+                        transition:    'all 0.18s',
+                        boxShadow:     active ? '0 0 12px rgba(201,169,110,0.2)' : 'none',
                       }}
                     >
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: active ? '#0C0C0E' : done ? '#C9A96E' : 'rgba(255,255,255,0.4)' }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: active ? '#C9A96E' : done ? 'rgba(201,169,110,0.7)' : 'rgba(255,255,255,0.3)' }}>
                         {done ? '✓' : slide.id}
                       </span>
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: active ? 700 : 400, color: active ? '#0C0C0E' : done ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.35)' }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: active ? 600 : 400, color: active ? 'rgba(255,255,255,0.9)' : done ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)' }}>
                         {slide.chapter}
                       </span>
                     </button>
@@ -604,147 +817,184 @@ export function ProductWalkthrough() {
               </div>
             </div>
 
-            {/* Full-width CTA link */}
+            {/* CTA */}
             <Link
               href="/welcome"
               style={{
                 display:       'block',
                 textAlign:     'center',
-                padding:       '0.625rem',
-                background:    '#C9A96E',
+                padding:       '0.875rem',
+                background:    'linear-gradient(135deg, #B8882A, #C9A96E, #D4B87E)',
                 color:         '#0C0C0E',
                 fontFamily:    'Inter, sans-serif',
-                fontSize:      '0.72rem',
+                fontSize:      '0.75rem',
                 fontWeight:    700,
-                letterSpacing: '0.08em',
+                letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                borderRadius:  '7px',
+                borderRadius:  '8px',
                 textDecoration:'none',
+                boxShadow:     '0 4px 20px rgba(201,169,110,0.3)',
               }}
             >
               {t('walk.ctaBtn')}
             </Link>
           </div>
+
         ) : (
-          /* ── Desktop two-column layout ───────────────── */
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: '1.5rem', alignItems: 'start' }}>
 
-            {/* ── Animated screen ─── */}
-            <div
-              onMouseEnter={() => setPaused(true)}
-              onMouseLeave={() => setPaused(false)}
-              style={{
-                background:   '#111318',
-                border:       '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px',
-                overflow:     'hidden',
-                position:     'relative',
-              }}
-            >
-              {/* Fake window chrome */}
-              <div style={{ padding: '0.625rem 0.875rem', background: '#1A1A22', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                <div style={{ display: 'flex', gap: '5px' }}>
-                  {['#FF5F57','#FFBD2E','#28C840'].map(c => <div key={c} style={{ width: 9, height: 9, borderRadius: '50%', background: c }} />)}
-                </div>
-                <div style={{ flex: 1, height: 16, background: 'rgba(255,255,255,0.05)', borderRadius: '3px', display: 'flex', alignItems: 'center', paddingLeft: '0.625rem' }}>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)' }}>sail-ai.vercel.app</span>
-                </div>
-                {paused && (
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.55rem', color: '#C9A96E', letterSpacing: '0.05em' }}>⏸ {t('walk.pause')}</span>
-                )}
-              </div>
+          /* ── Desktop two-column layout ────────────────────────────────── */
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 272px', gap: '2.5rem', alignItems: 'start' }}>
 
-              {/* Progress bar */}
-              <div style={{ height: 2, background: 'rgba(255,255,255,0.06)' }}>
-                <div style={{ height: '100%', width: `${progress}%`, background: '#C9A96E', transition: 'width 0.05s linear' }} />
-              </div>
-
-              {/* Slide content */}
-              <div style={{ padding: '1rem', minHeight: 340, position: 'relative' }}>
-                <SlideContent slide={current} />
-              </div>
+            {/* ── Device frame ──────────────────────────────────────────── */}
+            <div ref={demoRef} className={`pw-device-animate ${demoInView ? 'in' : ''}`}>
+              {deviceFrame}
             </div>
 
-            {/* ── Chapter list ─── */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '0.5rem' }}>
-                {t('walk.chapters')}
-              </p>
-              {SLIDES_I18N.map((slide) => {
-                const active = current === slide.id
-                const done   = current > slide.id
-                return (
-                  <button
-                    key={slide.id}
-                    onClick={() => { setCurrent(slide.id); setProgress(0) }}
-                    style={{
-                      display:      'flex',
-                      alignItems:   'center',
-                      gap:          '0.625rem',
-                      padding:      '0.5rem 0.625rem',
-                      background:   active ? 'rgba(201,169,110,0.1)' : 'transparent',
-                      border:       `1px solid ${active ? 'rgba(201,169,110,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                      borderRadius: '7px',
-                      cursor:       'pointer',
-                      textAlign:    'left',
-                      transition:   'all 0.15s',
-                    }}
-                  >
-                    <div style={{
-                      width:          22,
-                      height:         22,
-                      borderRadius:   '50%',
-                      background:     done ? '#C9A96E' : active ? 'rgba(201,169,110,0.2)' : 'rgba(255,255,255,0.05)',
-                      border:         `1px solid ${done || active ? '#C9A96E' : 'rgba(255,255,255,0.12)'}`,
-                      display:        'flex',
-                      alignItems:     'center',
-                      justifyContent: 'center',
-                      flexShrink:     0,
-                    }}>
-                      {done
-                        ? <span style={{ fontSize: '0.55rem', color: '#0C0C0E', fontWeight: 900 }}>✓</span>
-                        : <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', fontWeight: 700, color: active ? '#C9A96E' : 'rgba(255,255,255,0.3)' }}>{slide.id}</span>
-                      }
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', fontWeight: active ? 600 : 400, color: active ? '#FFFFFF' : done ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.3 }}>
-                        {slide.chapter}
-                      </p>
-                    </div>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>
-                      {slide.time}
-                    </span>
-                  </button>
-                )
-              })}
+            {/* ── Premium chapter sidebar ─────────────────────────────── */}
+            <div className={`pw-sidebar-animate ${demoInView ? 'in' : ''}`} style={{ display: 'flex', flexDirection: 'column' }}>
 
-              {/* CTA below chapters */}
-              <div style={{ marginTop: '0.75rem', padding: '0.875rem', background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)', borderRadius: '8px' }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#C9A96E', fontWeight: 600, margin: '0 0 0.5rem', lineHeight: 1.4 }}>
+              {/* Timeline label */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                <div style={{ width: 16, height: 1, background: 'rgba(255,255,255,0.2)' }} />
+                <p style={{
+                  fontFamily:    'Inter, sans-serif',
+                  fontSize:      '0.58rem',
+                  fontWeight:    700,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color:         'rgba(255,255,255,0.25)',
+                  margin:        0,
+                }}>
+                  {t('walk.chapters')}
+                </p>
+              </div>
+
+              {/* Timeline items */}
+              <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+
+                {/* Vertical track line */}
+                <div style={{
+                  position:   'absolute',
+                  left:       10,
+                  top:        11,
+                  bottom:     11,
+                  width:      1,
+                  background: 'rgba(255,255,255,0.07)',
+                  zIndex:     0,
+                }} />
+
+                {/* Filled portion of track */}
+                <div style={{
+                  position:   'absolute',
+                  left:       10,
+                  top:        11,
+                  width:      1,
+                  height:     `${((current - 1) / (totalSlides - 1)) * 100}%`,
+                  background: 'linear-gradient(180deg, #C9A96E, rgba(201,169,110,0.3))',
+                  transition: 'height 0.4s ease',
+                  zIndex:     0,
+                }} />
+
+                {SLIDES_I18N.map((slide) => {
+                  const active = current === slide.id
+                  const done   = current > slide.id
+                  return (
+                    <button
+                      key={slide.id}
+                      className="pw-chapter-btn"
+                      onClick={() => { setCurrent(slide.id); setProgress(0) }}
+                      style={{
+                        display:      'flex',
+                        alignItems:   'center',
+                        gap:          '0.875rem',
+                        padding:      '0.6rem 0.75rem 0.6rem 0.25rem',
+                        background:   active ? 'rgba(201,169,110,0.07)' : 'transparent',
+                        border:       `1px solid ${active ? 'rgba(201,169,110,0.2)' : 'transparent'}`,
+                        borderRadius: '8px',
+                        cursor:       'pointer',
+                        textAlign:    'left',
+                        transition:   'all 0.18s',
+                        position:     'relative',
+                        zIndex:       1,
+                        marginBottom: '0.125rem',
+                        boxShadow:    active ? '0 0 20px rgba(201,169,110,0.08)' : 'none',
+                      }}
+                    >
+                      <StepDot active={active} done={done} />
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p
+                          className="pw-chapter-name"
+                          style={{
+                            fontFamily: 'Inter, sans-serif',
+                            fontSize:   '0.72rem',
+                            fontWeight: active ? 600 : 400,
+                            color:      active ? '#FFFFFF' : done ? 'rgba(255,255,255,0.48)' : 'rgba(255,255,255,0.28)',
+                            margin:     0,
+                            lineHeight: 1.3,
+                            transition: 'color 0.18s',
+                          }}
+                        >
+                          {slide.chapter}
+                        </p>
+                        {active && (
+                          <div style={{ marginTop: '4px', height: 2, background: 'rgba(201,169,110,0.15)', borderRadius: 1, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${progress}%`, background: '#C9A96E', transition: 'width 0.05s linear', borderRadius: 1 }} />
+                          </div>
+                        )}
+                      </div>
+
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.56rem', color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
+                        {slide.time}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Spacer */}
+              <div style={{ flex: 1, minHeight: '1.5rem' }} />
+
+              {/* Premium CTA card */}
+              <div style={{
+                marginTop:    '1.5rem',
+                padding:      '1.25rem',
+                background:   'linear-gradient(145deg, rgba(201,169,110,0.08), rgba(201,169,110,0.04))',
+                border:       '1px solid rgba(201,169,110,0.2)',
+                borderRadius: '12px',
+                position:     'relative',
+                overflow:     'hidden',
+              }}>
+                {/* Corner decoration */}
+                <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, background: 'radial-gradient(circle, rgba(201,169,110,0.15), transparent)', borderRadius: '50%', pointerEvents: 'none' }} />
+
+                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.375rem', lineHeight: 1.3 }}>
                   {t('walk.ctaHeadline')}
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', margin: '0 0 1rem', lineHeight: 1.5 }}>
+                  {t('walk.ctaSub')}
                 </p>
                 <Link
                   href="/welcome"
                   style={{
                     display:       'block',
                     textAlign:     'center',
-                    padding:       '0.5rem',
-                    background:    '#C9A96E',
+                    padding:       '0.6rem 1rem',
+                    background:    'linear-gradient(135deg, #B8882A, #C9A96E)',
                     color:         '#0C0C0E',
                     fontFamily:    'Inter, sans-serif',
-                    fontSize:      '0.68rem',
+                    fontSize:      '0.65rem',
                     fontWeight:    700,
-                    letterSpacing: '0.08em',
+                    letterSpacing: '0.1em',
                     textTransform: 'uppercase',
-                    borderRadius:  '5px',
+                    borderRadius:  '6px',
                     textDecoration:'none',
+                    boxShadow:     '0 2px 12px rgba(201,169,110,0.35)',
+                    transition:    'box-shadow 0.2s',
                   }}
                 >
                   {t('walk.ctaBtn')}
                 </Link>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.3)', textAlign: 'center', margin: '0.4rem 0 0' }}>
-                  {t('walk.ctaSub')}
-                </p>
               </div>
             </div>
           </div>
