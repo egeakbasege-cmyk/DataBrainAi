@@ -1,383 +1,454 @@
 'use client'
 
 /**
- * components/SovereignDashboard.tsx — Sovereign Mode Selection Screen
+ * components/SovereignDashboard.tsx — 3-D Coverflow Mode Selector
  * ─────────────────────────────────────────────────────────────────────────────
- * Full-screen pre-conversation mode picker that integrates with the dark chat
- * UI. Replaces the broken fan layout with a clean, premium card grid.
+ * Five tall pill-shaped cards arranged in a 3-D arc.
+ * Clicking any card springs it forward to the center; others recede in depth.
  *
- * Layout:
- *   – Dark (#0C0C0E) background with subtle teal grid, matching chat page
- *   – 5 mode cards in a responsive grid (3+2 or 2+3)
- *   – Selected card: glowing border + mode-colour tint
- *   – "Chart Course" CTA launches selected mode
+ * Visual model (5 positions, index 0 = selected / front):
  *
- * Props (unchanged — chat/page.tsx requires no edits):
- *   initialMode     — pre-selected mode (default: 'upwind')
- *   onModeSelect    — called when user commits a mode
- *   confidenceScore — not rendered but accepted for compat
- *   processingMs    — not rendered but accepted for compat
- *   companyName     — brand name shown in header
- *   className       — extra class on root div
+ *   pos 3 (far-left)  ·  pos 4 (near-left)  ·  pos 0 (CENTER)  ·  pos 1 (near-right)  ·  pos 2 (far-right)
+ *
+ * Per-slot visual properties are in SLOT_PROPS below.
+ * No CSS overflow clipping — cards can extend outside the carousel div.
+ *
+ * Props interface is identical → chat/page.tsx needs zero changes.
  */
 
-import { useState, useCallback }  from 'react'
+import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage }             from '@/lib/i18n/LanguageContext'
 import type { TranslationKey }     from '@/lib/i18n/translations'
 
-// ── Mode type ─────────────────────────────────────────────────────────────────
+// ── Exported types ────────────────────────────────────────────────────────────
 
 export type SovereignMode = 'upwind' | 'synergy' | 'sail' | 'trim' | 'catamaran'
-
-// ── Props ─────────────────────────────────────────────────────────────────────
 
 export interface SovereignDashboardProps {
   initialMode?:     SovereignMode
   onModeSelect:     (mode: SovereignMode) => void
-  confidenceScore?: number  // accepted for compat; not rendered
-  processingMs?:    number  // accepted for compat; not rendered
+  confidenceScore?: number
+  processingMs?:    number
   companyName?:     string
   className?:       string
 }
 
-// ── Mode catalogue ────────────────────────────────────────────────────────────
+// ── Mode definitions ──────────────────────────────────────────────────────────
 
 interface ModeDef {
-  id:           SovereignMode
-  labelKey:     TranslationKey
-  descKey:      TranslationKey
-  color:        string   // accent / border / glow
-  bg:           string   // card tint when active
-  border:       string   // card border when active
-  glow:         string   // box-shadow glow when active
-  badge?:       string
-  badgeBg:      string
-  badgeColor:   string
-  capabilities: [string, string, string]
+  id:        SovereignMode
+  labelKey:  TranslationKey
+  descKey:   TranslationKey
+  color:     string   // accent colour (icon, title, CTA, glow)
+  tint:      string   // glassmorphic background tint (active card)
+  glow:      string   // box-shadow glow colour
+  border:    string   // active border colour
+  badge?:    string
+  badgeBg:   string
+  badgeText: string
+  caps:      [string, string, string]
+  stat:      string   // large numeric shown in the center card
+  statLabel: string
 }
 
 const MODES: ModeDef[] = [
   {
-    id:           'upwind',
-    labelKey:     'mode.upwind',
-    descKey:      'mode.upwindDesc',
-    color:        '#4E91D0',
-    bg:           'rgba(26,82,118,0.14)',
-    border:       'rgba(78,145,208,0.55)',
-    glow:         'rgba(26,82,118,0.25)',
-    badgeBg:      'rgba(26,82,118,0.25)',
-    badgeColor:   '#7DB9E8',
-    capabilities: [
-      'Instant strategic brief',
-      'Numerically anchored output',
-      'Live research synthesis',
-    ],
+    id:        'upwind',
+    labelKey:  'mode.upwind',
+    descKey:   'mode.upwindDesc',
+    color:     '#1A5276',
+    tint:      'rgba(26,82,118,0.10)',
+    glow:      'rgba(26,82,118,0.30)',
+    border:    'rgba(26,82,118,0.35)',
+    badgeBg:   'rgba(26,82,118,0.15)',
+    badgeText: '#2980B9',
+    caps:      ['Instant strategic brief', 'Numerically anchored output', 'Live research synthesis'],
+    stat:      '95',
+    statLabel: 'VERIM',
   },
   {
-    id:           'synergy',
-    labelKey:     'mode.synergy',
-    descKey:      'mode.synergyDesc',
-    color:        '#C9A96E',
-    bg:           'rgba(201,169,110,0.14)',
-    border:       'rgba(201,169,110,0.55)',
-    glow:         'rgba(201,169,110,0.25)',
-    badge:        'WAR ROOM',
-    badgeBg:      'rgba(201,169,110,0.2)',
-    badgeColor:   '#C9A96E',
-    capabilities: [
-      '3 specialist agents in parallel',
-      'Financial · Strategic · Operational lenses',
-      '70B synthesis — one authoritative verdict',
-    ],
+    id:        'synergy',
+    labelKey:  'mode.synergy',
+    descKey:   'mode.synergyDesc',
+    color:     '#7A5200',
+    tint:      'rgba(201,169,110,0.14)',
+    glow:      'rgba(201,169,110,0.40)',
+    border:    'rgba(201,169,110,0.45)',
+    badge:     'WAR ROOM',
+    badgeBg:   'rgba(201,169,110,0.18)',
+    badgeText: '#9A6B00',
+    caps:      ['3 specialist agents in parallel', 'Financial · Strategic · Operational lenses', '70B synthesis — one verdict'],
+    stat:      '3×',
+    statLabel: 'AGENTS',
   },
   {
-    id:           'sail',
-    labelKey:     'mode.sail',
-    descKey:      'mode.sailDesc',
-    color:        '#9D72F0',
-    bg:           'rgba(124,58,237,0.14)',
-    border:       'rgba(157,114,240,0.55)',
-    glow:         'rgba(124,58,237,0.25)',
-    badge:        'AI+',
-    badgeBg:      'rgba(124,58,237,0.25)',
-    badgeColor:   '#C4A8FF',
-    capabilities: [
-      'Intent-aware model routing',
-      '8B + 70B speculative race',
-      'Adaptive depth calibration',
-    ],
+    id:        'sail',
+    labelKey:  'mode.sail',
+    descKey:   'mode.sailDesc',
+    color:     '#5B21B6',
+    tint:      'rgba(124,58,237,0.10)',
+    glow:      'rgba(124,58,237,0.30)',
+    border:    'rgba(124,58,237,0.35)',
+    badge:     'AI+',
+    badgeBg:   'rgba(124,58,237,0.15)',
+    badgeText: '#7C3AED',
+    caps:      ['Intent-aware model routing', '8B + 70B speculative race', 'Adaptive depth calibration'],
+    stat:      '2×',
+    statLabel: 'SPEED',
   },
   {
-    id:           'trim',
-    labelKey:     'mode.trim',
-    descKey:      'mode.trimDesc',
-    color:        '#E8A045',
-    bg:           'rgba(180,83,9,0.14)',
-    border:       'rgba(201,169,110,0.55)',
-    glow:         'rgba(201,169,110,0.22)',
-    badge:        'NEW',
-    badgeBg:      'rgba(180,83,9,0.25)',
-    badgeColor:   '#F4C47D',
-    capabilities: [
-      'Phased execution roadmap',
-      'Dependency chain mapping',
-      'KPI milestone structure',
-    ],
+    id:        'trim',
+    labelKey:  'mode.trim',
+    descKey:   'mode.trimDesc',
+    color:     '#92400E',
+    tint:      'rgba(180,83,9,0.10)',
+    glow:      'rgba(180,83,9,0.30)',
+    border:    'rgba(201,169,110,0.40)',
+    badge:     'NEW',
+    badgeBg:   'rgba(180,83,9,0.15)',
+    badgeText: '#B45309',
+    caps:      ['Phased execution roadmap', 'Dependency chain mapping', 'KPI milestone structure'],
+    stat:      '5–8',
+    statLabel: 'PHASES',
   },
   {
-    id:           'catamaran',
-    labelKey:     'mode.catamaran',
-    descKey:      'mode.catamaranDesc',
-    color:        '#D4AF37',
-    bg:           'rgba(212,175,55,0.14)',
-    border:       'rgba(212,175,55,0.55)',
-    glow:         'rgba(212,175,55,0.25)',
-    badge:        'PRO',
-    badgeBg:      'rgba(212,175,55,0.22)',
-    badgeColor:   '#F0D060',
-    capabilities: [
-      'Dual-track growth model',
-      'Market + CX in parallel',
-      'Unified strategic keel',
-    ],
+    id:        'catamaran',
+    labelKey:  'mode.catamaran',
+    descKey:   'mode.catamaranDesc',
+    color:     '#78620A',
+    tint:      'rgba(212,175,55,0.12)',
+    glow:      'rgba(212,175,55,0.35)',
+    border:    'rgba(212,175,55,0.40)',
+    badge:     'PRO',
+    badgeBg:   'rgba(212,175,55,0.18)',
+    badgeText: '#92730A',
+    caps:      ['Dual-track growth model', 'Market + CX in parallel', 'Unified strategic keel'],
+    stat:      '2×',
+    statLabel: 'TRACKS',
   },
 ]
 
-// ── Icons (same SVG geometry as ModeSelector) ─────────────────────────────────
+// ── 3-D slot layout: 5 positions around the arc ───────────────────────────────
+// Index 0 = center / selected (front)
+// Index 1 = right-inner, 2 = right-outer
+// Index 3 = left-outer,  4 = left-inner
+// translateX is in px from carousel center; rotateY tilts the card in 3-D;
+// scale and opacity give depth cueing.
 
-function UpwindIcon({ color }: { color: string }) {
+interface SlotDef {
+  x:       number  // translateX px (card center offset from carousel center)
+  ry:      number  // rotateY degrees (positive = left edge toward viewer)
+  scale:   number
+  opacity: number
+  zIndex:  number
+  blur:    number  // backdrop-filter blur reduction for non-center cards
+}
+
+const SLOT_DEFS: SlotDef[] = [
+  { x:    0, ry:   0, scale: 1.00, opacity: 1.00, zIndex: 10, blur: 0  }, // 0 – center
+  { x:  225, ry: -22, scale: 0.80, opacity: 0.60, zIndex:  6, blur: 2  }, // 1 – near-right
+  { x:  410, ry: -36, scale: 0.60, opacity: 0.30, zIndex:  3, blur: 4  }, // 2 – far-right
+  { x: -410, ry:  36, scale: 0.60, opacity: 0.30, zIndex:  3, blur: 4  }, // 3 – far-left
+  { x: -225, ry:  22, scale: 0.80, opacity: 0.60, zIndex:  6, blur: 2  }, // 4 – near-left
+]
+
+// For card at mode-index i when selectedIndex = s:
+//   posSlot = (i - s + 5) % 5   →  into SLOT_DEFS
+function getSlot(cardIdx: number, selectedIdx: number): SlotDef {
+  return SLOT_DEFS[(cardIdx - selectedIdx + 5) % 5]
+}
+
+// ── SVG icons ─────────────────────────────────────────────────────────────────
+
+function UpwindIcon({ color, size = 32 }: { color: string; size?: number }) {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M12 3L12 19L4 19Z"  fill={color} opacity="0.85"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 3L12 19L4 19Z"  fill={color} opacity="0.9"/>
       <path d="M12 3L12 19L20 12Z" fill={color} opacity="0.28"/>
-      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M5 19Q12 22 19 19" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
     </svg>
   )
 }
-function SynergyIcon({ color }: { color: string }) {
+function SynergyIcon({ color, size = 32 }: { color: string; size?: number }) {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <polygon points="7,3 11,5.3 11,10 7,12.3 3,10 3,5.3"    fill={color} opacity="0.85"/>
-      <polygon points="17,3 21,5.3 21,10 17,12.3 13,10 13,5.3"  fill="#C9A96E" opacity="0.70"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <polygon points="7,3 11,5.3 11,10 7,12.3 3,10 3,5.3"    fill={color} opacity="0.88"/>
+      <polygon points="17,3 21,5.3 21,10 17,12.3 13,10 13,5.3"  fill="#C9A96E" opacity="0.75"/>
       <polygon points="12,11.7 16,14 16,18.7 12,21 8,18.7 8,14" fill={color} opacity="0.55"/>
-      <circle cx="12" cy="10" r="1.8" fill="#FFFFFF" opacity="0.9"/>
+      <circle cx="12" cy="10" r="1.8" fill="#FFFFFF" opacity="0.95"/>
     </svg>
   )
 }
-function SailIcon({ color }: { color: string }) {
+function SailIcon({ color, size = 32 }: { color: string; size?: number }) {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M12 3C18 5 22 11 20 19L12 19Z" fill={color} opacity="0.85"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 3C18 5 22 11 20 19L12 19Z" fill={color} opacity="0.9"/>
       <path d="M12 8C16 9 18 14 17 19L12 19Z" fill={color} opacity="0.38"/>
-      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M5 19Q12 22 19 19" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-      <circle cx="5" cy="6" r="1.8" fill={color} opacity="0.55"/>
+      <circle cx="5" cy="6" r="1.8" fill={color} opacity="0.6"/>
     </svg>
   )
 }
-function TrimIcon({ color }: { color: string }) {
+function TrimIcon({ color, size = 32 }: { color: string; size?: number }) {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       <line x1="6" y1="4" x2="6" y2="20" stroke={color} strokeWidth="1.3" strokeLinecap="round" opacity="0.3"/>
       <circle cx="6" cy="6"  r="2.2" fill={color} opacity="0.9"/>
       <circle cx="6" cy="12" r="2.2" fill={color} opacity="0.65"/>
       <circle cx="6" cy="18" r="2.2" fill={color} opacity="0.4"/>
-      <rect x="11" y="5"  width="9" height="2" rx="1" fill={color} opacity="0.85"/>
+      <rect x="11" y="5"  width="9" height="2" rx="1" fill={color} opacity="0.9"/>
       <rect x="11" y="11" width="7" height="2" rx="1" fill={color} opacity="0.65"/>
       <rect x="11" y="17" width="5" height="2" rx="1" fill={color} opacity="0.45"/>
     </svg>
   )
 }
-function CatamaranIcon({ color }: { color: string }) {
+function CatamaranIcon({ color, size = 32 }: { color: string; size?: number }) {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M4 18L6 20L8 18"   stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M4 18L6 20L8 18"    stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M16 18L18 20L20 18" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       <line x1="6"  y1="14" x2="18" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
       <line x1="12" y1="14" x2="12" y2="4"  stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M12 4L18 10L12 10Z" fill={color} opacity="0.8"/>
+      <path d="M12 4L18 10L12 10Z" fill={color} opacity="0.85"/>
       <line x1="2" y1="10" x2="5" y2="10" stroke={color} strokeWidth="1" opacity="0.45"/>
       <line x1="2" y1="13" x2="4" y2="13" stroke={color} strokeWidth="1" opacity="0.45"/>
     </svg>
   )
 }
 
-function ModeIconSwitch({ id, color }: { id: SovereignMode; color: string }) {
-  if (id === 'upwind')    return <UpwindIcon    color={color} />
-  if (id === 'synergy')   return <SynergyIcon   color={color} />
-  if (id === 'sail')      return <SailIcon      color={color} />
-  if (id === 'trim')      return <TrimIcon      color={color} />
-  return <CatamaranIcon color={color} />
+function ModeIcon({ id, color, size }: { id: SovereignMode; color: string; size?: number }) {
+  if (id === 'upwind')   return <UpwindIcon    color={color} size={size} />
+  if (id === 'synergy')  return <SynergyIcon   color={color} size={size} />
+  if (id === 'sail')     return <SailIcon      color={color} size={size} />
+  if (id === 'trim')     return <TrimIcon      color={color} size={size} />
+  return                        <CatamaranIcon color={color} size={size} />
 }
 
-// ── Single mode card ──────────────────────────────────────────────────────────
+// ── Architectural grid overlay ────────────────────────────────────────────────
 
-interface ModeCardProps {
-  def:      ModeDef
-  label:    string
-  desc:     string
-  isActive: boolean
-  onClick:  () => void
-  onLaunch: () => void
-  delay:    number
+function ArchGrid() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden>
+      <defs>
+        <pattern id="sv-g" width="60" height="60" patternUnits="userSpaceOnUse">
+          <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(45,212,191,0.10)" strokeWidth="0.5"/>
+        </pattern>
+        <radialGradient id="sv-vign" cx="50%" cy="50%" r="60%">
+          <stop offset="0%"   stopColor="rgba(255,255,255,0)"   />
+          <stop offset="100%" stopColor="rgba(200,240,235,0.20)" />
+        </radialGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#sv-g)" />
+      <rect width="100%" height="100%" fill="url(#sv-vign)" />
+    </svg>
+  )
 }
 
-function ModeCard({ def, label, desc, isActive, onClick, onLaunch, delay }: ModeCardProps) {
-  const [hovered, setHovered] = useState(false)
-  const lit = isActive || hovered
+// ── Individual carousel card ──────────────────────────────────────────────────
+
+const CARD_W = 170  // px
+const CARD_H = 410  // px
+const CARD_R = 56   // border-radius
+
+interface CarouselCardProps {
+  def:         ModeDef
+  label:       string
+  desc:        string
+  slot:        SlotDef
+  isCenter:    boolean
+  companyName?: string
+  confidenceScore: number
+  processingMs?:  number
+  onSelect:    () => void
+  onLaunch:    () => void
+}
+
+function CarouselCard({
+  def, label, desc, slot, isCenter, companyName,
+  confidenceScore, onSelect, onLaunch,
+}: CarouselCardProps) {
+  const [hov, setHov] = useState(false)
+
+  // Spring-animated transform values
+  const springConf = { type: 'spring' as const, stiffness: 320, damping: 34 }
 
   return (
-    <motion.button
-      type="button"
-      aria-pressed={isActive}
-      aria-label={`Select ${label} mode`}
-      onClick={onClick}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
-      style={{
-        position:      'relative',
-        display:       'flex',
-        flexDirection: 'column',
-        alignItems:    'flex-start',
-        gap:           0,
-        width:         '100%',
-        padding:       '1.5rem',
-        borderRadius:  '14px',
-        border:        isActive
-          ? `1.5px solid ${def.border}`
-          : `1px solid ${hovered ? def.border : 'rgba(255,255,255,0.08)'}`,
-        background:    isActive
-          ? def.bg
-          : hovered
-            ? 'rgba(255,255,255,0.04)'
-            : 'rgba(255,255,255,0.025)',
-        backdropFilter:  'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        boxShadow:     isActive
-          ? `0 0 0 1px ${def.border}, 0 8px 32px ${def.glow}, 0 2px 8px rgba(0,0,0,0.3)`
-          : hovered
-            ? `0 4px 24px rgba(0,0,0,0.2)`
-            : `0 2px 12px rgba(0,0,0,0.15)`,
-        cursor:        'pointer',
-        textAlign:     'left',
-        outline:       'none',
-        transition:    'background 0.2s, border-color 0.2s, box-shadow 0.2s',
+    <motion.div
+      onClick={isCenter ? onLaunch : onSelect}
+      onHoverStart={() => setHov(true)}
+      onHoverEnd={() => setHov(false)}
+      animate={{
+        x:       slot.x,
+        rotateY: slot.ry,
+        scale:   isCenter && hov ? 1.02 : slot.scale,
+        opacity: slot.opacity,
+        zIndex:  slot.zIndex,
       }}
+      transition={springConf}
+      style={{
+        position:     'absolute',
+        left:         `calc(50% - ${CARD_W / 2}px)`,
+        top:          0,
+        width:        `${CARD_W}px`,
+        height:       `${CARD_H}px`,
+        borderRadius: `${CARD_R}px`,
+        cursor:       isCenter ? 'default' : 'pointer',
+        // card face
+        background:   isCenter
+          ? `linear-gradient(170deg, rgba(255,255,255,0.96) 0%, ${def.tint} 55%, rgba(255,255,255,0.90) 100%)`
+          : `rgba(255,255,255,${isCenter ? 0.94 : 0.70})`,
+        border:       isCenter
+          ? `2px solid rgba(255,255,255,0.85)`
+          : `1px solid rgba(255,255,255,0.55)`,
+        boxShadow:    isCenter
+          ? `0 0 0 1px ${def.border}, 0 0 60px ${def.glow}, 0 24px 60px rgba(0,0,0,0.14), 0 6px 20px rgba(0,0,0,0.08)`
+          : `0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.05)`,
+        backdropFilter:       `blur(${isCenter ? 24 : 10 + slot.blur}px) saturate(160%)`,
+        WebkitBackdropFilter: `blur(${isCenter ? 24 : 10 + slot.blur}px) saturate(160%)`,
+        display:      'flex',
+        flexDirection:'column',
+        alignItems:   'center',
+        padding:      `${isCenter ? '2rem' : '1.75rem'} 1.25rem`,
+        gap:          0,
+        userSelect:   'none',
+        transformOrigin: 'center center',
+        willChange:   'transform, opacity',
+        // outline on tab
+        outline:      'none',
+      }}
+      role="button"
+      aria-label={isCenter ? `Launch ${label}` : `Select ${label}`}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') isCenter ? onLaunch() : onSelect() }}
     >
+      {/* Breathing glow ring — only on center card */}
+      {isCenter && (
+        <motion.div
+          animate={{ opacity: [0.25, 0.55, 0.25], scale: [1, 1.06, 1] }}
+          transition={{ repeat: Infinity, duration: 3.2, ease: 'easeInOut' }}
+          style={{
+            position:      'absolute',
+            inset:         '-6px',
+            borderRadius:  `${CARD_R + 6}px`,
+            border:        `1.5px solid ${def.color}`,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
       {/* Badge */}
       {def.badge && (
         <span style={{
           position:      'absolute',
-          top:           '12px',
-          right:         '12px',
+          top:           '-10px',
+          right:         '16px',
           fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.48rem',
+          fontSize:      '0.46rem',
           fontWeight:    700,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
-          padding:       '2px 7px',
+          padding:       '2px 8px',
           borderRadius:  '4px',
           background:    def.badgeBg,
-          color:         def.badgeColor,
+          color:         def.badgeText,
           border:        `1px solid ${def.border}`,
+          pointerEvents: 'none',
         }}>
           {def.badge}
         </span>
       )}
 
-      {/* Active selection ring */}
-      {isActive && (
-        <motion.span
-          layoutId="sov-active-ring"
-          style={{
-            position:      'absolute',
-            inset:         '-2px',
-            borderRadius:  '15px',
-            border:        `2px solid ${def.color}`,
-            opacity:       0.6,
-            pointerEvents: 'none',
-          }}
-          transition={{ type: 'spring', stiffness: 400, damping: 34 }}
-        />
-      )}
-
       {/* Icon */}
       <div style={{
-        width:        '48px',
-        height:       '48px',
-        borderRadius: '12px',
-        background:   lit ? def.bg : 'rgba(255,255,255,0.05)',
-        border:       `1px solid ${lit ? def.border : 'rgba(255,255,255,0.08)'}`,
-        display:      'flex',
-        alignItems:   'center',
-        justifyContent: 'center',
-        marginBottom:  '1rem',
-        transition:    'background 0.2s, border-color 0.2s',
-        flexShrink:    0,
+        marginBottom:   isCenter ? '0.75rem' : '0.6rem',
+        opacity:        isCenter ? 1 : 0.75,
+        transition:     'opacity 0.3s',
       }}>
-        <ModeIconSwitch id={def.id} color={lit ? def.color : 'rgba(255,255,255,0.35)'} />
+        <ModeIcon id={def.id} color={def.color} size={isCenter ? 40 : 30} />
       </div>
 
+      {/* Company name (center only) */}
+      {companyName && isCenter && (
+        <span style={{
+          fontFamily:    '"Cormorant Garamond", Georgia, serif',
+          fontStyle:     'italic',
+          fontSize:      '0.62rem',
+          fontWeight:    600,
+          color:         def.color,
+          opacity:       0.65,
+          letterSpacing: '0.04em',
+          marginBottom:  '0.2rem',
+          textAlign:     'center',
+        }}>
+          {companyName}
+        </span>
+      )}
+
       {/* Mode name */}
-      <h3 style={{
+      <h2 style={{
         fontFamily:    'Inter, sans-serif',
-        fontSize:      '0.78rem',
-        fontWeight:    700,
-        letterSpacing: '0.07em',
+        fontSize:      isCenter ? '0.78rem' : '0.65rem',
+        fontWeight:    800,
+        letterSpacing: '0.09em',
         textTransform: 'uppercase',
-        color:         lit ? def.color : 'rgba(255,255,255,0.72)',
-        margin:        '0 0 0.35rem',
+        color:         def.color,
+        margin:        `0 0 ${isCenter ? '0.45rem' : '0.35rem'}`,
+        textAlign:     'center',
         lineHeight:    1.2,
-        transition:    'color 0.2s',
       }}>
         {label}
-      </h3>
+      </h2>
 
       {/* Description */}
       <p style={{
         fontFamily: 'Inter, sans-serif',
-        fontSize:   '0.68rem',
-        color:      'rgba(255,255,255,0.45)',
-        margin:     '0 0 1rem',
+        fontSize:   isCenter ? '0.6rem' : '0.54rem',
+        color:      '#475569',
+        margin:     `0 0 ${isCenter ? '0.85rem' : '0.65rem'}`,
         lineHeight: 1.5,
-        flex:       1,
+        textAlign:  'center',
+        opacity:    isCenter ? 1 : 0.75,
       }}>
         {desc}
       </p>
 
       {/* Divider */}
       <div style={{
-        width:      '100%',
-        height:     '1px',
-        background: lit
-          ? `linear-gradient(90deg, ${def.color}44, transparent)`
-          : 'rgba(255,255,255,0.06)',
-        marginBottom: '0.85rem',
-        transition:   'background 0.2s',
+        width:        '40px',
+        height:       '1px',
+        background:   `linear-gradient(90deg, transparent, ${def.color}66, transparent)`,
+        marginBottom: isCenter ? '0.85rem' : '0.65rem',
       }} />
 
       {/* Capabilities */}
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.3rem', width: '100%' }}>
-        {def.capabilities.map(cap => (
-          <li key={cap} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+      <ul style={{
+        listStyle:     'none',
+        padding:       0,
+        margin:        `0 0 ${isCenter ? '1rem' : '0.75rem'}`,
+        width:         '100%',
+        display:       'flex',
+        flexDirection: 'column',
+        gap:           '0.28rem',
+      }}>
+        {def.caps.map(cap => (
+          <li key={cap} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
             <span style={{
-              width:        '4px',
-              height:       '4px',
+              width:        '4px', height: '4px',
               borderRadius: '50%',
-              background:   lit ? def.color : 'rgba(255,255,255,0.25)',
+              background:   def.color,
               flexShrink:   0,
-              transition:   'background 0.2s',
+              marginTop:    '4px',
+              opacity:      isCenter ? 0.8 : 0.55,
             }} />
             <span style={{
               fontFamily: 'Inter, sans-serif',
-              fontSize:   '0.6rem',
-              color:      'rgba(255,255,255,0.42)',
+              fontSize:   isCenter ? '0.58rem' : '0.51rem',
+              color:      '#334155',
               lineHeight: 1.4,
+              opacity:    isCenter ? 1 : 0.7,
             }}>
               {cap}
             </span>
@@ -385,77 +456,100 @@ function ModeCard({ def, label, desc, isActive, onClick, onLaunch, delay }: Mode
         ))}
       </ul>
 
-      {/* Select indicator — bottom row */}
-      <div style={{
-        marginTop:      '1.25rem',
-        width:          '100%',
-        display:        'flex',
-        alignItems:     'center',
-        justifyContent: isActive ? 'space-between' : 'flex-end',
-      }}>
-        {isActive && (
-          <motion.span
-            initial={{ opacity: 0, x: -6 }}
-            animate={{ opacity: 1, x: 0 }}
-            style={{
-              fontFamily:    'Inter, sans-serif',
-              fontSize:      '0.55rem',
-              fontWeight:    700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color:         def.color,
-            }}
-          >
-            ◈ Selected
-          </motion.span>
-        )}
+      {/* Stat — shown on all cards but prominent on center */}
+      <div style={{ textAlign: 'center', marginBottom: isCenter ? '1rem' : '0.75rem' }}>
         <span style={{
           fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.6rem',
-          fontWeight:    600,
-          color:         lit ? def.color : 'rgba(255,255,255,0.2)',
-          letterSpacing: '0.04em',
-          transition:    'color 0.2s',
+          fontSize:      isCenter ? '2rem' : '1.4rem',
+          fontWeight:    800,
+          color:         def.color,
+          lineHeight:    1,
+          letterSpacing: '-0.02em',
         }}>
-          {isActive ? 'Ready →' : 'Select'}
+          {def.stat}
         </span>
+        {def.statLabel !== def.stat && (
+          <p style={{
+            margin:        '2px 0 0',
+            fontFamily:    'Inter, sans-serif',
+            fontSize:      '0.48rem',
+            fontWeight:    700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color:         '#94A3B8',
+          }}>
+            {def.statLabel}
+          </p>
+        )}
       </div>
-    </motion.button>
-  )
-}
 
-// ── Background grid ───────────────────────────────────────────────────────────
-
-function DarkGrid() {
-  return (
-    <div
-      aria-hidden
-      style={{
-        position:        'absolute',
-        inset:           0,
-        backgroundImage: 'linear-gradient(rgba(45,212,191,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(45,212,191,0.045) 1px, transparent 1px)',
-        backgroundSize:  '60px 60px',
-        pointerEvents:   'none',
-      }}
-    />
+      {/* CTA — visible on all cards; prominent on center */}
+      {isCenter ? (
+        <motion.button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onLaunch() }}
+          whileHover={{ scale: 1.05, boxShadow: `0 6px 24px ${def.glow}` }}
+          whileTap={{ scale: 0.95 }}
+          style={{
+            marginTop:     'auto',
+            padding:       '0.55rem 1.5rem',
+            borderRadius:  '999px',
+            border:        'none',
+            background:    def.color,
+            color:         '#FFFFFF',
+            fontFamily:    'Inter, sans-serif',
+            fontSize:      '0.65rem',
+            fontWeight:    700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            cursor:        'pointer',
+            boxShadow:     `0 4px 16px ${def.glow}`,
+          }}
+        >
+          Başlat →
+        </motion.button>
+      ) : (
+        <div style={{
+          marginTop:  'auto',
+          fontFamily: 'Inter, sans-serif',
+          fontSize:   '0.52rem',
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color:      def.color,
+          opacity:    0.5,
+        }}>
+          Select
+        </div>
+      )}
+    </motion.div>
   )
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function SovereignDashboard({
-  initialMode = 'upwind',
+  initialMode    = 'upwind',
   onModeSelect,
+  confidenceScore = 0.95,
+  processingMs,
   companyName,
   className = '',
 }: SovereignDashboardProps) {
-  const { t }                   = useLanguage()
-  const [selected, setSelected] = useState<SovereignMode>(initialMode)
+  const { t } = useLanguage()
 
-  const handleSelect = useCallback((mode: SovereignMode) => setSelected(mode), [])
-  const handleLaunch = useCallback(() => onModeSelect(selected), [onModeSelect, selected])
+  const initialIdx = MODES.findIndex(m => m.id === initialMode)
+  const [selectedIdx, setSelectedIdx] = useState(initialIdx < 0 ? 0 : initialIdx)
 
-  const activeDef = MODES.find(m => m.id === selected)!
+  const handleSelect = useCallback((idx: number) => {
+    setSelectedIdx(idx)
+  }, [])
+
+  const handleLaunch = useCallback(() => {
+    onModeSelect(MODES[selectedIdx].id)
+  }, [onModeSelect, selectedIdx])
+
+  const activeDef = MODES[selectedIdx]
 
   return (
     <div
@@ -470,68 +564,70 @@ export function SovereignDashboard({
         justifyContent: 'center',
         minHeight:      '100vh',
         width:          '100%',
-        background:     '#0C0C0E',
+        background:     'linear-gradient(135deg, #c8f2ec 0%, #e8faf7 45%, #daedf8 100%)',
         overflow:       'hidden',
-        padding:        '2rem 1.5rem',
       }}
     >
-      {/* Background grid */}
-      <DarkGrid />
+      {/* Architectural grid */}
+      <ArchGrid />
 
-      {/* Ambient glow behind selected mode */}
-      <motion.div
-        key={selected}
-        aria-hidden
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        style={{
-          position:     'absolute',
-          top:          '20%',
-          left:         '50%',
-          transform:    'translateX(-50%)',
-          width:        '600px',
-          height:       '400px',
-          borderRadius: '50%',
-          background:   `radial-gradient(ellipse, ${activeDef.glow} 0%, transparent 70%)`,
-          pointerEvents: 'none',
-          filter:       'blur(40px)',
-        }}
-      />
+      {/* Ambient colour orb — shifts with selected mode */}
+      <AnimatePresence mode="popLayout">
+        <motion.div
+          key={`orb-${activeDef.id}`}
+          aria-hidden
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.55 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8 }}
+          style={{
+            position:     'absolute',
+            top:          '5%',
+            left:         '50%',
+            transform:    'translateX(-50%)',
+            width:        '600px',
+            height:       '500px',
+            borderRadius: '50%',
+            background:   `radial-gradient(ellipse, ${activeDef.glow} 0%, transparent 65%)`,
+            filter:       'blur(50px)',
+            pointerEvents:'none',
+          }}
+        />
+      </AnimatePresence>
 
-      {/* ── Header ─────────────────────────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────────────── */}
       <motion.div
-        initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0   }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         style={{
-          position:       'relative',
-          display:        'flex',
-          flexDirection:  'column',
-          alignItems:     'center',
-          marginBottom:   '3rem',
-          textAlign:      'center',
+          position:      'relative',
+          display:       'flex',
+          flexDirection: 'column',
+          alignItems:    'center',
+          textAlign:     'center',
+          marginBottom:  '3rem',
+          gap:           '0.4rem',
         }}
       >
-        {/* Gold × Teal hairline */}
+        {/* Champagne–Teal hairline */}
         <div style={{
-          width:      '80px',
-          height:     '1px',
-          background: 'linear-gradient(90deg, transparent, #C9A96E 40%, #14B8A6 60%, transparent)',
-          marginBottom: '1.25rem',
-          opacity:    0.6,
+          width:        '90px',
+          height:       '1px',
+          background:   'linear-gradient(90deg, transparent 0%, #C9A96E 35%, #14B8A6 65%, transparent 100%)',
+          marginBottom: '0.55rem',
+          opacity:      0.7,
         }} />
 
         {companyName && (
           <span style={{
             fontFamily:    '"Cormorant Garamond", Georgia, serif',
             fontStyle:     'italic',
-            fontSize:      '0.7rem',
+            fontSize:      '0.72rem',
             fontWeight:    600,
-            color:         '#C9A96E',
-            letterSpacing: '0.06em',
-            marginBottom:  '0.35rem',
-            opacity:       0.8,
+            color:         '#9A6B00',
+            letterSpacing: '0.05em',
+            opacity:       0.85,
           }}>
             {companyName}
           </span>
@@ -539,132 +635,157 @@ export function SovereignDashboard({
 
         <h1 style={{
           fontFamily:    '"Cormorant Garamond", Georgia, serif',
-          fontSize:      'clamp(1.6rem, 3vw, 2.4rem)',
+          fontSize:      'clamp(1.9rem, 3.5vw, 2.8rem)',
           fontWeight:    600,
-          color:         '#FFFFFF',
-          margin:        '0 0 0.5rem',
-          lineHeight:    1.15,
+          color:         '#0C0C0E',
+          margin:        0,
+          lineHeight:    1.1,
           letterSpacing: '-0.01em',
         }}>
           Set Your Course
         </h1>
 
         <p style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize:   '0.72rem',
-          color:      'rgba(255,255,255,0.38)',
-          margin:     0,
-          maxWidth:   '360px',
-          lineHeight: 1.6,
-          letterSpacing: '0.02em',
+          fontFamily:    'Inter, sans-serif',
+          fontSize:      '0.72rem',
+          color:         '#475569',
+          margin:        0,
+          maxWidth:      '360px',
+          lineHeight:    1.6,
+          opacity:       0.75,
         }}>
-          Choose an analysis mode. Each mode routes your query through a different intelligence architecture.
+          Select an analysis mode. Click any card to bring it forward.
         </p>
       </motion.div>
 
-      {/* ── Mode grid ──────────────────────────────────────────── */}
+      {/* ── 3-D Carousel ────────────────────────────────────────── */}
+      {/* perspective is set on the wrapper; cards use absolute positioning */}
       <div
         role="radiogroup"
         aria-label="Analysis modes"
         style={{
-          position:             'relative',
-          display:              'grid',
-          gridTemplateColumns:  'repeat(auto-fit, minmax(220px, 1fr))',
-          gap:                  '0.85rem',
-          width:                '100%',
-          maxWidth:             '1060px',
-          marginBottom:         '2.5rem',
+          position:    'relative',
+          width:       `${CARD_W}px`,   // only the "center slot" — cards overflow via absolute
+          height:      `${CARD_H}px`,
+          perspective: '1100px',
+          perspectiveOrigin: '50% 50%',
+          // allow cards to render outside this box
+          overflow:    'visible',
+          flexShrink:  0,
         }}
       >
-        {MODES.map((def, i) => (
-          <ModeCard
-            key={def.id}
-            def={def}
-            label={t(def.labelKey)}
-            desc={t(def.descKey)}
-            isActive={selected === def.id}
-            onClick={() => handleSelect(def.id)}
-            onLaunch={handleLaunch}
-            delay={i * 0.07}
-          />
-        ))}
+        {MODES.map((def, i) => {
+          const slot    = getSlot(i, selectedIdx)
+          const isCenter = i === selectedIdx
+          return (
+            <CarouselCard
+              key={def.id}
+              def={def}
+              label={t(def.labelKey)}
+              desc={t(def.descKey)}
+              slot={slot}
+              isCenter={isCenter}
+              companyName={companyName}
+              confidenceScore={confidenceScore}
+              processingMs={processingMs}
+              onSelect={() => handleSelect(i)}
+              onLaunch={handleLaunch}
+            />
+          )
+        })}
       </div>
 
-      {/* ── CTA ────────────────────────────────────────────────── */}
+      {/* ── Bottom CTA + mode-name label ───────────────────────── */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45, duration: 0.45 }}
-        style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0  }}
+        transition={{ delay: 0.4, duration: 0.45 }}
+        style={{
+          position:       'relative',
+          marginTop:      '2.75rem',
+          display:        'flex',
+          flexDirection:  'column',
+          alignItems:     'center',
+          gap:            '0.65rem',
+        }}
       >
+        {/* Big "Chart Course" CTA */}
         <motion.button
           type="button"
           onClick={handleLaunch}
-          whileHover={{ scale: 1.03, boxShadow: `0 8px 32px ${activeDef.glow}` }}
-          whileTap={{  scale: 0.97 }}
+          whileHover={{ scale: 1.04, boxShadow: `0 10px 36px ${activeDef.glow}` }}
+          whileTap={{ scale: 0.96 }}
           style={{
             display:       'flex',
             alignItems:    'center',
-            gap:           '0.5rem',
-            padding:       '0.75rem 2.5rem',
+            gap:           '0.6rem',
+            padding:       '0.8rem 2.75rem',
             borderRadius:  '999px',
-            border:        `1px solid ${activeDef.border}`,
-            background:    `linear-gradient(135deg, ${activeDef.bg}, rgba(0,0,0,0.2))`,
-            color:         activeDef.color,
+            border:        `1.5px solid ${activeDef.border}`,
+            background:    '#0C0C0E',
+            color:         '#FFFFFF',
             fontFamily:    'Inter, sans-serif',
             fontSize:      '0.72rem',
             fontWeight:    700,
-            letterSpacing: '0.1em',
+            letterSpacing: '0.12em',
             textTransform: 'uppercase',
             cursor:        'pointer',
-            transition:    'border-color 0.25s, background 0.25s',
-            backdropFilter: 'blur(12px)',
+            boxShadow:     `0 6px 28px rgba(0,0,0,0.18), 0 0 0 1px ${activeDef.border}`,
+            backdropFilter:'blur(8px)',
+            transition:    'border-color 0.3s',
           }}
         >
           <AnimatePresence mode="wait">
             <motion.span
-              key={selected}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{    opacity: 0, y: -4 }}
-              transition={{ duration: 0.2 }}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              key={activeDef.id}
+              initial={{ opacity: 0, y: 5  }}
+              animate={{ opacity: 1, y: 0  }}
+              exit={{    opacity: 0, y: -5 }}
+              transition={{ duration: 0.18 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}
             >
-              <ModeIconSwitch id={selected} color={activeDef.color} />
-              Chart Course — {t(activeDef.labelKey)}
+              <ModeIcon id={activeDef.id} color={activeDef.color} size={16} />
+              CHART COURSE
             </motion.span>
           </AnimatePresence>
-
-          {/* Arrow */}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M5 12h14M14 6l6 6-6 6" stroke={activeDef.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
         </motion.button>
 
-        <p style={{
-          fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.55rem',
-          fontStyle:     'italic',
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color:         'rgba(255,255,255,0.2)',
-          margin:        0,
-          userSelect:    'none',
-        }}>
-          Select a mode · Press Chart Course to begin
-        </p>
+        {/* Active mode label under CTA */}
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={activeDef.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{    opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              fontFamily:    'Inter, sans-serif',
+              fontSize:      '0.56rem',
+              fontStyle:     'italic',
+              letterSpacing: '0.09em',
+              textTransform: 'uppercase',
+              color:         activeDef.color,
+              margin:        0,
+              opacity:       0.6,
+              userSelect:    'none',
+            }}
+            aria-hidden
+          >
+            {t(activeDef.labelKey)} — click card · Başlat to launch
+          </motion.p>
+        </AnimatePresence>
       </motion.div>
 
-      {/* Bottom fade */}
+      {/* Bottom fade vignette */}
       <div
         aria-hidden
         style={{
-          position:   'absolute',
-          bottom:     0,
-          left:       0,
-          right:      0,
-          height:     '120px',
-          background: 'linear-gradient(to top, #0C0C0E, transparent)',
+          position:      'absolute',
+          bottom:        0,
+          left:          0,
+          right:         0,
+          height:        '80px',
+          background:    'linear-gradient(to top, rgba(200,242,236,0.6), transparent)',
           pointerEvents: 'none',
         }}
       />
