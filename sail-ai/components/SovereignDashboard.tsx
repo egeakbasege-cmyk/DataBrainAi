@@ -1,28 +1,22 @@
 'use client'
 
 /**
- * components/SovereignDashboard.tsx
+ * components/SovereignDashboard.tsx — Rotating Pill-Card Mode Picker
  * ─────────────────────────────────────────────────────────────────────────────
- * Full-screen pre-conversation mode picker.
+ * Light teal-mint background, one elegant white pill card centred on screen.
+ * Ghost cards peek from behind on left and right — clicking anywhere on the
+ * background (outside the active card) rotates to the next mode.
+ * Left-edge click goes backward, right-edge / center goes forward.
  *
- * Design philosophy: blend — not replace.
- * The card DNA is exactly the original ModeSelector (dark rgba(14,14,22),
- * mode-coloured border/glow, champagne synergy shimmer, same SVG icons,
- * same badge language).  The improvements layered on top are:
- *   • Staggered spring entrance (cards appear one-by-one on load)
- *   • layoutId spring ring that slides between the active card
- *   • Hover: subtle y-lift + glow intensifies
- *   • Capability bullets inside each card (extra detail, not in ModeSelector)
- *   • Header: same WelcomeBanner-style (dark card, gold hairline, Cormorant)
- *   • "Chart Course" CTA in the same champagne button style
- *
- * Props interface unchanged — chat/page.tsx needs zero edits.
+ * Card shape: exactly the pill from the original fan-layout screenshot.
+ * Blue-mint (#14B8A6 / #2DD4BF) used for fine accents only.
+ * All other props/behaviour unchanged — chat/page.tsx needs no edits.
  */
 
-import { useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useLanguage }             from '@/lib/i18n/LanguageContext'
-import type { TranslationKey }     from '@/lib/i18n/translations'
+import { useState, useCallback, useRef } from 'react'
+import { motion, AnimatePresence }        from 'framer-motion'
+import { useLanguage }                    from '@/lib/i18n/LanguageContext'
+import type { TranslationKey }            from '@/lib/i18n/translations'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -37,447 +31,429 @@ export interface SovereignDashboardProps {
   className?:       string
 }
 
-// ── Mode palette — identical to ModeSelector ─────────────────────────────────
+// ── Mode data ─────────────────────────────────────────────────────────────────
 
 interface ModeDef {
   id:        SovereignMode
   labelKey:  TranslationKey
   descKey:   TranslationKey
-  color:     string
-  bg:        string
-  border:    string
-  glow:      string
+  /** Teal-mint tint for the card's inner accent line */
+  accent:    string
+  stat:      string
+  statLabel: string
   badge?:    string
   caps:      [string, string, string]
 }
 
 const MODES: ModeDef[] = [
   {
-    id:       'upwind',
-    labelKey: 'mode.upwind',
-    descKey:  'mode.upwindDesc',
-    color:    '#1A5276',
-    bg:       'rgba(26,82,118,0.07)',
-    border:   'rgba(26,82,118,0.5)',
-    glow:     'rgba(26,82,118,0.12)',
-    caps:     ['Instant strategic brief', 'Numerically anchored output', 'Live research synthesis'],
+    id:        'upwind',
+    labelKey:  'mode.upwind',
+    descKey:   'mode.upwindDesc',
+    accent:    '#14B8A6',
+    stat:      '95',
+    statLabel: 'VERIM',
+    caps:      ['Instant strategic brief', 'Numerically anchored output', 'Live research synthesis'],
   },
   {
-    id:       'sail',
-    labelKey: 'mode.sail',
-    descKey:  'mode.sailDesc',
-    color:    '#7C3AED',
-    bg:       'rgba(124,58,237,0.07)',
-    border:   'rgba(124,58,237,0.5)',
-    glow:     'rgba(124,58,237,0.12)',
-    badge:    'AI+',
-    caps:     ['Intent-aware model routing', '8B + 70B speculative race', 'Adaptive depth calibration'],
+    id:        'synergy',
+    labelKey:  'mode.synergy',
+    descKey:   'mode.synergyDesc',
+    accent:    '#C9A96E',
+    stat:      '3×',
+    statLabel: 'AGENTS',
+    badge:     'WAR ROOM',
+    caps:      ['3 specialist agents in parallel', 'Financial · Strategic · Operational', '70B synthesis — one verdict'],
   },
   {
-    id:       'trim',
-    labelKey: 'mode.trim',
-    descKey:  'mode.trimDesc',
-    color:    '#B45309',
-    bg:       'rgba(180,83,9,0.07)',
-    border:   'rgba(201,169,110,0.6)',
-    glow:     'rgba(201,169,110,0.12)',
-    badge:    'NEW',
-    caps:     ['Phased execution roadmap', 'Dependency chain mapping', 'KPI milestone structure'],
+    id:        'sail',
+    labelKey:  'mode.sail',
+    descKey:   'mode.sailDesc',
+    accent:    '#14B8A6',
+    stat:      '2×',
+    statLabel: 'SPEED',
+    badge:     'AI+',
+    caps:      ['Intent-aware model routing', '8B + 70B speculative race', 'Adaptive depth calibration'],
   },
   {
-    id:       'catamaran',
-    labelKey: 'mode.catamaran',
-    descKey:  'mode.catamaranDesc',
-    color:    '#D4AF37',
-    bg:       'rgba(212,175,55,0.12)',
-    border:   'rgba(212,175,55,0.7)',
-    glow:     'rgba(212,175,55,0.18)',
-    badge:    'PRO',
-    caps:     ['Dual-track growth model', 'Market + CX in parallel', 'Unified strategic keel'],
+    id:        'trim',
+    labelKey:  'mode.trim',
+    descKey:   'mode.trimDesc',
+    accent:    '#14B8A6',
+    stat:      '5–8',
+    statLabel: 'PHASES',
+    badge:     'NEW',
+    caps:      ['Phased execution roadmap', 'Dependency chain mapping', 'KPI milestone structure'],
   },
-  // Synergy is rendered separately (special champagne treatment)
+  {
+    id:        'catamaran',
+    labelKey:  'mode.catamaran',
+    descKey:   'mode.catamaranDesc',
+    accent:    '#14B8A6',
+    stat:      '2×',
+    statLabel: 'TRACKS',
+    badge:     'PRO',
+    caps:      ['Dual-track growth model', 'Market + CX in parallel', 'Unified strategic keel'],
+  },
 ]
 
-// ── Icons — same SVG geometry as ModeSelector ────────────────────────────────
+// ── Icons (same SVG geometry, dark navy on white) ─────────────────────────────
 
-function UpwindIcon({ color }: { color: string }) {
+const ICON_COLOR = '#1A3A4A'   // dark navy for icons on white cards
+
+function UpwindIcon({ size = 32 }: { size?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M12 3L12 19L4 19Z"  fill={color} opacity="0.85"/>
-      <path d="M12 3L12 19L20 12Z" fill={color} opacity="0.35"/>
-      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M5 19Q12 22 19 19" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 3L12 19L4 19Z"  fill={ICON_COLOR} opacity="0.85"/>
+      <path d="M12 3L12 19L20 12Z" fill={ICON_COLOR} opacity="0.25"/>
+      <line x1="12" y1="2" x2="12" y2="20" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M5 19Q12 22 19 19" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
     </svg>
   )
 }
-function SailIcon({ color }: { color: string }) {
+function SynergyIcon({ size = 32 }: { size?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M12 3C18 5 22 11 20 19L12 19Z" fill={color} opacity="0.85"/>
-      <path d="M12 8C16 9 18 14 17 19L12 19Z" fill={color} opacity="0.4"/>
-      <line x1="12" y1="2" x2="12" y2="20" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M5 19Q12 22 19 19" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-      <circle cx="5" cy="6" r="1.8" fill={color} opacity="0.6"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <polygon points="7,3 11,5.3 11,10 7,12.3 3,10 3,5.3"    fill="#C9A96E" opacity="0.85"/>
+      <polygon points="17,3 21,5.3 21,10 17,12.3 13,10 13,5.3"  fill={ICON_COLOR} opacity="0.7"/>
+      <polygon points="12,11.7 16,14 16,18.7 12,21 8,18.7 8,14" fill="#C9A96E" opacity="0.55"/>
+      <circle cx="12" cy="10" r="1.8" fill="#FFFFFF" opacity="0.95"/>
     </svg>
   )
 }
-function TrimIcon({ color }: { color: string }) {
+function SailIcon({ size = 32 }: { size?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <line x1="6" y1="4" x2="6" y2="20" stroke={color} strokeWidth="1.3" strokeLinecap="round" opacity="0.35"/>
-      <circle cx="6" cy="6"  r="2.2" fill={color} opacity="0.9"/>
-      <circle cx="6" cy="12" r="2.2" fill={color} opacity="0.65"/>
-      <circle cx="6" cy="18" r="2.2" fill={color} opacity="0.4"/>
-      <rect x="11" y="5"  width="9" height="2" rx="1" fill={color} opacity="0.85"/>
-      <rect x="11" y="11" width="7" height="2" rx="1" fill={color} opacity="0.65"/>
-      <rect x="11" y="17" width="5" height="2" rx="1" fill={color} opacity="0.45"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 3C18 5 22 11 20 19L12 19Z" fill={ICON_COLOR} opacity="0.85"/>
+      <path d="M12 8C16 9 18 14 17 19L12 19Z" fill={ICON_COLOR} opacity="0.35"/>
+      <line x1="12" y1="2" x2="12" y2="20" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M5 19Q12 22 19 19" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <circle cx="5" cy="6" r="1.8" fill={ICON_COLOR} opacity="0.5"/>
     </svg>
   )
 }
-function CatamaranIcon({ color }: { color: string }) {
+function TrimIcon({ size = 32 }: { size?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M4 18L6 20L8 18"    stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M16 18L18 20L20 18" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <line x1="6"  y1="14" x2="18" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="12" y1="14" x2="12" y2="4"  stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M12 4L18 10L12 10Z" fill={color} opacity="0.8"/>
-      <line x1="2" y1="10" x2="5" y2="10" stroke={color} strokeWidth="1" opacity="0.5"/>
-      <line x1="2" y1="13" x2="4" y2="13" stroke={color} strokeWidth="1" opacity="0.5"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <line x1="6" y1="4" x2="6" y2="20" stroke={ICON_COLOR} strokeWidth="1.3" strokeLinecap="round" opacity="0.28"/>
+      <circle cx="6" cy="6"  r="2.2" fill={ICON_COLOR} opacity="0.9"/>
+      <circle cx="6" cy="12" r="2.2" fill={ICON_COLOR} opacity="0.6"/>
+      <circle cx="6" cy="18" r="2.2" fill={ICON_COLOR} opacity="0.35"/>
+      <rect x="11" y="5"  width="9" height="2" rx="1" fill={ICON_COLOR} opacity="0.85"/>
+      <rect x="11" y="11" width="7" height="2" rx="1" fill={ICON_COLOR} opacity="0.6"/>
+      <rect x="11" y="17" width="5" height="2" rx="1" fill={ICON_COLOR} opacity="0.38"/>
     </svg>
   )
 }
-function SynergyIcon({ colors }: { colors?: string[] }) {
-  const c0 = colors?.[0] ?? '#C9A96E'
-  const c1 = colors?.[1] ?? '#7C3AED'
+function CatamaranIcon({ size = 32 }: { size?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <polygon points="7,3 11,5.3 11,10 7,12.3 3,10 3,5.3"    fill={c0} opacity="0.8"/>
-      <polygon points="17,3 21,5.3 21,10 17,12.3 13,10 13,5.3"  fill={c1} opacity="0.8"/>
-      <polygon points="12,11.7 16,14 16,18.7 12,21 8,18.7 8,14" fill={c0} opacity="0.65"/>
-      <circle cx="12" cy="10" r="1.8" fill="#FFFFFF" opacity="0.9"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M4 18L6 20L8 18"    stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M16 18L18 20L20 18" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <line x1="6"  y1="14" x2="18" y2="14" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="12" y1="14" x2="12" y2="4"  stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M12 4L18 10L12 10Z" fill={ICON_COLOR} opacity="0.8"/>
+      <line x1="2" y1="10" x2="5" y2="10" stroke={ICON_COLOR} strokeWidth="1" opacity="0.4"/>
+      <line x1="2" y1="13" x2="4" y2="13" stroke={ICON_COLOR} strokeWidth="1" opacity="0.4"/>
     </svg>
   )
 }
 
-function ModeIconSwitch({ id, color }: { id: SovereignMode; color: string }) {
-  if (id === 'upwind')   return <UpwindIcon    color={color} />
-  if (id === 'sail')     return <SailIcon      color={color} />
-  if (id === 'trim')     return <TrimIcon      color={color} />
-  if (id === 'catamaran') return <CatamaranIcon color={color} />
-  return <SynergyIcon />
+function ModeIcon({ id, size }: { id: SovereignMode; size?: number }) {
+  if (id === 'upwind')    return <UpwindIcon    size={size} />
+  if (id === 'synergy')   return <SynergyIcon   size={size} />
+  if (id === 'sail')      return <SailIcon      size={size} />
+  if (id === 'trim')      return <TrimIcon      size={size} />
+  return                         <CatamaranIcon size={size} />
 }
 
-// ── Standard mode card (same DNA as ModeSelector, enlarged + animated) ────────
+// ── The pill card (matches original screenshot exactly) ───────────────────────
 
-interface ModeCardProps {
-  def:      ModeDef
-  label:    string
-  desc:     string
-  isActive: boolean
-  delay:    number
-  onClick:  () => void
+const CARD_W = 176
+const CARD_H = 420
+
+interface PillCardProps {
+  def:         ModeDef
+  label:       string
+  desc:        string
+  companyName?: string
+  direction:   1 | -1       // +1 = forward, -1 = backward (for exit/enter direction)
+  onLaunch:    () => void
 }
 
-function ModeCard({ def, label, desc, isActive, delay, onClick }: ModeCardProps) {
-  const [hov, setHov] = useState(false)
+function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCardProps) {
+  const isSynergy = def.id === 'synergy'
 
   return (
-    <motion.button
-      type="button"
-      aria-pressed={isActive}
-      onClick={onClick}
-      onHoverStart={() => setHov(true)}
-      onHoverEnd={()  => setHov(false)}
-      // Stagger entrance
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: hov ? -3 : 0 }}
-      transition={
-        hov
-          ? { type: 'spring', stiffness: 340, damping: 28 }
-          : { duration: 0.42, delay, ease: [0.16, 1, 0.3, 1] }
-      }
-      whileTap={{ scale: 0.97 }}
+    <motion.div
+      key={def.id}
+      initial={{ opacity: 0, x: direction * 80, scale: 0.94 }}
+      animate={{ opacity: 1, x: 0,              scale: 1     }}
+      exit={{    opacity: 0, x: direction * -80, scale: 0.94 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       style={{
         position:     'relative',
-        padding:      '1.1rem 1rem 1rem',
-        border:       `1px solid ${isActive ? def.border : hov ? def.border : 'rgba(255,255,255,0.07)'}`,
-        background:   isActive ? def.bg : hov ? `${def.bg}` : 'rgba(14,14,22,0.7)',
-        cursor:       'pointer',
-        textAlign:    'left',
-        borderRadius: '10px',
-        boxShadow:    isActive
-          ? `0 0 0 3px ${def.glow}, 0 2px 12px rgba(0,0,0,0.4), 0 8px 32px ${def.glow}`
-          : hov
-            ? `0 0 0 1px ${def.glow}, 0 4px 20px rgba(0,0,0,0.3)`
-            : '0 1px 4px rgba(0,0,0,0.2)',
-        transition:   'border-color 0.18s, background 0.18s, box-shadow 0.18s',
-        outline:      'none',
+        width:        `${CARD_W}px`,
+        height:       `${CARD_H}px`,
+        borderRadius: '60px',
+        background:   'rgba(255,255,255,0.94)',
+        border:       '1.5px solid rgba(255,255,255,0.90)',
+        backdropFilter:       'blur(20px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+        boxShadow: [
+          '0 0 0 1px rgba(20,184,166,0.18)',
+          '0 0 40px rgba(20,184,166,0.14)',
+          '0 20px 60px rgba(0,0,0,0.12)',
+          '0 4px 16px rgba(0,0,0,0.07)',
+        ].join(', '),
+        display:       'flex',
+        flexDirection: 'column',
+        alignItems:    'center',
+        padding:       '2.25rem 1.4rem 1.75rem',
+        // stop click from bubbling to background (which rotates)
+        zIndex:        10,
       }}
+      onClick={e => e.stopPropagation()}
     >
-      {/* Spring-animated active selection ring */}
-      {isActive && (
-        <motion.span
-          layoutId="sov-ring"
-          style={{
-            position:      'absolute',
-            inset:         '-1px',
-            borderRadius:  '11px',
-            border:        `1.5px solid ${def.border}`,
-            pointerEvents: 'none',
-          }}
-          transition={{ type: 'spring', stiffness: 380, damping: 34 }}
-        />
-      )}
+      {/* Breathing outer ring */}
+      <motion.div
+        animate={{ opacity: [0.25, 0.5, 0.25], scale: [1, 1.025, 1] }}
+        transition={{ repeat: Infinity, duration: 3.4, ease: 'easeInOut' }}
+        style={{
+          position:     'absolute',
+          inset:        '-8px',
+          borderRadius: '68px',
+          border:       '1px solid rgba(20,184,166,0.35)',
+          pointerEvents:'none',
+        }}
+      />
 
       {/* Badge */}
       {def.badge && (
         <span style={{
           position:      'absolute',
-          top:           '-7px',
-          right:         '10px',
+          top:           '-10px',
+          right:         '20px',
           fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.5rem',
+          fontSize:      '0.46rem',
           fontWeight:    700,
-          letterSpacing: '0.08em',
+          letterSpacing: '0.12em',
           textTransform: 'uppercase',
-          color:         def.badge === 'AI+' ? '#1E293B' : '#FFFFFF',
-          background:    def.badge === 'AI+'
-            ? (isActive ? '#94A3B8' : 'rgba(148,163,184,0.85)')
-            : (isActive ? def.color : '#C9A96E'),
-          padding:       '2px 7px',
-          borderRadius:  '3px',
-          filter:        def.badge === 'AI+' ? 'drop-shadow(0 0 5px rgba(148,163,184,0.55))' : 'none',
+          padding:       '2px 8px',
+          borderRadius:  '4px',
+          background:    isSynergy ? '#C9A96E' : '#1A3A4A',
+          color:         isSynergy ? '#0C0C0E' : '#FFFFFF',
         }}>
           {def.badge}
         </span>
       )}
 
-      {/* Icon + name row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-        <ModeIconSwitch id={def.id} color={isActive ? def.color : '#9CA3AF'} />
+      {/* Icon */}
+      <ModeIcon id={def.id} size={36} />
+
+      {/* Company name */}
+      {companyName && (
         <span style={{
-          fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.7rem',
-          fontWeight:    700,
-          letterSpacing: '0.07em',
-          textTransform: 'uppercase',
-          color:         isActive ? def.color : hov ? 'rgba(255,255,255,0.7)' : '#A1A1AA',
-          transition:    'color 0.18s',
+          fontFamily:    '"Cormorant Garamond", Georgia, serif',
+          fontStyle:     'italic',
+          fontSize:      '0.65rem',
+          fontWeight:    600,
+          color:         isSynergy ? '#9A6B00' : '#14B8A6',
+          letterSpacing: '0.04em',
+          marginTop:     '0.65rem',
+          opacity:       0.8,
+          textAlign:     'center',
         }}>
-          {label}
+          {companyName}
         </span>
-      </div>
+      )}
+
+      {/* Mode name */}
+      <h2 style={{
+        fontFamily:    'Inter, sans-serif',
+        fontSize:      '0.82rem',
+        fontWeight:    800,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        color:         '#0F2435',
+        margin:        `${companyName ? '0.15rem' : '0.75rem'} 0 0`,
+        textAlign:     'center',
+        lineHeight:    1.25,
+      }}>
+        {label}
+      </h2>
 
       {/* Description */}
       <p style={{
         fontFamily: 'Inter, sans-serif',
-        fontSize:   '0.68rem',
-        lineHeight: 1.5,
-        color:      isActive ? def.color : '#6B6B8A',
-        margin:     '0 0 0.75rem',
-        opacity:    isActive ? 0.9 : 1,
-        transition: 'color 0.18s',
+        fontSize:   '0.6rem',
+        color:      '#4A6070',
+        textAlign:  'center',
+        lineHeight: 1.55,
+        margin:     '0.55rem 0 0',
+        padding:    '0 0.1rem',
       }}>
         {desc}
       </p>
 
-      {/* Capability bullets — the improvement layer */}
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.22rem' }}>
+      {/* Teal-mint accent divider */}
+      <div style={{
+        width:      '32px',
+        height:     '1.5px',
+        borderRadius: '1px',
+        background: isSynergy
+          ? 'linear-gradient(90deg, #C9A96E, #E8C87A)'
+          : 'linear-gradient(90deg, #14B8A6, #2DD4BF)',
+        margin:     '0.9rem 0',
+        opacity:    0.7,
+      }} />
+
+      {/* Capabilities */}
+      <ul style={{
+        listStyle:     'none',
+        padding:       0,
+        margin:        0,
+        display:       'flex',
+        flexDirection: 'column',
+        gap:           '0.3rem',
+        width:         '100%',
+        alignItems:    'flex-start',
+      }}>
         {def.caps.map(cap => (
-          <li key={cap} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <li key={cap} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
             <span style={{
-              width:        '3px',
-              height:       '3px',
+              width:        '4px',
+              height:       '4px',
               borderRadius: '50%',
-              background:   isActive ? def.color : 'rgba(255,255,255,0.2)',
+              background:   isSynergy ? '#C9A96E' : '#14B8A6',
               flexShrink:   0,
-              transition:   'background 0.18s',
+              marginTop:    '4px',
             }} />
             <span style={{
               fontFamily: 'Inter, sans-serif',
-              fontSize:   '0.6rem',
-              color:      isActive ? `${def.color}bb` : 'rgba(255,255,255,0.3)',
-              lineHeight: 1.4,
-              transition: 'color 0.18s',
+              fontSize:   '0.57rem',
+              color:      '#3D5566',
+              lineHeight: 1.45,
             }}>
               {cap}
             </span>
           </li>
         ))}
       </ul>
-    </motion.button>
+
+      {/* Stat */}
+      <div style={{ textAlign: 'center', margin: '0.9rem 0 0' }}>
+        <span style={{
+          fontFamily:    'Inter, sans-serif',
+          fontSize:      '1.9rem',
+          fontWeight:    800,
+          color:         isSynergy ? '#9A6B00' : '#0F2435',
+          lineHeight:    1,
+          letterSpacing: '-0.02em',
+        }}>
+          {def.stat}
+          {def.statLabel === 'VERIM' && (
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, opacity: 0.65, marginLeft: '1px' }}>%</span>
+          )}
+        </span>
+        <p style={{
+          margin:        '2px 0 0',
+          fontFamily:    'Inter, sans-serif',
+          fontSize:      '0.46rem',
+          fontWeight:    700,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color:         '#94A3B8',
+        }}>
+          {def.statLabel}
+        </p>
+      </div>
+
+      {/* BAŞLAT button — same navy dark button from original */}
+      <motion.button
+        type="button"
+        onClick={onLaunch}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.95 }}
+        style={{
+          marginTop:     '1.1rem',
+          padding:       '0.55rem 1.6rem',
+          borderRadius:  '999px',
+          border:        'none',
+          background:    isSynergy
+            ? 'linear-gradient(135deg, #7A5200, #9A6B00)'
+            : '#1A3A4A',
+          color:         '#FFFFFF',
+          fontFamily:    'Inter, sans-serif',
+          fontSize:      '0.64rem',
+          fontWeight:    700,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          cursor:        'pointer',
+          boxShadow:     isSynergy
+            ? '0 4px 16px rgba(154,107,0,0.35)'
+            : '0 4px 16px rgba(26,58,74,0.35)',
+        }}
+      >
+        Başlat →
+      </motion.button>
+    </motion.div>
   )
 }
 
-// ── Synergy card — same special champagne treatment as ModeSelector ────────────
+// ── Ghost card (dim pill shown behind, left or right) ─────────────────────────
 
-interface SynergyCardProps {
-  label:       string
-  desc:        string
-  isActive:    boolean
-  delay:       number
-  companyName?: string
-  onClick:     () => void
+function GhostCard({ side }: { side: 'left' | 'right' }) {
+  return (
+    <div
+      aria-hidden
+      style={{
+        position:     'absolute',
+        top:          '50%',
+        [side]:       '-18px',
+        transform:    `translateY(-50%) ${side === 'left' ? 'rotate(-4deg)' : 'rotate(4deg)'}`,
+        width:        `${CARD_W}px`,
+        height:       `${CARD_H}px`,
+        borderRadius: '60px',
+        background:   'rgba(255,255,255,0.55)',
+        border:       '1px solid rgba(255,255,255,0.6)',
+        backdropFilter: 'blur(8px)',
+        boxShadow:    '0 8px 32px rgba(0,0,0,0.07)',
+        pointerEvents:'none',
+        zIndex:       4,
+      }}
+    />
+  )
 }
 
-function SynergyCard({ label, desc, isActive, delay, companyName, onClick }: SynergyCardProps) {
-  const [hov, setHov] = useState(false)
-  const synergyColors = ['#C9A96E', '#7C3AED', '#1A5276']
+// ── Dot navigation ────────────────────────────────────────────────────────────
 
+function NavDots({
+  total, active, onSelect,
+}: { total: number; active: number; onSelect: (i: number) => void }) {
   return (
-    <motion.button
-      type="button"
-      aria-pressed={isActive}
-      onClick={onClick}
-      onHoverStart={() => setHov(true)}
-      onHoverEnd={()  => setHov(false)}
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: hov ? -3 : 0 }}
-      transition={
-        hov
-          ? { type: 'spring', stiffness: 340, damping: 28 }
-          : { duration: 0.42, delay, ease: [0.16, 1, 0.3, 1] }
-      }
-      whileTap={{ scale: 0.985 }}
-      style={{
-        position:     'relative',
-        padding:      isActive ? '1.1rem 1rem 1.1rem' : '1.1rem 1rem 1rem',
-        border:       isActive
-          ? '1px solid rgba(201,169,110,0.7)'
-          : `1px solid rgba(201,169,110,${hov ? 0.4 : 0.22})`,
-        background:   isActive
-          ? 'linear-gradient(135deg, rgba(14,14,22,0.95) 0%, rgba(20,12,30,0.95) 100%)'
-          : `linear-gradient(135deg, rgba(14,14,22,${hov ? 0.9 : 0.8}) 0%, rgba(18,10,28,${hov ? 0.9 : 0.8}) 100%)`,
-        cursor:       'pointer',
-        textAlign:    'left',
-        borderRadius: '10px',
-        boxShadow:    isActive
-          ? '0 0 0 3px rgba(201,169,110,0.10), 0 0 24px rgba(201,169,110,0.10), 0 2px 12px rgba(0,0,0,0.4)'
-          : hov
-            ? '0 0 0 1px rgba(201,169,110,0.08), 0 4px 20px rgba(0,0,0,0.3)'
-            : '0 1px 4px rgba(0,0,0,0.25)',
-        transition:   'all 0.2s ease',
-        overflow:     'hidden',
-        outline:      'none',
-      }}
-    >
-      {/* Spring ring */}
-      {isActive && (
-        <motion.span
-          layoutId="sov-ring"
-          style={{
-            position:      'absolute',
-            inset:         '-1px',
-            borderRadius:  '11px',
-            border:        '1.5px solid rgba(201,169,110,0.7)',
-            pointerEvents: 'none',
+    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <motion.button
+          key={i}
+          type="button"
+          aria-label={`Mode ${i + 1}`}
+          onClick={() => onSelect(i)}
+          animate={{
+            width:      i === active ? 20 : 6,
+            background: i === active ? '#14B8A6' : 'rgba(20,184,166,0.35)',
           }}
-          transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          style={{
+            height:       '6px',
+            borderRadius: '999px',
+            border:       'none',
+            cursor:       'pointer',
+            padding:      0,
+          }}
         />
-      )}
-
-      {/* Animated shimmer hairline at top — same as ModeSelector */}
-      <div style={{
-        position:   'absolute',
-        top:        0, left: 0, right: 0,
-        height:     '1px',
-        background: isActive
-          ? `linear-gradient(90deg, transparent, ${synergyColors[0]}, ${synergyColors[1]}, transparent)`
-          : `linear-gradient(90deg, transparent, rgba(201,169,110,${hov ? 0.55 : 0.4}), transparent)`,
-        transition: 'all 0.3s',
-      }} />
-
-      {/* SYN badge */}
-      <span style={{
-        position:      'absolute',
-        top:           '-7px',
-        right:         '10px',
-        fontFamily:    'Inter, sans-serif',
-        fontSize:      '0.5rem',
-        fontWeight:    700,
-        letterSpacing: '0.1em',
-        textTransform: 'uppercase',
-        color:         '#0C0C0E',
-        background:    isActive
-          ? 'linear-gradient(90deg, #C9A96E, #E8C87A)'
-          : '#C9A96E',
-        padding:       '2px 7px',
-        borderRadius:  '3px',
-      }}>
-        ⊕ SYN
-      </span>
-
-      {/* Icon + name */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-        <SynergyIcon colors={isActive ? synergyColors : undefined} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-          {companyName && (
-            <span style={{
-              fontFamily:    '"Cormorant Garamond", Georgia, serif',
-              fontSize:      '0.72rem',
-              fontStyle:     'italic',
-              fontWeight:    600,
-              letterSpacing: '0.03em',
-              background:    isActive
-                ? 'linear-gradient(90deg, #C9A96E, #E8C87A, #C9A96E)'
-                : 'linear-gradient(90deg, rgba(201,169,110,0.7), rgba(201,169,110,0.5))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor:  'transparent',
-              backgroundClip:       'text',
-            }}>
-              {companyName}
-            </span>
-          )}
-          <span style={{
-            fontFamily:    'Inter, sans-serif',
-            fontSize:      '0.7rem',
-            fontWeight:    700,
-            letterSpacing: '0.07em',
-            textTransform: 'uppercase',
-            color:         isActive ? '#C9A96E' : hov ? 'rgba(201,169,110,0.7)' : '#A1A1AA',
-            transition:    'color 0.2s',
-          }}>
-            {companyName ? `· ${label}` : label}
-          </span>
-        </div>
-      </div>
-
-      {/* Description */}
-      <p style={{
-        fontFamily: 'Inter, sans-serif',
-        fontSize:   '0.68rem',
-        lineHeight: 1.5,
-        color:      isActive ? 'rgba(201,169,110,0.8)' : '#6B6B8A',
-        margin:     '0 0 0.75rem',
-        transition: 'color 0.2s',
-      }}>
-        {desc}
-      </p>
-
-      {/* Capabilities */}
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.22rem' }}>
-        {(['3 specialist agents in parallel', 'Financial · Strategic · Operational lenses', '70B synthesis — one authoritative verdict'] as const).map(cap => (
-          <li key={cap} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{
-              width: '3px', height: '3px', borderRadius: '50%',
-              background:   isActive ? '#C9A96E' : 'rgba(201,169,110,0.25)',
-              flexShrink:   0,
-              transition:   'background 0.18s',
-            }} />
-            <span style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize:   '0.6rem',
-              color:      isActive ? 'rgba(201,169,110,0.65)' : 'rgba(255,255,255,0.25)',
-              lineHeight: 1.4,
-              transition: 'color 0.18s',
-            }}>
-              {cap}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </motion.button>
+      ))}
+    </div>
   )
 }
 
@@ -486,27 +462,46 @@ function SynergyCard({ label, desc, isActive, delay, companyName, onClick }: Syn
 export function SovereignDashboard({
   initialMode    = 'upwind',
   onModeSelect,
+  confidenceScore = 0.95,
+  processingMs,
   companyName,
   className = '',
 }: SovereignDashboardProps) {
-  const { t }                   = useLanguage()
-  const [selected, setSelected] = useState<SovereignMode>(initialMode)
+  const { t } = useLanguage()
 
-  const select  = useCallback((m: SovereignMode) => setSelected(m), [])
-  const launch  = useCallback(() => onModeSelect(selected), [onModeSelect, selected])
+  const initIdx                     = MODES.findIndex(m => m.id === initialMode)
+  const [idx,       setIdx]         = useState(initIdx < 0 ? 0 : initIdx)
+  const [direction, setDirection]   = useState<1 | -1>(1)
+  const backgroundRef               = useRef<HTMLDivElement>(null)
 
-  const activeDef = selected !== 'synergy'
-    ? MODES.find(m => m.id === selected)!
-    : null
+  const goTo = useCallback((nextIdx: number, dir: 1 | -1) => {
+    setDirection(dir)
+    setIdx(nextIdx)
+  }, [])
 
-  // Order: upwind, sail | trim, catamaran | synergy (spans both columns)
-  const cardOrder: SovereignMode[] = ['upwind', 'sail', 'trim', 'catamaran']
+  const advance = useCallback(() => goTo((idx + 1) % MODES.length, 1), [idx, goTo])
+  const retreat = useCallback(() => goTo((idx - 1 + MODES.length) % MODES.length, -1), [idx, goTo])
+
+  // Clicking background: left third → retreat, rest → advance
+  const handleBgClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = backgroundRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const x = e.clientX - rect.left
+    if (x < rect.width * 0.28) retreat()
+    else advance()
+  }, [advance, retreat])
+
+  const def   = MODES[idx]
+  const label = t(def.labelKey)
+  const desc  = t(def.descKey)
 
   return (
     <div
+      ref={backgroundRef}
       role="region"
       aria-label="Mode selection"
       className={className}
+      onClick={handleBgClick}
       style={{
         position:       'relative',
         display:        'flex',
@@ -515,292 +510,218 @@ export function SovereignDashboard({
         justifyContent: 'center',
         minHeight:      '100vh',
         width:          '100%',
-        background:     '#0C0C0E',
+        background:     'linear-gradient(135deg, #c8f2ec 0%, #e8faf7 45%, #daedf8 100%)',
         overflow:       'hidden',
-        padding:        '2.5rem 1.5rem 3rem',
+        cursor:         'pointer',   // clicking bg rotates
+        userSelect:     'none',
       }}
     >
-      {/* Subtle teal grid overlay — same as chat page aesthetic */}
-      <div
+      {/* Architectural grid */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
         aria-hidden
-        style={{
-          position:        'absolute',
-          inset:           0,
-          backgroundImage: [
-            'linear-gradient(rgba(45,212,191,0.035) 1px, transparent 1px)',
-            'linear-gradient(90deg, rgba(45,212,191,0.035) 1px, transparent 1px)',
-          ].join(', '),
-          backgroundSize:  '60px 60px',
-          pointerEvents:   'none',
-        }}
-      />
+      >
+        <defs>
+          <pattern id="sov-gr" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(45,212,191,0.10)" strokeWidth="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#sov-gr)" />
+      </svg>
 
-      {/* Ambient glow — shifts colour with selected mode */}
+      {/* Ambient colour wash behind the card */}
       <motion.div
-        key={selected}
+        key={`glow-${def.id}`}
         aria-hidden
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.7 }}
+        transition={{ duration: 0.8 }}
         style={{
           position:     'absolute',
-          top:          '-8%',
+          top:          '10%',
           left:         '50%',
           transform:    'translateX(-50%)',
-          width:        '640px',
-          height:       '420px',
+          width:        '480px',
+          height:       '480px',
           borderRadius: '50%',
-          background:   selected === 'synergy'
-            ? 'radial-gradient(ellipse, rgba(201,169,110,0.12) 0%, transparent 65%)'
-            : `radial-gradient(ellipse, ${activeDef?.glow ?? 'rgba(26,82,118,0.12)'} 0%, transparent 65%)`,
-          filter:       'blur(48px)',
+          background:   def.id === 'synergy'
+            ? 'radial-gradient(ellipse, rgba(201,169,110,0.18) 0%, transparent 70%)'
+            : 'radial-gradient(ellipse, rgba(20,184,166,0.18) 0%, transparent 70%)',
+          filter:       'blur(40px)',
           pointerEvents:'none',
         }}
       />
 
-      {/* ── Header — same WelcomeBanner dark-card DNA ──────────── */}
+      {/* ── Header ─────────────────────────────────────────────── */}
       <motion.div
-        initial={{ opacity: 0, y: -14 }}
+        initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0   }}
-        transition={{ duration: 0.46, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         style={{
-          position:     'relative',
-          width:        '100%',
-          maxWidth:     '640px',
-          background:   'linear-gradient(135deg, #0C0C0E 0%, #131320 100%)',
-          border:       '1px solid rgba(201,169,110,0.18)',
-          borderRadius: '14px',
-          padding:      '1.25rem 1.5rem',
-          marginBottom: '1.25rem',
-          overflow:     'hidden',
+          position:      'relative',
+          textAlign:     'center',
+          marginBottom:  '2.75rem',
+          pointerEvents: 'none',   // header clicks fall through to bg rotate
         }}
       >
-        {/* Gold hairline at top — same as WelcomeBanner */}
+        {/* Teal–champagne hairline */}
         <div style={{
-          position:   'absolute',
-          top: 0, left: '8%', right: '8%',
-          height:     '1px',
-          background: 'linear-gradient(90deg, transparent, #C9A96E 40%, #14B8A6 60%, transparent)',
-          opacity:    0.55,
+          width:        '80px',
+          height:       '1px',
+          background:   'linear-gradient(90deg, transparent 0%, #14B8A6 40%, #C9A96E 60%, transparent 100%)',
+          margin:       '0 auto 1rem',
+          opacity:      0.6,
         }} />
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-          <div>
-            {companyName && (
-              <span style={{
-                display:       'block',
-                fontFamily:    '"Cormorant Garamond", Georgia, serif',
-                fontStyle:     'italic',
-                fontSize:      '0.72rem',
-                fontWeight:    600,
-                color:         '#C9A96E',
-                letterSpacing: '0.04em',
-                marginBottom:  '0.2rem',
-                opacity:       0.85,
-              }}>
-                {companyName}
-              </span>
-            )}
-            <h1 style={{
-              fontFamily:    '"Cormorant Garamond", Georgia, serif',
-              fontSize:      'clamp(1.4rem, 2.8vw, 2rem)',
-              fontWeight:    600,
-              color:         '#FFFFFF',
-              margin:        0,
-              lineHeight:    1.15,
-              letterSpacing: '-0.01em',
-            }}>
-              Set Your Course
-            </h1>
-            <p style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize:   '0.68rem',
-              color:      'rgba(255,255,255,0.38)',
-              margin:     '0.35rem 0 0',
-              lineHeight: 1.5,
-            }}>
-              Choose an intelligence architecture for this session.
-            </p>
-          </div>
+        {companyName && (
+          <span style={{
+            display:       'block',
+            fontFamily:    '"Cormorant Garamond", Georgia, serif',
+            fontStyle:     'italic',
+            fontSize:      '0.72rem',
+            fontWeight:    600,
+            color:         '#9A6B00',
+            letterSpacing: '0.05em',
+            marginBottom:  '0.3rem',
+            opacity:       0.85,
+          }}>
+            {companyName}
+          </span>
+        )}
 
-          {/* Selected mode indicator — animated */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={selected}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1   }}
-              exit={{    opacity: 0, scale: 0.85 }}
-              transition={{ duration: 0.2 }}
-              style={{
-                display:       'flex',
-                flexDirection: 'column',
-                alignItems:    'center',
-                gap:           '0.2rem',
-                flexShrink:    0,
-              }}
-            >
-              <span style={{
-                fontFamily:    'Inter, sans-serif',
-                fontSize:      '0.48rem',
-                fontWeight:    700,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color:         'rgba(255,255,255,0.3)',
-              }}>
-                Active
-              </span>
-              <span style={{
-                fontFamily:    'Inter, sans-serif',
-                fontSize:      '0.62rem',
-                fontWeight:    700,
-                letterSpacing: '0.07em',
-                textTransform: 'uppercase',
-                color:         selected === 'synergy' ? '#C9A96E' : (activeDef?.color ?? '#FFFFFF'),
-              }}>
-                {t(`mode.${selected}` as TranslationKey)}
-              </span>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </motion.div>
-
-      {/* ── Mode card grid ─────────────────────────────────────── */}
-      <div
-        role="radiogroup"
-        aria-label="Analysis modes"
-        style={{
-          position:            'relative',
-          display:             'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap:                 '0.55rem',
-          width:               '100%',
-          maxWidth:            '640px',
-          marginBottom:        '0.55rem',
-        }}
-      >
-        {cardOrder.map((id, i) => {
-          const def = MODES.find(m => m.id === id)!
-          return (
-            <ModeCard
-              key={id}
-              def={def}
-              label={t(def.labelKey)}
-              desc={t(def.descKey)}
-              isActive={selected === id}
-              delay={0.06 + i * 0.07}
-              onClick={() => select(id)}
-            />
-          )
-        })}
-      </div>
-
-      {/* Synergy — full-width row */}
-      <div style={{ width: '100%', maxWidth: '640px', marginBottom: '1.25rem' }}>
-        <SynergyCard
-          label={t('mode.synergy')}
-          desc={t('mode.synergyDesc')}
-          isActive={selected === 'synergy'}
-          delay={0.34}
-          companyName={companyName}
-          onClick={() => select('synergy')}
-        />
-      </div>
-
-      {/* ── Chart Course CTA ───────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0  }}
-        transition={{ delay: 0.44, duration: 0.4 }}
-        style={{ width: '100%', maxWidth: '640px' }}
-      >
-        <motion.button
-          type="button"
-          onClick={launch}
-          whileHover={{
-            scale:     1.015,
-            boxShadow: selected === 'synergy'
-              ? '0 8px 32px rgba(201,169,110,0.2)'
-              : `0 8px 32px ${activeDef?.glow ?? 'rgba(26,82,118,0.2)'}`,
-          }}
-          whileTap={{ scale: 0.975 }}
-          style={{
-            width:         '100%',
-            padding:       '0.85rem 1.5rem',
-            borderRadius:  '10px',
-            border:        selected === 'synergy'
-              ? '1px solid rgba(201,169,110,0.45)'
-              : `1px solid ${activeDef?.border ?? 'rgba(255,255,255,0.1)'}`,
-            background:    selected === 'synergy'
-              ? 'linear-gradient(135deg, rgba(201,169,110,0.12) 0%, rgba(14,14,22,0.8) 100%)'
-              : `linear-gradient(135deg, ${activeDef?.bg ?? 'rgba(26,82,118,0.07)'}, rgba(14,14,22,0.8))`,
-            cursor:        'pointer',
-            display:       'flex',
-            alignItems:    'center',
-            justifyContent:'center',
-            gap:           '0.65rem',
-          }}
-        >
-          {/* Animated icon + label on mode change */}
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={selected}
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0  }}
-              exit={{    opacity: 0, x:  6  }}
-              transition={{ duration: 0.18 }}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <ModeIconSwitch
-                id={selected}
-                color={selected === 'synergy' ? '#C9A96E' : (activeDef?.color ?? '#FFFFFF')}
-              />
-              <span style={{
-                fontFamily:    'Inter, sans-serif',
-                fontSize:      '0.72rem',
-                fontWeight:    700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color:         selected === 'synergy' ? '#C9A96E' : (activeDef?.color ?? '#FFFFFF'),
-              }}>
-                Chart Course
-              </span>
-            </motion.span>
-          </AnimatePresence>
-
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M5 12h14M14 6l6 6-6 6"
-              stroke={selected === 'synergy' ? '#C9A96E' : (activeDef?.color ?? '#FFFFFF')}
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </motion.button>
+        <h1 style={{
+          fontFamily:    '"Cormorant Garamond", Georgia, serif',
+          fontSize:      'clamp(1.7rem, 3vw, 2.4rem)',
+          fontWeight:    600,
+          color:         '#0F2435',
+          margin:        0,
+          lineHeight:    1.1,
+          letterSpacing: '-0.01em',
+        }}>
+          Set Your Course
+        </h1>
 
         <p style={{
-          fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.54rem',
-          fontStyle:     'italic',
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color:         'rgba(255,255,255,0.18)',
-          textAlign:     'center',
-          margin:        '0.65rem 0 0',
-          userSelect:    'none',
-        }}
-        aria-hidden>
-          Select a mode · Chart Course to begin
+          fontFamily: 'Inter, sans-serif',
+          fontSize:   '0.66rem',
+          color:      '#4A6070',
+          margin:     '0.4rem 0 0',
+          opacity:    0.75,
+          letterSpacing: '0.01em',
+        }}>
+          Tap background to rotate · tap card to select
         </p>
       </motion.div>
 
-      {/* Bottom vignette */}
+      {/* ── Carousel stage ─────────────────────────────────────── */}
       <div
+        style={{
+          position:       'relative',
+          width:          `${CARD_W}px`,
+          height:         `${CARD_H}px`,
+          display:        'flex',
+          alignItems:     'center',
+          justifyContent: 'center',
+        }}
+      >
+        {/* Ghost cards peeking from behind */}
+        <GhostCard side="left"  />
+        <GhostCard side="right" />
+
+        {/* Active pill card — AnimatePresence swaps content on mode change */}
+        <AnimatePresence mode="wait" custom={direction}>
+          <PillCard
+            key={def.id}
+            def={def}
+            label={label}
+            desc={desc}
+            companyName={companyName}
+            direction={direction}
+            onLaunch={() => onModeSelect(def.id)}
+          />
+        </AnimatePresence>
+      </div>
+
+      {/* ── Chart Course CTA ───────────────────────────────────── */}
+      <motion.button
+        type="button"
+        onClick={e => { e.stopPropagation(); onModeSelect(def.id) }}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.96 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0  }}
+        transition={{ delay: 0.3 }}
+        style={{
+          marginTop:     '2rem',
+          padding:       '0.72rem 2.5rem',
+          borderRadius:  '999px',
+          border:        '1.5px solid rgba(20,184,166,0.4)',
+          background:    '#0F2435',
+          color:         '#FFFFFF',
+          fontFamily:    'Inter, sans-serif',
+          fontSize:      '0.68rem',
+          fontWeight:    700,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          cursor:        'pointer',
+          boxShadow:     '0 6px 24px rgba(15,36,53,0.25)',
+          pointerEvents: 'auto',
+          display:       'flex',
+          alignItems:    'center',
+          gap:           '0.5rem',
+        }}
+      >
+        {/* Animated mode label inside CTA */}
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={def.id}
+            initial={{ opacity: 0, y: 4  }}
+            animate={{ opacity: 1, y: 0  }}
+            exit={{    opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+          >
+            CHART COURSE
+          </motion.span>
+        </AnimatePresence>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M5 12h14M14 6l6 6-6 6" stroke="#14B8A6" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </motion.button>
+
+      {/* ── Navigation dots ─────────────────────────────────────── */}
+      <div
+        style={{ marginTop: '1.25rem', pointerEvents: 'auto' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <NavDots
+          total={MODES.length}
+          active={idx}
+          onSelect={i => goTo(i, i > idx ? 1 : -1)}
+        />
+      </div>
+
+      {/* ── Footer hint ─────────────────────────────────────────── */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.55 }}
         aria-hidden
         style={{
-          position:     'absolute',
-          bottom: 0, left: 0, right: 0,
-          height:       '80px',
-          background:   'linear-gradient(to top, #0C0C0E, transparent)',
-          pointerEvents:'none',
+          position:      'absolute',
+          bottom:        '1.75rem',
+          fontFamily:    'Inter, sans-serif',
+          fontSize:      '0.52rem',
+          fontStyle:     'italic',
+          letterSpacing: '0.09em',
+          textTransform: 'uppercase',
+          color:         'rgba(15,36,53,0.28)',
+          margin:        0,
+          pointerEvents: 'none',
         }}
-      />
+      >
+        {idx + 1} / {MODES.length} — {label}
+      </motion.p>
     </div>
   )
 }
