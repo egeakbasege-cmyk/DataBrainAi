@@ -819,3 +819,142 @@ input { outline: none; font-family: 'Inter', sans-serif; }
   outline:        2px solid var(--sv-teal);
   outline-offset: 2px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SWISS PRECISION × EXPLORA LUXURY — Premium Motion Layer
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Infinite horizontal marquee ──────────────────────────────── */
+@keyframes sv-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.sv-marquee-track {
+  display:     inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  animation:   sv-marquee 55s linear infinite;
+  will-change: transform;
+}
+.sv-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ── Hover lift — cards, rows, interactive blocks ─────────────── */
+.hover-lift {
+  transition: transform 0.32s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.32s cubic-bezier(0.22,1,0.36,1);
+}
+.hover-lift:hover {
+  transform:  translateY(-5px);
+  box-shadow: 0 20px 48px rgba(0,0,0,0.10);
+}
+.hover-lift-dark:hover {
+  transform:  translateY(-5px);
+  box-shadow: 0 20px 48px rgba(0,0,0,0.45);
+}
+
+/* ── Button — lift & shadow on hover ─────────────────────────── */
+.btn-primary:hover {
+  background:  var(--charcoal);
+  transform:   translateY(-2px);
+  box-shadow:  0 8px 24px rgba(0,0,0,0.28);
+}
+.btn-primary:active {
+  transform:   translateY(0);
+  box-shadow:  none;
+}
+.btn-ghost-white:hover {
+  background:    rgba(255,255,255,0.1);
+  border-color:  rgba(255,255,255,0.55);
+  transform:     translateY(-1px);
+}
+
+/* ── Champagne underline link (Swiss editorial) ───────────────── */
+.link-editorial {
+  position:        relative;
+  text-decoration: none;
+  color:           inherit;
+}
+.link-editorial::after {
+  content:    '';
+  position:   absolute;
+  bottom:     -2px;
+  left:       0;
+  width:      0;
+  height:     1px;
+  background: var(--champagne);
+  transition: width 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+.link-editorial:hover::after { width: 100%; }
+
+/* ── Section reveal — JS adds .in class via IntersectionObserver ─ */
+.sv-reveal {
+  opacity:    0;
+  transform:  translateY(28px);
+  transition: opacity 0.72s cubic-bezier(0.22,1,0.36,1),
+              transform 0.72s cubic-bezier(0.22,1,0.36,1);
+}
+.sv-reveal.sv-in {
+  opacity:   1;
+  transform: translateY(0);
+}
+
+/* ── Stagger delays for sibling reveals ────────────────────────── */
+.sv-d1 { transition-delay: 0.08s; }
+.sv-d2 { transition-delay: 0.17s; }
+.sv-d3 { transition-delay: 0.26s; }
+.sv-d4 { transition-delay: 0.35s; }
+
+/* ── Mode card hover — teal ring already in .mode-card-sv ──────── */
+/* Add subtle scale to the icon container on card hover */
+.mode-card-sv:hover .mode-icon-box {
+  transform:  scale(1.1);
+  transition: transform 0.25s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* ── Case row hover ────────────────────────────────────────────── */
+.case-row {
+  transition: background 0.2s;
+  cursor:     default;
+}
+.case-row:hover {
+  background: rgba(201,169,110,0.03);
+}
+
+/* ── Champagne hairline gradient rule ──────────────────────────── */
+.champagne-rule {
+  height:     1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(201,169,110,0.5) 35%,
+    rgba(20,184,166,0.4)  65%,
+    transparent 100%
+  );
+  opacity: 0.6;
+}
+
+/* ── Section eyebrow — consistent pattern ──────────────────────── */
+.sv-eyebrow {
+  display:       flex;
+  align-items:   center;
+  gap:           0.875rem;
+  margin-bottom: 0.75rem;
+}
+.sv-eyebrow::before {
+  content:    '';
+  display:    block;
+  width:      24px;
+  height:     1px;
+  background: var(--champagne);
+  flex-shrink:0;
+  opacity:    0.7;
+}
+.sv-eyebrow-label {
+  font-family:    'Inter', sans-serif;
+  font-size:      0.6rem;
+  font-weight:    700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color:          var(--champagne);
+}

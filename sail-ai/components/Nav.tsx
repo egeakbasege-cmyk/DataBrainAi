@@ -1,18 +1,31 @@
 'use client'
 
-import Link     from 'next/link'
-import { useState } from 'react'
-import { useSession, signOut } from 'next-auth/react'
-import { Logo }               from './Logo'
-import { LanguageSelector }   from './LanguageSelector'
-import { useLanguage }        from '@/lib/i18n/LanguageContext'
+import Link                  from 'next/link'
+import { useState, useEffect } from 'react'
+import { useSession, signOut }  from 'next-auth/react'
+import { usePathname }          from 'next/navigation'
+import { Logo }                 from './Logo'
+import { LanguageSelector }     from './LanguageSelector'
+import { useLanguage }          from '@/lib/i18n/LanguageContext'
 
 export function Nav() {
   const { data: session } = useSession()
   const { t } = useLanguage()
-  const [menuOpen, setMenuOpen] = useState(false)
+  const pathname = usePathname()
+  const [menuOpen,      setMenuOpen]      = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
   const [portalError,   setPortalError]   = useState<string | null>(null)
+  const [scrolled,      setScrolled]      = useState(false)
+
+  // Scroll-aware transparency: only on the landing page
+  const isLanding = pathname === '/'
+  useEffect(() => {
+    if (!isLanding) return
+    const onScroll = () => setScrolled(window.scrollY > 72)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [isLanding])
 
   const initial = session?.user?.name?.[0]?.toUpperCase()
     ?? session?.user?.email?.[0]?.toUpperCase()
@@ -34,16 +47,27 @@ export function Nav() {
     }
   }
 
+  // On landing: transparent until scrolled. On all other pages: always frosted.
+  const navBg = isLanding && !scrolled
+    ? 'transparent'
+    : 'rgba(250,250,248,0.96)'
+  const navBlur = isLanding && !scrolled ? 'none' : 'blur(18px)'
+  // Text colours flip to white when nav is transparent over dark hero
+  const navLinkColor = isLanding && !scrolled ? 'rgba(255,255,255,0.65)' : '#71717A'
+  const navResearchColor = isLanding && !scrolled ? 'rgba(201,169,110,0.85)' : '#C9A96E'
+  const navBrandColor = isLanding && !scrolled ? '#FFFFFF' : '#0C0C0E'
+
   return (
     <header
       style={{
-        position:    'sticky',
-        top:         0,
-        zIndex:      30,
-        background:  'rgba(250,250,248,0.95)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderBottom:'none',
+        position:             'sticky',
+        top:                  0,
+        zIndex:               30,
+        background:           navBg,
+        backdropFilter:       navBlur,
+        WebkitBackdropFilter: navBlur,
+        transition:           'background 0.4s ease, backdrop-filter 0.4s ease',
+        borderBottom:         'none',
       }}
     >
       <div
@@ -58,8 +82,9 @@ export function Nav() {
               fontFamily:    'Cormorant Garamond, Georgia, serif',
               fontSize:      '1rem',
               fontWeight:    600,
-              color:         '#0C0C0E',
+              color:         navBrandColor,
               letterSpacing: '0.07em',
+              transition:    'color 0.4s',
             }}>
               SAIL
             </span>
@@ -92,10 +117,11 @@ export function Nav() {
               fontWeight:    600,
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
-              color:         '#C9A96E',
+              color:         navResearchColor,
               textDecoration:'none',
               borderBottom:  '1px solid rgba(20,184,166,0.4)',
               paddingBottom: '1px',
+              transition:    'color 0.4s',
             }}
           >
             {t('nav.research')}
@@ -108,8 +134,9 @@ export function Nav() {
               fontWeight:    600,
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
-              color:         '#71717A',
+              color:         navLinkColor,
               textDecoration:'none',
+              transition:    'color 0.4s',
             }}
           >
             Data Lab
@@ -122,8 +149,9 @@ export function Nav() {
               fontWeight:    600,
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
-              color:         '#71717A',
+              color:         navLinkColor,
               textDecoration:'none',
+              transition:    'color 0.4s',
             }}
           >
             {t('nav.pricing')}
