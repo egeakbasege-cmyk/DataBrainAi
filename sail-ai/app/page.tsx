@@ -22,15 +22,42 @@
  *   • Teal: #14B8A6 · Slate: #71717A · Silver: #A1A1AA
  */
 
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion, useScroll, useTransform, useInView, animate } from 'framer-motion'
 import { Nav } from '@/components/Nav'
 import { Logo } from '@/components/Logo'
 import { CompassRose, EngravedSailboat } from '@/components/Ornaments'
 import { TopoBackground } from '@/components/TopoBackground'
 import { ProductWalkthrough } from '@/components/ProductWalkthrough'
+import { SectionDivider, ChampagneRule } from '@/components/SectionDivider'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+
+// ── Animated counter — counts up from 0 when entering viewport ──
+function AnimatedCounter({ value }: { value: string }) {
+  const ref      = useRef<HTMLSpanElement>(null)
+  const inView   = useInView(ref, { once: true, margin: '-40px' })
+
+  useEffect(() => {
+    if (!inView || !ref.current) return
+    const match = value.match(/^([^0-9\-+]*)([0-9]+\.?[0-9]*)(.*)$/)
+    if (!match) { ref.current.textContent = value; return }
+    const [, prefix, numStr, suffix] = match
+    const target  = parseFloat(numStr)
+    const isFloat = numStr.includes('.')
+    const ctrl = animate(0, target, {
+      duration: 1.6,
+      ease:     [0.22, 1, 0.36, 1],
+      onUpdate: v => {
+        if (ref.current)
+          ref.current.textContent = prefix + (isFloat ? v.toFixed(1) : Math.round(v).toString()) + suffix
+      },
+    })
+    return () => ctrl.stop()
+  }, [inView, value])
+
+  return <span ref={ref}>{value}</span>
+}
 
 // ── Animation constants ─────────────────────────────────────────
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -388,7 +415,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Marquee Band 1: dark → light transition ──── */}
+      {/* ── Diagonal divider: dark hero → white ─────── */}
+      <SectionDivider from="#0C0C0E" to="#FFFFFF" direction="down-right" height={52} />
+
+      {/* ── Marquee Band 1 ───────────────────────────── */}
       <MarqueeBand />
 
       {/* ══════════════════════════════════════════════
@@ -530,7 +560,10 @@ export default function LandingPage() {
       ══════════════════════════════════════════════ */}
       <ProductWalkthrough />
 
-      {/* ── Marquee Band 2: after video section ──────── */}
+      {/* ── Diagonal divider: dark video → light ─────── */}
+      <SectionDivider from="#08090D" to="#F4F4F2" direction="down-left" height={52} />
+
+      {/* ── Marquee Band 2 ───────────────────────────── */}
       <MarqueeBand />
 
       {/* ══════════════════════════════════════════════
@@ -745,7 +778,7 @@ export default function LandingPage() {
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.3rem, 2.2vw, 1.75rem)', fontWeight: 700, color: '#C9A96E', lineHeight: 1, display: 'block', letterSpacing: '-0.01em' }}>
-                    {c.outcome}
+                    <AnimatedCounter value={c.outcome} />
                   </span>
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A1A1AA', display: 'block', marginTop: '0.25rem' }}>
                     {t('landing.estOutcome')}

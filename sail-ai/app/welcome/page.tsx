@@ -14,9 +14,21 @@
 import { useState } from 'react'
 import Link         from 'next/link'
 import { signIn }   from 'next-auth/react'
+import { motion }   from 'framer-motion'
 import { Logo }     from '@/components/Logo'
 import { ProductWalkthrough } from '@/components/ProductWalkthrough'
 import { useLanguage }        from '@/lib/i18n/LanguageContext'
+import { ChampagneRule }      from '@/components/SectionDivider'
+
+const EASE = [0.22, 1, 0.36, 1] as const
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } },
+}
+const stagger = {
+  hidden: {},
+  show:   { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
+}
 
 // ── Adım göstergesi ───────────────────────────────────────────────────────────
 
@@ -517,17 +529,30 @@ export default function WelcomePage() {
       {/* ── SECTION 1: Product Tour ──────────────────────────────────── */}
       <section style={{ background: '#0C0C0E' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '3rem 1.5rem 2rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#C9A96E' }}>
-              SAIL AI
-            </span>
-            <h1 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', fontWeight: 600, color: '#FFFFFF', margin: '0.5rem 0 0.5rem', lineHeight: 1.2 }}>
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="show"
+            style={{ textAlign: 'center', marginBottom: '2rem' }}
+          >
+            <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
+              <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.55)' }} />
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>SAIL AI</span>
+              <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.55)' }} />
+            </motion.div>
+            <motion.h1
+              variants={fadeUp}
+              style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', fontWeight: 600, color: '#FFFFFF', margin: '0 0 0.75rem', lineHeight: 1.15 }}
+            >
               {t('welcome.heroTitle')}
-            </h1>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', fontWeight: 300 }}>
+            </motion.h1>
+            <motion.p
+              variants={fadeUp}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(255,255,255,0.38)', fontWeight: 300, lineHeight: 1.75 }}
+            >
               {t('welcome.heroSub')}
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
         </div>
 
         {/* Full-width walkthrough */}
@@ -536,72 +561,106 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      {/* ── SECTION 2: Gerçek AI Yanıt Örneği ─────────────────────── */}
-      <section style={{ background: '#FAFAF8', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '4rem 1.5rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#C9A96E', display: 'block', marginBottom: '0.75rem' }}>
-                {t('walk.insight')}
-              </span>
-              <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.5rem', fontWeight: 600, color: '#0C0C0E', lineHeight: 1.3, margin: '0 0 1rem' }}>
+      <ChampagneRule />
+
+      {/* ── SECTION 2: Real AI Example ─────────────────────── */}
+      <section style={{ background: '#FAFAF8' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '5rem 1.5rem' }}>
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-80px' }}
+            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3.5rem', alignItems: 'center' }}
+          >
+            <motion.div variants={fadeUp}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
+                <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+                  {t('walk.insight')}
+                </span>
+              </div>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.4rem, 2.5vw, 1.75rem)', fontWeight: 600, color: '#0C0C0E', lineHeight: 1.25, margin: '0 0 1rem' }}>
                 {t('welcome.heroTitle')}
               </h2>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: '#71717A', lineHeight: 1.7, fontWeight: 300, margin: '0 0 1.5rem' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: '#71717A', lineHeight: 1.78, fontWeight: 300, margin: '0 0 1.75rem' }}>
                 {t('research.subtitle')}
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {[
                   `→ 20+ ${t('walk.sourcesScanned')}`,
                   `→ ${t('walk.sectorMedian')}`,
                   `→ ${t('walk.recActions')} + ${t('walk.target30d')}`,
                 ].map(item => (
-                  <p key={item} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#0C0C0E', margin: 0, fontWeight: 500 }}>{item}</p>
+                  <p key={item} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#0C0C0E', margin: 0, fontWeight: 500 }}>{item}</p>
                 ))}
               </div>
-            </div>
-            <ExampleCard />
-          </div>
+            </motion.div>
+            <motion.div variants={fadeUp}>
+              <ExampleCard />
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── SECTION 3: Kayıt + Abonelik ────────────────────────────── */}
+      <ChampagneRule />
+
+      {/* ── SECTION 3: Signup + Pricing ────────────────────────────── */}
       <section id="signup" style={{ background: '#FFFFFF' }}>
-        <div style={{ maxWidth: 700, margin: '0 auto', padding: '4rem 1.5rem' }}>
+        <div style={{ maxWidth: 700, margin: '0 auto', padding: '5rem 1.5rem' }}>
 
           <StepBar active={activeStep} />
 
           {/* Sign up form */}
-          <div style={{ background: '#FAFAF8', border: '1px solid rgba(0,0,0,0.09)', borderRadius: '14px', padding: '2rem 2.25rem', marginBottom: '2rem' }}>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.3rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.5rem' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.65, ease: EASE }}
+            style={{ background: '#FAFAF8', border: '1px solid rgba(0,0,0,0.09)', borderRadius: '14px', padding: '2.25rem 2.5rem', marginBottom: '1.5rem' }}
+          >
+            <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.5rem' }}>
               {t('welcome.signup.title')}
             </h2>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', margin: '0 0 1.5rem', fontWeight: 300 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', margin: '0 0 1.75rem', fontWeight: 300, lineHeight: 1.7 }}>
               {t('welcome.signup.sub')}
             </p>
             <SignupSection onSignedUp={() => setActiveStep(3)} />
-          </div>
+          </motion.div>
 
           {/* Pricing */}
-          <div style={{ background: '#FAFAF8', border: '1px solid rgba(0,0,0,0.09)', borderRadius: '14px', padding: '2rem 2.25rem', marginBottom: '2rem' }}>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.3rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.25rem' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.65, delay: 0.1, ease: EASE }}
+            style={{ background: '#FAFAF8', border: '1px solid rgba(0,0,0,0.09)', borderRadius: '14px', padding: '2.25rem 2.5rem', marginBottom: '1.5rem' }}
+          >
+            <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.375rem' }}>
               {t('welcome.pricing.title')}
             </h2>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', margin: '0 0 1.5rem', fontWeight: 300 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', margin: '0 0 1.75rem', fontWeight: 300, lineHeight: 1.7 }}>
               {t('pricing.subheadline')}
             </p>
             <PricingSection onUpgrade={() => setActiveStep(4)} />
-          </div>
+          </motion.div>
 
           {/* FAQ */}
-          <div style={{ background: '#FAFAF8', border: '1px solid rgba(0,0,0,0.09)', borderRadius: '14px', padding: '2rem 2.25rem' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.65, delay: 0.2, ease: EASE }}
+            style={{ background: '#FAFAF8', border: '1px solid rgba(0,0,0,0.09)', borderRadius: '14px', padding: '2.25rem 2.5rem' }}
+          >
             <FAQSection />
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────────── */}
-      <footer style={{ background: '#0C0C0E', padding: '1.5rem 1.5rem', textAlign: 'center' }}>
+      <footer style={{ background: '#0C0C0E', padding: '2rem 1.5rem', textAlign: 'center', borderTop: '1px solid rgba(201,169,110,0.1)' }}>
+        <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.4), rgba(20,184,166,0.3), transparent)', marginBottom: '1.25rem' }} />
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', margin: 0 }}>
           © {new Date().getFullYear()} SAIL AI · <Link href="/pricing" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>{t('nav.pricing')}</Link> · <Link href="/chat" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>{t('nav.chartCourse')}</Link>
         </p>

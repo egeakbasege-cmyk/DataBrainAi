@@ -2,19 +2,55 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { Nav } from '@/components/Nav'
 import { FREE_LIMIT } from '@/lib/stripe'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { ChampagneRule } from '@/components/SectionDivider'
 
-function Rule() {
-  return <div style={{ height: 1, background: 'rgba(0,0,0,0.09)', margin: '0' }} />
+// ── Animation constants ─────────────────────────────────────────
+const EASE = [0.22, 1, 0.36, 1] as const
+const fadeUp = {
+  hidden: { opacity: 0, y: 22 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } },
+}
+const stagger = {
+  hidden: {},
+  show:   { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
+}
+
+// ── Marquee items ───────────────────────────────────────────────
+const MARQUEE_ITEMS = [
+  'Cancel any time',
+  'No hidden fees',
+  'Groq 70B included',
+  'Live web research',
+  'Swiss precision AI',
+  'Enterprise-grade output',
+  'Free tier forever',
+  'Stripe-secured checkout',
+]
+
+function MarqueeBand() {
+  const doubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS]
+  return (
+    <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)', borderBottom: '1px solid rgba(0,0,0,0.07)', background: '#F4F4F2', padding: '0.875rem 0', overflow: 'hidden' }}>
+      <div className="sv-marquee-track">
+        {doubled.map((item, i) => (
+          <span key={i} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.67rem', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', padding: '0 2.75rem', display: 'inline-flex', alignItems: 'center', gap: '2.75rem' }}>
+            {item}
+            <span style={{ display: 'inline-block', width: 3, height: 3, borderRadius: '50%', background: '#C9A96E', flexShrink: 0 }} />
+          </span>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function PricingPage() {
   const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
 
-  /* ── Tier definitions ──────────────────────────────── */
   const TIERS = [
     {
       key:     'starter',
@@ -92,199 +128,205 @@ export default function PricingPage() {
   }
 
   return (
-    <main
-      className="sv-grid-bg"
-      style={{ background: 'var(--sv-mint-bg)', backgroundSize: '80px 80px' }}
-    >
+    <main style={{ background: '#FAFAF8', minHeight: '100vh' }}>
       <Nav />
 
-      <section className="max-w-5xl mx-auto px-6 md:px-10 pb-32" style={{ paddingTop: '2rem' }}>
+      {/* ── Hero header ──────────────────────────────────────────── */}
+      <section style={{ background: '#0C0C0E', borderBottom: 'none', position: 'relative', overflow: 'hidden' }}>
+        {/* Grid overlay */}
+        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.4, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '60vw', height: '40vh', background: 'radial-gradient(ellipse, rgba(201,169,110,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        {/* Header */}
-        <div style={{ marginBottom: '4.5rem' }}>
-          {/* sv-brand-rule above eyebrow label */}
-          <div className="sv-brand-rule" style={{ marginBottom: '1.5rem' }} />
-          <span className="label-caps" style={{ display: 'block', marginBottom: '1rem' }}>{t('pricing.membership')}</span>
-          <h1
-            style={{
-              fontFamily:    'Cormorant Garamond, Georgia, serif',
-              fontStyle:     'italic',
-              fontSize:      'clamp(2rem, 4vw, 3.2rem)',
-              color:         '#0C0C0E',
-              letterSpacing: '-0.025em',
-              lineHeight:    1.1,
-              marginBottom:  '1rem',
-            }}
+        <div className="max-w-5xl mx-auto px-6 md:px-10 pt-20 pb-24" style={{ position: 'relative', zIndex: 10 }}>
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="show"
           >
-            {t('pricing.headline')}
-          </h1>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#71717A', maxWidth: '44ch', fontWeight: 300, lineHeight: 1.7 }}>
-            {t('pricing.subheadline')}
-          </p>
-        </div>
+            <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.5rem' }}>
+              <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+                {t('pricing.membership')}
+              </span>
+            </motion.div>
 
-        <Rule />
-
-        {/* Tiers */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', marginTop: '2rem', gap: 0 }}>
-          {TIERS.map((tier, i) => (
-            <div
-              key={tier.key}
+            <motion.h1
+              variants={fadeUp}
               style={{
-                padding:     '2.25rem',
-                background:  tier.accent
-                  ? '#0C0C0E'
-                  : tier.key === 'advisory'
-                    ? 'linear-gradient(160deg, #FFFFFF 0%, #f8fffe 100%)'
-                    : '#FFFFFF',
-                border:      '1px solid rgba(0,0,0,0.1)',
-                borderLeft:  i === 0 ? '1px solid rgba(0,0,0,0.1)' : 'none',
-                position:    'relative',
-                boxShadow:   tier.accent
-                  ? '0 0 0 1px rgba(20,184,166,0.15), 0 20px 60px rgba(0,0,0,0.25)'
-                  : tier.key === 'advisory'
-                    ? '0 4px 24px rgba(20,184,166,0.06)'
-                    : undefined,
+                fontFamily:    'Cormorant Garamond, Georgia, serif',
+                fontStyle:     'italic',
+                fontSize:      'clamp(2.25rem, 5vw, 3.5rem)',
+                fontWeight:    600,
+                color:         '#FFFFFF',
+                letterSpacing: '-0.025em',
+                lineHeight:    1.08,
+                marginBottom:  '1.25rem',
               }}
             >
-              {/* Champagne top rule for Pro */}
-              {tier.accent && (
-                <>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #0C0C0E, #C9A96E, #0C0C0E)' }} />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/sail-square.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.12, pointerEvents: 'none', borderRadius: 'inherit' }} />
-                </>
-              )}
+              {t('pricing.headline')}
+            </motion.h1>
 
-              <span
-                className={tier.accent ? 'label-gold' : 'label-caps'}
-                style={{ display: 'block', marginBottom: '1.25rem' }}
-              >
-                {tier.name}
-              </span>
-
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.5rem' }}>
-                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '2.75rem', fontWeight: 700, color: tier.accent ? '#FFFFFF' : '#0C0C0E', lineHeight: 1 }}>
-                  {tier.price}
-                </span>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: tier.accent ? 'rgba(255,255,255,0.4)' : '#A1A1AA' }}>
-                  {tier.period}
-                </span>
-              </div>
-
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.5)' : '#71717A', lineHeight: 1.6, marginBottom: '1.75rem', fontWeight: 300 }}>
-                {tier.summary}
-              </p>
-
-              <div style={{ height: 1, background: tier.accent ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.09)', marginBottom: '1.5rem' }} />
-
-              <ul style={{ listStyle: 'none', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                {tier.features.map(f => (
-                  <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.7)' : '#3A3A3C', lineHeight: 1.4 }}>
-                    <span style={{ color: tier.accent ? '#C9A96E' : 'var(--sv-teal)', fontSize: '0.55rem', flexShrink: 0, marginTop: '0.35rem' }}>◆</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA */}
-              {tier.cta.action === 'stripe' ? (
-                <button
-                  onClick={handleStripe}
-                  disabled={loading}
-                  style={{
-                    display:       'flex',
-                    alignItems:    'center',
-                    justifyContent:'center',
-                    width:         '100%',
-                    padding:       '0.875rem',
-                    background:    '#C9A96E',
-                    color:         '#0C0C0E',
-                    fontFamily:    'Inter, sans-serif',
-                    fontSize:      '0.75rem',
-                    fontWeight:    700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    border:        '1px solid #C9A96E',
-                    cursor:        loading ? 'wait' : 'pointer',
-                    opacity:       loading ? 0.6 : 1,
-                    transition:    'opacity 0.2s',
-                  }}
-                >
-                  {loading ? t('pricing.redirecting') : tier.cta.label}
-                </button>
-              ) : tier.cta.href?.startsWith('mailto') ? (
-                <a
-                  href={tier.cta.href}
-                  style={{
-                    display:       'flex',
-                    alignItems:    'center',
-                    justifyContent:'center',
-                    width:         '100%',
-                    padding:       '0.875rem',
-                    background:    'transparent',
-                    color:         '#0C0C0E',
-                    fontFamily:    'Inter, sans-serif',
-                    fontSize:      '0.75rem',
-                    fontWeight:    600,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    border:        '1px solid rgba(0,0,0,0.2)',
-                    textDecoration:'none',
-                    textAlign:     'center',
-                    transition:    'background 0.18s',
-                  }}
-                >
-                  {tier.cta.label}
-                </a>
-              ) : (
-                <Link
-                  href={tier.cta.href!}
-                  style={{
-                    display:       'flex',
-                    alignItems:    'center',
-                    justifyContent:'center',
-                    padding:       '0.875rem',
-                    background:    'transparent',
-                    color:         '#0C0C0E',
-                    fontFamily:    'Inter, sans-serif',
-                    fontSize:      '0.75rem',
-                    fontWeight:    600,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    border:        '1px solid rgba(0,0,0,0.2)',
-                    textDecoration:'none',
-                    textAlign:     'center',
-                  }}
-                >
-                  {tier.cta.label}
-                </Link>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* FAQ */}
-        <div style={{ marginTop: '6.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem' }}>
-            <span className="label-caps">{t('pricing.commonQ')}</span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.09)' }} />
-          </div>
-
-          {FAQ.map((faq) => (
-            <div
-              key={faq.q}
-              style={{ padding: '1.5rem 0', borderBottom: '1px solid rgba(0,0,0,0.07)' }}
+            <motion.p
+              variants={fadeUp}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9375rem', color: 'rgba(255,255,255,0.42)', maxWidth: '44ch', fontWeight: 300, lineHeight: 1.78 }}
             >
-              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600, fontSize: '1.1rem', color: '#0C0C0E', marginBottom: '0.375rem' }}>
-                <span style={{ color: 'var(--sv-teal)', marginRight: '0.5rem', fontSize: '0.7rem' }}>◈</span>
-                {faq.q}
-              </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.7, color: '#71717A', fontWeight: 300 }}>
-                {faq.a}
-              </p>
-            </div>
-          ))}
+              {t('pricing.subheadline')}
+            </motion.p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Marquee between hero and tiers */}
+      <MarqueeBand />
+
+      {/* ── Tier cards ───────────────────────────────────────────── */}
+      <section style={{ background: '#FFFFFF' }}>
+        <div className="max-w-5xl mx-auto px-6 md:px-10 py-20">
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-60px' }}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 0 }}
+          >
+            {TIERS.map((tier, i) => (
+              <motion.div
+                key={tier.key}
+                variants={fadeUp}
+                style={{
+                  padding:    '2.5rem',
+                  background: tier.accent
+                    ? '#0C0C0E'
+                    : tier.key === 'advisory'
+                      ? 'linear-gradient(160deg, #FFFFFF 0%, #f8fffe 100%)'
+                      : '#FFFFFF',
+                  border:    '1px solid rgba(0,0,0,0.1)',
+                  borderLeft: i === 0 ? '1px solid rgba(0,0,0,0.1)' : 'none',
+                  position:  'relative',
+                  boxShadow: tier.accent
+                    ? '0 0 0 1px rgba(20,184,166,0.15), 0 24px 64px rgba(0,0,0,0.3)'
+                    : tier.key === 'advisory'
+                      ? '0 4px 24px rgba(20,184,166,0.06)'
+                      : undefined,
+                  transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s',
+                }}
+                whileHover={{
+                  y: tier.accent ? -6 : -4,
+                  boxShadow: tier.accent
+                    ? '0 0 0 1px rgba(20,184,166,0.2), 0 32px 80px rgba(0,0,0,0.4)'
+                    : '0 16px 48px rgba(0,0,0,0.1)',
+                }}
+              >
+                {tier.accent && (
+                  <>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #0C0C0E, #C9A96E, #0C0C0E)' }} />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/sail-square.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.1, pointerEvents: 'none', borderRadius: 'inherit' }} />
+                  </>
+                )}
+
+                <span className={tier.accent ? 'label-gold' : 'label-caps'} style={{ display: 'block', marginBottom: '1.25rem' }}>
+                  {tier.name}
+                </span>
+
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                  <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '3rem', fontWeight: 700, color: tier.accent ? '#FFFFFF' : '#0C0C0E', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                    {tier.price}
+                  </span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: tier.accent ? 'rgba(255,255,255,0.35)' : '#A1A1AA', fontWeight: 300 }}>
+                    {tier.period}
+                  </span>
+                </div>
+
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.45)' : '#71717A', lineHeight: 1.7, marginBottom: '2rem', fontWeight: 300 }}>
+                  {tier.summary}
+                </p>
+
+                <div style={{ height: 1, background: tier.accent ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', marginBottom: '1.75rem' }} />
+
+                <ul style={{ listStyle: 'none', marginBottom: '2.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {tier.features.map(f => (
+                    <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.65)' : '#3A3A3C', lineHeight: 1.5 }}>
+                      <span style={{ color: tier.accent ? '#C9A96E' : 'var(--sv-teal)', fontSize: '0.5rem', flexShrink: 0, marginTop: '0.4rem' }}>◆</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                {tier.cta.action === 'stripe' ? (
+                  <button
+                    onClick={handleStripe}
+                    disabled={loading}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.9rem', background: 'linear-gradient(135deg, #B8882A, #C9A96E)', color: '#0C0C0E', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s', boxShadow: '0 4px 16px rgba(201,169,110,0.4)' }}
+                  >
+                    {loading ? t('pricing.redirecting') : tier.cta.label}
+                  </button>
+                ) : tier.cta.href?.startsWith('mailto') ? (
+                  <a
+                    href={tier.cta.href}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.9rem', background: 'transparent', color: '#0C0C0E', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid rgba(0,0,0,0.18)', textDecoration: 'none', textAlign: 'center', transition: 'background 0.18s' }}
+                  >
+                    {tier.cta.label}
+                  </a>
+                ) : (
+                  <Link
+                    href={tier.cta.href!}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.9rem', background: 'transparent', color: '#0C0C0E', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid rgba(0,0,0,0.18)', textDecoration: 'none', textAlign: 'center' }}
+                  >
+                    {tier.cta.label}
+                  </Link>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      <ChampagneRule />
+
+      {/* ── FAQ ──────────────────────────────────────────────────── */}
+      <section style={{ background: '#FAFAF8' }}>
+        <div className="max-w-5xl mx-auto px-6 md:px-10 py-20">
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-60px' }}
+            style={{ marginBottom: '3rem' }}
+          >
+            <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '0' }}>
+              <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+                {t('pricing.commonQ')}
+              </span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-40px' }}
+          >
+            {FAQ.map((faq) => (
+              <motion.div
+                key={faq.q}
+                variants={fadeUp}
+                style={{ padding: '1.75rem 0', borderBottom: '1px solid rgba(0,0,0,0.07)' }}
+              >
+                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600, fontSize: '1.15rem', color: '#0C0C0E', marginBottom: '0.5rem', lineHeight: 1.3 }}>
+                  <span style={{ color: 'var(--sv-teal)', marginRight: '0.5rem', fontSize: '0.7rem' }}>◈</span>
+                  {faq.q}
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.78, color: '#71717A', fontWeight: 300 }}>
+                  {faq.a}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
     </main>

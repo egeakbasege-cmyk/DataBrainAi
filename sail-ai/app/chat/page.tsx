@@ -1028,14 +1028,19 @@ export default function ChatPage() {
         {showWelcome && <WelcomeBanner onDismiss={dismissWelcome} />}
 
         {/* ── Header: Boat animation + counter ── */}
-        <div style={{
-          background:   'linear-gradient(135deg, #FFFFFF 0%, #FAFAF8 100%)',
-          border:       '1px solid rgba(201,169,110,0.18)',
-          borderRadius: '16px',
-          overflow:     'hidden',
-          position:     'relative',
-          boxShadow:    '0 4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(201,169,110,0.12)',
-        }}>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            background:   'linear-gradient(135deg, #FFFFFF 0%, #FAFAF8 100%)',
+            border:       '1px solid rgba(201,169,110,0.18)',
+            borderRadius: '16px',
+            overflow:     'hidden',
+            position:     'relative',
+            boxShadow:    '0 4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(201,169,110,0.12)',
+          }}
+        >
           {/* Gold gradient accent line */}
           <div style={{ position: 'absolute', top: 0, left: '10%', right: '10%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.6), transparent)' }} />
           {/* Background photo */}
@@ -1266,7 +1271,7 @@ export default function ChatPage() {
               </button>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* ── API key indicator (compact) ── */}
         {apiKey && !isActive && !isComplete && (

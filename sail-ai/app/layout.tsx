@@ -6,6 +6,8 @@ import { AuthProvider }       from '@/components/AuthProvider'
 import { AetherisProvider }   from '@/components/AetherisProvider'
 import { Dock }               from '@/components/Dock'
 import { LanguageProvider }   from '@/lib/i18n/LanguageContext'
+import { LenisProvider }      from '@/components/LenisProvider'
+import { CursorDot }          from '@/components/CursorDot'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -54,14 +56,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="safe-area-top safe-area-bottom">
         <AuthProvider>
-          {/* AetherisProvider initialises the Zustand store with the
-              authenticated user identity and a fresh session ID.
-              It must live inside AuthProvider (needs useSession). */}
           <AetherisProvider>
             <LanguageProvider>
               <BusinessProvider>
-                {children}
-                <Dock />
+                <LenisProvider>
+                  {children}
+                  <Dock />
+                  <CursorDot />
+                </LenisProvider>
               </BusinessProvider>
             </LanguageProvider>
           </AetherisProvider>

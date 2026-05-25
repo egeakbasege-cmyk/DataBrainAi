@@ -3,7 +3,12 @@
 import { useSession } from 'next-auth/react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { Nav } from '@/components/Nav'
+
+const _EASE = [0.22, 1, 0.36, 1] as const
+const _fadeUp = { hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.65, ease: _EASE } } }
+const _stagger = { hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } } }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -642,33 +647,50 @@ export default function DataLabPage() {
   const step1 = (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '4rem 2rem' }}>
       {/* Hero */}
-      <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-        <h1
+      <motion.div
+        variants={_stagger}
+        initial="hidden"
+        animate="show"
+        style={{ textAlign: 'center', marginBottom: '3.5rem' }}
+      >
+        <motion.div variants={_fadeUp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
+          <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+            Data Intelligence
+          </span>
+          <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
+        </motion.div>
+        <motion.h1
+          variants={_fadeUp}
           style={{
             fontFamily: 'Cormorant Garamond, serif',
-            fontSize: '3.5rem',
-            fontWeight: 700,
-            color: '#111827',
+            fontStyle: 'italic',
+            fontSize: 'clamp(2.5rem, 5vw, 3.75rem)',
+            fontWeight: 600,
+            color: '#0C0C0E',
             margin: '0 0 1rem',
-            letterSpacing: '-0.01em',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.08,
           }}
         >
           DataLab
-        </h1>
-        <p
+        </motion.h1>
+        <motion.p
+          variants={_fadeUp}
           style={{
             fontFamily: 'Inter, sans-serif',
-            fontSize: '1.1rem',
-            color: '#6B7280',
-            maxWidth: 540,
+            fontSize: '0.9375rem',
+            color: '#71717A',
+            maxWidth: 480,
             margin: '0 auto',
-            lineHeight: 1.7,
+            lineHeight: 1.78,
+            fontWeight: 300,
           }}
         >
           Connect your application data. Analyse your seller context.{' '}
           <span style={{ color: '#14B8A6', fontWeight: 500 }}>Benchmark against the market.</span>
-        </p>
-      </div>
+        </motion.p>
+      </motion.div>
 
       {/* Connector grid */}
       <div
