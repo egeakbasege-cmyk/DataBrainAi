@@ -220,59 +220,233 @@ async function connectCsv(url: string): Promise<
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Groq helper — used by connectApi for AI extraction from HTML/text
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GROQ_URL_CONNECT   = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_MODEL_CONNECT = 'llama-3.3-70b-versatile'
+
+function getGroqKeyConnect(): string | undefined {
+  return process.env.GROQ_API_KEY ?? process.env.GROQ_API_KEY_2
+}
+
+async function aiExtractFromWebsite(url: string, pageText: string): Promise<SourceSummary> {
+  const groqKey = getGroqKeyConnect()
+  // Strip HTML tags and collapse whitespace — keep first 4000 chars
+  const clean = pageText
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 4000)
+
+  const domain = new URL(url).hostname.replace('www.', '')
+
+  if (!groqKey || clean.length < 50) {
+    // No Groq key or no readable content — return minimal stub
+    return {
+      type: 'api', name: domain, syncedAt: now(),
+      revenue: 'N/A', orders: 'N/A', aov: 'N/A', topProduct: 'N/A',
+      extra: [
+        { label: 'Source',  value: domain },
+        { label: 'Type',    value: 'Website — AI extraction unavailable' },
+        { label: 'Action',  value: 'Paste a JSON API endpoint for better results' },
+      ],
+    }
+  }
+
+  const prompt = `You are a business intelligence extractor. Read the following website content and extract what you can infer about this business.
+
+Website: ${url}
+Content:
+${clean}
+
+Return ONLY a valid JSON object with this exact shape (no markdown, no explanation):
+{
+  "businessName": "the brand/company name",
+  "estimatedRevenueTier": "e.g. $10K-$50K/mo, $50K-$200K/mo, $200K-$1M/mo — infer from pricing, product count, brand presence",
+  "estimatedOrdersPerMonth": "e.g. 100-500/mo — infer from category, price point, brand scale",
+  "avgOrderValue": "e.g. $45-$80 — infer from visible prices",
+  "topProduct": "name of the main product or category you can identify",
+  "businessType": "e.g. DTC Fashion, SaaS, Marketplace, Agency",
+  "pricingSignal": "one sentence about their pricing strategy from the page",
+  "confidence": "low | medium | high — how confident you are in these estimates"
+}`
+
+  try {
+    const r = await fetch(GROQ_URL_CONNECT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
+      body: JSON.stringify({
+        model: GROQ_MODEL_CONNECT, temperature: 0.1, max_tokens: 600,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: AbortSignal.timeout(15_000),
+    })
+
+    if (!r.ok) throw new Error(`Groq ${r.status}`)
+    const groqData  = await r.json()
+    const rawText   = groqData.choices?.[0]?.message?.content ?? ''
+    const cleaned   = rawText.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/,'').trim()
+    const extracted = JSON.parse(cleaned)
+
+    return {
+      type:       'api',
+      name:       extracted.businessName ?? domain,
+      syncedAt:   now(),
+      revenue:    extracted.estimatedRevenueTier ?? 'Estimated by AI',
+      orders:     extracted.estimatedOrdersPerMonth ?? 'Estimated by AI',
+      aov:        extracted.avgOrderValue ?? 'Estimated by AI',
+      topProduct: extracted.topProduct ?? 'N/A',
+      extra: [
+        { label: 'Business Type',   value: extracted.businessType ?? 'Unknown' },
+        { label: 'Pricing Signal',  value: extracted.pricingSignal ?? '—' },
+        { label: 'AI Confidence',   value: extracted.confidence ?? 'low' },
+        { label: 'Source',          value: domain },
+      ],
+    }
+  } catch {
+    return {
+      type: 'api', name: domain, syncedAt: now(),
+      revenue: 'N/A', orders: 'N/A', aov: 'N/A', topProduct: 'N/A',
+      extra: [
+        { label: 'Source',  value: domain },
+        { label: 'Status',  value: 'AI extraction failed — try a JSON API endpoint' },
+      ],
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Custom API / webhook connector
+// Strategy:
+//   1. Try Shopify public products endpoint (/products.json) — works on any Shopify store
+//   2. Try the URL as a JSON API — field-map known keys
+//   3. If response is HTML — use AI to extract business context from page text
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function connectApi(endpoint: string): Promise<
   { success: true; source: SourceSummary } | { success: false; error: string; hint: string }
 > {
   if (!endpoint.startsWith('http')) {
-    return { success: false, error: 'Please enter a valid URL starting with http:// or https://', hint: 'Example: https://your-app.com/api/analytics' }
+    return {
+      success: false,
+      error: 'Please enter a valid URL starting with http:// or https://',
+      hint:  'Examples: https://mystore.myshopify.com/products.json  or  https://your-app.com/api/analytics',
+    }
   }
 
-  let data: Record<string, unknown>
+  // ── Strategy 1: detect Shopify store → probe /products.json ─────────────────
+  let baseUrl: string
+  try { baseUrl = new URL(endpoint).origin } catch { baseUrl = endpoint }
+
+  if (endpoint.includes('myshopify.com') || endpoint.includes('/products.json')) {
+    const shopifyUrl = `${baseUrl}/products.json?limit=5`
+    try {
+      const r = await fetch(shopifyUrl, { signal: AbortSignal.timeout(10_000) })
+      if (r.ok) {
+        const json = await r.json()
+        const products: Array<{ title: string; variants: Array<{ price: string }> }> = json.products ?? []
+        const topProduct = products[0]?.title ?? 'N/A'
+        const avgPrice   = products.length > 0
+          ? products.reduce((s, p) => s + parseFloat(p.variants?.[0]?.price ?? '0'), 0) / products.length
+          : 0
+        const domain = new URL(endpoint).hostname.replace('www.', '')
+        return {
+          success: true,
+          source: {
+            type: 'api', name: domain, syncedAt: now(),
+            revenue: 'Connect via Shopify tab for full metrics',
+            orders:  'Connect via Shopify tab for full metrics',
+            aov:     avgPrice > 0 ? fmt(avgPrice) : 'N/A',
+            topProduct,
+            extra: [
+              { label: 'Products Found',  value: String(products.length) },
+              { label: 'Tip',             value: 'Use the Shopify connector for live revenue data' },
+              { label: 'Store',           value: domain },
+            ],
+          },
+        }
+      }
+    } catch { /* fall through */ }
+  }
+
+  // ── Strategy 2: try as a JSON API ────────────────────────────────────────────
+  let responseText = ''
+  let contentType  = ''
+  let statusCode   = 0
+
   try {
     const r = await fetch(endpoint, {
-      headers: { Accept: 'application/json' },
+      headers: { Accept: 'application/json, text/html, */*' },
       signal:  AbortSignal.timeout(12_000),
     })
+    statusCode   = r.status
+    contentType  = r.headers.get('content-type') ?? ''
+    responseText = await r.text()
+
     if (!r.ok) {
-      return { success: false, error: `Endpoint returned HTTP ${r.status}.`, hint: 'Make sure the endpoint is publicly reachable and returns JSON.' }
+      return {
+        success: false,
+        error: `URL returned HTTP ${statusCode}.`,
+        hint:  'Make sure the URL is publicly reachable. For website URLs, try pasting the homepage URL.',
+      }
     }
-    data = await r.json().catch(() => ({}))
   } catch (e: unknown) {
-    return { success: false, error: 'Could not reach that endpoint.', hint: String(e instanceof Error ? e.message : e) }
-  }
-
-  // Best-effort field mapping — look for common key names
-  const pick = (...keys: string[]): string => {
-    for (const k of keys) {
-      const v = data[k] ?? (data.data as Record<string, unknown>)?.[k]
-      if (v !== undefined) return String(v)
+    return {
+      success: false,
+      error: 'Could not reach that URL.',
+      hint:  String(e instanceof Error ? e.message : e),
     }
-    return 'N/A'
   }
 
-  const revenue = pick('revenue', 'total_revenue', 'gmv', 'sales', 'amount')
-  const orders  = pick('orders', 'order_count', 'transactions', 'total_orders')
-  const aov     = pick('aov', 'average_order_value', 'avg_order', 'avg_cart')
+  const isJson = contentType.includes('application/json') ||
+                 responseText.trimStart().startsWith('{') ||
+                 responseText.trimStart().startsWith('[')
 
-  const source: SourceSummary = {
-    type:       'api',
-    name:       'Custom API Source',
-    syncedAt:   now(),
-    revenue:    revenue !== 'N/A' ? (revenue.startsWith('$') ? revenue : `$${revenue}`) : 'N/A',
-    orders:     orders,
-    aov:        aov !== 'N/A' ? (aov.startsWith('$') ? aov : `$${aov}`) : 'N/A',
-    topProduct: pick('top_product', 'best_seller', 'top_sku', 'product'),
-    extra: [
-      { label: 'Endpoint',       value: endpoint.slice(0, 50) + (endpoint.length > 50 ? '…' : '') },
-      { label: 'Keys Received',  value: String(Object.keys(data).length) },
-      { label: 'Response',       value: 'JSON — connected ✓' },
-    ],
+  if (isJson) {
+    // ── JSON API — field-map known keys ───────────────────────────────────────
+    let data: Record<string, unknown> = {}
+    try { data = JSON.parse(responseText) } catch { data = {} }
+
+    // Unwrap common envelope patterns: { data: {...} } / { result: {...} }
+    const inner = (data.data ?? data.result ?? data) as Record<string, unknown>
+
+    const pick = (...keys: string[]): string => {
+      for (const k of keys) {
+        const v = inner[k] ?? data[k]
+        if (v !== undefined && v !== null) return String(v)
+      }
+      return 'N/A'
+    }
+
+    const revenue = pick('revenue','total_revenue','gmv','sales','amount','total_sales','net_revenue')
+    const orders  = pick('orders','order_count','transactions','total_orders','num_orders','count')
+    const aov     = pick('aov','average_order_value','avg_order','avg_cart','average_cart')
+
+    const allKeys = [...new Set([...Object.keys(data), ...Object.keys(inner)])]
+
+    return {
+      success: true,
+      source: {
+        type: 'api', name: new URL(endpoint).hostname.replace('www.',''), syncedAt: now(),
+        revenue:    revenue !== 'N/A' ? (revenue.startsWith('$') ? revenue : `$${revenue}`) : 'N/A',
+        orders:     orders,
+        aov:        aov !== 'N/A' ? (aov.startsWith('$') ? aov : `$${aov}`) : 'N/A',
+        topProduct: pick('top_product','best_seller','top_sku','product','item'),
+        extra: [
+          { label: 'Keys Received', value: String(allKeys.length) },
+          { label: 'Content-Type',  value: 'JSON' },
+          { label: 'Endpoint',      value: endpoint.slice(0, 48) + (endpoint.length > 48 ? '…' : '') },
+        ],
+      },
+    }
   }
 
-  return { success: true, source }
+  // ── Strategy 3: HTML website — AI extracts business context ─────────────────
+  const aiSource = await aiExtractFromWebsite(endpoint, responseText)
+  return { success: true, source: aiSource }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
