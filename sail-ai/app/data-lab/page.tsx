@@ -405,7 +405,7 @@ export default function DataLabPage() {
     }, 2000)
   }, [modalConnector])
 
-  // Simulate AI analysis
+  // Real AI analysis — calls /api/data-lab/analyze, falls back to buildAnalysis()
   const handleAnalyze = useCallback(
     (q: string) => {
       if (!connectedSource || !q.trim()) return
@@ -413,6 +413,8 @@ export default function DataLabPage() {
       setAnalyzing(true)
       setLoadingStage(0)
 
+      // Keep LOADING_STAGES animation running while the API call is in-flight.
+      // The interval advances through stages at 600 ms, capping at the last stage.
       const interval = setInterval(() => {
         setLoadingStage((s) => {
           if (s >= LOADING_STAGES.length - 1) {
@@ -421,14 +423,59 @@ export default function DataLabPage() {
           }
           return s + 1
         })
-      }, 550)
+      }, 600)
 
-      setTimeout(() => {
-        clearInterval(interval)
-        setAnalysisResult(buildAnalysis(q, connectedSource))
-        setAnalyzing(false)
-        setStep(3)
-      }, 3000)
+      // Real fetch — resolved or rejected, we always clear the interval and
+      // leave the UI in a valid state.
+      ;(async () => {
+        try {
+          const res = await fetch('/api/data-lab/analyze', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ query: q, source: connectedSource }),
+          })
+
+          if (!res.ok) {
+            // Server returned an error — log it and fall back to mock
+            const errBody = await res.json().catch(() => ({ error: 'unknown' }))
+            console.warn('[DataLab] API error, using mock fallback:', errBody.error)
+            clearInterval(interval)
+            setAnalysisResult(buildAnalysis(q, connectedSource))
+            setAnalyzing(false)
+            setStep(3)
+            return
+          }
+
+          const data = await res.json()
+
+          if (!data?.result) {
+            console.warn('[DataLab] Unexpected API shape, using mock fallback:', data)
+            clearInterval(interval)
+            setAnalysisResult(buildAnalysis(q, connectedSource))
+            setAnalyzing(false)
+            setStep(3)
+            return
+          }
+
+          // Success — advance to the final loading stage briefly before showing results
+          clearInterval(interval)
+          setLoadingStage(LOADING_STAGES.length - 1)
+          // Small delay so the user sees the last stage tick ✓ before transition
+          await new Promise<void>((r) => setTimeout(r, 400))
+
+          setAnalysisResult(data.result as AnalysisResult)
+          setAnalyzing(false)
+          setStep(3)
+
+        } catch (err) {
+          // Network error / timeout — fall back to mock so the UI never breaks
+          console.error('[DataLab] fetch threw, using mock fallback:', err)
+          clearInterval(interval)
+          setAnalysisResult(buildAnalysis(q, connectedSource))
+          setAnalyzing(false)
+          setStep(3)
+        }
+      })()
     },
     [connectedSource]
   )

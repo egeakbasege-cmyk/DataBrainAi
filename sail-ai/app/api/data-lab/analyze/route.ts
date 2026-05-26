@@ -1,12 +1,26 @@
 /**
- * /api/data-lab/analyze
- * ─────────────────────
- * Accepts: { query, connectorIds, mode }
- * Flow  : auth check → build mock platform context → Groq 70B synthesis → structured JSON
+ * /api/data-lab/analyze  — DataLab AI Analysis Engine v2
+ * ──────────────────────────────────────────────────────────────────────────────
+ * Accepts : { query: string, source: SourceSummary }
+ * Returns : { success: true, result: AnalysisResult }
+ *
+ * The AnalysisResult shape matches the frontend interface exactly — field names
+ * must never be changed here without a matching change in data-lab/page.tsx.
+ *
+ * Pipeline:
+ *   1. Auth guard
+ *   2. Validate + parse body
+ *   3. Build structured Groq prompt from source data + user query
+ *   4. Force strict JSON output mapped 1-to-1 with AnalysisResult interface
+ *   5. Parse → safe-default → return typed result
+ *
+ * Model   : llama-3.3-70b-versatile  (Groq — fast, cheap, strong JSON output)
+ * Fallback: On any non-200, return 502 so the frontend can catch and call
+ *           the local buildAnalysis() mock without breaking the UI.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth }                      from '@/auth'
+import { auth } from '@/auth'
 
 // ── Groq config ───────────────────────────────────────────────────────────────
 
@@ -15,375 +29,211 @@ const GROQ_MODEL = 'llama-3.3-70b-versatile'
 
 function getGroqKey(): string | undefined {
   return (
-    process.env.GROQ_API_KEY     ??
-    process.env.GROQ_API_KEY_1   ??
-    process.env.GROQ_API_KEY_2   ??
+    process.env.GROQ_API_KEY   ??
+    process.env.GROQ_API_KEY_2 ??
     process.env.GROQ_API_KEY_3
   )
 }
 
-// ── Mock platform datasets ────────────────────────────────────────────────────
+// ── AnalysisResult interface (mirror of frontend — NEVER rename these fields) ─
 
-const PLATFORM_DATA: Record<string, object> = {
-  'shopify-store': {
-    platform: 'Shopify',
-    period: 'Last 30 days',
-    revenue_usd: 84250,
-    orders: 1240,
-    avg_order_value_usd: 67.94,
-    conversion_rate_pct: 2.4,
-    cart_abandonment_pct: 68.2,
-    returns: 87,
-    return_rate_pct: 7.0,
-    new_customers: 412,
-    returning_customers: 828,
-    repeat_purchase_rate_pct: 33.5,
-    top_products: [
-      { name: 'Wireless Earbuds Pro', units: 284, revenue_usd: 28400, return_rate_pct: 4.2 },
-      { name: 'Ergonomic Desk Stand', units: 196, revenue_usd: 15680, return_rate_pct: 2.1 },
-      { name: 'Smart Water Bottle',   units: 310, revenue_usd: 12400, return_rate_pct: 12.3 },
-    ],
-    return_reasons: [
-      { reason: 'Product not as described', count: 31, share_pct: 35.6 },
-      { reason: 'Quality issues',           count: 24, share_pct: 27.6 },
-      { reason: 'Wrong size / fit',         count: 18, share_pct: 20.7 },
-      { reason: 'Changed mind',             count: 14, share_pct: 16.1 },
-    ],
-    traffic_sources: [
-      { source: 'Organic Search', sessions: 4200, cvr_pct: 3.1 },
-      { source: 'Paid Social',    sessions: 2800, cvr_pct: 1.8 },
-      { source: 'Email',          sessions: 1600, cvr_pct: 4.2 },
-      { source: 'Direct',         sessions: 1200, cvr_pct: 3.8 },
-    ],
-    industry_benchmarks: {
-      avg_conversion_rate_pct: 2.2,
-      avg_return_rate_pct:     5.5,
-      avg_cart_abandonment_pct: 69.8,
-      avg_order_value_usd:     58.20,
-    },
-  },
-
-  'amazon-product-price': {
-    platform: 'Amazon Seller Central',
-    period: 'Last 30 days',
-    total_revenue_usd: 126400,
-    units_sold: 1890,
-    active_asins: 42,
-    buy_box_win_rate_pct: 71,
-    avg_bsr: 8420,
-    avg_review_score: 4.3,
-    new_reviews: 28,
-    return_rate_pct: 6.8,
-    ad_spend_usd: 8200,
-    acos_pct: 18.4,
-    tacos_pct: 6.5,
-    top_asins: [
-      { name: 'Wireless Earbuds Pro',  bsr: 1240,  buy_box: true,  monthly_rev_usd: 42000 },
-      { name: 'Kitchen Smart Scale',    bsr: 3110,  buy_box: true,  monthly_rev_usd: 28400 },
-      { name: 'Premium Yoga Mat',       bsr: 5890,  buy_box: false, monthly_rev_usd: 19200 },
-    ],
-    buy_box_loss_reasons: [
-      { reason: 'Price undercut by competitor', share_pct: 42 },
-      { reason: 'FBM vs FBA fulfillment gap',   share_pct: 31 },
-      { reason: 'Seller rating below threshold', share_pct: 27 },
-    ],
-    industry_benchmarks: {
-      avg_acos_pct:        22.0,
-      avg_return_rate_pct:  8.2,
-      avg_buy_box_rate_pct: 65.0,
-    },
-  },
-
-  'tiktok-ads': {
-    platform: 'TikTok for Business',
-    period: 'Last 30 days',
-    total_spend_usd: 4200,
-    impressions: 2400000,
-    clicks: 43200,
-    ctr_pct: 1.8,
-    cpm_usd: 1.75,
-    cpc_usd: 0.097,
-    conversions: 756,
-    roas: 3.2,
-    revenue_attributed_usd: 13440,
-    top_creatives: [
-      { name: 'Unboxing Hook v3',   ctr_pct: 3.1, roas: 4.8, spend_usd: 1200 },
-      { name: 'UGC Review Cut',     ctr_pct: 2.4, roas: 3.9, spend_usd: 900  },
-      { name: 'Product Demo 15s',   ctr_pct: 1.2, roas: 2.1, spend_usd: 600  },
-    ],
-    top_audiences: [
-      { segment: 'F 18-24', ctr_pct: 2.4, roas: 4.1 },
-      { segment: 'F 25-34', ctr_pct: 1.9, roas: 3.8 },
-      { segment: 'M 18-24', ctr_pct: 1.1, roas: 2.2 },
-    ],
-    industry_benchmarks: {
-      avg_ctr_pct:       1.2,
-      avg_roas_ecomm:    2.8,
-      avg_cpm_usd:       2.10,
-    },
-  },
-
-  'meta-ads': {
-    platform: 'Meta Ads Manager',
-    period: 'Last 30 days',
-    total_spend_usd: 6800,
-    impressions: 1800000,
-    clicks: 19800,
-    ctr_pct: 1.1,
-    cpm_usd: 14.30,
-    cpc_usd: 0.34,
-    roas: 4.1,
-    revenue_attributed_usd: 27880,
-    frequency: 2.8,
-    top_campaigns: [
-      { name: 'Retargeting — Cart Abandoners', roas: 8.2, spend_usd: 1400 },
-      { name: 'Lookalike — Top 1% Customers',  roas: 5.1, spend_usd: 2200 },
-      { name: 'Cold — Interest Targeting',     roas: 2.4, spend_usd: 3200 },
-    ],
-    industry_benchmarks: {
-      avg_cpm_usd:    12.40,
-      avg_ctr_pct:     0.9,
-      avg_roas_ecomm:  3.5,
-    },
-  },
-
-  'google-trends': {
-    platform: 'Google Trends',
-    period: 'Last 30 days',
-    rising_queries: ['wireless earbuds waterproof', 'best desk accessories 2026', 'AI home office setup'],
-    breakout_terms: [
-      { term: 'AI desk setup',                   growth_pct: 560 },
-      { term: 'noise cancelling earbuds under $100', growth_pct: 380 },
-    ],
-    category_indices: {
-      'Consumer Electronics': { index: 84, trend: 'rising'   },
-      'Home Office':          { index: 91, trend: 'rising'   },
-      'Fitness Equipment':    { index: 62, trend: 'declining' },
-    },
-  },
-
-  'ebay-product-price': {
-    platform: 'eBay Marketplace',
-    period: 'Last 30 days',
-    avg_sell_price_usd: 47.20,
-    sell_through_rate_pct: 68,
-    active_listings: 312,
-    avg_time_to_sell_days: 4.2,
-    top_categories: [
-      { name: 'Electronics',    avg_price_usd: 89.50, yoy_change_pct: 4.2  },
-      { name: 'Collectibles',   avg_price_usd: 34.10, yoy_change_pct: 11.8 },
-      { name: 'Sporting Goods', avg_price_usd: 55.60, yoy_change_pct: 6.3  },
-    ],
-  },
-
-  'etsy-marketplace': {
-    platform: 'Etsy',
-    period: 'Last 30 days',
-    avg_order_value_usd: 38.70,
-    shop_views_per_day: 1240,
-    conversion_rate_pct: 3.1,
-    fav_rate_pct: 8.4,
-    trending_searches: ['Personalized Gifts', 'Boho Wall Art', 'Vintage Jewelry'],
-  },
-
-  'walmart-marketplace': {
-    platform: 'Walmart Seller Center',
-    period: 'Last 30 days',
-    price_competitiveness_pct: 91,
-    in_stock_rate_pct: 96.4,
-    avg_margin_pct: 18.2,
-    fulfillment_score: 4.7,
-  },
-
-  'aliexpress-sourcing': {
-    platform: 'AliExpress',
-    period: 'Last 30 days',
-    avg_sourcing_cost_usd: 8.40,
-    avg_shipping_days: 9.2,
-    supplier_score: 4.6,
-    avg_moq_units: 50,
-    hot_categories: ['Smart Home Devices', 'Pet Accessories', 'Phone Accessories'],
-  },
-
-  'pinterest-shopping': {
-    platform: 'Pinterest',
-    period: 'Last 30 days',
-    monthly_impressions: 8200000,
-    save_rate_pct: 4.7,
-    outbound_ctr_pct: 0.68,
-    avg_cpc_usd: 0.34,
-    trending_boards: ['Quiet Luxury', 'Summer Wedding Decor', 'Coastal Grandmother'],
-  },
-
-  'youtube-creator': {
-    platform: 'YouTube Analytics',
-    period: 'Last 30 days',
-    avg_cpv_usd: 0.028,
-    avg_watch_time_seconds: 402,
-    subscribe_rate_pct: 2.1,
-    avg_cpm_usd: 4.80,
-    top_categories_by_cpm: [
-      { category: 'Personal Finance', cpm_usd: 18.40 },
-      { category: 'Tech Reviews',     cpm_usd: 12.70 },
-    ],
-  },
-
-  'spotify-creator': {
-    platform: 'Spotify for Artists',
-    period: 'Last 30 days',
-    avg_stream_rate_usd: 0.004,
-    editorial_save_rate_pct: 12.4,
-    playlist_add_rate_pct: 6.2,
-    listener_retention_pct: 38,
-    trending_genres: ['Afrobeats', 'Phonk', 'Indie Pop'],
-  },
-
-  'poshmark-resale': {
-    platform: 'Poshmark',
-    period: 'Last 30 days',
-    avg_resale_margin_pct: 62,
-    avg_days_to_sell: 11.2,
-    avg_sale_price_usd: 38.40,
-    offer_accept_rate_pct: 44,
-    top_brands: ['Lululemon', 'Nike / Jordan', 'Free People'],
-  },
-
-  'real-estate': {
-    platform: 'Real Estate Data (Zillow + NAR)',
-    period: 'Last 30 days',
-    median_home_price_usd: 412000,
-    days_on_market: 28.4,
-    price_cut_rate_pct: 18.2,
-    mortgage_rate_pct: 6.72,
-    top_markets: ['Austin TX (+8.4%)', 'Nashville TN (+6.9%)', 'Phoenix AZ (+5.2%)'],
-  },
+interface KeyMetric {
+  label:     string
+  value:     string
+  benchmark: string
+  delta:     string
+  trend:     'up' | 'down' | 'neutral'
 }
 
-// ── System prompts per mode ───────────────────────────────────────────────────
-
-const MODE_PROMPTS: Record<string, string> = {
-  upwind: `You are a Senior Partner at a top-tier strategy consultancy (McKinsey / BCG tier).
-You are given real platform data from a client's connected business accounts.
-Produce a concise, data-driven executive intelligence report.
-Every insight must be grounded in the provided data. Every recommendation must be specific, measurable, and time-bound.
-Tone: authoritative, precise, zero fluff.`,
-
-  sail: `You are SAIL Intelligence — an adaptive AI market analyst.
-Given real platform data, answer the user's business query with sharp, data-grounded analysis.
-Balance analytical depth with clarity. Use the data as your evidence base.
-Surface non-obvious insights. Prioritise impact over comprehensiveness.`,
-
-  operator: `You are an Operator — a hyper-tactical business execution specialist.
-Given platform data, your job is to produce an immediately actionable plan.
-Every action step must be executable TODAY or THIS WEEK.
-Be surgical: skip theory, go straight to what moves the needle.
-Priority: critical actions first. Revenue impact drives order.`,
+interface ActionStep {
+  priority:  'HIGH' | 'MEDIUM' | 'LOW'
+  title:     string
+  rationale: string
+  timeframe: string
 }
 
-// ── JSON schema instruction ───────────────────────────────────────────────────
+interface Insight {
+  category: string
+  finding:  string
+}
+
+interface RiskFlag {
+  severity:   'high' | 'medium' | 'low'
+  risk:       string
+  mitigation: string
+}
+
+interface BenchmarkRow {
+  metric:      string
+  yourValue:   string
+  industryAvg: string
+  delta:       string
+  status:      'above' | 'below' | 'on-par'
+}
+
+interface AnalysisResult {
+  query:            string
+  confidence:       number
+  source:           string
+  executiveSummary: string
+  keyMetrics:       KeyMetric[]
+  actionSteps:      ActionStep[]
+  insights:         Insight[]
+  riskFlags:        RiskFlag[]
+  benchmarks:       BenchmarkRow[]
+  nextActions:      string[]
+}
+
+// ── SourceSummary (mirror of frontend) ───────────────────────────────────────
+
+interface SourceSummary {
+  type:       'shopify' | 'amazon' | 'csv' | 'api'
+  name:       string
+  syncedAt:   string
+  revenue:    string
+  orders:     string
+  aov:        string
+  topProduct: string
+  extra:      { label: string; value: string }[]
+}
+
+// ── System prompt ─────────────────────────────────────────────────────────────
+
+const SYSTEM_PROMPT = `You are a Senior Strategy Partner at a top-tier management consultancy (McKinsey / Bain tier).
+You receive live business data from a connected platform and the user's analytical question.
+Your job: produce a rigorous, data-grounded business intelligence report.
+
+RULES:
+- Every metric, delta, and benchmark figure must be derived from or clearly extrapolated from the provided data.
+- Every recommendation must be specific, measurable, and time-bound.
+- Tone: authoritative, precise, zero fluff. No filler sentences.
+- All delta values must include a direction sign (e.g. "+12%" or "-2.3pp").
+- Confidence (0-100) reflects how completely the data supports the user's query.
+- Return ONLY a valid JSON object. No markdown fences, no explanation, no preamble.`
+
+// ── JSON schema instruction appended to user message ─────────────────────────
 
 const SCHEMA_INSTRUCTION = `
-Return ONLY a valid JSON object matching this exact schema (no markdown, no explanation):
+Your response MUST be a single JSON object with this EXACT structure (all field names required, no extras):
+
 {
-  "headline": "One powerful sentence — the single most important finding from the data",
-  "executiveSummary": "2-3 sentences of data-grounded executive context",
+  "executiveSummary": "2-4 sentence data-grounded narrative that directly answers the user's question. Reference specific numbers.",
+  "confidence": <integer 0-100>,
   "keyMetrics": [
     {
-      "label": "metric name",
-      "value": "current value with unit",
-      "change": "+/- vs benchmark or prior period",
-      "trend": "up | down | neutral",
-      "context": "one sentence explaining why this matters"
+      "label": "short metric name",
+      "value": "current value with currency/unit/% (e.g. $84,200 or 4.2%)",
+      "benchmark": "industry average with identical unit",
+      "delta": "+/-X% or +/-Xpp vs benchmark (always include sign)",
+      "trend": "up | down | neutral"
     }
   ],
   "actionSteps": [
     {
-      "priority": "critical | high | medium",
-      "step": "specific action to take",
-      "rationale": "data point that justifies this action",
-      "timeline": "specific timeframe (e.g. Week 1, Days 1-3)",
-      "expectedImpact": "quantified expected outcome"
+      "priority": "HIGH | MEDIUM | LOW",
+      "title": "short imperative action title (max 10 words)",
+      "rationale": "1-2 sentences citing a specific data point that justifies this action",
+      "timeframe": "e.g. 1-2 weeks, 48 hours, Month 1"
     }
   ],
   "insights": [
     {
-      "category": "category label",
-      "finding": "specific finding from the data",
-      "dataPoint": "exact number or metric cited",
-      "implication": "what this means for the business"
+      "category": "e.g. Revenue Concentration, Pricing, Retention",
+      "finding": "1-2 sentences of non-obvious insight grounded in the data"
     }
   ],
   "riskFlags": [
     {
       "severity": "high | medium | low",
-      "risk": "specific risk identified in the data",
-      "mitigation": "concrete mitigation step"
+      "risk": "specific risk identified from the data",
+      "mitigation": "concrete, actionable mitigation step"
     }
   ],
-  "dataSources": ["list of platforms data was drawn from"],
-  "confidenceScore": 85
+  "benchmarks": [
+    {
+      "metric": "metric name",
+      "yourValue": "client value with unit",
+      "industryAvg": "benchmark value with same unit",
+      "delta": "+/-X% or absolute delta with sign",
+      "status": "above | below | on-par"
+    }
+  ],
+  "nextActions": [
+    "Assign owner for HIGH priority action by end of week",
+    "Second next action sentence",
+    "Third next action sentence"
+  ]
 }
 
-Rules:
-- keyMetrics: 4-6 items
-- actionSteps: 3-5 items, ordered by priority (critical first)
-- insights: 3-4 items
-- riskFlags: 2-3 items
-- All numbers must come from the provided data
-- confidenceScore: 0-100 integer reflecting data quality and coverage
+Exact counts required:
+- keyMetrics:  4 items
+- actionSteps: 3 items ordered HIGH → MEDIUM → LOW
+- insights:    2 items
+- riskFlags:   1 or 2 items
+- benchmarks:  4 items
+- nextActions: 3 strings
 `
 
 // ── POST handler ──────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+
   // 1. Auth guard
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // 2. Parse body
-  let query: string, connectorIds: string[], mode: string
+  // 2. Parse + validate body
+  let query:  string
+  let source: SourceSummary
+
   try {
     const body = await req.json()
-    query        = String(body.query        ?? '').trim()
-    connectorIds = Array.isArray(body.connectorIds) ? body.connectorIds : []
-    mode         = String(body.mode ?? 'sail')
+    query  = String(body.query  ?? '').trim()
+    source = body.source as SourceSummary
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
   if (!query) {
-    return NextResponse.json({ error: 'Query is required' }, { status: 400 })
+    return NextResponse.json({ error: 'query is required' }, { status: 400 })
+  }
+  if (!source?.type || !source?.revenue) {
+    return NextResponse.json({ error: 'source data is required' }, { status: 400 })
   }
 
-  // 3. Build platform data context
-  const activePlatforms = connectorIds
-    .filter(id => PLATFORM_DATA[id])
-    .map(id => ({
-      id,
-      data: PLATFORM_DATA[id],
-    }))
-
-  if (activePlatforms.length === 0) {
-    return NextResponse.json({ error: 'No active connectors with available data' }, { status: 400 })
-  }
-
-  const dataContext = activePlatforms
-    .map(p => `=== ${(p.data as any).platform ?? p.id} ===\n${JSON.stringify(p.data, null, 2)}`)
-    .join('\n\n')
-
-  // 4. Check Groq key
+  // 3. Groq key check
   const groqKey = getGroqKey()
   if (!groqKey) {
-    return NextResponse.json({ error: 'Groq API key not configured' }, { status: 503 })
+    return NextResponse.json({ error: 'AI service not configured' }, { status: 503 })
   }
 
-  // 5. Build prompt
-  const systemPrompt = (MODE_PROMPTS[mode] ?? MODE_PROMPTS.sail) + '\n\n' + SCHEMA_INSTRUCTION
-  const userMessage  = `USER QUERY: ${query}\n\nPLATFORM DATA:\n${dataContext}`
+  // 4. Build the data context block sent to the model
+  const extraLines = (source.extra ?? [])
+    .map((e: { label: string; value: string }) => `  - ${e.label}: ${e.value}`)
+    .join('\n')
 
-  // 6. Call Groq
+  const dataContext = `
+CONNECTED DATA SOURCE: ${source.name} (${source.type.toUpperCase()})
+Last synced: ${source.syncedAt}
+
+CORE METRICS:
+  - Monthly Revenue:     ${source.revenue}
+  - Monthly Orders:      ${source.orders}
+  - Average Order Value: ${source.aov}
+  - Top Product:         ${source.topProduct}
+ADDITIONAL METRICS:
+${extraLines}
+`.trim()
+
+  const userMessage = `USER QUESTION: "${query}"
+
+${dataContext}
+
+${SCHEMA_INSTRUCTION}`
+
+  // 5. Call Groq — 25 s hard timeout so Vercel serverless doesn't hard-cut first
   let rawText: string
   try {
     const groqRes = await fetch(GROQ_URL, {
@@ -394,50 +244,96 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model:       GROQ_MODEL,
-        temperature: 0.12,
-        max_tokens:  3000,
+        temperature: 0.10,
+        max_tokens:  2400,
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: userMessage  },
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user',   content: userMessage   },
         ],
       }),
+      signal: AbortSignal.timeout(25_000),
     })
 
     if (!groqRes.ok) {
-      const err = await groqRes.text().catch(() => 'unknown')
-      console.error('[data-lab/analyze] Groq error:', err)
-      return NextResponse.json({ error: 'AI synthesis failed. Try again.' }, { status: 502 })
+      const errText = await groqRes.text().catch(() => '—')
+      console.error('[data-lab/analyze] Groq HTTP error', groqRes.status, errText)
+      return NextResponse.json(
+        { error: 'AI synthesis failed — please retry.' },
+        { status: 502 },
+      )
     }
 
     const groqData = await groqRes.json()
     rawText = groqData.choices?.[0]?.message?.content ?? ''
-  } catch (e: any) {
-    console.error('[data-lab/analyze] Fetch error:', e.message)
-    return NextResponse.json({ error: 'Network error reaching AI service' }, { status: 502 })
+
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[data-lab/analyze] fetch/timeout error:', msg)
+    return NextResponse.json(
+      { error: 'AI service timed out — please retry.' },
+      { status: 502 },
+    )
   }
 
-  // 7. Parse JSON from response (handle code fences)
-  let result: object
+  // 6. Parse AI response — strip markdown fences if model adds them
+  let parsed: Record<string, unknown>
   try {
     const cleaned = rawText
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/,      '')
-      .replace(/```\s*$/,      '')
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/```\s*$/,           '')
       .trim()
-    result = JSON.parse(cleaned)
+    parsed = JSON.parse(cleaned)
   } catch {
-    // Fallback: try to extract JSON object with regex
+    // Second attempt: extract first {...} block
     const match = rawText.match(/\{[\s\S]+\}/)
-    if (match) {
-      try {
-        result = JSON.parse(match[0])
-      } catch {
-        return NextResponse.json({ error: 'Failed to parse AI response. Please retry.' }, { status: 502 })
-      }
-    } else {
-      return NextResponse.json({ error: 'AI returned unexpected format. Please retry.' }, { status: 502 })
+    if (!match) {
+      console.error('[data-lab/analyze] Unparseable AI response:', rawText.slice(0, 400))
+      return NextResponse.json(
+        { error: 'AI returned unexpected format — please retry.' },
+        { status: 502 },
+      )
+    }
+    try {
+      parsed = JSON.parse(match[0])
+    } catch {
+      return NextResponse.json(
+        { error: 'AI JSON parse failed — please retry.' },
+        { status: 502 },
+      )
     }
   }
 
-  return NextResponse.json({ success: true, analysis: result })
+  // 7. Shape into AnalysisResult — safe defaults for any missing field
+  const result: AnalysisResult = {
+    query,
+    confidence:       typeof parsed.confidence === 'number' ? parsed.confidence : 88,
+    source:           source.name,
+    executiveSummary: String(parsed.executiveSummary ?? ''),
+
+    keyMetrics: Array.isArray(parsed.keyMetrics)
+      ? (parsed.keyMetrics as KeyMetric[]).slice(0, 6)
+      : [],
+
+    actionSteps: Array.isArray(parsed.actionSteps)
+      ? (parsed.actionSteps as ActionStep[]).slice(0, 5)
+      : [],
+
+    insights: Array.isArray(parsed.insights)
+      ? (parsed.insights as Insight[]).slice(0, 4)
+      : [],
+
+    riskFlags: Array.isArray(parsed.riskFlags)
+      ? (parsed.riskFlags as RiskFlag[]).slice(0, 3)
+      : [],
+
+    benchmarks: Array.isArray(parsed.benchmarks)
+      ? (parsed.benchmarks as BenchmarkRow[]).slice(0, 6)
+      : [],
+
+    nextActions: Array.isArray(parsed.nextActions)
+      ? (parsed.nextActions as string[]).slice(0, 5)
+      : [],
+  }
+
+  return NextResponse.json({ success: true, result })
 }
