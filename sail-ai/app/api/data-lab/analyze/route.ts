@@ -20,7 +20,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/auth'
 
 // ── Groq config ───────────────────────────────────────────────────────────────
 
@@ -178,13 +177,7 @@ Exact counts required:
 
 export async function POST(req: NextRequest) {
 
-  // 1. Auth guard
-  const session = await auth()
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  // 2. Parse + validate body
+  // 1. Parse + validate body
   let query:  string
   let source: SourceSummary
 

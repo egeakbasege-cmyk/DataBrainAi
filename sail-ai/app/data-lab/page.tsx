@@ -429,7 +429,7 @@ export default function DataLabPage() {
       // leave the UI in a valid state.
       ;(async () => {
         try {
-          const res = await fetch('/api/data-lab/analyze', {
+          const res = await fetch('/api/data-lab/analyze/', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ query: q, source: connectedSource }),
