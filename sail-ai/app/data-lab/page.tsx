@@ -14,9 +14,21 @@ const _stagger = { hidden: {}, show: { transition: { staggerChildren: 0.1, delay
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-type ConnectorType = 'shopify' | 'amazon' | 'csv' | 'api'
+type ConnectorType =
+  // E-Commerce
+  | 'shopify' | 'amazon' | 'woocommerce' | 'ebay' | 'etsy' | 'tiktokshop'
+  // Advertising
+  | 'meta-ads' | 'google-ads' | 'amazon-ppc' | 'tiktok-ads' | 'klaviyo'
+  // Hospitality
+  | 'booking' | 'airbnb' | 'expedia' | 'tripadvisor'
+  // Services / SaaS
+  | 'stripe' | 'fiverr' | 'upwork'
+  // Analytics / Custom
+  | 'ga4' | 'csv' | 'api'
+
+type IndustryType = 'ecommerce' | 'advertising' | 'hospitality' | 'services' | 'analytics'
 type Step = 1 | 2 | 3
-type TabType = 'analysis' | 'benchmarks' | 'comparisons'
+type TabType = 'analysis' | 'benchmarks' | 'price-scout'
 
 interface ConnectorDef {
   id: ConnectorType
@@ -25,9 +37,37 @@ interface ConnectorDef {
   icon: string
   placeholder: string
   fieldLabel: string
-  // Optional second credential field (e.g. store domain for Shopify)
   field2Label?:       string
   field2Placeholder?: string
+}
+
+interface QueryCategory {
+  label:   string
+  icon:    string
+  queries: string[]
+}
+
+interface IndustryGroup {
+  id:              IndustryType
+  name:            string
+  icon:            string
+  color:           string   // accent colour for this industry
+  description:     string
+  connectors:      ConnectorDef[]
+  queryCategories: QueryCategory[]
+}
+
+interface PriceResult {
+  title:        string
+  price:        string
+  currency:     string
+  platform:     string
+  url:          string
+  rating?:      string
+  reviewCount?: string
+  savings?:     string
+  isAlternative: boolean
+  snippet?:     string
 }
 
 interface SourceSummary {
@@ -92,42 +132,94 @@ interface AnalysisResult {
 // Connector definitions
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CONNECTORS: ConnectorDef[] = [
+const INDUSTRY_GROUPS: IndustryGroup[] = [
   {
-    id: 'shopify',
-    name: 'Shopify',
-    description: 'Connect via Admin API token to pull real orders, revenue, and product data',
-    icon: '🛍️',
-    fieldLabel:        'Store Domain',
-    placeholder:       'mystore.myshopify.com',
-    field2Label:       'Admin API Access Token',
-    field2Placeholder: 'shpat_xxxxxxxxxxxxxxxxxxxxxxxx',
+    id: 'ecommerce', name: 'E-Commerce', icon: '🛍️', color: '#14B8A6',
+    description: 'Satış kanalları, mağaza verisi ve ürün analizi',
+    connectors: [
+      { id: 'shopify',    name: 'Shopify',       icon: '🟢', description: 'Admin API ile gerçek sipariş, gelir ve ürün verisi', fieldLabel: 'Store Domain', placeholder: 'mystore.myshopify.com', field2Label: 'Admin API Access Token', field2Placeholder: 'shpat_xxxxxxxxxxxxxxxxxxxxxxxx' },
+      { id: 'amazon',     name: 'Amazon',         icon: '📦', description: 'SP-API ile satış hızı, BSR, stok sağlığı ve iadeler', fieldLabel: 'SP-API Refresh Token', placeholder: 'Atzr|xxxxxxxxxxxxxxxxxxxxxxxx' },
+      { id: 'woocommerce',name: 'WooCommerce',    icon: '🔵', description: 'REST API ile WordPress mağaza verisi', fieldLabel: 'Site URL', placeholder: 'https://mysite.com', field2Label: 'Consumer Key', field2Placeholder: 'ck_xxxxxxxxxxxxxxxxxxxxxxxx' },
+      { id: 'ebay',       name: 'eBay',           icon: '🟡', description: 'Satıcı merkezi URL veya mağaza sayfası analizi', fieldLabel: 'Store URL', placeholder: 'https://www.ebay.com/str/yourstore' },
+      { id: 'etsy',       name: 'Etsy',           icon: '🟤', description: 'Mağaza URL ile ürün ve satış analizi', fieldLabel: 'Shop URL', placeholder: 'https://www.etsy.com/shop/yourshop' },
+      { id: 'tiktokshop', name: 'TikTok Shop',    icon: '🎵', description: 'TikTok mağaza ve içerik performansı', fieldLabel: 'Shop/Profile URL', placeholder: 'https://www.tiktok.com/@yourstore' },
+      { id: 'csv',        name: 'CSV / Spreadsheet', icon: '📄', description: 'Dışa aktarılan CSV URL — satış geçmişi, siparişler', fieldLabel: 'Public CSV URL', placeholder: 'https://docs.google.com/spreadsheets/.../export?format=csv' },
+    ],
+    queryCategories: [
+      { label: 'Ürün & SKU Analizi',    icon: '📦', queries: ['Run ABC analysis — which SKUs drive 80% of revenue?', 'Which products have the highest return rate and why?', 'Identify products I should discontinue or bundle', 'What is my top product revenue concentration risk?'] },
+      { label: 'Gelir & Kar Marjı',      icon: '💰', queries: ['Calculate my real profit margin after all fees and returns', 'Where am I losing the most revenue right now?', 'What is my cart abandonment costing me per month?', 'Analyse my AOV trend and upsell opportunities'] },
+      { label: 'Müşteri Segmentasyonu',  icon: '👥', queries: ['Run RFM segmentation — who are my champion customers?', 'Which customers are at risk of churning this month?', 'What is my customer LTV by acquisition channel?', 'Identify my repeat purchase rate and loyalty drivers'] },
+      { label: 'Stok & Operasyon',       icon: '📋', queries: ['Which products are at stockout risk in the next 30 days?', 'Calculate my optimal reorder point and safety stock level', 'What is my inventory turnover rate vs category benchmark?', 'Analyse my supplier concentration and single-source risk'] },
+      { label: 'Büyüme Fırsatları',      icon: '🚀', queries: ['What are my top 3 revenue growth opportunities right now?', 'Which new markets or categories should I expand into?', 'Find cross-sell and bundle opportunities in my catalogue', 'Compare my performance to top 10% sellers in my category'] },
+    ],
   },
   {
-    id: 'amazon',
-    name: 'Amazon Seller Central',
-    description: 'Connect SP-API for sales velocity, BSR, inventory health, and returns',
-    icon: '📦',
-    fieldLabel:  'SP-API Refresh Token',
-    placeholder: 'Atzr|xxxxxxxxxxxxxxxxxxxxxxxx',
+    id: 'advertising', name: 'Reklam & Büyüme', icon: '📢', color: '#8B5CF6',
+    description: 'Reklam performansı, ROAS analizi ve büyüme optimizasyonu',
+    connectors: [
+      { id: 'meta-ads',    name: 'Meta Ads',       icon: '🔵', description: 'Facebook & Instagram reklam performansı', fieldLabel: 'Brand Page or Ad Account URL', placeholder: 'https://facebook.com/yourbrand' },
+      { id: 'google-ads',  name: 'Google Ads',     icon: '🔴', description: 'Search, Display, Shopping kampanya verisi', fieldLabel: 'Website Domain', placeholder: 'https://yoursite.com' },
+      { id: 'amazon-ppc',  name: 'Amazon PPC',     icon: '📦', description: 'Sponsored Products, Brands, Display ACOS analizi', fieldLabel: 'SP-API Token', placeholder: 'Atzr|xxxxxxxxxxxxxxxxxxxxxxxx' },
+      { id: 'tiktok-ads',  name: 'TikTok Ads',     icon: '🎵', description: 'TikTok for Business kampanya ve creative analizi', fieldLabel: 'Business URL or Account', placeholder: 'https://www.tiktok.com/@yourbrand' },
+      { id: 'klaviyo',     name: 'Klaviyo',         icon: '📧', description: 'Email & SMS pazarlama gelir analizi', fieldLabel: 'Brand URL or Public API Key', placeholder: 'https://yoursite.com or pk_xxx' },
+      { id: 'api',         name: 'Custom Ad Data',  icon: '🔗', description: 'Herhangi bir reklam platformu API\'si', fieldLabel: 'Endpoint URL', placeholder: 'https://your-ads-platform.com/api/stats' },
+    ],
+    queryCategories: [
+      { label: 'ROAS & Verimlilik',      icon: '📈', queries: ['Which ad campaigns have the best ROAS right now?', 'Which campaigns should I scale or kill immediately?', 'Calculate my blended ROAS across all channels', 'Compare Meta vs Google vs TikTok efficiency'] },
+      { label: 'Creative & Audience',    icon: '🎨', queries: ['Which ad creatives are driving the most conversions?', 'Which audience segments have the lowest CPA?', 'Analyse my CTR vs industry benchmark by channel', 'Identify audience fatigue signals in my campaigns'] },
+      { label: 'Budget Optimizasyonu',   icon: '💸', queries: ['Where should I reallocate budget for maximum return?', 'What is my true CAC by channel?', 'Calculate payback period for new customer acquisition', 'Forecast revenue if I scale ad spend by 30%'] },
+      { label: 'Email & Retention ROI',  icon: '📧', queries: ['What is my email revenue contribution vs paid ads?', 'Which email flows or sequences generate the most revenue?', 'Calculate my email list ROI per subscriber', 'Analyse list health, open rates, and unsubscribe trend'] },
+    ],
   },
   {
-    id: 'csv',
-    name: 'CSV / Spreadsheet',
-    description: 'Paste a public URL to your exported CSV — sales history, orders, or ad spend',
-    icon: '📊',
-    fieldLabel:  'Public CSV URL',
-    placeholder: 'https://docs.google.com/spreadsheets/.../export?format=csv',
+    id: 'hospitality', name: 'Konaklama & Seyahat', icon: '🏨', color: '#F59E0B',
+    description: 'Otel, kiralık mülk, tatil evi ve seyahat acentaları',
+    connectors: [
+      { id: 'booking',     name: 'Booking.com',    icon: '💙', description: 'Mülk sayfası veya URL ile doluluk ve fiyat analizi', fieldLabel: 'Property URL', placeholder: 'https://www.booking.com/hotel/...' },
+      { id: 'airbnb',      name: 'Airbnb',          icon: '🔴', description: 'İlan URL ile fiyat, doluluk ve review analizi', fieldLabel: 'Listing URL', placeholder: 'https://www.airbnb.com/rooms/...' },
+      { id: 'expedia',     name: 'Expedia / Hotels.com', icon: '🟡', description: 'Expedia grup platformu fiyat ve rekabet analizi', fieldLabel: 'Property URL', placeholder: 'https://www.expedia.com/...' },
+      { id: 'tripadvisor', name: 'TripAdvisor',    icon: '🟢', description: 'Review sentiment, sıralama ve rekabet analizi', fieldLabel: 'Property URL', placeholder: 'https://www.tripadvisor.com/Hotel_Review-...' },
+      { id: 'api',         name: 'PMS / Channel Manager', icon: '🔗', description: 'Opera, Cloudbeds, Guesty, vb. API entegrasyonu', fieldLabel: 'API Endpoint', placeholder: 'https://api.cloudbeds.com/...' },
+    ],
+    queryCategories: [
+      { label: 'Doluluk & RevPAR',       icon: '🏨', queries: ['Calculate my RevPAR and compare to local comp set', 'What is my optimal occupancy rate for maximum profitability?', 'Analyse my ADR trend vs competitor set this season', 'Identify my highest and lowest performing date ranges'] },
+      { label: 'OTA & Kanal Stratejisi', icon: '💻', queries: ['What OTA commission am I paying and what is the net margin?', 'How does my direct booking rate compare to OTA share?', 'Which OTA drives the most profitable bookings?', 'Should I adjust my rate parity or close-out strategy?'] },
+      { label: 'Fiyatlandırma Zekası',   icon: '💰', queries: ['Find optimal pricing for next peak season dates', 'How do my rates compare to similar properties in my area?', 'What happens to occupancy if I raise rates by 15%?', 'Identify last-minute pricing and yield opportunities'] },
+      { label: 'Review & Deneyim',       icon: '⭐', queries: ['Analyse my review sentiment and main guest pain points', 'How do my review scores affect my OTA search ranking?', 'Revenue impact of improving my rating by 0.5 stars?', 'Compare my amenities vs top-rated competitors nearby'] },
+    ],
   },
   {
-    id: 'api',
-    name: 'Custom API / Webhook',
-    description: 'Point any JSON data endpoint for real-time ingestion and analysis',
-    icon: '🔗',
-    fieldLabel:  'Endpoint URL',
-    placeholder: 'https://your-app.com/api/analytics',
+    id: 'services', name: 'Hizmet & SaaS', icon: '⚙️', color: '#EC4899',
+    description: 'Freelance, ajans, SaaS ve abonelik işletmeleri',
+    connectors: [
+      { id: 'stripe',  name: 'Stripe',   icon: '🟣', description: 'Ödeme ve abonelik gelir analizi', fieldLabel: 'Business Website or Stripe Dashboard URL', placeholder: 'https://yoursite.com' },
+      { id: 'fiverr',  name: 'Fiverr',   icon: '🟢', description: 'Freelancer profil ve gig performans analizi', fieldLabel: 'Profile URL', placeholder: 'https://www.fiverr.com/yourprofile' },
+      { id: 'upwork',  name: 'Upwork',   icon: '🟢', description: 'Freelancer profil, proje ve kazanç analizi', fieldLabel: 'Profile URL', placeholder: 'https://www.upwork.com/freelancers/...' },
+      { id: 'api',     name: 'Custom API', icon: '🔗', description: 'Kendi sisteminizdeki herhangi bir veri kaynağı', fieldLabel: 'Endpoint URL', placeholder: 'https://your-app.com/api/analytics' },
+    ],
+    queryCategories: [
+      { label: 'MRR & Büyüme',           icon: '📈', queries: ['What is my MRR trend and growth rate?', 'Calculate my ARR and forecast for next 12 months', 'What is my revenue churn and its LTV impact?', 'Identify my fastest and slowest growing segments'] },
+      { label: 'Müşteri Ekonomisi',       icon: '👥', queries: ['What is my average LTV vs CAC ratio?', 'Which service tier has the best margin?', 'Identify at-risk accounts by payment or usage signals', 'Calculate payback period by customer segment'] },
+      { label: 'Proje & Kapasite',        icon: '⚙️', queries: ['What is my revenue per billable hour?', 'Which project types have the highest margin?', 'Calculate my team utilization rate vs target', 'Identify upsell and expansion opportunities in current accounts'] },
+    ],
+  },
+  {
+    id: 'analytics', name: 'Veri & Analitik', icon: '📊', color: '#6366F1',
+    description: 'Web analitik, trafik, dönüşüm ve kohort analizi',
+    connectors: [
+      { id: 'ga4',  name: 'Google Analytics 4', icon: '📊', description: 'Trafik, dönüşüm ve kullanıcı davranışı analizi', fieldLabel: 'Website URL', placeholder: 'https://yoursite.com' },
+      { id: 'csv',  name: 'CSV / Spreadsheet',  icon: '📄', description: 'GA4, Mixpanel veya özel export CSV verisi', fieldLabel: 'Public CSV URL', placeholder: 'https://docs.google.com/.../export?format=csv' },
+      { id: 'api',  name: 'Analytics API',      icon: '🔗', description: 'Mixpanel, Amplitude, Segment veya özel API', fieldLabel: 'Endpoint URL', placeholder: 'https://api.mixpanel.com/...' },
+    ],
+    queryCategories: [
+      { label: 'Trafik & Dönüşüm',       icon: '🌐', queries: ['Which traffic sources convert best and at what CPA?', 'Analyse my conversion funnel — where are users dropping off?', 'Compare organic vs paid traffic quality and value', 'What is my mobile vs desktop conversion gap?'] },
+      { label: 'Kohort & Retention',      icon: '📅', queries: ['Run cohort retention analysis — which month performs best?', 'Identify my stickiest features or content by engagement', 'Calculate 30/60/90 day user retention curves', 'Which acquisition channel produces the best long-term retention?'] },
+    ],
   },
 ]
+
+// Flat list of all connectors (used for modal lookup)
+const ALL_CONNECTORS: ConnectorDef[] = INDUSTRY_GROUPS.flatMap(g => g.connectors)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock data per connector
@@ -185,6 +277,176 @@ const MOCK_SOURCES: Record<ConnectorType, SourceSummary> = {
       { label: 'Active Integrations', value: '3' },
       { label: 'Webhooks Live', value: '7' },
     ],
+  },
+  woocommerce: {
+    type: 'woocommerce',
+    name: 'WooCommerce Store',
+    syncedAt: 'Just now',
+    revenue: '$56,300',
+    orders: '1,050',
+    aov: '$53.62',
+    topProduct: 'Premium Plugin Bundle',
+    extra: [{ label: 'Active Products', value: '148' }, { label: 'Conversion Rate', value: '2.8%' }],
+  },
+  ebay: {
+    type: 'ebay',
+    name: 'eBay Seller Account',
+    syncedAt: 'Just now',
+    revenue: '$38,900',
+    orders: '2,140',
+    aov: '$18.18',
+    topProduct: 'Vintage Electronics',
+    extra: [{ label: 'Feedback Score', value: '99.2%' }, { label: 'Active Listings', value: '312' }],
+  },
+  etsy: {
+    type: 'etsy',
+    name: 'Etsy Shop',
+    syncedAt: 'Just now',
+    revenue: '$22,400',
+    orders: '740',
+    aov: '$30.27',
+    topProduct: 'Handmade Ceramic Mugs',
+    extra: [{ label: 'Shop Stars', value: '4.9 ★' }, { label: 'Total Sales', value: '5,200' }],
+  },
+  tiktokshop: {
+    type: 'tiktokshop',
+    name: 'TikTok Shop',
+    syncedAt: 'Just now',
+    revenue: '$91,000',
+    orders: '5,600',
+    aov: '$16.25',
+    topProduct: 'Trending Beauty Bundle',
+    extra: [{ label: 'Video Views', value: '2.3M' }, { label: 'Live GMV', value: '$34,500' }],
+  },
+  'meta-ads': {
+    type: 'meta-ads',
+    name: 'Meta Ads Manager',
+    syncedAt: 'Just now',
+    revenue: '$480,000',
+    orders: '12,000',
+    aov: '$40.00',
+    topProduct: 'DTC Apparel Campaign',
+    extra: [{ label: 'ROAS', value: '3.8x' }, { label: 'CPM', value: '$12.40' }],
+  },
+  'google-ads': {
+    type: 'google-ads',
+    name: 'Google Ads',
+    syncedAt: 'Just now',
+    revenue: '$320,000',
+    orders: '8,900',
+    aov: '$35.96',
+    topProduct: 'Search — Brand Keywords',
+    extra: [{ label: 'Quality Score', value: '8.2/10' }, { label: 'CPC', value: '$1.84' }],
+  },
+  'amazon-ppc': {
+    type: 'amazon-ppc',
+    name: 'Amazon PPC',
+    syncedAt: 'Just now',
+    revenue: '$145,000',
+    orders: '4,300',
+    aov: '$33.72',
+    topProduct: 'Sponsored Products',
+    extra: [{ label: 'ACoS', value: '22%' }, { label: 'CTR', value: '0.48%' }],
+  },
+  'tiktok-ads': {
+    type: 'tiktok-ads',
+    name: 'TikTok Ads',
+    syncedAt: 'Just now',
+    revenue: '$67,000',
+    orders: '3,100',
+    aov: '$21.61',
+    topProduct: 'In-Feed Video Campaign',
+    extra: [{ label: 'CPM', value: '$7.20' }, { label: 'VTR', value: '62%' }],
+  },
+  klaviyo: {
+    type: 'klaviyo',
+    name: 'Klaviyo Email',
+    syncedAt: 'Just now',
+    revenue: '$58,000',
+    orders: '1,820',
+    aov: '$31.87',
+    topProduct: 'Abandoned Cart Flow',
+    extra: [{ label: 'Open Rate', value: '28.4%' }, { label: 'Click Rate', value: '4.1%' }],
+  },
+  booking: {
+    type: 'booking',
+    name: 'Booking.com Property',
+    syncedAt: 'Just now',
+    revenue: '$112,000',
+    orders: '480',
+    aov: '$233.33',
+    topProduct: 'Deluxe Sea View Room',
+    extra: [{ label: 'Occupancy Rate', value: '78%' }, { label: 'Review Score', value: '8.7/10' }],
+  },
+  airbnb: {
+    type: 'airbnb',
+    name: 'Airbnb Host Account',
+    syncedAt: 'Just now',
+    revenue: '$48,600',
+    orders: '210',
+    aov: '$231.43',
+    topProduct: 'Beachfront Studio',
+    extra: [{ label: 'Superhost', value: 'Yes' }, { label: 'Avg Rating', value: '4.87 ★' }],
+  },
+  expedia: {
+    type: 'expedia',
+    name: 'Expedia Property',
+    syncedAt: 'Just now',
+    revenue: '$89,000',
+    orders: '390',
+    aov: '$228.21',
+    topProduct: 'Standard Double Room',
+    extra: [{ label: 'Traveler Rating', value: '8.4/10' }, { label: 'RevPAR', value: '$142' }],
+  },
+  tripadvisor: {
+    type: 'tripadvisor',
+    name: 'TripAdvisor Listing',
+    syncedAt: 'Just now',
+    revenue: '$74,000',
+    orders: '320',
+    aov: '$231.25',
+    topProduct: 'Boutique Hotel Package',
+    extra: [{ label: 'Ranking', value: '#3 in City' }, { label: 'Reviews', value: '1,240' }],
+  },
+  stripe: {
+    type: 'stripe',
+    name: 'Stripe Payments',
+    syncedAt: 'Just now',
+    revenue: '$198,000',
+    orders: '3,600',
+    aov: '$55.00',
+    topProduct: 'SaaS Monthly Plan',
+    extra: [{ label: 'MRR', value: '$16,500' }, { label: 'Churn Rate', value: '2.1%' }],
+  },
+  fiverr: {
+    type: 'fiverr',
+    name: 'Fiverr Pro Account',
+    syncedAt: 'Just now',
+    revenue: '$18,400',
+    orders: '310',
+    aov: '$59.35',
+    topProduct: 'Logo Design Gig',
+    extra: [{ label: 'Level', value: 'Top Rated' }, { label: 'Repeat Buyers', value: '41%' }],
+  },
+  upwork: {
+    type: 'upwork',
+    name: 'Upwork Agency',
+    syncedAt: 'Just now',
+    revenue: '$62,000',
+    orders: '88',
+    aov: '$704.55',
+    topProduct: 'Full-Stack Development',
+    extra: [{ label: 'JSS', value: '98%' }, { label: 'Top Rated Plus', value: 'Yes' }],
+  },
+  ga4: {
+    type: 'ga4',
+    name: 'Google Analytics 4',
+    syncedAt: 'Just now',
+    revenue: '$N/A — analytics only',
+    orders: 'N/A',
+    aov: 'N/A',
+    topProduct: 'N/A',
+    extra: [{ label: 'Monthly Sessions', value: '142,000' }, { label: 'Bounce Rate', value: '38%' }],
   },
 }
 
@@ -343,17 +605,6 @@ function buildAnalysis(query: string, source: SourceSummary): AnalysisResult {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Pill query examples
-// ─────────────────────────────────────────────────────────────────────────────
-
-const QUERY_EXAMPLES = [
-  'What are my top-performing products?',
-  'Where am I losing revenue?',
-  'Compare my AOV to industry',
-  'Find my biggest growth opportunities',
-]
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Colour helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -378,9 +629,11 @@ export default function DataLabPage() {
 
   const [step, setStep] = useState<Step>(1)
   const [activeTab, setActiveTab] = useState<TabType>('analysis')
+  const [selectedIndustry, setSelectedIndustry] = useState<IndustryType>('ecommerce')
+  const [activeQueryCategory, setActiveQueryCategory] = useState(0)
   const [modalConnector, setModalConnector] = useState<ConnectorDef | null>(null)
   const [apiInput, setApiInput] = useState('')
-  const [apiInput2, setApiInput2] = useState('')      // second field (e.g. Shopify token)
+  const [apiInput2, setApiInput2] = useState('')
   const [connectError, setConnectError] = useState<{ error: string; hint: string } | null>(null)
   const [connecting, setConnecting] = useState(false)
   const [connectedSource, setConnectedSource] = useState<SourceSummary | null>(null)
@@ -388,8 +641,16 @@ export default function DataLabPage() {
   const [analyzing, setAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [loadingStage, setLoadingStage] = useState(0)
+  // Price Scout
+  const [priceQuery, setPriceQuery] = useState('')
+  const [priceSearching, setPriceSearching] = useState(false)
+  const [priceResults, setPriceResults] = useState<PriceResult[] | null>(null)
+  const [priceAiSummary, setPriceAiSummary] = useState('')
 
-  const queryRef = useRef<HTMLInputElement>(null)
+  const queryRef      = useRef<HTMLInputElement>(null)
+  const priceQueryRef = useRef<HTMLInputElement>(null)
+
+  const activeIndustry = INDUSTRY_GROUPS.find(g => g.id === selectedIndustry) ?? INDUSTRY_GROUPS[0]
 
   const LOADING_STAGES = [
     'Parsing your data source…',
@@ -529,6 +790,31 @@ export default function DataLabPage() {
     e.preventDefault()
     handleAnalyze(query)
   }
+
+  // Price Scout — search cheapest price + alternatives for any product/service
+  const handlePriceSearch = useCallback(async (q: string) => {
+    if (!q.trim()) return
+    setPriceSearching(true)
+    setPriceResults(null)
+    setPriceAiSummary('')
+    try {
+      const res  = await fetch('/api/data-lab/price-scout/', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ query: q, category: activeIndustry.name }),
+      })
+      const data = await res.json()
+      if (data.results) {
+        setPriceResults(data.results as PriceResult[])
+        setPriceAiSummary(data.aiSummary ?? '')
+      }
+    } catch (err) {
+      console.error('[PriceScout] error:', err)
+      setPriceResults([])
+    } finally {
+      setPriceSearching(false)
+    }
+  }, [activeIndustry.name])
 
   // ── Auth guard ──────────────────────────────────────────────────────────────
 
@@ -763,167 +1049,85 @@ export default function DataLabPage() {
   // ── Step 1: Connect Your Data ───────────────────────────────────────────────
 
   const step1 = (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '4rem 2rem' }}>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '3.5rem 2rem' }}>
       {/* Hero */}
-      <motion.div
-        variants={_stagger}
-        initial="hidden"
-        animate="show"
-        style={{ textAlign: 'center', marginBottom: '3.5rem' }}
-      >
-        <motion.div variants={_fadeUp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
-          <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
-            Data Intelligence
-          </span>
-          <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
+      <motion.div variants={_stagger} initial="hidden" animate="show" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+        <motion.div variants={_fadeUp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.875rem', marginBottom: '1rem' }}>
+          <div style={{ width: 24, height: 1, background: '#C9A96E', opacity: 0.6 }} />
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>Data Intelligence</span>
+          <div style={{ width: 24, height: 1, background: '#C9A96E', opacity: 0.6 }} />
         </motion.div>
-        <motion.h1
-          variants={_fadeUp}
-          style={{
-            fontFamily: 'Cormorant Garamond, serif',
-            fontStyle: 'italic',
-            fontSize: 'clamp(2.5rem, 5vw, 3.75rem)',
-            fontWeight: 600,
-            color: '#0C0C0E',
-            margin: '0 0 1rem',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.08,
-          }}
-        >
+        <motion.h1 variants={_fadeUp} style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 'clamp(2.2rem, 5vw, 3.5rem)', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.75rem', letterSpacing: '-0.02em', lineHeight: 1.08 }}>
           DataLab
         </motion.h1>
-        <motion.p
-          variants={_fadeUp}
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.9375rem',
-            color: '#71717A',
-            maxWidth: 480,
-            margin: '0 auto',
-            lineHeight: 1.78,
-            fontWeight: 300,
-          }}
-        >
-          Connect your application data. Analyse your seller context.{' '}
-          <span style={{ color: '#14B8A6', fontWeight: 500 }}>Benchmark against the market.</span>
+        <motion.p variants={_fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#71717A', maxWidth: 520, margin: '0 auto', lineHeight: 1.75, fontWeight: 300 }}>
+          Sektörünüzü seçin, veri kaynağınızı bağlayın.{' '}
+          <span style={{ color: '#14B8A6', fontWeight: 500 }}>Gerçek zamanlı AI analizi başlasın.</span>
         </motion.p>
       </motion.div>
 
-      {/* Connector grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
-          gap: '1.25rem',
-          marginBottom: '2.5rem',
-        }}
-      >
-        {CONNECTORS.map((c) => (
+      {/* Industry selector */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '2rem' }}>
+        {INDUSTRY_GROUPS.map((ind) => (
+          <button
+            key={ind.id}
+            onClick={() => { setSelectedIndustry(ind.id); setActiveQueryCategory(0) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.45rem',
+              padding: '0.5rem 1.1rem',
+              borderRadius: 999,
+              border: selectedIndustry === ind.id ? `1.5px solid ${ind.color}` : '1.5px solid #E5E7EB',
+              background: selectedIndustry === ind.id ? `${ind.color}15` : '#fff',
+              color: selectedIndustry === ind.id ? ind.color : '#6B7280',
+              fontFamily: 'Inter, sans-serif', fontSize: '0.83rem', fontWeight: selectedIndustry === ind.id ? 600 : 400,
+              cursor: 'pointer', transition: 'all 0.15s ease',
+            }}
+          >
+            <span>{ind.icon}</span> {ind.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Connector grid for selected industry */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
+        {activeIndustry.connectors.map((c) => (
           <div
             key={c.id}
-            style={{
-              ...cardStyle,
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '1rem',
-              transition: 'box-shadow 0.18s ease',
-            }}
-            onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 28px rgba(20,184,166,0.10)')
-            }
-            onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)')
-            }
+            style={{ ...cardStyle, display: 'flex', alignItems: 'flex-start', gap: '0.9rem', cursor: 'pointer', transition: 'box-shadow 0.18s, transform 0.18s' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = `0 6px 28px ${activeIndustry.color}20`; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)' }}
           >
-            <div
-              style={{
-                fontSize: '2rem',
-                width: 52,
-                height: 52,
-                background: 'rgba(20,184,166,0.07)',
-                borderRadius: 10,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
+            <div style={{ fontSize: '1.6rem', width: 44, height: 44, background: `${activeIndustry.color}12`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {c.icon}
             </div>
             <div style={{ flex: 1 }}>
-              <h3
-                style={{
-                  fontFamily: 'Cormorant Garamond, serif',
-                  fontSize: '1.2rem',
-                  fontWeight: 600,
-                  color: '#111827',
-                  margin: '0 0 0.3rem',
-                }}
-              >
-                {c.name}
-              </h3>
-              <p
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '0.84rem',
-                  color: '#6B7280',
-                  margin: '0 0 1rem',
-                  lineHeight: 1.55,
-                }}
-              >
-                {c.description}
-              </p>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 600, color: '#111827', margin: '0 0 0.2rem' }}>{c.name}</h3>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#6B7280', margin: '0 0 0.75rem', lineHeight: 1.5 }}>{c.description}</p>
               <button
                 onClick={() => setModalConnector(c)}
-                style={{
-                  background: 'transparent',
-                  border: '1.5px solid #14B8A6',
-                  color: '#14B8A6',
-                  borderRadius: 7,
-                  padding: '0.45rem 1.1rem',
-                  fontFamily: 'Inter, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '0.84rem',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s ease, color 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLButtonElement).style.background = '#14B8A6'
-                  ;(e.currentTarget as HTMLButtonElement).style.color = '#fff'
-                }}
-                onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-                  ;(e.currentTarget as HTMLButtonElement).style.color = '#14B8A6'
-                }}
+                style={{ background: 'transparent', border: `1.5px solid ${activeIndustry.color}`, color: activeIndustry.color, borderRadius: 6, padding: '0.35rem 0.9rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = activeIndustry.color; (e.currentTarget as HTMLButtonElement).style.color = '#fff' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = activeIndustry.color }}
               >
-                Connect
+                Bağlan
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Sample data link */}
-      <div style={{ textAlign: 'center' }}>
+      {/* Sample data + industry count */}
+      <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
         <button
-          onClick={() => {
-            setConnectedSource(MOCK_SOURCES.shopify)
-            setStep(2)
-          }}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: '#9CA3AF',
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.84rem',
-            cursor: 'pointer',
-            textDecoration: 'underline',
-            textDecorationColor: 'rgba(156,163,175,0.5)',
-          }}
+          onClick={() => { setConnectedSource(MOCK_SOURCES.shopify); setStep(2) }}
+          style={{ background: 'transparent', border: 'none', color: '#9CA3AF', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(156,163,175,0.4)' }}
         >
-          Or try with sample data
+          Örnek veri ile dene
         </button>
+        <span style={{ color: '#D1D5DB', fontSize: '0.7rem' }}>|</span>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#9CA3AF' }}>
+          {INDUSTRY_GROUPS.reduce((s, g) => s + g.connectors.length, 0)} platform · 5 sektör
+        </span>
       </div>
     </div>
   )
@@ -939,7 +1143,7 @@ export default function DataLabPage() {
             {/* Source header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
               <span style={{ fontSize: '1.5rem' }}>
-                {CONNECTORS.find((c) => c.id === connectedSource.type)?.icon}
+                {ALL_CONNECTORS.find((c) => c.id === connectedSource.type)?.icon}
               </span>
               <div>
                 <p
@@ -1026,142 +1230,197 @@ export default function DataLabPage() {
         {/* Right panel */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Tabs */}
-          <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem' }}>
-            {(['analysis', 'benchmarks', 'comparisons'] as TabType[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => setActiveTab(t)}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 7,
-                  border: 'none',
-                  background: activeTab === t ? '#14B8A6' : 'rgba(255,255,255,0.7)',
-                  color: activeTab === t ? '#fff' : '#6B7280',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '0.87rem',
-                  fontWeight: activeTab === t ? 600 : 400,
-                  cursor: 'pointer',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+          <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            {([
+              { id: 'analysis',    label: '🔍 Analiz' },
+              { id: 'benchmarks',  label: '📈 Benchmark' },
+              { id: 'price-scout', label: '🛒 Fiyat Karşılaştır' },
+            ] as { id: TabType; label: string }[]).map((t) => (
+              <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: '0.5rem 1.1rem', borderRadius: 7, border: 'none', background: activeTab === t.id ? '#14B8A6' : 'rgba(255,255,255,0.7)', color: activeTab === t.id ? '#fff' : '#6B7280', fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', fontWeight: activeTab === t.id ? 600 : 400, cursor: 'pointer' }}>
+                {t.label}
               </button>
             ))}
           </div>
 
-          {/* Query bar */}
-          <form onSubmit={handleQuerySubmit} style={{ marginBottom: '1.25rem' }}>
-            <div
-              style={{
-                display: 'flex',
-                gap: '0.75rem',
-                background: 'rgba(255,255,255,0.92)',
-                border: '1.5px solid rgba(20,184,166,0.18)',
-                borderRadius: 10,
-                padding: '0.5rem 0.5rem 0.5rem 1rem',
-                alignItems: 'center',
-              }}
-            >
-              <input
-                ref={queryRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask anything about your data…"
-                style={{
-                  flex: 1,
-                  border: 'none',
-                  outline: 'none',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '0.95rem',
-                  color: '#374151',
-                  background: 'transparent',
-                }}
-              />
-              <button
-                type="submit"
-                disabled={!query.trim() || analyzing}
-                style={{
-                  background: query.trim() ? '#14B8A6' : '#E5E7EB',
-                  color: query.trim() ? '#fff' : '#9CA3AF',
-                  border: 'none',
-                  borderRadius: 7,
-                  padding: '0.6rem 1.1rem',
-                  fontFamily: 'Inter, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '0.87rem',
-                  cursor: query.trim() ? 'pointer' : 'not-allowed',
-                  transition: 'background 0.15s ease',
-                }}
-              >
-                Analyse →
-              </button>
-            </div>
-          </form>
+          {/* ── ANALYSIS & BENCHMARKS tab ── */}
+          {activeTab !== 'price-scout' && (
+            <>
+              {/* Query bar */}
+              <form onSubmit={handleQuerySubmit} style={{ marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(255,255,255,0.92)', border: '1.5px solid rgba(20,184,166,0.18)', borderRadius: 10, padding: '0.5rem 0.5rem 0.5rem 1rem', alignItems: 'center' }}>
+                  <input
+                    ref={queryRef} type="text" value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Veriniz hakkında herhangi bir soru sorun…"
+                    style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: '#374151', background: 'transparent' }}
+                  />
+                  <button type="submit" disabled={!query.trim() || analyzing}
+                    style={{ background: query.trim() ? '#14B8A6' : '#E5E7EB', color: query.trim() ? '#fff' : '#9CA3AF', border: 'none', borderRadius: 7, padding: '0.6rem 1.1rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', cursor: query.trim() ? 'pointer' : 'not-allowed' }}>
+                    Analiz Et →
+                  </button>
+                </div>
+              </form>
 
-          {/* Query example pills */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2rem' }}>
-            {QUERY_EXAMPLES.map((ex) => (
-              <button
-                key={ex}
-                onClick={() => {
-                  setQuery(ex)
-                  handleAnalyze(ex)
-                }}
-                style={{
-                  background: 'rgba(20,184,166,0.06)',
-                  border: '1px solid rgba(20,184,166,0.15)',
-                  borderRadius: 20,
-                  padding: '0.38rem 0.9rem',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '0.8rem',
-                  color: '#0D9488',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s ease',
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.12)')
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.06)')
-                }
-              >
-                {ex}
-              </button>
-            ))}
-          </div>
+              {/* Category tabs + query pills */}
+              {activeIndustry.queryCategories.length > 0 && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  {/* Category pills */}
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                    {activeIndustry.queryCategories.map((cat, idx) => (
+                      <button key={cat.label} onClick={() => setActiveQueryCategory(idx)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem 0.85rem', borderRadius: 999, border: activeQueryCategory === idx ? `1.5px solid ${activeIndustry.color}` : '1.5px solid #E5E7EB', background: activeQueryCategory === idx ? `${activeIndustry.color}12` : 'transparent', color: activeQueryCategory === idx ? activeIndustry.color : '#6B7280', fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', fontWeight: activeQueryCategory === idx ? 600 : 400, cursor: 'pointer' }}>
+                        <span>{cat.icon}</span> {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Query pills for active category */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+                    {activeIndustry.queryCategories[activeQueryCategory]?.queries.map((ex) => (
+                      <button key={ex} onClick={() => { setQuery(ex); handleAnalyze(ex) }}
+                        style={{ background: 'rgba(20,184,166,0.05)', border: '1px solid rgba(20,184,166,0.14)', borderRadius: 20, padding: '0.35rem 0.85rem', fontFamily: 'Inter, sans-serif', fontSize: '0.77rem', color: '#0D9488', cursor: 'pointer', textAlign: 'left', lineHeight: 1.4, transition: 'background 0.12s' }}
+                        onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.11)')}
+                        onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.05)')}>
+                        {ex}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {/* Tab content placeholder */}
-          <div style={{ ...cardStyle, textAlign: 'center', padding: '3rem 2rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>
-              {activeTab === 'analysis' ? '🔍' : activeTab === 'benchmarks' ? '📈' : '⚖️'}
+              {/* Placeholder */}
+              <div style={{ ...cardStyle, textAlign: 'center', padding: '2.5rem 2rem' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.6rem' }}>{activeTab === 'analysis' ? '🔍' : '📈'}</div>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 600, color: '#111827', margin: '0 0 0.35rem' }}>
+                  {activeTab === 'analysis' ? 'Soru sorun, analiz başlasın' : 'Benchmark karşılaştırması için soru sorun'}
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: '#9CA3AF', margin: 0 }}>
+                  Yukarıya yazın veya hazır sorulardan birini seçin.
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* ── PRICE SCOUT tab ── */}
+          {activeTab === 'price-scout' && (
+            <div>
+              <form onSubmit={(e) => { e.preventDefault(); handlePriceSearch(priceQuery) }} style={{ marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(255,255,255,0.92)', border: '1.5px solid rgba(201,169,110,0.25)', borderRadius: 10, padding: '0.5rem 0.5rem 0.5rem 1rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>🔎</span>
+                  <input
+                    ref={priceQueryRef} type="text" value={priceQuery}
+                    onChange={(e) => setPriceQuery(e.target.value)}
+                    placeholder="Ürün veya hizmet adı girin… (e.g. iPhone 15 Pro, Airbnb Istanbul 2 bedroom)"
+                    style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: '#374151', background: 'transparent' }}
+                  />
+                  <button type="submit" disabled={!priceQuery.trim() || priceSearching}
+                    style={{ background: priceQuery.trim() ? '#C9A96E' : '#E5E7EB', color: priceQuery.trim() ? '#fff' : '#9CA3AF', border: 'none', borderRadius: 7, padding: '0.6rem 1.1rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', cursor: priceQuery.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
+                    {priceSearching ? '🔍 Taranıyor…' : 'Fiyat Bul →'}
+                  </button>
+                </div>
+              </form>
+
+              {/* Quick search suggestions */}
+              {!priceResults && !priceSearching && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', color: '#9CA3AF', margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Hızlı Örnekler</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {[
+                      'Sony WH-1000XM5 kulaklık', 'Shopify Plus plan price', 'Istanbul Airbnb 2 bedroom',
+                      'Klaviyo email marketing pricing', 'Booking.com hotel management software',
+                      'WooCommerce vs Shopify pricing', 'Amazon FBA tool software',
+                    ].map((s) => (
+                      <button key={s} onClick={() => { setPriceQuery(s); handlePriceSearch(s) }}
+                        style={{ background: 'rgba(201,169,110,0.07)', border: '1px solid rgba(201,169,110,0.2)', borderRadius: 20, padding: '0.33rem 0.85rem', fontFamily: 'Inter, sans-serif', fontSize: '0.77rem', color: '#92683A', cursor: 'pointer' }}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Loading state */}
+              {priceSearching && (
+                <div style={{ ...cardStyle, textAlign: 'center', padding: '3rem 2rem' }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.75rem', animation: 'pulse 1s infinite' }}>🔍</div>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#111827', margin: 0 }}>İnternette en iyi fiyat aranıyor…</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#9CA3AF', margin: '0.5rem 0 0' }}>Fiyat karşılaştırma, alternatifler, değerlendirmeler…</p>
+                </div>
+              )}
+
+              {/* Results */}
+              {priceResults && !priceSearching && (
+                <div>
+                  {/* AI Summary */}
+                  {priceAiSummary && (
+                    <div style={{ ...cardStyle, borderLeft: '3px solid #C9A96E', marginBottom: '1rem', padding: '1rem 1.25rem' }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A96E', margin: '0 0 0.4rem' }}>AI Özeti</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#374151', lineHeight: 1.65, margin: 0 }}>{priceAiSummary}</p>
+                    </div>
+                  )}
+
+                  {priceResults.length === 0 ? (
+                    <div style={{ ...cardStyle, textAlign: 'center', padding: '2.5rem' }}>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#111827', margin: 0 }}>Sonuç bulunamadı</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: '#9CA3AF', margin: '0.4rem 0 0' }}>Farklı bir ürün adı veya daha genel bir arama deneyin.</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Direct matches */}
+                      {priceResults.filter(r => !r.isAlternative).length > 0 && (
+                        <div style={{ marginBottom: '1.25rem' }}>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#374151', margin: '0 0 0.6rem' }}>En İyi Fiyatlar</p>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
+                            {priceResults.filter(r => !r.isAlternative).map((r, i) => (
+                              <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                                <div style={{ ...cardStyle, padding: '1rem', cursor: 'pointer', transition: 'all 0.15s', border: i === 0 ? '1.5px solid rgba(20,184,166,0.4)' : '1px solid rgba(20,184,166,0.10)' }}
+                                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)' }}
+                                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)' }}>
+                                  {i === 0 && <div style={{ display: 'inline-block', background: '#14B8A6', color: '#fff', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem' }}>EN UCUZ</div>}
+                                  {r.savings && <div style={{ display: 'inline-block', background: 'rgba(239,68,68,0.1)', color: '#DC2626', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem', marginLeft: i === 0 ? '0.35rem' : 0 }}>{r.savings}</div>}
+                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#374151', margin: '0 0 0.35rem', lineHeight: 1.35, fontWeight: 500 }}>{r.title}</p>
+                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 700, color: '#0C0C0E', margin: '0 0 0.25rem' }}>{r.price}</p>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: '#6B7280' }}>{r.platform}</span>
+                                    {r.rating && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: '#C9A96E', fontWeight: 600 }}>★ {r.rating}</span>}
+                                  </div>
+                                  {r.snippet && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#9CA3AF', margin: '0.4rem 0 0', lineHeight: 1.4 }}>{r.snippet}</p>}
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Alternatives */}
+                      {priceResults.filter(r => r.isAlternative).length > 0 && (
+                        <div>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#374151', margin: '0 0 0.6rem' }}>Alternatifler & Benzer Ürünler</p>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
+                            {priceResults.filter(r => r.isAlternative).map((r, i) => (
+                              <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                                <div style={{ ...cardStyle, padding: '1rem', cursor: 'pointer', transition: 'all 0.15s', background: 'rgba(248,250,252,0.9)' }}
+                                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)' }}
+                                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)' }}>
+                                  <div style={{ display: 'inline-block', background: 'rgba(201,169,110,0.12)', color: '#92683A', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem' }}>ALTERNATİF</div>
+                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#374151', margin: '0 0 0.35rem', lineHeight: 1.35, fontWeight: 500 }}>{r.title}</p>
+                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 700, color: '#0C0C0E', margin: '0 0 0.25rem' }}>{r.price}</p>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: '#6B7280' }}>{r.platform}</span>
+                                    {r.rating && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: '#C9A96E', fontWeight: 600 }}>★ {r.rating}</span>}
+                                  </div>
+                                  {r.snippet && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#9CA3AF', margin: '0.4rem 0 0', lineHeight: 1.4 }}>{r.snippet}</p>}
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
-            <p
-              style={{
-                fontFamily: 'Cormorant Garamond, serif',
-                fontSize: '1.3rem',
-                fontWeight: 600,
-                color: '#111827',
-                margin: '0 0 0.4rem',
-              }}
-            >
-              {activeTab === 'analysis'
-                ? 'Ask a question to run analysis'
-                : activeTab === 'benchmarks'
-                ? 'Run a query to see benchmark comparisons'
-                : 'Run a query to compare your metrics'}
-            </p>
-            <p
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.87rem',
-                color: '#9CA3AF',
-                margin: 0,
-              }}
-            >
-              Type a question above or select an example prompt.
-            </p>
-          </div>
+          )}
         </div>
       </div>
     </div>
