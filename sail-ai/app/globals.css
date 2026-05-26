@@ -1,11 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── Swiss Precision Design Tokens ─────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   UNIFIED DESIGN TOKENS — Single Source of Truth
+   Three previously-separate :root blocks merged here.
+   All tokens live here; dark-context tokens in .aetheris block below.
+   ═══════════════════════════════════════════════════════════════ */
 :root {
+  /* ── Light surface palette ──────────────────── */
   --ink:        #0C0C0E;
   --charcoal:   #1C1C1E;
   --steel:      #3A3A3C;
@@ -15,13 +20,57 @@
   --rule-strong:rgba(0,0,0,0.16);
   --canvas:     #FAFAF8;
   --surface:    #FFFFFF;
+  --border:     rgba(0,0,0,0.09);
+  --border-mid: rgba(0,0,0,0.14);
+
+  /* ── Brand — champagne gold ─────────────────── */
   --champagne:  #C9A96E;
   --champagne-d:#A8873E;
   --champagne-x:rgba(201,169,110,0.12);
-  --error:      #C9A96E;
-  --error-dim:  rgba(201,169,110,0.08);
-  --border:     rgba(0,0,0,0.09);
-  --border-mid: rgba(0,0,0,0.14);
+  --error:      #991B1B;
+  --error-dim:  rgba(153,27,27,0.08);
+
+  /* ── Sovereign teal ─────────────────────────── */
+  --sv-teal:          #14B8A6;
+  --sv-teal-bright:   #2DD4BF;
+  --sv-teal-dim:      rgba(20,184,166,0.10);
+  --sv-teal-rule:     rgba(20,184,166,0.16);
+  --sv-teal-glow:     rgba(45,212,191,0.22);
+  --sv-teal-wash:     rgba(20,184,166,0.06);
+  --sv-mint-bg:       #f0fdfb;
+  --sv-mint-hero:     linear-gradient(135deg, #d4f5f0 0%, #edfaf8 45%, #e2eef9 100%);
+  --sv-glass:         rgba(255,255,255,0.86);
+  --sv-glass-border:  rgba(255,255,255,0.68);
+  --sv-glass-shadow:  0 8px 40px rgba(20,184,166,0.08), 0 2px 10px rgba(0,0,0,0.05);
+  --sv-grid:          rgba(45,212,191,0.065);
+  --sv-grid-size:     60px;
+  --sv-brand-grad:    linear-gradient(135deg, #C9A96E 0%, #14B8A6 100%);
+
+  /* ── Vintage luxury palette ─────────────────── */
+  --summer-yellow:    #F0C030;
+  --summer-yellow-d:  #D4A820;
+  --summer-yellow-dk: #A88010;
+  --chrome-silver:    #B8C4CC;
+  --chrome-light:     #E8EEF4;
+  --gold-accent:      #D4AF37;
+  --gold-accent-dim:  rgba(212,175,55,0.55);
+  --vintage-bg:       #09090B;
+  --gold-grad:    linear-gradient(135deg, #D4AF37 0%, #F9E29D 45%, #B8860B 100%);
+  --chrome-grad:  linear-gradient(145deg, #8090A0 0%, #C8D4DC 40%, #E8EEF4 55%, #9098A8 100%);
+  --yellow-grad:  linear-gradient(135deg, #F5D020 0%, #F0C030 50%, #D4A820 100%);
+
+  /* ── Border radius scale (mirrors tailwind config) */
+  --radius-none: 0;
+  --radius-sm:   2px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:   10px;
+  --radius-2xl:  12px;
+  --radius-full: 9999px;
+
+  /* ── Page max-widths ────────────────────────── */
+  --page-max:    1152px;  /* marketing pages */
+  --app-max:     1024px;  /* app/dashboard pages */
 }
 
 /* ── Aetheris Terminal — Dark Mode Tokens ───────────── */
@@ -239,6 +288,75 @@ input { outline: none; font-family: 'Inter', sans-serif; }
   .card-cream { background: var(--canvas);  border: 1px solid var(--border); }
 
   .rule { height: 1px; background: var(--rule); }
+
+  /* ── Page shell — light (marketing, dashboard, login) ── */
+  .page-light {
+    min-height: 100vh;
+    background: var(--canvas);
+    color:      var(--ink);
+  }
+
+  /* ── Page shell — dark (chat, data-lab, research) ─────── */
+  .page-dark {
+    min-height: 100vh;
+    background: var(--ae-bg, #080810);
+    color:      var(--ae-text, #F0F0F4);
+  }
+
+  /* ── Marketing container ────────────────────────────────── */
+  .container-page {
+    width:      100%;
+    max-width:  var(--page-max);
+    margin-left:  auto;
+    margin-right: auto;
+    padding-left:  1.5rem;
+    padding-right: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .container-page { padding-left: 2.5rem; padding-right: 2.5rem; }
+  }
+
+  /* ── App container (tighter) ────────────────────────────── */
+  .container-app {
+    width:      100%;
+    max-width:  var(--app-max);
+    margin-left:  auto;
+    margin-right: auto;
+    padding-left:  1rem;
+    padding-right: 1rem;
+  }
+  @media (min-width: 768px) {
+    .container-app { padding-left: 1.5rem; padding-right: 1.5rem; }
+  }
+
+  /* ── Section vertical rhythm ────────────────────────────── */
+  .section-gap   { padding-top: 5rem;  padding-bottom: 5rem;  }
+  .section-gap-sm{ padding-top: 3rem;  padding-bottom: 3rem;  }
+  .section-gap-lg{ padding-top: 8rem;  padding-bottom: 8rem;  }
+
+  /* ── Aetheris dark card (unified replacement for bg-[#0f0f12]) ─ */
+  .ae-app-card {
+    background:  var(--ae-bg-surface, #141420);
+    border:      1px solid var(--ae-border, rgba(226,226,232,0.08));
+    border-radius: var(--radius-lg);
+  }
+
+  /* ── Aetheris stat chip (replaces inline zinc chips) ─────── */
+  .ae-chip {
+    display:        inline-flex;
+    align-items:    center;
+    gap:            0.375rem;
+    padding:        0.25rem 0.625rem;
+    background:     var(--ae-bg-elevated, #1A1A2A);
+    border:         1px solid var(--ae-border, rgba(226,226,232,0.08));
+    border-radius:  var(--radius-full);
+    font-family:    'Inter', sans-serif;
+    font-size:      0.6875rem;
+    font-weight:    500;
+    color:          var(--ae-text-dim, #9898B0);
+    letter-spacing: 0.02em;
+    white-space:    nowrap;
+  }
 }
 
 /* ── Streaming cursor ──────────────────────────────── */
@@ -512,23 +630,8 @@ input { outline: none; font-family: 'Inter', sans-serif; }
 
 /* ═══════════════════════════════════════════════════════════════
    SAIL AI+ — GOLDEN VIBE · 80s LUXURY VINTAGE THEME
-   Summer Sailing Yellow + Chrome Silver + Obsidian + Red Vectors
+   Tokens now consolidated into the single :root block above.
    ═══════════════════════════════════════════════════════════════ */
-
-:root {
-  --summer-yellow:    #F0C030;
-  --summer-yellow-d:  #D4A820;
-  --summer-yellow-dk: #A88010;
-  --chrome-silver:    #B8C4CC;
-  --chrome-light:     #E8EEF4;
-  --gold-accent:      #D4AF37;
-  --gold-accent-dim:  rgba(212,175,55,0.55);
-  --vintage-bg:       #09090B;
-
-  --gold-grad: linear-gradient(135deg, #D4AF37 0%, #F9E29D 45%, #B8860B 100%);
-  --chrome-grad: linear-gradient(145deg, #8090A0 0%, #C8D4DC 40%, #E8EEF4 55%, #9098A8 100%);
-  --yellow-grad: linear-gradient(135deg, #F5D020 0%, #F0C030 50%, #D4A820 100%);
-}
 
 /* ── Playfair Display — luxury serif ──────────────────────── */
 .font-playfair {
@@ -677,34 +780,8 @@ input { outline: none; font-family: 'Inter', sans-serif; }
 
 /* ═══════════════════════════════════════════════════════════════
    SOVEREIGN DESIGN SYSTEM — Teal Precision Layer
-   Extends existing tokens with the SovereignDashboard palette.
+   Tokens now consolidated into the single :root block above.
    ═══════════════════════════════════════════════════════════════ */
-
-:root {
-  /* ── Sovereign teal ─────────────────────────── */
-  --sv-teal:          #14B8A6;
-  --sv-teal-bright:   #2DD4BF;
-  --sv-teal-dim:      rgba(20,184,166,0.10);
-  --sv-teal-rule:     rgba(20,184,166,0.16);
-  --sv-teal-glow:     rgba(45,212,191,0.22);
-  --sv-teal-wash:     rgba(20,184,166,0.06);
-
-  /* ── Mint backgrounds ───────────────────────── */
-  --sv-mint-bg:       #f0fdfb;
-  --sv-mint-hero:     linear-gradient(135deg, #d4f5f0 0%, #edfaf8 45%, #e2eef9 100%);
-
-  /* ── Glass surfaces ─────────────────────────── */
-  --sv-glass:         rgba(255,255,255,0.86);
-  --sv-glass-border:  rgba(255,255,255,0.68);
-  --sv-glass-shadow:  0 8px 40px rgba(20,184,166,0.08), 0 2px 10px rgba(0,0,0,0.05);
-
-  /* ── Architectural grid ─────────────────────── */
-  --sv-grid:          rgba(45,212,191,0.065);
-  --sv-grid-size:     60px;
-
-  /* ── Brand gradient — champagne ⟶ teal ──────── */
-  --sv-brand-grad:    linear-gradient(135deg, #C9A96E 0%, #14B8A6 100%);
-}
 
 /* ── Sovereign glass card ─────────────────────────────────────── */
 .sv-card {

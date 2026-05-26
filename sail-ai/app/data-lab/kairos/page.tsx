@@ -24,81 +24,88 @@ export default async function KairosPage() {
   const analyses = await getRecentAnalyses()
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100">
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-zinc-800/60 bg-[#09090b]/90 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link href="/data-lab" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors">
+    <div className="page-dark">
+      {/* ── Header ─────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-30 border-b border-[var(--ae-border)] bg-[var(--ae-bg)]/90 backdrop-blur-md">
+        <div className="container-page h-14 flex items-center gap-4">
+          <Link href="/data-lab"
+            className="flex items-center gap-1.5 text-xs text-[var(--ae-text-muted)] hover:text-[var(--ae-text-dim)] transition-colors">
             <ArrowLeft size={13} /> Data Lab
           </Link>
-          <div className="w-px h-4 bg-zinc-800" />
+          <div className="w-px h-4 bg-[var(--ae-border)]" />
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <Zap size={11} className="text-white" />
+            <div className="w-6 h-6 rounded-md bg-[var(--ae-gold-wash)] border border-[var(--ae-gold-rule)] flex items-center justify-center">
+              <Zap size={11} className="text-[var(--ae-gold)]" />
             </div>
-            <span className="text-xs font-bold text-zinc-100 tracking-tight">
-              KAIROS <span className="text-zinc-500 font-normal">Intelligence</span>
+            <span className="text-xs font-bold text-[var(--ae-text)] tracking-tight">
+              KAIROS <span className="text-[var(--ae-text-muted)] font-normal">Intelligence</span>
             </span>
           </div>
         </div>
       </header>
 
-      {/* Hero */}
+      {/* ── Hero ────────────────────────────────────────────────────── */}
       <section className="flex flex-col items-center justify-center px-6 py-20 text-center">
-        <div className="mb-4 inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/5 text-indigo-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+        {/* Eyebrow badge */}
+        <div className="mb-5 inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-[var(--ae-gold-rule)] bg-[var(--ae-gold-wash)] text-[var(--ae-gold)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--ae-gold)] animate-pulse" />
           Real-time e-commerce intelligence
         </div>
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-100 max-w-2xl leading-none mb-6">
+
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[var(--ae-text)] max-w-2xl leading-none mb-6">
           Spy on any store.
           <br />
-          <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            Beat any competitor.
-          </span>
+          <span className="text-gold-grad">Beat any competitor.</span>
         </h1>
-        <p className="text-base text-zinc-400 max-w-xl mb-10 leading-relaxed">
-          Paste a Shopify or Amazon URL. KAIROS extracts product data, estimates revenue, maps supplier costs, and generates a custom AI battle plan — in seconds.
+
+        <p className="text-base text-[var(--ae-text-dim)] max-w-xl mb-10 leading-relaxed">
+          Paste a Shopify or Amazon URL. KAIROS extracts product data, estimates revenue, maps supplier costs,
+          and generates a custom AI battle plan — in seconds.
         </p>
+
         <KairosAnalysisInput />
 
+        {/* Feature cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-20 max-w-4xl w-full text-left">
           {FEATURES.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="bg-[#0f0f12] border border-zinc-800 rounded-xl p-4">
-              <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 w-fit mb-3">
-                <Icon size={14} className="text-indigo-400" />
+            <div key={title} className="ae-app-card p-4">
+              <div className="p-2 rounded-lg bg-[var(--ae-gold-wash)] border border-[var(--ae-gold-rule)] w-fit mb-3">
+                <Icon size={14} className="text-[var(--ae-gold)]" />
               </div>
-              <h3 className="text-xs font-bold text-zinc-200 mb-1">{title}</h3>
-              <p className="text-xs text-zinc-600 leading-relaxed">{desc}</p>
+              <h3 className="text-xs font-bold text-[var(--ae-text)] mb-1">{title}</h3>
+              <p className="text-xs text-[var(--ae-text-muted)] leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Recent analyses */}
+      {/* ── Recent analyses ─────────────────────────────────────────── */}
       {analyses.length > 0 && (
-        <section className="border-t border-zinc-800 bg-[#0a0a0d] px-6 py-10">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-6">Recent Analyses</h2>
+        <section className="border-t border-[var(--ae-border)] bg-[var(--ae-bg-raised)] px-6 py-10">
+          <div className="container-page">
+            <h2 className="ae-label-chrome mb-6">Recent Analyses</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {analyses.map((a: typeof analyses[number]) => (
                 <Link key={a.id} href={`/data-lab/kairos/analysis/${a.id}`}
-                  className="bg-[#0f0f12] border border-zinc-800 hover:border-zinc-600 rounded-xl p-4 transition-colors group">
+                  className="ae-app-card hover:border-[var(--ae-border-mid)] p-4 transition-colors group">
                   <div className="flex items-center justify-between mb-2">
+                    {/* Platform badge — use velocity-pos for Shopify (growth), gold for Amazon */}
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${
                       a.platform === 'SHOPIFY'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        ? 'bg-[var(--ae-velocity-pos)]/10 text-[var(--ae-velocity-pos)] border-[var(--ae-velocity-pos)]/20'
+                        : 'bg-[var(--ae-gold-wash)] text-[var(--ae-gold)] border-[var(--ae-gold-rule)]'
                     }`}>{a.platform}</span>
                     <span className={`text-xs font-medium ${
-                      a.status === 'COMPLETE' ? 'text-emerald-400' :
-                      a.status === 'ERROR'    ? 'text-red-400' : 'text-zinc-500'
+                      a.status === 'COMPLETE' ? 'text-[var(--ae-velocity-pos)]' :
+                      a.status === 'ERROR'    ? 'text-[var(--ae-velocity-neg)]' :
+                                               'text-[var(--ae-text-muted)]'
                     }`}>{a.status}</span>
                   </div>
-                  <p className="text-sm font-semibold text-zinc-100 group-hover:text-white truncate mb-1">
+                  <p className="text-sm font-semibold text-[var(--ae-text)] group-hover:text-[var(--ae-chrome)] truncate mb-1">
                     {a.targetName || a.targetUrl}
                   </p>
-                  <p className="text-xs text-zinc-600 truncate">{a.targetUrl}</p>
-                  <p className="text-xs text-zinc-700 mt-2">{new Date(a.createdAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-[var(--ae-text-muted)] truncate">{a.targetUrl}</p>
+                  <p className="text-xs text-[var(--ae-text-ghost)] mt-2">{new Date(a.createdAt).toLocaleDateString()}</p>
                 </Link>
               ))}
             </div>
@@ -106,7 +113,7 @@ export default async function KairosPage() {
         </section>
       )}
 
-      <footer className="border-t border-zinc-800/60 px-6 py-6 text-center text-xs text-zinc-700">
+      <footer className="border-t border-[var(--ae-border)] px-6 py-6 text-center text-xs text-[var(--ae-text-ghost)]">
         KAIROS Intelligence — For competitive research only. Respect platform ToS.
       </footer>
     </div>

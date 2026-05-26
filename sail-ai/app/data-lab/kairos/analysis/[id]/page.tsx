@@ -25,7 +25,6 @@ export default async function KairosAnalysisPage({ params }: Props) {
   const record  = await prisma.kairosAnalysis.findUnique({ where: { id } })
   if (!record) notFound()
 
-  // If still processing, show a polling UI
   if (record.status === 'PENDING' || record.status === 'SCRAPING' || record.status === 'ANALYZING') {
     return <ProcessingScreen id={id} status={record.status} targetUrl={record.targetUrl} />
   }
@@ -33,10 +32,10 @@ export default async function KairosAnalysisPage({ params }: Props) {
   if (record.status === 'ERROR') {
     const err = (record.aiAnalysis as any)?.error ?? 'Unknown error'
     return (
-      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="text-red-400 font-semibold text-lg">Analysis Failed</p>
-        <p className="text-sm text-zinc-500 max-w-md">{err}</p>
-        <Link href="/data-lab/kairos" className="text-xs text-indigo-400 hover:underline mt-2">← Try another URL</Link>
+      <div className="page-dark flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-[var(--ae-velocity-neg)] font-semibold text-lg">Analysis Failed</p>
+        <p className="text-sm text-[var(--ae-text-muted)] max-w-md">{err}</p>
+        <Link href="/data-lab/kairos" className="text-xs text-[var(--ae-gold)] hover:underline mt-2">← Try another URL</Link>
       </div>
     )
   }
@@ -56,32 +55,35 @@ export default async function KairosAnalysisPage({ params }: Props) {
   const aiAnalysis = analysis.aiAnalysis as KairosAIAnalysis
 
   return (
-    <div className="min-h-screen bg-[#09090b]">
-      {/* Nav */}
-      <header className="sticky top-0 z-30 border-b border-zinc-800/60 bg-[#09090b]/90 backdrop-blur-md">
+    <div className="page-dark">
+      {/* ── Header ─────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-30 border-b border-[var(--ae-border)] bg-[var(--ae-bg)]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link href="/data-lab/kairos" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors">
+          <Link href="/data-lab/kairos"
+            className="flex items-center gap-1.5 text-xs text-[var(--ae-text-muted)] hover:text-[var(--ae-text-dim)] transition-colors">
             <ArrowLeft size={13} /> Back
           </Link>
-          <div className="w-px h-4 bg-zinc-800" />
+          <div className="w-px h-4 bg-[var(--ae-border)]" />
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <Zap size={10} className="text-white" />
+            <div className="w-5 h-5 rounded-md bg-[var(--ae-gold-wash)] border border-[var(--ae-gold-rule)] flex items-center justify-center">
+              <Zap size={10} className="text-[var(--ae-gold)]" />
             </div>
-            <span className="text-xs font-semibold text-zinc-400">{analysis.targetName || analysis.targetUrl}</span>
+            <span className="text-xs font-semibold text-[var(--ae-text-dim)]">
+              {analysis.targetName || analysis.targetUrl}
+            </span>
           </div>
-          <span className="ml-auto text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+          <span className="ml-auto text-xs px-2 py-1 rounded-full bg-[var(--ae-velocity-pos)]/10 text-[var(--ae-velocity-pos)] border border-[var(--ae-velocity-pos)]/20 font-medium">
             ✓ Analysis Complete
           </span>
         </div>
       </header>
 
-      {/* 3-column layout */}
+      {/* ── 3-column layout ─────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr_400px] gap-5">
           {/* LEFT — metadata + charts */}
           <div className="space-y-5 xl:max-h-[calc(100vh-80px)] xl:overflow-y-auto xl:pr-1">
-            <div className="bg-[#0f0f12] border border-zinc-800 rounded-xl p-4">
+            <div className="ae-app-card p-4">
               <KairosMetadataPanel analysis={analysis} />
             </div>
             <KairosChartsPanel analysis={analysis} />
@@ -92,8 +94,8 @@ export default async function KairosAnalysisPage({ params }: Props) {
             {aiAnalysis?.vulnerabilities ? (
               <KairosAIPlaybook analysis={aiAnalysis} />
             ) : (
-              <div className="h-full bg-[#0f0f12] border border-zinc-800 rounded-xl flex items-center justify-center">
-                <p className="text-sm text-zinc-600">AI analysis not yet available.</p>
+              <div className="ae-app-card h-full flex items-center justify-center">
+                <p className="text-sm text-[var(--ae-text-muted)]">AI analysis not yet available.</p>
               </div>
             )}
           </div>
@@ -120,22 +122,22 @@ function ProcessingScreen({ id, status, targetUrl }: { id: string; status: strin
     'Running AI analysis…'
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center gap-6 px-6 text-center">
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-        <Zap size={22} className="text-white" />
+    <div className="page-dark flex flex-col items-center justify-center gap-6 px-6 text-center">
+      <div className="w-12 h-12 rounded-2xl bg-[var(--ae-gold-wash)] border border-[var(--ae-gold-rule)] flex items-center justify-center">
+        <Zap size={22} className="text-[var(--ae-gold)]" />
       </div>
       <div>
-        <p className="text-zinc-100 font-semibold text-lg mb-1">Analysing Competitor</p>
-        <p className="text-zinc-500 text-sm truncate max-w-sm">{targetUrl}</p>
+        <p className="text-[var(--ae-text)] font-semibold text-lg mb-1">Analysing Competitor</p>
+        <p className="text-[var(--ae-text-muted)] text-sm truncate max-w-sm">{targetUrl}</p>
       </div>
-      <div className="flex items-center gap-2 text-indigo-400 text-sm">
+      <div className="flex items-center gap-2 text-[var(--ae-gold)] text-sm">
         <Loader2 size={16} className="animate-spin" />
         {label}
       </div>
       {/* Auto-refresh every 4 seconds */}
       <meta httpEquiv="refresh" content={`4;url=/data-lab/kairos/analysis/${id}`} />
-      <p className="text-xs text-zinc-700">Page refreshes automatically…</p>
-      <Link href="/data-lab/kairos" className="text-xs text-zinc-600 hover:text-zinc-400 mt-4">← Cancel</Link>
+      <p className="text-xs text-[var(--ae-text-ghost)]">Page refreshes automatically…</p>
+      <Link href="/data-lab/kairos" className="text-xs text-[var(--ae-text-muted)] hover:text-[var(--ae-text-dim)] mt-4">← Cancel</Link>
     </div>
   )
 }

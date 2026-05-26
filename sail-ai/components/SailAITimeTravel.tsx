@@ -10,8 +10,8 @@ function SceneLoader() {
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[#020202]">
       <div className="text-center">
-        <div className="w-12 h-12 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-blue-400 text-sm font-mono tracking-widest">ZAMAN TÜNELİ YÜKLENİYOR...</p>
+        <div className="w-12 h-12 border-2 border-[var(--ae-gold-rule)] border-t-[var(--ae-gold)] rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-[var(--ae-gold)] text-sm font-mono tracking-widest">ZAMAN TÜNELİ YÜKLENİYOR...</p>
       </div>
     </div>
   );
@@ -38,7 +38,7 @@ function DataStream() {
         >
           <mesh position={p.pos as any}>
             <sphereGeometry args={[p.size, 8, 8]} />
-            <meshBasicMaterial color="#3b82f6" transparent opacity={0.3} />
+            <meshBasicMaterial color="#C9A96E" transparent opacity={0.25} />
           </mesh>
         </Float>
       ))}
@@ -169,9 +169,9 @@ export default function SailAITimeTravel() {
   ];
 
   const timeStates = [
-    { key: 'PAST', label: 'GECMIS', color: 'text-amber-400', bgColor: 'bg-amber-500/20', borderColor: 'border-amber-500/50' },
-    { key: 'PRESENT', label: 'SIMDI', color: 'text-blue-400', bgColor: 'bg-blue-500/20', borderColor: 'border-blue-500/50' },
-    { key: 'FUTURE', label: 'GELECEK', color: 'text-purple-400', bgColor: 'bg-purple-500/20', borderColor: 'border-purple-500/50' },
+    { key: 'PAST',    label: 'GEÇMİŞ',  color: 'text-[var(--ae-chrome-dim)]',    bgColor: 'bg-[var(--ae-chrome-wash)]',    borderColor: 'border-[var(--ae-chrome-rule)]' },
+    { key: 'PRESENT', label: 'ŞİMDİ',   color: 'text-[var(--ae-gold)]',           bgColor: 'bg-[var(--ae-gold-wash)]',      borderColor: 'border-[var(--ae-gold-rule)]' },
+    { key: 'FUTURE',  label: 'GELECEK',  color: 'text-[var(--ae-velocity-pos)]',   bgColor: 'bg-[var(--ae-velocity-pos)]/10',borderColor: 'border-[var(--ae-velocity-pos)]/20' },
   ];
 
   const handleVoiceInput = () => {
@@ -220,7 +220,7 @@ export default function SailAITimeTravel() {
           className="w-1/4 p-8 flex flex-col justify-between pointer-events-auto bg-black/20 backdrop-blur-md border-r border-white/5"
         >
           <div>
-            <h2 className="text-[10px] tracking-[0.4em] text-blue-500 font-bold uppercase mb-4">Data Sources</h2>
+            <h2 className="text-[10px] tracking-[0.4em] text-[var(--ae-gold)] font-bold uppercase mb-4">Data Sources</h2>
             <div className="space-y-4">
               {['Blockchain Ledger', 'Neural Market Feed', 'Historical ROI'].map(source => (
                 <div key={source} className="group flex items-center justify-between p-3 border border-white/10 rounded-lg hover:bg-white/5 transition-all">
@@ -240,7 +240,7 @@ export default function SailAITimeTravel() {
                   initial={{ height: 0 }} 
                   animate={{ height: `${h}%` }} 
                   transition={{ delay: 0.5 + i * 0.1 }}
-                  className="flex-1 bg-blue-500/30 rounded-t-sm" 
+                  className="flex-1 bg-[var(--ae-gold)]/25 rounded-t-sm"
                 />
               ))}
             </div>
@@ -264,7 +264,7 @@ export default function SailAITimeTravel() {
                   {m.role === 'user' ? 'Architect' : 'Verdante'}
                 </p>
                 <div className={`inline-block max-w-full p-4 rounded-lg leading-relaxed ${
-                  m.role === 'user' ? 'bg-white/5 text-white' : 'text-blue-200 bg-blue-500/5 border-l border-blue-500'
+                  m.role === 'user' ? 'bg-white/5 text-white' : 'text-[var(--ae-text-dim)] bg-[var(--ae-gold-wash)] border-l border-[var(--ae-gold-rule)]'
                 }`}>
                   <span className="text-sm font-light leading-relaxed tracking-wide">
                     {m.content}
@@ -313,7 +313,7 @@ export default function SailAITimeTravel() {
 
             {/* Ana Input Form */}
             <form onSubmit={handleSubmit} className="relative">
-              <div className="flex items-center gap-2 p-2 bg-zinc-950/80 border border-zinc-800 rounded-2xl focus-within:border-blue-500/50 transition-all">
+              <div className="flex items-center gap-2 p-2 bg-zinc-950/80 border border-[var(--ae-border)] rounded-2xl focus-within:border-[var(--ae-gold-rule)] transition-all">
                 {/* Dosya Yukleme Butonu */}
                 <button
                   type="button"
@@ -352,7 +352,8 @@ export default function SailAITimeTravel() {
                 <button
                   type="submit"
                   disabled={!input?.trim() || isLoading}
-                  className="p-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white rounded-xl transition-all"
+                  className="p-2.5 bg-[var(--ae-gold)] hover:bg-[var(--ae-gold-bright)] disabled:bg-[var(--ae-bg-elevated)] disabled:text-[var(--ae-text-ghost)] rounded-xl transition-all"
+                  style={{ color: '#080810' }}
                   title="Gonder"
                 >
                   <SendIcon />

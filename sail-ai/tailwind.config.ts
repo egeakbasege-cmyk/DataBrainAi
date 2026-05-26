@@ -177,14 +177,18 @@ const config: Config = {
       },
 
       // ── Border radius ──────────────────────────────────────────────────────
-      // Zero-radius preferred (Swiss style); sm for inputs, DEFAULT never used
+      // Light surfaces: none/sm preferred (Swiss editorial style)
+      // Dark app surfaces: lg/xl for cards, 2xl for pills & inputs
       borderRadius: {
-        none: '0',
-        sm:   '2px',
+        none:    '0',
+        sm:      '2px',
         DEFAULT: '4px',
-        md:   '6px',
-        lg:   '8px',
-        full: '9999px',
+        md:      '6px',
+        lg:      '8px',
+        xl:      '10px',   // dark-context cards
+        '2xl':   '12px',   // dark-context panels / pill inputs
+        '3xl':   '16px',   // large modals only
+        full:    '9999px',
       },
 
       // ── Box shadow ─────────────────────────────────────────────────────────
