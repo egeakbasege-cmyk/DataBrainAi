@@ -207,9 +207,20 @@ export async function POST(req: NextRequest) {
     .map((e: { label: string; value: string }) => `  - ${e.label}: ${e.value}`)
     .join('\n')
 
+  // Detect whether this source has real numeric data or AI-estimated / unavailable data.
+  // When revenue/orders are "N/A" or marketplace placeholders, the model must NOT
+  // invent precise figures — it must acknowledge the data gap and reason qualitatively.
+  const hasRealRevenue  = !String(source.revenue).includes('N/A') && !String(source.revenue).includes('marketplace') && !String(source.revenue).includes('not publicly')
+  const hasRealOrders   = !String(source.orders).includes('N/A')  && !String(source.orders).includes('not publicly') && !String(source.orders).includes('listings')
+  const isEstimatedData = !hasRealRevenue || !hasRealOrders
+
+  const dataQualityNote = isEstimatedData
+    ? `\nDATA QUALITY WARNING: Revenue and/or order figures are NOT real metrics — they are either unavailable (marketplace page) or rough AI estimates from public page content. Do NOT fabricate specific dollar amounts or percentages based on these. Use qualitative language: "based on visible pricing signals", "category-level observation", etc. Any benchmark comparisons must use wide ranges and must be clearly labelled as estimates.`
+    : ''
+
   const dataContext = `
 CONNECTED DATA SOURCE: ${source.name} (${source.type.toUpperCase()})
-Last synced: ${source.syncedAt}
+Last synced: ${source.syncedAt}${dataQualityNote}
 
 CORE METRICS:
   - Monthly Revenue:     ${source.revenue}

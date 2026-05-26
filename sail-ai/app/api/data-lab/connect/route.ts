@@ -230,9 +230,121 @@ function getGroqKeyConnect(): string | undefined {
   return process.env.GROQ_API_KEY ?? process.env.GROQ_API_KEY_2
 }
 
+// Known marketplace domains — revenue figures are meaningless for these
+const MARKETPLACE_HOSTS = [
+  'amazon.', 'ebay.', 'etsy.', 'aliexpress.', 'alibaba.',
+  'walmart.', 'temu.', 'wish.', 'mercadolibre.', 'rakuten.',
+  'lazada.', 'shopee.', 'flipkart.', 'noon.', 'ozon.',
+]
+
+function isMarketplaceUrl(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase()
+    return MARKETPLACE_HOSTS.some(m => hostname.includes(m))
+  } catch { return false }
+}
+
+// ── Marketplace handler: extract category / competitive signals — no fake revenue ──
+
+async function extractMarketplaceCategory(url: string, pageText: string): Promise<SourceSummary> {
+  const groqKey = getGroqKeyConnect()
+  const domain  = new URL(url).hostname.replace('www.', '')
+
+  const clean = pageText
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 3500)
+
+  if (!groqKey || clean.length < 50) {
+    return {
+      type: 'api', name: domain, syncedAt: now(),
+      revenue: 'N/A — marketplace page', orders: 'N/A', aov: 'N/A', topProduct: 'N/A',
+      extra: [
+        { label: 'Note', value: 'Marketplace pages do not expose seller revenue data' },
+        { label: 'Tip',  value: 'Use the Shopify or CSV connector for your own store data' },
+      ],
+    }
+  }
+
+  const prompt = `You are a marketplace category analyst. The user pasted a ${domain} URL.
+This is a MARKETPLACE page — do NOT invent revenue or order figures for any seller.
+Only extract what is visibly present on the page.
+
+URL: ${url}
+Page content:
+${clean}
+
+Return ONLY valid JSON (no markdown, no explanation):
+{
+  "categoryName": "the product category name shown on the page",
+  "topListedProduct": "the first/most prominent product name you can read from the content",
+  "priceRangeMin": "lowest visible price with currency symbol, or null",
+  "priceRangeMax": "highest visible price with currency symbol, or null",
+  "listingCount": "number of listings/products visible or mentioned, or null",
+  "topBrandsVisible": ["brand1", "brand2"],
+  "categoryInsight": "1 sentence about what this category page shows — factual only, no revenue speculation",
+  "marketplaceNote": "one honest sentence explaining why seller-specific revenue cannot be extracted from this URL"
+}`
+
+  try {
+    const r = await fetch(GROQ_URL_CONNECT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
+      body: JSON.stringify({
+        model: GROQ_MODEL_CONNECT, temperature: 0.05, max_tokens: 500,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!r.ok) throw new Error(`Groq ${r.status}`)
+    const groqData  = await r.json()
+    const rawText   = groqData.choices?.[0]?.message?.content ?? ''
+    const txt       = rawText.replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim()
+    const ex        = JSON.parse(txt)
+
+    const priceRange = ex.priceRangeMin && ex.priceRangeMax
+      ? `${ex.priceRangeMin} – ${ex.priceRangeMax}`
+      : ex.priceRangeMin ?? ex.priceRangeMax ?? 'N/A'
+
+    const brands = Array.isArray(ex.topBrandsVisible) && ex.topBrandsVisible.length > 0
+      ? ex.topBrandsVisible.slice(0, 3).join(', ')
+      : 'N/A'
+
+    return {
+      type:       'api',
+      name:       `${domain} — ${ex.categoryName ?? 'Category'}`,
+      syncedAt:   now(),
+      revenue:    'N/A — marketplace category',
+      orders:     ex.listingCount ? `${ex.listingCount} listings` : 'N/A',
+      aov:        priceRange,
+      topProduct: ex.topListedProduct ?? 'N/A',
+      extra: [
+        { label: 'Category Insight', value: ex.categoryInsight ?? '—' },
+        { label: 'Top Brands',       value: brands },
+        { label: '⚠ Note',           value: ex.marketplaceNote ?? 'Marketplace pages cannot show individual seller revenue.' },
+        { label: 'Tip',              value: 'Connect your own store via the Shopify or CSV connector for real data.' },
+      ],
+    }
+  } catch {
+    return {
+      type: 'api', name: domain, syncedAt: now(),
+      revenue: 'N/A — marketplace', orders: 'N/A', aov: 'N/A', topProduct: 'N/A',
+      extra: [
+        { label: '⚠ Note', value: 'Marketplace pages (Amazon, eBay, etc.) do not expose individual seller revenue.' },
+        { label: 'Tip',    value: 'Paste your own store URL or use the Shopify connector.' },
+      ],
+    }
+  }
+}
+
+// ── Brand/DTC website handler: extract observable signals, honest about estimates ──
+
 async function aiExtractFromWebsite(url: string, pageText: string): Promise<SourceSummary> {
   const groqKey = getGroqKeyConnect()
-  // Strip HTML tags and collapse whitespace — keep first 4000 chars
+
   const clean = pageText
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -244,34 +356,40 @@ async function aiExtractFromWebsite(url: string, pageText: string): Promise<Sour
   const domain = new URL(url).hostname.replace('www.', '')
 
   if (!groqKey || clean.length < 50) {
-    // No Groq key or no readable content — return minimal stub
     return {
       type: 'api', name: domain, syncedAt: now(),
       revenue: 'N/A', orders: 'N/A', aov: 'N/A', topProduct: 'N/A',
       extra: [
-        { label: 'Source',  value: domain },
-        { label: 'Type',    value: 'Website — AI extraction unavailable' },
-        { label: 'Action',  value: 'Paste a JSON API endpoint for better results' },
+        { label: 'Source', value: domain },
+        { label: 'Status', value: 'Website — AI extraction unavailable' },
+        { label: 'Tip',    value: 'Paste a JSON API endpoint for real metrics' },
       ],
     }
   }
 
-  const prompt = `You are a business intelligence extractor. Read the following website content and extract what you can infer about this business.
+  const prompt = `You are a business intelligence analyst. Analyse this brand's website content.
+IMPORTANT RULES:
+- Only use information visibly present on the page.
+- Do NOT invent revenue or order volume figures. If you cannot see a price or SKU count, say null.
+- Revenue/order estimates are BROAD ranges with LOW confidence — never present them as facts.
+- If this looks like a marketplace or aggregator (not the brand's own store), say so.
 
 Website: ${url}
 Content:
 ${clean}
 
-Return ONLY a valid JSON object with this exact shape (no markdown, no explanation):
+Return ONLY valid JSON (no markdown):
 {
-  "businessName": "the brand/company name",
-  "estimatedRevenueTier": "e.g. $10K-$50K/mo, $50K-$200K/mo, $200K-$1M/mo — infer from pricing, product count, brand presence",
-  "estimatedOrdersPerMonth": "e.g. 100-500/mo — infer from category, price point, brand scale",
-  "avgOrderValue": "e.g. $45-$80 — infer from visible prices",
-  "topProduct": "name of the main product or category you can identify",
-  "businessType": "e.g. DTC Fashion, SaaS, Marketplace, Agency",
-  "pricingSignal": "one sentence about their pricing strategy from the page",
-  "confidence": "low | medium | high — how confident you are in these estimates"
+  "businessName": "brand or company name from the page",
+  "businessType": "DTC Brand | SaaS | Agency | Content Site | B2B | Other",
+  "topProduct": "main product or service name visible on the page, or null",
+  "visiblePriceMin": "lowest price you can actually read on the page with currency, or null",
+  "visiblePriceMax": "highest price you can actually read on the page with currency, or null",
+  "visibleSkuCount": "number of distinct products/SKUs mentioned or countable, or null",
+  "pricingSignal": "one factual sentence about pricing based only on what is visible",
+  "revenueTierEstimate": "ONLY if businessType is DTC Brand or SaaS: a rough range like $10K-$100K/mo. Otherwise null.",
+  "estimateConfidence": "low | very-low — always be conservative",
+  "estimateWarning": "one sentence reminding the user this is a rough estimate from public page data only"
 }`
 
   try {
@@ -279,31 +397,45 @@ Return ONLY a valid JSON object with this exact shape (no markdown, no explanati
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
       body: JSON.stringify({
-        model: GROQ_MODEL_CONNECT, temperature: 0.1, max_tokens: 600,
+        model: GROQ_MODEL_CONNECT, temperature: 0.05, max_tokens: 600,
         messages: [{ role: 'user', content: prompt }],
       }),
       signal: AbortSignal.timeout(15_000),
     })
-
     if (!r.ok) throw new Error(`Groq ${r.status}`)
     const groqData  = await r.json()
     const rawText   = groqData.choices?.[0]?.message?.content ?? ''
-    const cleaned   = rawText.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/,'').trim()
-    const extracted = JSON.parse(cleaned)
+    const txt       = rawText.replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim()
+    const ex        = JSON.parse(txt)
+
+    // Build AOV from visible prices — never invent a number
+    const aovDisplay = ex.visiblePriceMin && ex.visiblePriceMax
+      ? `${ex.visiblePriceMin} – ${ex.visiblePriceMax}`
+      : ex.visiblePriceMin ?? ex.visiblePriceMax ?? 'N/A'
+
+    // Revenue: only show if AI produced an estimate, and always label it as estimated
+    const revenueDisplay = ex.revenueTierEstimate
+      ? `~${ex.revenueTierEstimate} (est.)`
+      : 'N/A — not publicly available'
+
+    const skuInfo = ex.visibleSkuCount
+      ? `~${ex.visibleSkuCount} products`
+      : 'N/A'
 
     return {
       type:       'api',
-      name:       extracted.businessName ?? domain,
+      name:       ex.businessName ?? domain,
       syncedAt:   now(),
-      revenue:    extracted.estimatedRevenueTier ?? 'Estimated by AI',
-      orders:     extracted.estimatedOrdersPerMonth ?? 'Estimated by AI',
-      aov:        extracted.avgOrderValue ?? 'Estimated by AI',
-      topProduct: extracted.topProduct ?? 'N/A',
+      revenue:    revenueDisplay,
+      orders:     'N/A — not publicly available',
+      aov:        aovDisplay,
+      topProduct: ex.topProduct ?? 'N/A',
       extra: [
-        { label: 'Business Type',   value: extracted.businessType ?? 'Unknown' },
-        { label: 'Pricing Signal',  value: extracted.pricingSignal ?? '—' },
-        { label: 'AI Confidence',   value: extracted.confidence ?? 'low' },
-        { label: 'Source',          value: domain },
+        { label: 'Business Type',   value: ex.businessType ?? 'Unknown' },
+        { label: 'Pricing Signal',  value: ex.pricingSignal ?? '—' },
+        { label: 'SKUs Visible',    value: skuInfo },
+        { label: '⚠ Estimates',     value: ex.estimateWarning ?? 'Revenue figures are rough estimates from public page data only.' },
+        { label: 'Confidence',      value: ex.estimateConfidence ?? 'very-low' },
       ],
     }
   } catch {
@@ -311,8 +443,8 @@ Return ONLY a valid JSON object with this exact shape (no markdown, no explanati
       type: 'api', name: domain, syncedAt: now(),
       revenue: 'N/A', orders: 'N/A', aov: 'N/A', topProduct: 'N/A',
       extra: [
-        { label: 'Source',  value: domain },
-        { label: 'Status',  value: 'AI extraction failed — try a JSON API endpoint' },
+        { label: 'Source', value: domain },
+        { label: 'Status', value: 'AI extraction failed — try a JSON API endpoint' },
       ],
     }
   }
@@ -444,7 +576,15 @@ async function connectApi(endpoint: string): Promise<
     }
   }
 
-  // ── Strategy 3: HTML website — AI extracts business context ─────────────────
+  // ── Strategy 3a: Marketplace URL (Amazon, eBay, etc.) ────────────────────────
+  // These pages belong to the marketplace, not to any individual seller.
+  // Never fabricate seller revenue — extract category/competitive signals only.
+  if (isMarketplaceUrl(endpoint)) {
+    const marketplaceSource = await extractMarketplaceCategory(endpoint, responseText)
+    return { success: true, source: marketplaceSource }
+  }
+
+  // ── Strategy 3b: Brand / DTC website — AI extraction with honest labels ───────
   const aiSource = await aiExtractFromWebsite(endpoint, responseText)
   return { success: true, source: aiSource }
 }
