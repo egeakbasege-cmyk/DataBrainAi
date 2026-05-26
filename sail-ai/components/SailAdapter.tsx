@@ -410,6 +410,25 @@ const INTENT_LABELS: Record<SailIntent, string> = {
   analytic:  'Analytic · Data',
 }
 
+// ── Citation / source cleaner ─────────────────────────────────────────────────
+// Removes inline URL citations, reference markers, and "Sources:" blocks that
+// the model occasionally injects. These belong in research mode, not chat.
+
+function stripCitations(raw: string): string {
+  return raw
+    // Remove bare URLs (http / https)
+    .replace(/https?:\/\/[^\s)\]]+/g, '')
+    // Remove markdown links: [text](url)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove numbered reference tags: [1], [2], [12], etc.
+    .replace(/\[\d+\]/g, '')
+    // Remove "Sources:", "References:", "Source:" header lines
+    .replace(/^(Sources?|References?|Kaynak(lar)?|Referanslar?)\s*:?.*$/gim, '')
+    // Remove trailing empty lines left by the above
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface Props {
@@ -422,13 +441,12 @@ export function SailAdapter({ text, intent, streaming }: Props) {
   const accent = INTENT_ACCENT[intent]
 
   const segments = useMemo(() => {
-    // Inject MRR chart for analytic intent when text contains MRR keyword
-    const parsed = parseMarkdown(text)
-    const hasMrrRef = /\bmrr\b/i.test(text)
+    const cleaned   = stripCitations(text)
+    const parsed    = parseMarkdown(cleaned)
+    const hasMrrRef = /\bmrr\b/i.test(cleaned)
     if (intent === 'analytic' && hasMrrRef) {
-      // Insert chart after first heading or at top
       const firstHeadIdx = parsed.findIndex(s => s.type === 'heading')
-      const insertAt = firstHeadIdx >= 0 ? firstHeadIdx + 1 : 0
+      const insertAt     = firstHeadIdx >= 0 ? firstHeadIdx + 1 : 0
       parsed.splice(insertAt, 0, { type: 'mrr-chart' })
     }
     return parsed

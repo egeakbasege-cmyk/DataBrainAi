@@ -190,6 +190,7 @@ const translations = {
     'dock.home':              'Home',
     'dock.chartCourse':       'Chart Course',
     'dock.pricing':           'Pricing',
+    'dock.datalab':           'Data Lab',
 
     // ── Login ────────────────────────────────────────────
     'login.signIn':           'Sign In',
@@ -728,8 +729,8 @@ const translations = {
     'chat.diagnosticLoaded': 'Tanı yüklendi',
     'chat.sessionMemory':  'kayıtlı strateji',
     'chat.guidedSession':  'Rehberli oturum aktif',
-    'chat.exchanges':      'alışveriş',
-    'chat.exchangesPlural':'alışveriş',
+    'chat.exchanges':      'diyalog',
+    'chat.exchangesPlural':'diyalog',
     'chat.startOver':      'Baştan başla',
     'chat.typeAnswer':     'Yanıtınızı yukarıya yazın ve gönderin — stratejinizi oluşturmaya devam edeceğim.',
     'chat.customKey':      'Özel anahtar',
@@ -819,11 +820,12 @@ const translations = {
     'paywall.redirecting':    'Yönlendiriliyor…',
 
     'counter.proUnlimited':   'Profesyonel · Sınırsız',
-    'counter.freeToday':      'ücretsiz bugün',
+    'counter.freeToday':      'bugün ücretsiz',
 
     'dock.home':              'Ana Sayfa',
     'dock.chartCourse':       'Rota Çiz',
     'dock.pricing':           'Fiyatlandırma',
+    'dock.datalab':           'Veri Laboratuvarı',
 
     'login.signIn':           'Giriş Yap',
     'login.register':         'Kayıt Ol',
@@ -964,7 +966,7 @@ const translations = {
     'export.successRate':   'Başarı oranı:',
     'export.timeline':      'Süre:',
     'export.density':       'Yoğunluk:',
-    'export.blockHorizons': 'UYGULAMA OVALARİ',
+    'export.blockHorizons': 'UYGULAMA UFUKLARİ',
     'export.sprint30':      '30 Günlük Sprint',
     'export.sprint60':      '60 Günlük İnşa',
     'export.sprint90':      '90 Günlük Ufuk',
@@ -1448,6 +1450,7 @@ const translations = {
     'dock.home':              'Inicio',
     'dock.chartCourse':       'Trazar Rumbo',
     'dock.pricing':           'Precios',
+    'dock.datalab':           'Lab de Datos',
 
     'login.signIn':           'Iniciar sesión',
     'login.register':         'Registrarse',
@@ -2067,6 +2070,7 @@ const translations = {
     'dock.home':              'Start',
     'dock.chartCourse':       'Kurs setzen',
     'dock.pricing':           'Preise',
+    'dock.datalab':           'Datenlabor',
 
     'login.signIn':           'Anmelden',
     'login.register':         'Registrieren',
@@ -2686,6 +2690,7 @@ const translations = {
     'dock.home':              'Accueil',
     'dock.chartCourse':       'Tracer la route',
     'dock.pricing':           'Tarifs',
+    'dock.datalab':           'Labo Données',
 
     'login.signIn':           'Se connecter',
     'login.register':         'S\'inscrire',
@@ -3305,6 +3310,7 @@ const translations = {
     'dock.home':              '首页',
     'dock.chartCourse':       '制定航线',
     'dock.pricing':           '定价',
+    'dock.datalab':           '数据实验室',
 
     'login.signIn':           '登录',
     'login.register':         '注册',

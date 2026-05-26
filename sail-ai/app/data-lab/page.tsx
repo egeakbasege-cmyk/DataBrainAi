@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Nav } from '@/components/Nav'
+import { ConnectorLogo } from '@/components/ConnectorLogos'
 
 const _EASE = [0.22, 1, 0.36, 1] as const
 const _fadeUp = { hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.65, ease: _EASE } } }
@@ -14,7 +15,7 @@ const _stagger = { hidden: {}, show: { transition: { staggerChildren: 0.1, delay
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-type ConnectorType =
+export type ConnectorType =
   // E-Commerce
   | 'shopify' | 'amazon' | 'woocommerce' | 'ebay' | 'etsy' | 'tiktokshop'
   // Advertising
@@ -916,7 +917,7 @@ export default function DataLabPage() {
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-          <span style={{ fontSize: '1.75rem' }}>{modalConnector.icon}</span>
+          <ConnectorLogo id={modalConnector.id} size={36} />
           <div>
             <h3
               style={{
@@ -1097,8 +1098,8 @@ export default function DataLabPage() {
             onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = `0 6px 28px ${activeIndustry.color}20`; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)' }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)' }}
           >
-            <div style={{ fontSize: '1.6rem', width: 44, height: 44, background: `${activeIndustry.color}12`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {c.icon}
+            <div style={{ width: 44, height: 44, background: `${activeIndustry.color}10`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+              <ConnectorLogo id={c.id} size={32} />
             </div>
             <div style={{ flex: 1 }}>
               <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 600, color: '#111827', margin: '0 0 0.2rem' }}>{c.name}</h3>
@@ -1142,9 +1143,7 @@ export default function DataLabPage() {
           <div style={{ ...cardStyle, marginBottom: '1rem' }}>
             {/* Source header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '1.5rem' }}>
-                {ALL_CONNECTORS.find((c) => c.id === connectedSource.type)?.icon}
-              </span>
+              <ConnectorLogo id={connectedSource.type} size={32} />
               <div>
                 <p
                   style={{

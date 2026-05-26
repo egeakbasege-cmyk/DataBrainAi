@@ -1,6 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSession }                    from 'next-auth/react'
+import { useRouter }                     from 'next/navigation'
 import { motion, AnimatePresence }       from 'framer-motion'
 import { Nav }                           from '@/components/Nav'
 import { BrandSetupModal, BrandNameplate, useBrandConfig } from '@/components/BrandSetupModal'
@@ -220,6 +222,15 @@ function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
 }
 
 export default function ChatPage() {
+  // ── Auth gate: redirect unauthenticated visitors to login ─────────────────
+  const { status: authStatus } = useSession()
+  const router = useRouter()
+  useEffect(() => {
+    if (authStatus === 'unauthenticated') {
+      router.replace('/login?callbackUrl=%2Fchat')
+    }
+  }, [authStatus, router])
+
   const [input,        setInput]        = useState('')
   const [phIdx,        setPhIdx]        = useState(0)
   const [isMac,        setIsMac]        = useState(true)
@@ -233,10 +244,8 @@ export default function ChatPage() {
   const { config: brandConfig, ready: brandReady, save: saveBrand } = useBrandConfig()
   const [showBrandSetup, setShowBrandSetup] = useState(false)
 
-  // Show modal on first visit (after localStorage is ready and no config found)
-  useEffect(() => {
-    if (brandReady && !brandConfig) setShowBrandSetup(true)
-  }, [brandReady, brandConfig])
+  // Brand setup is opened manually (via "Use Profile Context" button) — NOT auto-shown on first visit.
+  // This prevents overwhelming new users before they understand the product.
 
   const handleBrandComplete = (cfg: BrandConfig) => {
     saveBrand(cfg)
@@ -1102,10 +1111,12 @@ export default function ChatPage() {
                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 500 }}>History</span>
                   </button>
                 )}
-                {/* ── Profile Context toggle — emerald glow CTA ── */}
+                {/* ── Profile Context toggle — opens Brand Setup on long-press / secondary click ── */}
                 <motion.button
                   onClick={toggleProfileCtx}
-                  title={useProfileCtx ? 'Profile context active' : 'Profile context disabled'}
+                  onContextMenu={e => { e.preventDefault(); setShowBrandSetup(true) }}
+                  onDoubleClick={() => setShowBrandSetup(true)}
+                  title={useProfileCtx ? 'Profile context active · Double-click to edit setup' : 'Click to enable · Double-click to set up profile'}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   animate={useProfileCtx ? {

@@ -182,7 +182,7 @@ export function Dock() {
   const NAV = [
     { id: 'home',    href: '/',         label: t('dock.home'),       icon: <HomeIcon />    },
     { id: 'chat',    href: '/chat',     label: t('dock.chartCourse'),icon: <ChatIcon />    },
-    { id: 'datalab', href: '/data-lab', label: 'DataLab',            icon: <DataLabIcon /> },
+    { id: 'datalab', href: '/data-lab', label: t('dock.datalab'),     icon: <DataLabIcon /> },
     { id: 'pricing', href: '/pricing',  label: t('dock.pricing'),    icon: <PricingIcon /> },
   ]
 
