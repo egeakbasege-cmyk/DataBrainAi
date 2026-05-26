@@ -25,6 +25,9 @@ interface ConnectorDef {
   icon: string
   placeholder: string
   fieldLabel: string
+  // Optional second credential field (e.g. store domain for Shopify)
+  field2Label?:       string
+  field2Placeholder?: string
 }
 
 interface SourceSummary {
@@ -93,34 +96,36 @@ const CONNECTORS: ConnectorDef[] = [
   {
     id: 'shopify',
     name: 'Shopify',
-    description: 'Connect via API key to pull real store data: orders, products, customers, returns',
+    description: 'Connect via Admin API token to pull real orders, revenue, and product data',
     icon: '🛍️',
-    placeholder: 'shpat_xxxxxxxxxxxxxxxxxxxxxxxx',
-    fieldLabel: 'Shopify Admin API Key',
+    fieldLabel:        'Store Domain',
+    placeholder:       'mystore.myshopify.com',
+    field2Label:       'Admin API Access Token',
+    field2Placeholder: 'shpat_xxxxxxxxxxxxxxxxxxxxxxxx',
   },
   {
     id: 'amazon',
     name: 'Amazon Seller Central',
-    description: 'Connect MWS/SP-API for sales velocity, BSR, inventory health, returns',
+    description: 'Connect SP-API for sales velocity, BSR, inventory health, and returns',
     icon: '📦',
-    placeholder: 'amzn.mws.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-    fieldLabel: 'SP-API / MWS Token',
+    fieldLabel:  'SP-API Refresh Token',
+    placeholder: 'Atzr|xxxxxxxxxxxxxxxxxxxxxxxx',
   },
   {
     id: 'csv',
-    name: 'CSV / Spreadsheet Upload',
-    description: 'Upload your export files: sales history, product catalog, ad spend',
+    name: 'CSV / Spreadsheet',
+    description: 'Paste a public URL to your exported CSV — sales history, orders, or ad spend',
     icon: '📊',
-    placeholder: 'Drop a .csv or .xlsx file here, or click to browse',
-    fieldLabel: 'File path or paste CSV URL',
+    fieldLabel:  'Public CSV URL',
+    placeholder: 'https://docs.google.com/spreadsheets/.../export?format=csv',
   },
   {
     id: 'api',
     name: 'Custom API / Webhook',
-    description: 'Point any data source to our endpoint for real-time ingestion',
+    description: 'Point any JSON data endpoint for real-time ingestion and analysis',
     icon: '🔗',
-    placeholder: 'https://your-app.com/api/data-export',
-    fieldLabel: 'Endpoint URL',
+    fieldLabel:  'Endpoint URL',
+    placeholder: 'https://your-app.com/api/analytics',
   },
 ]
 
@@ -375,6 +380,8 @@ export default function DataLabPage() {
   const [activeTab, setActiveTab] = useState<TabType>('analysis')
   const [modalConnector, setModalConnector] = useState<ConnectorDef | null>(null)
   const [apiInput, setApiInput] = useState('')
+  const [apiInput2, setApiInput2] = useState('')      // second field (e.g. Shopify token)
+  const [connectError, setConnectError] = useState<{ error: string; hint: string } | null>(null)
   const [connecting, setConnecting] = useState(false)
   const [connectedSource, setConnectedSource] = useState<SourceSummary | null>(null)
   const [query, setQuery] = useState('')
@@ -392,18 +399,56 @@ export default function DataLabPage() {
     'Finalising analysis…',
   ]
 
-  // Simulate connecting
+  // Real connector — calls /api/data-lab/connect/, shows inline error on failure
   const handleConnect = useCallback(() => {
     if (!modalConnector) return
     setConnecting(true)
-    setTimeout(() => {
-      setConnectedSource(MOCK_SOURCES[modalConnector.id])
-      setConnecting(false)
-      setModalConnector(null)
-      setApiInput('')
-      setStep(2)
-    }, 2000)
-  }, [modalConnector])
+    setConnectError(null)
+
+    ;(async () => {
+      try {
+        const res = await fetch('/api/data-lab/connect/', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            connectorType: modalConnector.id,
+            credentials: {
+              // field 1 is always the primary key / URL
+              key:    apiInput.trim(),
+              // field 2 is the secondary credential (domain for Shopify)
+              domain: apiInput2.trim() || undefined,
+            },
+          }),
+        })
+
+        const data = await res.json()
+
+        if (!data.success) {
+          // Show the error inline — do NOT fall back to mock silently
+          setConnectError({ error: data.error ?? 'Connection failed.', hint: data.hint ?? '' })
+          setConnecting(false)
+          return
+        }
+
+        // Success — real SourceSummary from the API
+        setConnectedSource(data.source as SourceSummary)
+        setConnecting(false)
+        setModalConnector(null)
+        setApiInput('')
+        setApiInput2('')
+        setConnectError(null)
+        setStep(2)
+
+      } catch (err) {
+        console.error('[DataLab] connect error:', err)
+        setConnectError({
+          error: 'Network error — could not reach the connect service.',
+          hint:  'Check your internet connection and try again.',
+        })
+        setConnecting(false)
+      }
+    })()
+  }, [modalConnector, apiInput, apiInput2])
 
   // Real AI analysis — calls /api/data-lab/analyze, falls back to buildAnalysis()
   const handleAnalyze = useCallback(
@@ -578,7 +623,7 @@ export default function DataLabPage() {
         zIndex: 999,
         padding: '1rem',
       }}
-      onClick={() => { if (!connecting) setModalConnector(null) }}
+      onClick={() => { if (!connecting) { setModalConnector(null); setApiInput(''); setApiInput2(''); setConnectError(null) } }}
     >
       <div
         style={{ ...cardStyle, width: '100%', maxWidth: 480 }}
@@ -604,38 +649,64 @@ export default function DataLabPage() {
           </div>
         </div>
 
-        <label
-          style={{
-            display: 'block',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            color: '#374151',
-            marginBottom: '0.4rem',
-            fontFamily: 'Inter, sans-serif',
-          }}
-        >
+        {/* ── Field 1: primary key / URL ── */}
+        <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: '0.4rem', fontFamily: 'Inter, sans-serif' }}>
           {modalConnector.fieldLabel}
         </label>
         <input
           type="text"
           value={apiInput}
-          onChange={(e) => setApiInput(e.target.value)}
+          onChange={(e) => { setApiInput(e.target.value); setConnectError(null) }}
           placeholder={modalConnector.placeholder}
           disabled={connecting}
           style={{
-            width: '100%',
-            padding: '0.65rem 0.9rem',
-            border: '1px solid rgba(20,184,166,0.25)',
-            borderRadius: 8,
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.87rem',
-            color: '#374151',
-            background: '#fff',
-            boxSizing: 'border-box',
-            marginBottom: '1.25rem',
-            outline: 'none',
+            width: '100%', padding: '0.65rem 0.9rem',
+            border: connectError ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(20,184,166,0.25)',
+            borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: '0.87rem',
+            color: '#374151', background: '#fff', boxSizing: 'border-box',
+            marginBottom: modalConnector.field2Label ? '0.85rem' : '1.25rem', outline: 'none',
           }}
         />
+
+        {/* ── Field 2: optional secondary credential (Shopify token) ── */}
+        {modalConnector.field2Label && (
+          <>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: '0.4rem', fontFamily: 'Inter, sans-serif' }}>
+              {modalConnector.field2Label}
+            </label>
+            <input
+              type="text"
+              value={apiInput2}
+              onChange={(e) => { setApiInput2(e.target.value); setConnectError(null) }}
+              placeholder={modalConnector.field2Placeholder ?? ''}
+              disabled={connecting}
+              style={{
+                width: '100%', padding: '0.65rem 0.9rem',
+                border: connectError ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(20,184,166,0.25)',
+                borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: '0.87rem',
+                color: '#374151', background: '#fff', boxSizing: 'border-box',
+                marginBottom: '1.25rem', outline: 'none',
+              }}
+            />
+          </>
+        )}
+
+        {/* ── Inline error ── */}
+        {connectError && (
+          <div style={{
+            background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)',
+            borderRadius: 8, padding: '0.7rem 0.9rem', marginBottom: '1rem',
+          }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.83rem', fontWeight: 600, color: '#DC2626', margin: '0 0 0.25rem' }}>
+              {connectError.error}
+            </p>
+            {connectError.hint && (
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#9B1C1C', margin: 0, lineHeight: 1.5 }}>
+                {connectError.hint}
+              </p>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button
@@ -669,7 +740,7 @@ export default function DataLabPage() {
           </button>
           {!connecting && (
             <button
-              onClick={() => setModalConnector(null)}
+              onClick={() => { setModalConnector(null); setApiInput(''); setApiInput2(''); setConnectError(null) }}
               style={{
                 background: 'transparent',
                 border: '1px solid #E5E7EB',
