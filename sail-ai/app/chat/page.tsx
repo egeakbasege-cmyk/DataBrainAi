@@ -44,6 +44,9 @@ import type { MoodGuideData }             from '@/components/MoodGuideCard'
 import { ChatThread }                    from '@/components/ChatThread'
 import { InChatModeSwitcher }            from '@/components/InChatModeSwitcher'
 import { useChatMessages }               from '@/hooks/useChatMessages'
+// ── Dual interface ────────────────────────────────────────────────────────────
+import { ConsumerChat }                  from '@/components/ConsumerChat'
+import { useUserType }                   from '@/components/Dock'
 
 // Placeholders are derived from translations — built inside the component
 const PLACEHOLDER_KEYS = [
@@ -299,6 +302,9 @@ export default function ChatPage() {
 
   // Sovereign Dashboard — fullscreen mode picker shown before first message
   const [showSovereign, setShowSovereign] = useState(true)
+
+  // ── Dual interface: business vs consumer ─────────────────────────────────
+  const { type: userType, setType: setUserType } = useUserType()
 
   // ── Unified chat thread (new architecture) ───────────────────────────────
   const {
@@ -983,6 +989,16 @@ export default function ChatPage() {
   const charsLeft  = MAX - input.length
   const warn       = charsLeft < 200
   const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
+
+  // ── Consumer mode — render simplified personal AI interface ──────────────
+  if (userType === 'consumer') {
+    return (
+      <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column' }}>
+        <ConsumerChat onSwitchToBusiness={() => setUserType('business')} />
+        <PaywallModal open={showPaywall} onClose={closePaywall} />
+      </div>
+    )
+  }
 
   return (
     <>
