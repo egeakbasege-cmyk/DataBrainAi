@@ -456,6 +456,22 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Message is required.' }, { status: 422 })
   }
 
+  // C-5: DoS protection — enforce hard message length cap
+  const MAX_MESSAGE_CHARS = 8_000
+  if ((body.message?.length ?? 0) > MAX_MESSAGE_CHARS) {
+    return Response.json(
+      { error: `Message too long. Maximum ${MAX_MESSAGE_CHARS} characters allowed.` },
+      { status: 413 },
+    )
+  }
+
+  // C-6: Language allowlist — prevent prompt injection via body.language
+  const VALID_LOCALES = new Set(['en', 'tr', 'es', 'de', 'fr', 'zh'])
+  if (body.language && !VALID_LOCALES.has(body.language)) {
+    console.error(`[SECURITY] Rejected invalid language param: "${body.language}" — defaulting to en`)
+    body.language = 'en'
+  }
+
   const analysisMode: AnalysisMode = body.analysisMode ?? 'upwind'
 
   // ── 3. Key availability ────────────────────────────────────────────────────
@@ -760,12 +776,13 @@ SCOPE RULES — NON-NEGOTIABLE:
                   const clean = stripper.push(delta)
                   if (clean) ctrl.enqueue(encoder.encode(clean))
                 }
-              } catch { /* ignore parse errors */ }
+              } catch (parseErr) { console.error("[STREAM] SSE chunk parse error:", parseErr) }
             }
           }
-        } catch { /* stream ended abruptly */ } finally {
+        } catch (streamErr) { console.error("[STREAM:personalised] read error:", streamErr) } finally {
           const tail = stripper.flush()
           if (tail) ctrl.enqueue(encoder.encode(tail))
+          try { reader.cancel() } catch { /* already closed */ }
           ctrl.close()
         }
       },
@@ -866,10 +883,10 @@ SCOPE RULES — NON-NEGOTIABLE:
                   const clean = stripper.push(delta)
                   if (clean) ctrl.enqueue(encoder.encode(clean))
                 }
-              } catch { /* ignore */ }
+              } catch (parseErr) { console.error("[STREAM] SSE chunk parse error:", parseErr) }
             }
           }
-        } catch { /* stream ended */ } finally {
+        } catch (streamErr) { console.error("[STREAM] read error:", streamErr) } finally {
           const tail = stripper.flush()
           if (!intentEmitted) {
             ctrl.enqueue(encoder.encode(
@@ -946,12 +963,13 @@ SCOPE RULES — NON-NEGOTIABLE:
                   const clean = stripper.push(delta)
                   if (clean) ctrl.enqueue(encoder.encode(clean))
                 }
-              } catch { /* ignore */ }
+              } catch (parseErr) { console.error("[STREAM] SSE chunk parse error:", parseErr) }
             }
           }
-        } catch { /* stream ended */ } finally {
+        } catch (streamErr) { console.error("[STREAM] read error:", streamErr) } finally {
           const tail = stripper.flush()
           if (tail) ctrl.enqueue(encoder.encode(tail))
+          try { reader.cancel() } catch { /* already closed */ }
           ctrl.close()
         }
       },
@@ -1017,12 +1035,13 @@ SCOPE RULES — NON-NEGOTIABLE:
                   const clean = stripper.push(delta)
                   if (clean) ctrl.enqueue(encoder.encode(clean))
                 }
-              } catch { /* ignore */ }
+              } catch (parseErr) { console.error("[STREAM] SSE chunk parse error:", parseErr) }
             }
           }
-        } catch { /* stream ended */ } finally {
+        } catch (streamErr) { console.error("[STREAM] read error:", streamErr) } finally {
           const tail = stripper.flush()
           if (tail) ctrl.enqueue(encoder.encode(tail))
+          try { reader.cancel() } catch { /* already closed */ }
           ctrl.close()
         }
       },
@@ -1070,7 +1089,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         __healthReport: healthReport,
         scopeMetadata:  buildScopeMeta(true, 0, intent.clarityScore),
       }
-      void setCachedResponse(cacheQueryText, analysisMode, cacheLang, trimResp as Record<string, unknown>, _hasSynthesisContext)
+      setCachedResponse(cacheQueryText, analysisMode, cacheLang, trimResp as Record<string, unknown>, _hasSynthesisContext).catch((e: unknown) => console.error("[CACHE] write failed:", e))
       return Response.json(trimResp, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       // JSON Schema strict mode should prevent this — graceful fallback
@@ -1118,7 +1137,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         __healthReport: healthReport,
         scopeMetadata:  buildScopeMeta(true, 0, intent.clarityScore),
       }
-      void setCachedResponse(cacheQueryText, analysisMode, cacheLang, catResp as Record<string, unknown>, _hasSynthesisContext)
+      setCachedResponse(cacheQueryText, analysisMode, cacheLang, catResp as Record<string, unknown>, _hasSynthesisContext).catch((e: unknown) => console.error("[CACHE] write failed:", e))
       return Response.json(catResp, { headers: { 'Cache-Control': 'no-store' } })
     } catch {
       return Response.json(
@@ -1269,11 +1288,11 @@ SCOPE RULES — NON-NEGOTIABLE:
       }
 
       // Fire-and-forget cache write
-      void setCachedResponse(
+      setCachedResponse(
         cacheQueryText, analysisMode, cacheLang,
         finalResp as Record<string, unknown>,
         _hasSynthesisContext,
-      )
+      ).catch((e: unknown) => console.error("[CACHE] write failed:", e))
 
       // ── Chunk 2: full result ───────────────────────────────────────────────
       ctrl.enqueue(encoder.encode(JSON.stringify({ __result: finalResp }) + '\n'))

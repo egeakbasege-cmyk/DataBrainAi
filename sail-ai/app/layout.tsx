@@ -8,6 +8,7 @@ import { Dock }               from '@/components/Dock'
 import { LanguageProvider }   from '@/lib/i18n/LanguageContext'
 import { LenisProvider }      from '@/components/LenisProvider'
 import { CursorDot }          from '@/components/CursorDot'
+import { ErrorBoundary }      from '@/components/ErrorBoundary'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -55,19 +56,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="msapplication-tap-highlight" content="no" />
       </head>
       <body className="safe-area-top safe-area-bottom">
-        <AuthProvider>
-          <AetherisProvider>
-            <LanguageProvider>
-              <BusinessProvider>
-                <LenisProvider>
-                  {children}
-                  <Dock />
-                  <CursorDot />
-                </LenisProvider>
-              </BusinessProvider>
-            </LanguageProvider>
-          </AetherisProvider>
-        </AuthProvider>
+        {/* M-2: Global error boundary — prevents single-component crashes from wiping the whole app */}
+        <ErrorBoundary>
+          <AuthProvider>
+            <AetherisProvider>
+              <LanguageProvider>
+                <BusinessProvider>
+                  <LenisProvider>
+                    {children}
+                    <Dock />
+                    <CursorDot />
+                  </LenisProvider>
+                </BusinessProvider>
+              </LanguageProvider>
+            </AetherisProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

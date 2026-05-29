@@ -26,23 +26,38 @@ export function loadUserSources(): UserDataSource[] {
 }
 
 export function saveUserSources(sources: UserDataSource[]) {
-  try { localStorage.setItem(SOURCES_KEY, JSON.stringify(sources)) } catch { /* ignore */ }
+  try {
+    localStorage.setItem(SOURCES_KEY, JSON.stringify(sources))
+  } catch (err: unknown) {
+    // H-8: localStorage can fail when storage quota is exceeded or in private mode
+    console.error('[UserDataImport] Failed to persist sources to localStorage:', err)
+    // Note: in-memory state remains correct — only persistence failed
+  }
 }
 
 // ── Platform detection ────────────────────────────────────────────────────────
 
-function detectPlatform(url: string): { name: string; icon: string; color: string } {
-  const l = url.toLowerCase()
-  if (l.includes('shopify') || l.includes('myshopify')) return { name: 'Shopify',    icon: '🏬', color: '#22C55E' }
-  if (l.includes('etsy.com'))                            return { name: 'Etsy',       icon: '🧶', color: '#EA580C' }
-  if (l.includes('amazon.com'))                          return { name: 'Amazon',     icon: '📦', color: '#F97316' }
-  if (l.includes('ebay.com'))                            return { name: 'eBay',       icon: '🛒', color: '#EAB308' }
-  if (l.includes('walmart.com'))                         return { name: 'Walmart',    icon: '🏪', color: '#3B82F6' }
-  if (l.includes('poshmark.com'))                        return { name: 'Poshmark',   icon: '👗', color: '#A855F7' }
-  if (l.includes('aliexpress.com'))                      return { name: 'AliExpress', icon: '🚢', color: '#EF4444' }
-  if (l.includes('tiktok.com'))                          return { name: 'TikTok',     icon: '🎵', color: '#EC4899' }
-  if (l.includes('youtube.com') || l.includes('youtu.be')) return { name: 'YouTube', icon: '▶️', color: '#EF4444' }
-  if (l.includes('pinterest.com'))                       return { name: 'Pinterest',  icon: '📌', color: '#DC2626' }
+// M-5: Use URL.hostname for detection — prevents ?ref=amazon.com spoofing
+function detectPlatform(rawUrl: string): { name: string; icon: string; color: string } {
+  let hostname: string
+  try {
+    const normalised = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`
+    hostname = new URL(normalised).hostname.toLowerCase().replace(/^www\./, '')
+  } catch {
+    // If URL is malformed, fall back to raw string (still better than nothing)
+    hostname = rawUrl.toLowerCase()
+  }
+
+  if (hostname.includes('myshopify.com') || hostname === 'shopify.com') return { name: 'Shopify',    icon: '🏬', color: '#22C55E' }
+  if (hostname === 'etsy.com'  || hostname.endsWith('.etsy.com'))        return { name: 'Etsy',       icon: '🧶', color: '#EA580C' }
+  if (hostname === 'amazon.com' || hostname.match(/^amazon\.[a-z.]+$/))  return { name: 'Amazon',     icon: '📦', color: '#F97316' }
+  if (hostname === 'ebay.com'   || hostname.match(/^ebay\.[a-z.]+$/)  )  return { name: 'eBay',       icon: '🛒', color: '#EAB308' }
+  if (hostname === 'walmart.com')                                         return { name: 'Walmart',    icon: '🏪', color: '#3B82F6' }
+  if (hostname === 'poshmark.com')                                        return { name: 'Poshmark',   icon: '👗', color: '#A855F7' }
+  if (hostname === 'aliexpress.com')                                      return { name: 'AliExpress', icon: '🚢', color: '#EF4444' }
+  if (hostname === 'tiktok.com' || hostname.endsWith('.tiktok.com'))      return { name: 'TikTok',     icon: '🎵', color: '#EC4899' }
+  if (hostname === 'youtube.com' || hostname === 'youtu.be')              return { name: 'YouTube',    icon: '▶️', color: '#EF4444' }
+  if (hostname === 'pinterest.com')                                       return { name: 'Pinterest',  icon: '📌', color: '#DC2626' }
   return { name: 'Custom URL', icon: '🔗', color: '#C9A96E' }
 }
 
@@ -230,7 +245,24 @@ export function UserDataImport({ open, onClose }: { open: boolean; onClose: () =
   const [tab,     setTab]     = useState<'url' | 'oauth'>('url')
   const [sources, setSources] = useState<UserDataSource[]>([])
 
+  // Load on mount
   useEffect(() => { setSources(loadUserSources()) }, [])
+
+  // M-4: Sync with changes made in other tabs via the storage event
+  useEffect(() => {
+    const onStorageChange = (e: StorageEvent) => {
+      if (e.key === SOURCES_KEY) {
+        setSources(loadUserSources())
+      }
+    }
+    window.addEventListener('storage', onStorageChange)
+    return () => window.removeEventListener('storage', onStorageChange)
+  }, [])
+
+  // Also re-sync whenever the drawer opens (catches same-tab mutations)
+  useEffect(() => {
+    if (open) setSources(loadUserSources())
+  }, [open])
 
   function addSource(src: Omit<UserDataSource, 'id' | 'connected_at'>) {
     const next = [...sources, { ...src, id: crypto.randomUUID(), connected_at: new Date().toISOString() }]

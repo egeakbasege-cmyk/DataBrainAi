@@ -10,11 +10,21 @@ const SailIcon = () => (
   </svg>
 );
 
+// M-1: Strict interface — no any types
+interface ParsedAIResponse {
+  text: string;
+  metrics: Record<string, { label?: string; value: string; benchmark?: string; status?: 'good' | 'warning' | 'bad' }> | null;
+  chart: { data: { label: string; value: number; color: string }[] } | null;
+  recommendation: string | null;
+  risk: string | null;
+  error?: boolean;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  parsed?: any;
+  parsed?: ParsedAIResponse;
 }
 
 function DataCard({ title, value, benchmark, status, sectorLabel }: { title: string; value: string; benchmark?: string; status?: 'good' | 'warning' | 'bad'; sectorLabel: string }) {
@@ -59,17 +69,20 @@ function BarChart({ data }: { data: { label: string; value: number; color: strin
   );
 }
 
-function parseAIResponse(content: string) {
+function parseAIResponse(content: string): ParsedAIResponse {
   try {
-    const parsed = JSON.parse(content);
+    const parsed = JSON.parse(content) as Record<string, unknown>;
     return {
-      text: parsed.chatMessage || parsed.analysis || content,
-      metrics: parsed.metrics || null,
-      chart: parsed.chart || null,
-      recommendation: parsed.recommendation || null,
-      risk: parsed.risk || null,
+      text: (typeof parsed.chatMessage === 'string' ? parsed.chatMessage : null)
+         ?? (typeof parsed.analysis     === 'string' ? parsed.analysis     : null)
+         ?? content,
+      metrics:        (parsed.metrics        as ParsedAIResponse['metrics'])        ?? null,
+      chart:          (parsed.chart          as ParsedAIResponse['chart'])          ?? null,
+      recommendation: (typeof parsed.recommendation === 'string' ? parsed.recommendation : null),
+      risk:           (typeof parsed.risk           === 'string' ? parsed.risk           : null),
     };
-  } catch {
+  } catch (err: unknown) {
+    console.error('[TrimMode] Failed to parse AI response:', err);
     return { text: content, metrics: null, chart: null, recommendation: null, risk: null };
   }
 }
@@ -82,10 +95,17 @@ export default function TrimMode() {
   const [isRecording, setIsRecording] = useState(false);
   const [useDataMode, setUseDataMode] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // C-4: AbortController ref — cancelled on component unmount to prevent zombie requests
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // C-4: Cancel any in-flight request when the component unmounts
+  useEffect(() => {
+    return () => { abortRef.current?.abort() }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +121,11 @@ export default function TrimMode() {
     setInput('');
     setIsLoading(true);
 
+    // C-4: Create fresh AbortController per request; abort previous if still in-flight
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -111,6 +136,7 @@ export default function TrimMode() {
           language: locale,
           useData: useDataMode,
         }),
+        signal: controller.signal,
       });
 
       const data = await response.json();
@@ -123,7 +149,10 @@ export default function TrimMode() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch {
+    } catch (err: unknown) {
+      // Ignore AbortError — user navigated away or cancelled deliberately
+      if (err instanceof Error && err.name === 'AbortError') return;
+      console.error('[TrimMode] fetch error:', err);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -131,7 +160,7 @@ export default function TrimMode() {
           chatMessage: t('trim.errorMessage'),
           error: true,
         }),
-        parsed: { text: t('trim.errorMessage'), error: true },
+        parsed: { text: t('trim.errorMessage'), error: true, metrics: null, chart: null, recommendation: null, risk: null },
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {

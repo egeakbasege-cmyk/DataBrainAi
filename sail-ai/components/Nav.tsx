@@ -39,9 +39,10 @@ export function Nav() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       window.location.href = data.url
-    } catch (err: any) {
-      // H-06: replace alert() with inline error — prevents browser dialog hijacking
-      setPortalError(err.message ?? 'Unable to open billing portal. Please try again.')
+    } catch (err: unknown) {
+      // M-1: err typed as unknown — guard before accessing .message
+      const message = err instanceof Error ? err.message : 'Unable to open billing portal. Please try again.'
+      setPortalError(message)
     } finally {
       setPortalLoading(false)
     }

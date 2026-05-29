@@ -63,6 +63,19 @@ async function connectShopify(domain: string, token: string): Promise<
   if (!host) {
     return { success: false, error: 'Store domain is required.', hint: 'Enter your store domain: mystore.myshopify.com' }
   }
+
+  // C-7: SSRF protection — block localhost, internal IPs, and private subnets
+  const SSRF_BLOCK = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|169\.254\.|::1|0\.0\.0\.0|metadata\.)/i
+  if (SSRF_BLOCK.test(host) || !host.includes('.') || host.startsWith('[')) {
+    console.error(`[SECURITY] SSRF attempt blocked — domain: "${host}"`)
+    return { success: false, error: 'Invalid store domain.', hint: 'Enter your real Shopify store domain, e.g. mystore.myshopify.com' }
+  }
+
+  // Only allow valid hostname characters
+  if (!/^[a-zA-Z0-9._-]+$/.test(host)) {
+    return { success: false, error: 'Invalid domain format.', hint: 'Domain must contain only letters, numbers, dots, and hyphens.' }
+  }
+
   if (!token || token.length < 20) {
     return { success: false, error: 'Access token looks too short.', hint: 'Find it in Shopify Admin → Settings → Apps & sales channels → Develop apps.' }
   }
@@ -154,6 +167,34 @@ async function connectShopify(domain: string, token: string): Promise<
 // CSV connector  (accepts a public URL)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// H-6: RFC 4180 compliant CSV parser — handles quoted fields with embedded commas/newlines
+function parseCSVLine(line: string): string[] {
+  const fields: string[] = []
+  let field = ''
+  let inQuote = false
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (inQuote) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') { field += '"'; i++ }   // escaped quote ""
+        else inQuote = false                              // closing quote
+      } else {
+        field += ch
+      }
+    } else {
+      if (ch === '"') { inQuote = true }
+      else if (ch === ',') { fields.push(field.trim()); field = '' }
+      else { field += ch }
+    }
+  }
+  fields.push(field.trim())
+  return fields
+}
+
+// H-7: Max CSV byte size — 5 MB hard cap to prevent OOM
+const MAX_CSV_BYTES = 5 * 1024 * 1024
+
 async function connectCsv(url: string): Promise<
   { success: true; source: SourceSummary } | { success: false; error: string; hint: string }
 > {
@@ -169,19 +210,44 @@ async function connectCsv(url: string): Promise<
   try {
     const r = await fetch(url, { signal: AbortSignal.timeout(12_000) })
     if (!r.ok) return { success: false, error: `Could not fetch CSV (HTTP ${r.status}).`, hint: 'Make sure the URL is publicly accessible and returns a plain text CSV.' }
-    text = await r.text()
+
+    // H-7: Enforce size cap before reading into memory
+    const contentLength = Number(r.headers.get('content-length') ?? 0)
+    if (contentLength > MAX_CSV_BYTES) {
+      return { success: false, error: 'CSV file is too large (max 5 MB).', hint: 'Split the file into smaller chunks or filter to the relevant date range first.' }
+    }
+
+    // Stream first 5 MB and stop early if content-length was missing/wrong
+    const reader = r.body?.getReader()
+    if (!reader) return { success: false, error: 'Could not read CSV response.', hint: 'Try a different URL format.' }
+
+    const chunks: Uint8Array[] = []
+    let bytesRead = 0
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      if (value) {
+        bytesRead += value.byteLength
+        if (bytesRead > MAX_CSV_BYTES) {
+          await reader.cancel()
+          return { success: false, error: 'CSV file is too large (max 5 MB).', hint: 'Filter the export to the last 90 days and try again.' }
+        }
+        chunks.push(value)
+      }
+    }
+    text = new TextDecoder().decode(new Uint8Array(chunks.reduce((a, c) => [...a, ...c], [] as number[])))
   } catch (e: unknown) {
     return { success: false, error: 'Network error fetching CSV.', hint: String(e instanceof Error ? e.message : e) }
   }
 
-  // Parse CSV
-  const lines   = text.trim().split('\n').filter(Boolean)
+  // Parse CSV — H-6: use RFC 4180 compliant parser
+  const lines   = text.trim().split(/\r?\n/).filter(Boolean)
   if (lines.length < 2) {
     return { success: false, error: 'CSV appears empty or has only a header row.', hint: 'The file needs at least one data row.' }
   }
 
-  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase())
-  const rows    = lines.slice(1).map(l => l.split(',').map(c => c.trim().replace(/"/g, '')))
+  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase())
+  const rows    = lines.slice(1).map(l => parseCSVLine(l))
 
   // Try to find revenue/amount/sales column
   const revenueIdx = headers.findIndex(h => /revenue|amount|sales|total|price|gmv/i.test(h))
