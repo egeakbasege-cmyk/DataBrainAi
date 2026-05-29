@@ -52,7 +52,7 @@ const MODES: ModeDef[] = [
     descKey:   'mode.upwindDesc',
     accent:    '#14B8A6',
     stat:      '95',
-    statLabel: 'VERIM',
+    statLabel: 'YIELD',
     caps:      ['Instant strategic brief', 'Numerically anchored output', 'Live research synthesis'],
   },
   {
@@ -182,6 +182,7 @@ interface PillCardProps {
 }
 
 function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCardProps) {
+  const { t } = useLanguage()
   const isSynergy = def.id === 'synergy'
 
   return (
@@ -352,7 +353,7 @@ function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCa
           letterSpacing: '-0.02em',
         }}>
           {def.stat}
-          {def.statLabel === 'VERIM' && (
+          {def.statLabel === 'YIELD' && (
             <span style={{ fontSize: '0.75rem', fontWeight: 600, opacity: 0.65, marginLeft: '1px' }}>%</span>
           )}
         </span>
@@ -395,7 +396,7 @@ function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCa
             : '0 4px 16px rgba(26,58,74,0.35)',
         }}
       >
-        Başlat →
+        {t('nav.launch')} →
       </motion.button>
     </motion.div>
   )
