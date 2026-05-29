@@ -1,13 +1,74 @@
 'use client'
 
+import { useState, useCallback } from 'react'
 import type { CatamaranResponse } from '@/types/chat'
+import { useLanguage }            from '@/lib/i18n/LanguageContext'
 
 interface CatamaranResponseCardProps {
-  response: CatamaranResponse | null
+  response:   CatamaranResponse | null
   isStreaming?: boolean
+  query?:     string
 }
 
-export function CatamaranResponseCard({ response, isStreaming = false }: CatamaranResponseCardProps) {
+// ── Export helpers ─────────────────────────────────────────────────────────────
+
+async function runExport(payload: Record<string, unknown>): Promise<string> {
+  const res = await fetch('/api/export', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error('Export failed')
+  return res.text()
+}
+
+function triggerDownload(text: string, filename: string) {
+  const blob = new Blob([text], { type: 'text/markdown' })
+  const url  = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href     = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+export function CatamaranResponseCard({ response, isStreaming = false, query }: CatamaranResponseCardProps) {
+  const [exportState, setExportState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [copyState,   setCopyState]   = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const { t } = useLanguage()
+
+  const buildPayload = useCallback(() => ({
+    _type:               'catamaran' as const,
+    catamaranTitle:      response?.catamaranTitle ?? 'Dual-Track Strategy',
+    marketGrowth:        response?.marketGrowth       ? { actions: response.marketGrowth.actions,       target: response.marketGrowth.target       } : undefined,
+    customerExperience:  response?.customerExperience ? { actions: response.customerExperience.actions, target: response.customerExperience.target  } : undefined,
+    unifiedStrategy:     response?.unifiedStrategy,
+    thirtyDayTarget:     response?.thirtyDayTarget,
+    greatestRisk:        response?.greatestRisk,
+    query,
+  }), [response, query])
+
+  const handleDownload = useCallback(async () => {
+    if (!response || exportState === 'loading') return
+    setExportState('loading')
+    try {
+      const md = await runExport(buildPayload())
+      triggerDownload(md, `catamaran-${new Date().toISOString().slice(0, 10)}.md`)
+      setExportState('done')
+      setTimeout(() => setExportState('idle'), 2000)
+    } catch { setExportState('error'); setTimeout(() => setExportState('idle'), 2500) }
+  }, [response, buildPayload, exportState])
+
+  const handleCopy = useCallback(async () => {
+    if (!response || copyState === 'loading') return
+    setCopyState('loading')
+    try {
+      const md = await runExport(buildPayload())
+      await navigator.clipboard.writeText(md)
+      setCopyState('done')
+      setTimeout(() => setCopyState('idle'), 2000)
+    } catch { setCopyState('error'); setTimeout(() => setCopyState('idle'), 2500) }
+  }, [response, buildPayload, copyState])
   if (isStreaming || !response) {
     return (
       <div style={{
@@ -268,6 +329,34 @@ export function CatamaranResponseCard({ response, isStreaming = false }: Catamar
             {confidenceIndex}%
           </p>
         </div>
+      </div>
+
+      {/* Export footer */}
+      <div style={{ padding: '10px 20px 16px', display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid rgba(212,175,55,0.1)' }}>
+        {([
+          { state: exportState, label: t('export.download'), doneLabel: t('export.downloaded'), icon: '↓', onClick: handleDownload },
+          { state: copyState,   label: t('export.copy'),     doneLabel: t('export.copied'),     icon: '⎘', onClick: handleCopy },
+        ] as const).map(({ state, label, doneLabel, icon, onClick }) => (
+          <button
+            key={label}
+            onClick={onClick}
+            disabled={state === 'loading'}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '5px 11px',
+              fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 500,
+              color:      state === 'done' ? '#14B8A6' : state === 'error' ? '#DC2626' : '#71717A',
+              background: 'rgba(0,0,0,0.03)',
+              border:     '1px solid rgba(0,0,0,0.09)',
+              cursor:     state === 'loading' ? 'wait' : 'pointer',
+              transition: 'color 0.2s',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span style={{ fontSize: '0.8rem' }}>{state === 'loading' ? '…' : state === 'done' ? '✓' : state === 'error' ? '✕' : icon}</span>
+            {state === 'done' ? doneLabel : state === 'error' ? t('export.error') : label}
+          </button>
+        ))}
       </div>
     </div>
   )

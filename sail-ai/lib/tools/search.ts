@@ -755,6 +755,86 @@ export async function executeDeepSearch(
   }
 }
 
+// ── Cohere Rerank ─────────────────────────────────────────────────────────────
+// [SAIL-RERANK-V1]
+// Semantically reranks raw search results before they reach the Groq 70B context
+// window. Replaces the domain-reliability sort with Cohere's multilingual cross-
+// encoder, which scores each result against the actual user query.
+//
+// Net effect: Groq 70B is fed the 8 most query-relevant results rather than the
+// 8 highest-authority-domain results — a material improvement in answer grounding.
+//
+// Graceful fallback: if COHERE_API_KEY is absent, the API errors, or the call
+// times out, the existing reliability-score sort is preserved unchanged.
+
+const RERANK_TIMEOUT_MS = 3_500
+const RERANK_TOP_N      = 8
+
+interface CohereRerankResult {
+  index:           number
+  relevance_score: number
+}
+
+/**
+ * rerankResults
+ *
+ * Calls Cohere's multilingual Rerank API to semantically order search results.
+ * Returns up to topN results. Blends semantic score (60%) with domain authority
+ * (40%) so authoritative sources are never fully displaced by topical matches.
+ *
+ * @param query   - The original user query (first search vector)
+ * @param results - Raw results from executeDeepSearch(), already deduped
+ * @param topN    - Maximum results to return (default 8 — ~900 tokens)
+ */
+export async function rerankResults(
+  query:   string,
+  results: SearchResult[],
+  topN     = RERANK_TOP_N,
+): Promise<SearchResult[]> {
+  const apiKey = process.env.COHERE_API_KEY
+  // Skip if no key, no results, or already within budget
+  if (!apiKey || results.length === 0) return results.slice(0, topN)
+  if (results.length <= topN)          return results
+
+  const abort = new AbortController()
+  const timer = setTimeout(() => abort.abort(), RERANK_TIMEOUT_MS)
+
+  try {
+    const res = await fetch('https://api.cohere.com/v2/rerank', {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model:     'rerank-multilingual-v3.0',  // covers all 6 SAIL locales
+        query:     query.slice(0, 500),
+        documents: results.map(r => `${r.title}\n${r.content}`),
+        top_n:     topN,
+      }),
+      signal: abort.signal,
+    })
+
+    clearTimeout(timer)
+    if (!res.ok) return results.slice(0, topN)
+
+    const data = await res.json() as { results?: CohereRerankResult[] }
+    if (!data.results?.length) return results.slice(0, topN)
+
+    // Cohere returns items sorted by relevance_score descending — preserve that order.
+    // Blend: 60% semantic relevance, 40% domain authority (never fully drops gov/edu)
+    return data.results.map(item => ({
+      ...results[item.index],
+      reliabilityScore:
+        0.6 * item.relevance_score +
+        0.4 * results[item.index].reliabilityScore,
+    }))
+  } catch {
+    clearTimeout(timer)
+    return results.slice(0, topN)
+  }
+}
+
 // ── Groq-compatible context encoder ──────────────────────────────────────────
 
 /**

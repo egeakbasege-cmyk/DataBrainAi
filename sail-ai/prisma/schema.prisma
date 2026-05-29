@@ -30,6 +30,7 @@ model User {
   sessions        Session[]
   analyses        Analysis[]
   kairosAnalyses  KairosAnalysis[]
+  businessProfile BusinessProfile?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -80,6 +81,22 @@ model Analysis {
   createdAt   DateTime @default(now())
 
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([userId])
+}
+
+// Persisted business profile — sector, metrics, and diagnostic context.
+// Enables cross-session memory without requiring the user to re-enter constraints.
+model BusinessProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  sector     String   @default("")
+  metrics    Json     @default("[]")   // BusinessMetric[]
+  diagnostic Json?                     // DiagnosticInput | null
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 

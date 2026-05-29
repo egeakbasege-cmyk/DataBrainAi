@@ -80,6 +80,7 @@ import {
 import {
   executeDeepSearch,
   encodeResearchContext,
+  rerankResults,
   requiresResearch,
   decomposeToSearchQueries,
   detectQueryLanguage,
@@ -582,7 +583,10 @@ export async function POST(req: NextRequest) {
     )
 
     if (_searchResults.length > 0) {
-      body.ragContext      = encodeResearchContext(searchResponse)
+      // Cohere Rerank: semantically filter to top 8 highest-leverage results
+      // before encoding into the Groq context window. Fallback: reliability sort.
+      _searchResults = await rerankResults(queryText, _searchResults)
+      body.ragContext = encodeResearchContext({ ...searchResponse, results: _searchResults })
       _hasSynthesisContext = true
     }
   }
@@ -622,6 +626,8 @@ export async function POST(req: NextRequest) {
     )
     // If guardrail retrieved new sources, rebuild ragContext
     if (_searchResults.length > (_hasSynthesisContext ? (_researchQueries.length * 10) : 0)) {
+      // Re-rerank merged results so the guardrail's fresh sources are also scored
+      _searchResults = await rerankResults(queryText, _searchResults)
       const enrichedResponse = {
         results:          _searchResults,
         images:           [],

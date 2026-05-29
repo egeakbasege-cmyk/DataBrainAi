@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
+import { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react'
 import type { DiagnosticInput } from '@/lib/diagnostic'
 
 /* ── Types ──────────────────────────────────────────── */
@@ -111,21 +111,53 @@ interface BusinessContextValue {
 
 const BusinessContext = createContext<BusinessContextValue | null>(null)
 
-const STORAGE_KEY = 'sail_business_profile'
+const STORAGE_KEY   = 'sail_business_profile'
+const DB_SYNC_DELAY = 2_000   // ms — debounce DB writes so rapid metric updates don't spam the API
 
 export function BusinessProvider({ children }: { children: React.ReactNode }) {
   const [profile, dispatch] = useReducer(reducer, EMPTY_PROFILE)
+  const dbSyncTimer         = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isHydrated          = useRef(false)
 
-  // Hydrate from localStorage first, then merge DB sessions
+  // ── 1. Hydrate: localStorage → DB merge on mount ────────────────────────────
   useEffect(() => {
+    // Step A: hydrate from localStorage immediately (zero latency)
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) dispatch({ type: 'HYDRATE', profile: JSON.parse(raw) })
-    } catch {
-      // Ignore parse errors
-    }
+    } catch { /* ignore parse errors */ }
 
-    // Fetch persisted sessions from DB (Pro users)
+    // Step B: fetch DB profile — DB wins on sector + metrics + diagnostic
+    fetch('/api/profile')
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { profile?: { sector?: string; metrics?: unknown; diagnostic?: unknown } | null } | null) => {
+        const dbProfile = data?.profile
+        if (!dbProfile) return
+        // Merge: DB sector/metrics/diagnostic are authoritative
+        if (dbProfile.sector) {
+          dispatch({ type: 'SET_SECTOR', sector: dbProfile.sector as string })
+        }
+        if (Array.isArray(dbProfile.metrics) && dbProfile.metrics.length > 0) {
+          // Rebuild metrics from DB — they are the source of truth
+          const freshProfile: BusinessProfile = {
+            ...EMPTY_PROFILE,
+            sector:  dbProfile.sector  as string ?? '',
+            metrics: dbProfile.metrics as BusinessMetric[],
+          }
+          dispatch({ type: 'HYDRATE', profile: freshProfile })
+        }
+        if (dbProfile.diagnostic) {
+          dispatch({
+            type:   'SET_DIAGNOSTIC',
+            data:   dbProfile.diagnostic as DiagnosticInput,
+            prompt: '',
+          })
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => { isHydrated.current = true })
+
+    // Step C: merge DB sessions (analysis history)
     fetch('/api/sessions')
       .then(r => r.json())
       .then(({ sessions }) => {
@@ -136,14 +168,36 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
       .catch(() => undefined)
   }, [])
 
-  // Persist to localStorage on every change
+  // ── 2. Persist to localStorage on every change ───────────────────────────────
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
-    } catch {
-      // Ignore quota errors
-    }
+    } catch { /* ignore quota errors */ }
   }, [profile])
+
+  // ── 3. Debounced DB sync — only fires when sector/metrics/diagnostic change ──
+  useEffect(() => {
+    // Don't sync on the initial hydration pass
+    if (!isHydrated.current) return
+    if (!profile.sector && profile.metrics.length === 0 && !profile.diagnostic) return
+
+    if (dbSyncTimer.current) clearTimeout(dbSyncTimer.current)
+    dbSyncTimer.current = setTimeout(() => {
+      fetch('/api/profile', {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          sector:     profile.sector,
+          metrics:    profile.metrics,
+          diagnostic: profile.diagnostic,
+        }),
+      }).catch(() => undefined)
+    }, DB_SYNC_DELAY)
+
+    return () => {
+      if (dbSyncTimer.current) clearTimeout(dbSyncTimer.current)
+    }
+  }, [profile.sector, profile.metrics, profile.diagnostic])
 
   const setSector      = useCallback((sector: string) => dispatch({ type: 'SET_SECTOR', sector }), [])
   const addMetric      = useCallback((label: string, value: string) => dispatch({ type: 'ADD_METRIC', label, value }), [])

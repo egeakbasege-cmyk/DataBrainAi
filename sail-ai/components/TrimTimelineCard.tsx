@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useCallback } from 'react'
+import { motion }                 from 'framer-motion'
+import { useLanguage }            from '@/lib/i18n/LanguageContext'
 
 export interface TrimPhase {
   phase:       string
@@ -35,6 +36,7 @@ export interface TrimResponse {
 interface Props {
   response:  TrimResponse | null
   isLoading: boolean
+  query?:    string
 }
 
 const PHASE_COLORS = [
@@ -44,8 +46,55 @@ const PHASE_COLORS = [
   { dot: '#5B21B6', bar: 'rgba(91,33,182,0.08)',  border: 'rgba(91,33,182,0.20)'  },
 ]
 
-export function TrimTimelineCard({ response, isLoading }: Props) {
-  const [expanded, setExpanded] = useState(false)
+export function TrimTimelineCard({ response, isLoading, query }: Props) {
+  const [expanded,    setExpanded]    = useState(false)
+  const [exportState, setExportState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [copyState,   setCopyState]   = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const { t } = useLanguage()
+
+  const buildPayload = useCallback(() => ({
+    _type:     'trim' as const,
+    trimTitle: response?.trimTitle ?? 'Strategic Roadmap',
+    summary:   response?.summary,
+    query,
+    phases:    response?.phases?.map((ph, i) => ({
+      phase:     i + 1,
+      title:     ph.phase,
+      objective: ph.metric,
+      timeline:  ph.timeframe,
+      actions:   ph.actions,
+    })),
+  }), [response, query])
+
+  const handleDownload = useCallback(async () => {
+    if (!response || exportState === 'loading') return
+    setExportState('loading')
+    try {
+      const res = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildPayload()) })
+      if (!res.ok) throw new Error()
+      const blob = await res.blob()
+      const url  = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href     = url
+      link.download = `trim-${new Date().toISOString().slice(0, 10)}.md`
+      link.click()
+      URL.revokeObjectURL(url)
+      setExportState('done')
+      setTimeout(() => setExportState('idle'), 2000)
+    } catch { setExportState('error'); setTimeout(() => setExportState('idle'), 2500) }
+  }, [response, buildPayload, exportState])
+
+  const handleCopy = useCallback(async () => {
+    if (!response || copyState === 'loading') return
+    setCopyState('loading')
+    try {
+      const res = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildPayload()) })
+      if (!res.ok) throw new Error()
+      await navigator.clipboard.writeText(await res.text())
+      setCopyState('done')
+      setTimeout(() => setCopyState('idle'), 2000)
+    } catch { setCopyState('error'); setTimeout(() => setCopyState('idle'), 2500) }
+  }, [response, buildPayload, copyState])
 
   if (isLoading) {
     return (
@@ -372,6 +421,36 @@ export function TrimTimelineCard({ response, isLoading }: Props) {
             </div>
           </div>
         </>
+      )}
+
+      {/* Export footer */}
+      {!isLoading && response && (
+        <div style={{ padding: '10px 20px 16px', display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          {([
+            { state: exportState, label: t('export.download'), doneLabel: t('export.downloaded'), icon: '↓', onClick: handleDownload },
+            { state: copyState,   label: t('export.copy'),     doneLabel: t('export.copied'),     icon: '⎘', onClick: handleCopy },
+          ] as const).map(({ state, label, doneLabel, icon, onClick }) => (
+            <button
+              key={label}
+              onClick={onClick}
+              disabled={state === 'loading'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 11px',
+                fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 500,
+                color:      state === 'done' ? '#14B8A6' : state === 'error' ? '#DC2626' : '#71717A',
+                background: 'rgba(0,0,0,0.03)',
+                border:     '1px solid rgba(0,0,0,0.09)',
+                cursor:     state === 'loading' ? 'wait' : 'pointer',
+                transition: 'color 0.2s',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span>{state === 'loading' ? '…' : state === 'done' ? '✓' : state === 'error' ? '✕' : icon}</span>
+              {state === 'done' ? doneLabel : state === 'error' ? t('export.error') : label}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   )
