@@ -574,7 +574,9 @@ export async function POST(req: NextRequest) {
   // ── 10. Adaptive model selection ──────────────────────────────────────────
   const contextChars   = (body.ragContext?.length ?? 0) + (body.fileContent?.length ?? 0)
   const modelSelection = selectModel(queryText, analysisMode, contextChars)
-  const language       = body.language ?? 'en'
+  // Use the explicitly set language first, then fall back to auto-detected query language.
+  // This ensures English users get English responses even when body.language is unset.
+  const language       = body.language ?? _queryLanguage ?? 'en'
   const primaryConstraint = body.primaryConstraint
 
   // ── 11. Build user message (skill injection + research context) ────────────

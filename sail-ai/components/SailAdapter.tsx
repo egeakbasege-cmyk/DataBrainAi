@@ -410,23 +410,97 @@ const INTENT_LABELS: Record<SailIntent, string> = {
   analytic:  'Analytic · Data',
 }
 
-// ── Citation / source cleaner ─────────────────────────────────────────────────
-// Removes inline URL citations, reference markers, and "Sources:" blocks that
-// the model occasionally injects. These belong in research mode, not chat.
+// ── Source extraction ─────────────────────────────────────────────────────────
+// Splits the AI response into clean body text + a structured sources list.
+// The AI is instructed to append a `## Sources` block at the very end.
+// Everything before that block is the main content; everything inside is parsed.
 
-function stripCitations(raw: string): string {
-  return raw
-    // Remove bare URLs (http / https)
-    .replace(/https?:\/\/[^\s)\]]+/g, '')
-    // Remove markdown links: [text](url)
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    // Remove numbered reference tags: [1], [2], [12], etc.
-    .replace(/\[\d+\]/g, '')
-    // Remove "Sources:", "References:", "Source:" header lines
-    .replace(/^(Sources?|References?|Kaynak(lar)?|Referanslar?)\s*:?.*$/gim, '')
-    // Remove trailing empty lines left by the above
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+interface ParsedSource {
+  index:   number
+  domain:  string
+  snippet: string
+}
+
+function extractSourcesBlock(raw: string): { body: string; sources: ParsedSource[] } {
+  // Match the ## Sources (or ## Kaynaklar / ## Quellen etc.) section at the end
+  const sourcesHeadRegex = /^##\s+(Sources?|References?|Kaynaklar?|Referanslar?|Quellen|Fuentes|Sources)\s*$/im
+  const match = sourcesHeadRegex.exec(raw)
+
+  if (!match || match.index === undefined) {
+    // No structured block — strip any stray inline fragments and return clean text
+    const cleaned = raw
+      .replace(/\[\d+\]/g, '')                               // [1] [2] numbered refs
+      .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')   // [text](url) → text only
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+    return { body: cleaned, sources: [] }
+  }
+
+  const body = raw.slice(0, match.index).replace(/\n{3,}/g, '\n\n').trim()
+  const block = raw.slice(match.index + match[0].length).trim()
+
+  // Parse numbered list: "1. domain.com (date) — description" or "- domain.com ..."
+  const sources: ParsedSource[] = []
+  const lineRegex = /^(?:\d+\.|[-*•])\s+(.+)$/gm
+  let lineMatch: RegExpExecArray | null
+
+  while ((lineMatch = lineRegex.exec(block)) !== null) {
+    const line = lineMatch[1].trim()
+    // Extract domain — first token that looks like a domain or URL
+    const domainMatch = line.match(/^(https?:\/\/)?([a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/)
+    const domain  = domainMatch ? domainMatch[2] : line.split(/\s[—–-]\s/)[0].trim()
+    // Everything after " — " is the description
+    const snippet = line.replace(/^[^\s—–-]+[^\n]*?[—–-]\s*/, '').trim() || line
+    sources.push({ index: sources.length + 1, domain, snippet })
+  }
+
+  return { body, sources }
+}
+
+// ── Sources footer component ──────────────────────────────────────────────────
+
+function SourcesFooter({ sources, accent }: { sources: ParsedSource[]; accent: string }) {
+  if (!sources.length) return null
+  return (
+    <div style={{
+      marginTop:    '1.5rem',
+      paddingTop:   '0.875rem',
+      borderTop:    `1px solid ${accent}20`,
+    }}>
+      <p style={{
+        fontFamily:    'Inter, sans-serif',
+        fontSize:      '0.6rem',
+        fontWeight:    700,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        color:         accent,
+        marginBottom:  '0.5rem',
+      }}>
+        Sources
+      </p>
+      <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+        {sources.map(src => (
+          <li key={src.index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
+            <span style={{
+              fontFamily:  'JetBrains Mono, monospace',
+              fontSize:    '0.6rem',
+              color:       accent,
+              flexShrink:  0,
+              minWidth:    '1rem',
+            }}>
+              {src.index}.
+            </span>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'var(--ae-text-dim, #9898B0)', lineHeight: 1.5 }}>
+              <span style={{ fontWeight: 600, color: 'var(--ae-text, #F0F0F4)' }}>{src.domain}</span>
+              {src.snippet && src.snippet !== src.domain && (
+                <> — {src.snippet}</>
+              )}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -440,16 +514,16 @@ interface Props {
 export function SailAdapter({ text, intent, streaming }: Props) {
   const accent = INTENT_ACCENT[intent]
 
-  const segments = useMemo(() => {
-    const cleaned   = stripCitations(text)
-    const parsed    = parseMarkdown(cleaned)
-    const hasMrrRef = /\bmrr\b/i.test(cleaned)
+  const { segments, sources } = useMemo(() => {
+    const { body, sources } = extractSourcesBlock(text)
+    const parsed    = parseMarkdown(body)
+    const hasMrrRef = /\bmrr\b/i.test(body)
     if (intent === 'analytic' && hasMrrRef) {
       const firstHeadIdx = parsed.findIndex(s => s.type === 'heading')
       const insertAt     = firstHeadIdx >= 0 ? firstHeadIdx + 1 : 0
       parsed.splice(insertAt, 0, { type: 'mrr-chart' })
     }
-    return parsed
+    return { segments: parsed, sources }
   }, [text, intent])
 
   if (!text && streaming) {
@@ -513,6 +587,9 @@ export function SailAdapter({ text, intent, streaming }: Props) {
           return null
         })}
       </div>
+
+      {/* Sources footer — only shown when streaming is done and sources are present */}
+      {!streaming && <SourcesFooter sources={sources} accent={accent} />}
 
       {/* Streaming cursor */}
       {streaming && text && (
