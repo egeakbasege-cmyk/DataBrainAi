@@ -8,7 +8,6 @@ import { Nav }                           from '@/components/Nav'
 import { BrandSetupModal, BrandNameplate, useBrandConfig } from '@/components/BrandSetupModal'
 import type { BrandConfig }              from '@/components/BrandSetupModal'
 import { HelmButton }                    from '@/components/HelmButton'
-import { SailboatAnimation }             from '@/components/SailboatAnimation'
 import { ExecutiveResponseCard }         from '@/components/ExecutiveResponseCard'
 import { PredictiveAlertList }           from '@/components/PredictiveAlertBanner'
 import { DailyCounter }                  from '@/components/DailyCounter'
@@ -1092,7 +1091,6 @@ export default function ChatPage() {
               onEdit={() => setShowBrandSetup(true)}
             />
           )}
-          <SailboatAnimation state={sailState} />
 
           {/* Context + counter bar */}
           <div style={{
