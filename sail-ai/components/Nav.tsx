@@ -224,7 +224,8 @@ export function Nav() {
                     <MenuItem href="/chat"        onClick={() => setMenuOpen(false)} label={t('nav.chartCourse')} />
                     <MenuItem href="/research"   onClick={() => setMenuOpen(false)} label={t('nav.research')}    />
                     <MenuItem href="/data-lab"   onClick={() => setMenuOpen(false)} label={t('nav.dataLab')}      />
-                    <MenuItem href="/vault"      onClick={() => setMenuOpen(false)} label={t('nav.dataVault')}   />
+                    <MenuItem href="/vault"       onClick={() => setMenuOpen(false)} label={t('nav.dataVault')}    />
+                    <MenuItem href="/frameworks" onClick={() => setMenuOpen(false)} label={t('nav.frameworks')}   />
                     <MenuItem href="/dashboard"  onClick={() => setMenuOpen(false)} label={t('nav.dashboard')}   />
                     <MenuItem href="/pricing"    onClick={() => setMenuOpen(false)} label={t('nav.pricing')}     />
 
