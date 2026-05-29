@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Paperclip, Mic, Compass, TrendingUp, BarChart3, AlertTriangle, Target, Database, Brain } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 const SailIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -16,19 +17,19 @@ interface Message {
   parsed?: any;
 }
 
-function DataCard({ title, value, benchmark, status }: { title: string; value: string; benchmark?: string; status?: 'good' | 'warning' | 'bad' }) {
+function DataCard({ title, value, benchmark, status, sectorLabel }: { title: string; value: string; benchmark?: string; status?: 'good' | 'warning' | 'bad'; sectorLabel: string }) {
   const statusColors = {
     good: 'bg-green-50 border-green-200 text-green-700',
     warning: 'bg-amber-50 border-amber-200 text-amber-700',
     bad: 'bg-red-50 border-red-200 text-red-700',
   };
-  
+
   return (
     <div className={`p-4 rounded-xl border ${status ? statusColors[status] : 'bg-slate-50 border-slate-200'}`}>
       <p className="text-xs text-slate-500 mb-1">{title}</p>
       <p className="text-lg font-semibold">{value}</p>
       {benchmark && (
-        <p className="text-xs mt-1 opacity-70">Sektör: {benchmark}</p>
+        <p className="text-xs mt-1 opacity-70">{sectorLabel.replace('{benchmark}', benchmark)}</p>
       )}
     </div>
   );
@@ -36,7 +37,7 @@ function DataCard({ title, value, benchmark, status }: { title: string; value: s
 
 function BarChart({ data }: { data: { label: string; value: number; color: string }[] }) {
   const max = Math.max(...data.map(d => d.value));
-  
+
   return (
     <div className="space-y-3">
       {data.map((item, i) => (
@@ -74,11 +75,12 @@ function parseAIResponse(content: string) {
 }
 
 export default function TrimMode() {
+  const { t, locale } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [useDataMode, setUseDataMode] = useState(true); // Toggle: true = data-driven, false = independent
+  const [useDataMode, setUseDataMode] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -106,8 +108,8 @@ export default function TrimMode() {
         body: JSON.stringify({
           message: userMessage.content,
           analysisMode: 'trim',
-          language: 'tr',
-          useData: useDataMode, // Toggle durumuna göre data kullanımı
+          language: locale,
+          useData: useDataMode,
         }),
       });
 
@@ -121,15 +123,15 @@ export default function TrimMode() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: JSON.stringify({
-          chatMessage: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
+          chatMessage: t('trim.errorMessage'),
           error: true,
         }),
-        parsed: { text: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.', error: true },
+        parsed: { text: t('trim.errorMessage'), error: true },
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -138,10 +140,10 @@ export default function TrimMode() {
   };
 
   const quickPrompts = [
-    'Sektör kıyaslamamı göster',
-    'Performans metriklerimi analiz et',
-    'Strateji önerileri al',
-    'Riskleri değerlendir',
+    t('trim.benchmarkPrompt'),
+    t('trim.performancePrompt'),
+    t('trim.strategyPrompt'),
+    t('trim.riskPrompt'),
   ];
 
   return (
@@ -160,8 +162,8 @@ export default function TrimMode() {
         </div>
 
         <div className="p-4 space-y-3">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Özellikler</p>
-          
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">{t('trim.features')}</p>
+
           {/* Data Mode Toggle */}
           <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
             <div className="flex items-center justify-between mb-2">
@@ -172,7 +174,7 @@ export default function TrimMode() {
                   <Brain size={16} className="text-purple-500" />
                 )}
                 <span className="text-sm font-medium text-slate-700">
-                  {useDataMode ? 'Veri Modu' : 'Bağımsız Mod'}
+                  {useDataMode ? t('trim.dataModeLabel') : t('trim.independentModeLabel')}
                 </span>
               </div>
               <button
@@ -188,17 +190,15 @@ export default function TrimMode() {
               </button>
             </div>
             <p className="text-xs text-slate-500">
-              {useDataMode 
-                ? 'İşletme metrikleri ve sektör verilerine dayalı analiz' 
-                : 'AI bilgisiyle bağımsız strateji yanıtları'}
+              {useDataMode ? t('trim.dataModeDesc') : t('trim.independentModeDesc')}
             </p>
           </div>
 
           {[
-            { icon: TrendingUp, text: 'Sektör Kıyaslama', color: 'text-blue-500' },
-            { icon: BarChart3, text: 'Performans Analizi', color: 'text-green-500' },
-            { icon: Target, text: 'Strateji Önerileri', color: 'text-purple-500' },
-            { icon: AlertTriangle, text: 'Risk Değerlendirme', color: 'text-amber-500' },
+            { icon: TrendingUp, text: t('trim.sectorBenchmark'), color: 'text-blue-500' },
+            { icon: BarChart3, text: t('trim.performanceAnalysis'), color: 'text-green-500' },
+            { icon: Target, text: t('trim.strategyRecommendations'), color: 'text-purple-500' },
+            { icon: AlertTriangle, text: t('trim.riskAssessment'), color: 'text-amber-500' },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-3 text-sm text-slate-600">
               <item.icon size={16} className={item.color} />
@@ -210,8 +210,8 @@ export default function TrimMode() {
         <div className="mt-auto p-4">
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-4 text-white">
             <Compass size={20} className="mb-3 opacity-60" />
-            <p className="text-sm font-medium mb-1">Rota Belirleme</p>
-            <p className="text-xs opacity-70">Veri destekli stratejik analiz</p>
+            <p className="text-sm font-medium mb-1">{t('trim.navigationTitle')}</p>
+            <p className="text-xs opacity-70">{t('trim.navigationDesc')}</p>
           </div>
         </div>
       </aside>
@@ -219,12 +219,12 @@ export default function TrimMode() {
       <main className="flex-1 flex flex-col">
         <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-600">TRIM Mod</span>
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">Beta</span>
+            <span className="text-sm font-medium text-slate-600">{t('trim.headerMode')}</span>
+            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">{t('trim.beta')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            Veri Destekli Analiz
+            {t('trim.headerStatus')}
           </div>
         </header>
 
@@ -239,11 +239,11 @@ export default function TrimMode() {
                 <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Compass size={32} className="text-slate-400" />
                 </div>
-                <h2 className="text-2xl font-semibold text-slate-900 mb-3">Veri Destekli Analiz</h2>
+                <h2 className="text-2xl font-semibold text-slate-900 mb-3">{t('trim.pageHeading')}</h2>
                 <p className="text-slate-500 mb-8 max-w-md mx-auto">
-                  Sektör kıyaslamaları ve performans metrikleriyle desteklenmiş stratejik analiz için soru sorun.
+                  {t('trim.pageInstructions')}
                 </p>
-                
+
                 <div className="flex flex-wrap justify-center gap-3">
                   {quickPrompts.map((prompt, i) => (
                     <button
@@ -260,7 +260,7 @@ export default function TrimMode() {
               <div className="max-w-4xl mx-auto space-y-6">
                 {messages.map((m, i) => {
                   const parsed = m.role === 'assistant' ? m.parsed : null;
-                  
+
                   return (
                     <motion.div
                       key={m.id}
@@ -282,11 +282,11 @@ export default function TrimMode() {
                           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                             <div className="flex items-center gap-2 mb-3">
                               <BarChart3 size={16} className="text-blue-500" />
-                              <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">Analiz</span>
+                              <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">{t('trim.analysisLabel')}</span>
                             </div>
-                            <p className="text-sm leading-relaxed text-slate-700">{parsed?.text || 'Analiz yükleniyor...'}</p>
+                            <p className="text-sm leading-relaxed text-slate-700">{parsed?.text || t('trim.analysisLoading')}</p>
                           </div>
-                          
+
                           {parsed?.metrics && (
                             <div className="grid grid-cols-3 gap-3">
                               {Object.entries(parsed.metrics).map(([key, data]: [string, any], idx) => (
@@ -296,36 +296,37 @@ export default function TrimMode() {
                                   value={data.value}
                                   benchmark={data.benchmark}
                                   status={data.status}
+                                  sectorLabel={t('trim.sectorLabel')}
                                 />
                               ))}
                             </div>
                           )}
-                          
+
                           {parsed?.chart && (
                             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                               <div className="flex items-center gap-2 mb-4">
                                 <TrendingUp size={16} className="text-green-500" />
-                                <span className="text-xs font-medium text-green-600 uppercase tracking-wider">Performans Kıyaslama</span>
+                                <span className="text-xs font-medium text-green-600 uppercase tracking-wider">{t('trim.performanceBenchmark')}</span>
                               </div>
                               <BarChart data={parsed.chart.data} />
                             </div>
                           )}
-                          
+
                           {parsed?.recommendation && (
                             <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
                               <div className="flex items-center gap-2 mb-2">
                                 <Target size={16} className="text-blue-600" />
-                                <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">Öneri</span>
+                                <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">{t('trim.recommendationLabel')}</span>
                               </div>
                               <p className="text-sm text-blue-800">{parsed.recommendation}</p>
                             </div>
                           )}
-                          
+
                           {parsed?.risk && (
                             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
                               <div className="flex items-center gap-2 mb-2">
                                 <AlertTriangle size={16} className="text-amber-600" />
-                                <span className="text-xs font-medium text-amber-600 uppercase tracking-wider">Risk</span>
+                                <span className="text-xs font-medium text-amber-600 uppercase tracking-wider">{t('trim.riskLabel')}</span>
                               </div>
                               <p className="text-sm text-amber-800">{parsed.risk}</p>
                             </div>
@@ -335,7 +336,7 @@ export default function TrimMode() {
                     </motion.div>
                   );
                 })}
-                
+
                 {isLoading && (
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -349,7 +350,7 @@ export default function TrimMode() {
                           <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                           <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
-                        <span className="text-sm text-slate-500">Veriler analiz ediliyor...</span>
+                        <span className="text-sm text-slate-500">{t('trim.loadingAnalyzing')}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -367,27 +368,27 @@ export default function TrimMode() {
                 <button
                   type="button"
                   className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
-                  title="Dosya ekle"
+                  title={t('trim.fileAdd')}
                 >
                   <Paperclip size={20} />
                 </button>
-                
+
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Veri destekli analiz için soru sorun..."
+                  placeholder={t('trim.placeholder')}
                   className="flex-1 bg-transparent outline-none text-slate-800 placeholder:text-slate-400"
                 />
-                
+
                 <button
                   type="button"
                   onClick={() => setIsRecording(!isRecording)}
                   className={`p-2 transition-colors ${isRecording ? 'text-red-500' : 'text-slate-400 hover:text-slate-600'}`}
-                  title="Sesli komut"
+                  title={t('trim.voiceCommand')}
                 >
                   <Mic size={20} />
                 </button>
-                
+
                 <button
                   type="submit"
                   disabled={!input?.trim() || isLoading}
@@ -397,9 +398,9 @@ export default function TrimMode() {
                 </button>
               </div>
             </form>
-            
+
             <p className="text-center text-xs text-slate-400 mt-3">
-              Sail AI veri destekli stratejik analiz sunar.
+              {t('trim.footer')}
             </p>
           </div>
         </div>

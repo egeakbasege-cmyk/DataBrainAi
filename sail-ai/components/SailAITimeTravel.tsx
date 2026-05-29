@@ -4,14 +4,16 @@ import { OrbitControls, Stars, Float, Text } from '@react-three/drei';
 import { useRef, useState, useMemo, Suspense } from 'react';
 import { useChat } from 'ai/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 // Loading component for 3D scene
 function SceneLoader() {
+  const { t } = useLanguage();
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[#020202]">
       <div className="text-center">
         <div className="w-12 h-12 border-2 border-[var(--ae-gold-rule)] border-t-[var(--ae-gold)] rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-[var(--ae-gold)] text-sm font-mono tracking-widest">ZAMAN TÜNELİ YÜKLENİYOR...</p>
+        <p className="text-[var(--ae-gold)] text-sm font-mono tracking-widest">{t('timetravel.loading')}</p>
       </div>
     </div>
   );
@@ -144,6 +146,7 @@ const FileTextIcon = () => (
 );
 
 export default function SailAITimeTravel() {
+  const { t } = useLanguage();
   const [timeState, setTimeState] = useState('PRESENT');
   const [isRecording, setIsRecording] = useState(false);
   const [isSceneReady, setIsSceneReady] = useState(false);
@@ -220,7 +223,7 @@ export default function SailAITimeTravel() {
           className="w-1/4 p-8 flex flex-col justify-between pointer-events-auto bg-black/20 backdrop-blur-md border-r border-white/5"
         >
           <div>
-            <h2 className="text-[10px] tracking-[0.4em] text-[var(--ae-gold)] font-bold uppercase mb-4">Data Sources</h2>
+            <h2 className="text-[10px] tracking-[0.4em] text-[var(--ae-gold)] font-bold uppercase mb-4">{t('timetravel.dataSources')}</h2>
             <div className="space-y-4">
               {['Blockchain Ledger', 'Neural Market Feed', 'Historical ROI'].map(source => (
                 <div key={source} className="group flex items-center justify-between p-3 border border-white/10 rounded-lg hover:bg-white/5 transition-all">
@@ -232,7 +235,7 @@ export default function SailAITimeTravel() {
           </div>
           
           <div className="h-40 bg-zinc-900/40 rounded-xl border border-white/5 p-4">
-            <p className="text-[10px] text-zinc-600 uppercase mb-2 font-mono">Simulated Growth</p>
+            <p className="text-[10px] text-zinc-600 uppercase mb-2 font-mono">{t('timetravel.simulatedGrowth')}</p>
             <div className="w-full h-full flex items-end gap-1">
               {[40, 70, 45, 90, 65, 80].map((h, i) => (
                 <motion.div 
@@ -319,20 +322,20 @@ export default function SailAITimeTravel() {
                   type="button"
                   onClick={handleFileUpload}
                   className="p-2.5 text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-                  title="Dosya Yukle"
+                  title={t('timetravel.fileUpload')}
                 >
                   <PaperclipIcon />
                 </button>
 
-                {/* Input Alani */}
+                {/* Input Area */}
                 <input
                   value={input}
                   onChange={handleInputChange}
-                  placeholder="Zaman tunelinde bir komut ver..."
+                  placeholder={t('timetravel.placeholder')}
                   className="flex-1 bg-transparent p-2 text-white text-sm font-light focus:outline-none placeholder:text-zinc-600"
                 />
 
-                {/* Sesli Giris Butonu */}
+                {/* Voice Input Button */}
                 <button
                   type="button"
                   onClick={handleVoiceInput}
@@ -341,20 +344,20 @@ export default function SailAITimeTravel() {
                       ? 'bg-red-500/20 text-red-400 animate-pulse'
                       : 'text-zinc-500 hover:text-white hover:bg-white/5'
                   }`}
-                  title="Sesli Komut"
+                  title={t('timetravel.voiceCommand')}
                 >
                   <div className={isRecording ? 'animate-bounce' : ''}>
                     <MicIcon />
                   </div>
                 </button>
 
-                {/* Gonder Butonu */}
+                {/* Send Button */}
                 <button
                   type="submit"
                   disabled={!input?.trim() || isLoading}
                   className="p-2.5 bg-[var(--ae-gold)] hover:bg-[var(--ae-gold-bright)] disabled:bg-[var(--ae-bg-elevated)] disabled:text-[var(--ae-text-ghost)] rounded-xl transition-all"
                   style={{ color: '#080810' }}
-                  title="Gonder"
+                  title={t('timetravel.send')}
                 >
                   <SendIcon />
                 </button>

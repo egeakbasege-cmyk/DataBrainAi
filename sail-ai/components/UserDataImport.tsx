@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 // ── User source types ─────────────────────────────────────────────────────────
 
@@ -86,6 +87,7 @@ const BTN_GOLD = {
 // ── URL Import Tab ────────────────────────────────────────────────────────────
 
 function URLTab({ sources, onAdd, onRemove }: { sources: UserDataSource[]; onAdd: (s: Omit<UserDataSource, 'id' | 'connected_at'>) => void; onRemove: (id: string) => void }) {
+  const { t } = useLanguage()
   const [url,     setUrl]     = useState('')
   const [label,   setLabel]   = useState('')
   const [loading, setLoading] = useState(false)
@@ -99,7 +101,7 @@ function URLTab({ sources, onAdd, onRemove }: { sources: UserDataSource[]; onAdd
     if (!trimmed) return
     setError('')
     try { new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`) }
-    catch { setError('Geçerli bir URL girin (örn: https://mystore.myshopify.com)'); return }
+    catch { setError(t('userdata.errInvalidUrl')); return }
     setLoading(true)
     await new Promise(r => setTimeout(r, 500))
     onAdd({ type: 'url', platform: detected?.name ?? 'Custom', label: label.trim() || detected?.name || trimmed, url: trimmed.startsWith('http') ? trimmed : `https://${trimmed}` })
@@ -109,7 +111,7 @@ function URLTab({ sources, onAdd, onRemove }: { sources: UserDataSource[]; onAdd
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       <p style={{ ...BASE_FONT, fontSize: '0.72rem', color: '#6B7280', margin: 0 }}>
-        Mağaza, satıcı profili veya ürün sayfası URL'sini yapıştır.
+        {t('userdata.urlInstructions')}
       </p>
 
       <div style={{ position: 'relative' }}>
@@ -129,7 +131,7 @@ function URLTab({ sources, onAdd, onRemove }: { sources: UserDataSource[]; onAdd
 
       <input
         style={INPUT_STYLE}
-        placeholder="Etiket (opsiyonel — örn: 'Rakip Mağaza 1')"
+        placeholder={t('userdata.labelPlaceholder')}
         value={label}
         onChange={e => setLabel(e.target.value)}
       />
@@ -137,12 +139,12 @@ function URLTab({ sources, onAdd, onRemove }: { sources: UserDataSource[]; onAdd
       {error && <p style={{ ...BASE_FONT, fontSize: '0.7rem', color: '#EF4444', margin: 0 }}>{error}</p>}
 
       <button onClick={() => void handleAdd()} disabled={!url.trim() || loading} style={{ ...BTN_GOLD, opacity: (!url.trim() || loading) ? 0.5 : 1 }}>
-        {loading ? 'Ekleniyor…' : 'Kaynak Ekle'}
+        {loading ? t('userdata.addSourceLoading') : t('userdata.addSource')}
       </button>
 
       {urlSources.length > 0 && (
         <div>
-          <p style={LABEL_STYLE}>Bağlı kaynaklar</p>
+          <p style={LABEL_STYLE}>{t('userdata.connectedSources')}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
             {urlSources.map(src => {
               const p = detectPlatform(src.url ?? '')
@@ -169,6 +171,7 @@ function URLTab({ sources, onAdd, onRemove }: { sources: UserDataSource[]; onAdd
 // ── OAuth Tab ─────────────────────────────────────────────────────────────────
 
 function OAuthTab({ sources, onAdd, onRemove }: { sources: UserDataSource[]; onAdd: (s: Omit<UserDataSource, 'id' | 'connected_at'>) => void; onRemove: (id: string) => void }) {
+  const { t } = useLanguage()
   const [connecting, setConnecting] = useState<string | null>(null)
   const connectedIds = new Set(sources.filter(s => s.type === 'oauth').map(s => s.platform.toLowerCase()))
 
@@ -176,14 +179,14 @@ function OAuthTab({ sources, onAdd, onRemove }: { sources: UserDataSource[]; onA
     if (connectedIds.has(p.id)) return
     setConnecting(p.id)
     await new Promise(r => setTimeout(r, 1000))
-    onAdd({ type: 'oauth', platform: p.name, label: `${p.name} Hesabım` })
+    onAdd({ type: 'oauth', platform: p.name, label: `${p.name} Account` })
     setConnecting(null)
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
       <p style={{ ...BASE_FONT, fontSize: '0.72rem', color: '#6B7280', margin: 0 }}>
-        Hesabınla giriş yap — satıcı verilerine doğrudan erişerek derin analiz yap.
+        {t('userdata.oauthInstructions')}
       </p>
       {OAUTH_PLATFORMS.map(p => {
         const isConnected  = connectedIds.has(p.id)
@@ -202,14 +205,14 @@ function OAuthTab({ sources, onAdd, onRemove }: { sources: UserDataSource[]; onA
             <div style={{ flexShrink: 0, marginLeft: 12 }}>
               {isConnected ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ ...BASE_FONT, fontSize: '0.65rem', color: p.color, fontWeight: 600 }}>✓ Bağlı</span>
-                  {src && <button onClick={() => onRemove(src.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: '0.65rem' }}>Kes</button>}
+                  <span style={{ ...BASE_FONT, fontSize: '0.65rem', color: p.color, fontWeight: 600 }}>{t('userdata.connected')}</span>
+                  {src && <button onClick={() => onRemove(src.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: '0.65rem' }}>{t('userdata.disconnect')}</button>}
                 </div>
               ) : isConnecting ? (
-                <span style={{ ...BASE_FONT, fontSize: '0.7rem', color: '#9CA3AF' }}>Bağlanıyor…</span>
+                <span style={{ ...BASE_FONT, fontSize: '0.7rem', color: '#9CA3AF' }}>{t('userdata.connecting')}</span>
               ) : (
                 <button onClick={() => void handleConnect(p)} style={{ ...BASE_FONT, padding: '0.3rem 0.75rem', background: p.color, color: '#FFF', border: 'none', borderRadius: 6, fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>
-                  Bağlan
+                  {t('userdata.connect')}
                 </button>
               )}
             </div>
@@ -223,6 +226,7 @@ function OAuthTab({ sources, onAdd, onRemove }: { sources: UserDataSource[]; onA
 // ── Main Drawer ───────────────────────────────────────────────────────────────
 
 export function UserDataImport({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useLanguage()
   const [tab,     setTab]     = useState<'url' | 'oauth'>('url')
   const [sources, setSources] = useState<UserDataSource[]>([])
 
@@ -265,9 +269,11 @@ export function UserDataImport({ open, onClose }: { open: boolean; onClose: () =
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
           <div>
-            <h2 style={{ ...BASE_FONT, fontSize: '0.875rem', fontWeight: 700, color: '#0C0C0E', margin: 0 }}>Verim Ekle</h2>
+            <h2 style={{ ...BASE_FONT, fontSize: '0.875rem', fontWeight: 700, color: '#0C0C0E', margin: 0 }}>{t('userdata.drawerTitle')}</h2>
             <p style={{ ...BASE_FONT, fontSize: '0.65rem', color: '#9CA3AF', margin: '0.15rem 0 0' }}>
-              {sources.length > 0 ? `${sources.length} kaynak bağlı` : 'Kendi mağaza verilerini getir'}
+              {sources.length > 0
+                ? `${sources.length} ${t('userdata.sourcesConnected')}`
+                : t('userdata.noSourcesYet')}
             </p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: '#9CA3AF', lineHeight: 1 }}>✕</button>
@@ -275,25 +281,25 @@ export function UserDataImport({ open, onClose }: { open: boolean; onClose: () =
 
         {/* Tabs */}
         <div style={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-          {(['url', 'oauth'] as const).map(t => (
+          {(['url', 'oauth'] as const).map(tabKey => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={tabKey}
+              onClick={() => setTab(tabKey)}
               style={{
                 flex:        1,
                 padding:     '0.625rem',
                 ...BASE_FONT,
                 fontSize:    '0.72rem',
                 fontWeight:  600,
-                color:       tab === t ? '#C9A96E' : '#9CA3AF',
+                color:       tab === tabKey ? '#C9A96E' : '#9CA3AF',
                 background:  'none',
                 border:      'none',
-                borderBottom: tab === t ? '2px solid #C9A96E' : '2px solid transparent',
+                borderBottom: tab === tabKey ? '2px solid #C9A96E' : '2px solid transparent',
                 cursor:      'pointer',
                 transition:  'all 0.15s',
               }}
             >
-              {t === 'url' ? '🔗 URL ile İçe Aktar' : '🔑 Hesabınla Bağlan'}
+              {tabKey === 'url' ? t('userdata.tabUrlImport') : t('userdata.tabOAuthConnect')}
             </button>
           ))}
         </div>
@@ -304,13 +310,6 @@ export function UserDataImport({ open, onClose }: { open: boolean; onClose: () =
             ? <URLTab   sources={sources} onAdd={addSource} onRemove={removeSource} />
             : <OAuthTab sources={sources} onAdd={addSource} onRemove={removeSource} />
           }
-        </div>
-
-        {/* Footer */}
-        <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid rgba(0,0,0,0.07)', background: '#FAFAFA' }}>
-          <p style={{ ...BASE_FONT, fontSize: '0.62rem', color: '#9CA3AF', textAlign: 'center', margin: 0 }}>
-            Veriler yalnızca analiz için kullanılır ve saklanmaz.
-          </p>
         </div>
       </div>
     </>

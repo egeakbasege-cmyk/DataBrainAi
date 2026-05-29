@@ -183,6 +183,7 @@ function BenchmarkSection({ benchmarks }: { benchmarks: StrategyResult['benchmar
 }
 
 export function AnswerCard({ result, streamText, isStreaming, agentMode = 'auto' }: Props) {
+  const { t } = useLanguage()
   if (isStreaming) {
     return (
       <motion.div {...up()} className="card-linen p-6">
@@ -192,7 +193,7 @@ export function AnswerCard({ result, streamText, isStreaming, agentMode = 'auto'
               className="w-2 h-2 rounded-full"
               style={{ background: '#C9A96E', animation: 'pulse 1.2s ease-in-out infinite' }}
             />
-            <span className="label-caps">Generating your strategy</span>
+            <span className="label-caps">{t('answer.generating')}</span>
           </div>
           <AgentBadge mode={agentMode} />
         </div>

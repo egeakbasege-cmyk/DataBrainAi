@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Nav } from '@/components/Nav'
 import { ConnectorLogo } from '@/components/ConnectorLogos'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 const _EASE = [0.22, 1, 0.36, 1] as const
 const _fadeUp = { hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.65, ease: _EASE } } }
@@ -626,6 +627,7 @@ const SEVERITY_COLOUR: Record<string, string> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function DataLabPage() {
+  const { t } = useLanguage()
   const { data: session, status } = useSession()
 
   const [step, setStep] = useState<Step>(1)
@@ -1110,7 +1112,7 @@ export default function DataLabPage() {
                 onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = activeIndustry.color; (e.currentTarget as HTMLButtonElement).style.color = '#fff' }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = activeIndustry.color }}
               >
-                Bağlan
+                {t('userdata.connect')}
               </button>
             </div>
           </div>
@@ -1123,7 +1125,7 @@ export default function DataLabPage() {
           onClick={() => { setConnectedSource(MOCK_SOURCES.shopify); setStep(2) }}
           style={{ background: 'transparent', border: 'none', color: '#9CA3AF', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(156,163,175,0.4)' }}
         >
-          Örnek veri ile dene
+          {t('userdata.noSourcesYet')}
         </button>
         <span style={{ color: '#D1D5DB', fontSize: '0.7rem' }}>|</span>
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#9CA3AF' }}>
@@ -1231,9 +1233,9 @@ export default function DataLabPage() {
           {/* Tabs */}
           <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             {([
-              { id: 'analysis',    label: '🔍 Analiz' },
+              { id: 'analysis',    label: `🔍 ${t('trim.analysisLabel')}` },
               { id: 'benchmarks',  label: '📈 Benchmark' },
-              { id: 'price-scout', label: '🛒 Fiyat Karşılaştır' },
+              { id: 'price-scout', label: `🛒 ${t('datalab.priceSearchButton').replace(' →', '')}` },
             ] as { id: TabType; label: string }[]).map((t) => (
               <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: '0.5rem 1.1rem', borderRadius: 7, border: 'none', background: activeTab === t.id ? '#14B8A6' : 'rgba(255,255,255,0.7)', color: activeTab === t.id ? '#fff' : '#6B7280', fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', fontWeight: activeTab === t.id ? 600 : 400, cursor: 'pointer' }}>
                 {t.label}
@@ -1250,12 +1252,12 @@ export default function DataLabPage() {
                   <input
                     ref={queryRef} type="text" value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Veriniz hakkında herhangi bir soru sorun…"
+                    placeholder={t('datalab.analysisPlaceholder')}
                     style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: '#374151', background: 'transparent' }}
                   />
                   <button type="submit" disabled={!query.trim() || analyzing}
                     style={{ background: query.trim() ? '#14B8A6' : '#E5E7EB', color: query.trim() ? '#fff' : '#9CA3AF', border: 'none', borderRadius: 7, padding: '0.6rem 1.1rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', cursor: query.trim() ? 'pointer' : 'not-allowed' }}>
-                    Analiz Et →
+                    {t('datalab.analyzeButton')}
                   </button>
                 </div>
               </form>
@@ -1290,10 +1292,10 @@ export default function DataLabPage() {
               <div style={{ ...cardStyle, textAlign: 'center', padding: '2.5rem 2rem' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.6rem' }}>{activeTab === 'analysis' ? '🔍' : '📈'}</div>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 600, color: '#111827', margin: '0 0 0.35rem' }}>
-                  {activeTab === 'analysis' ? 'Soru sorun, analiz başlasın' : 'Benchmark karşılaştırması için soru sorun'}
+                  {activeTab === 'analysis' ? t('datalab.analysisHeading') : t('datalab.benchmarkHeading')}
                 </p>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: '#9CA3AF', margin: 0 }}>
-                  Yukarıya yazın veya hazır sorulardan birini seçin.
+                  {t('datalab.instructions')}
                 </p>
               </div>
             </>
@@ -1308,12 +1310,12 @@ export default function DataLabPage() {
                   <input
                     ref={priceQueryRef} type="text" value={priceQuery}
                     onChange={(e) => setPriceQuery(e.target.value)}
-                    placeholder="Ürün veya hizmet adı girin… (e.g. iPhone 15 Pro, Airbnb Istanbul 2 bedroom)"
+                    placeholder={t('datalab.priceScoutPlaceholder')}
                     style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: '#374151', background: 'transparent' }}
                   />
                   <button type="submit" disabled={!priceQuery.trim() || priceSearching}
                     style={{ background: priceQuery.trim() ? '#C9A96E' : '#E5E7EB', color: priceQuery.trim() ? '#fff' : '#9CA3AF', border: 'none', borderRadius: 7, padding: '0.6rem 1.1rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', cursor: priceQuery.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
-                    {priceSearching ? '🔍 Taranıyor…' : 'Fiyat Bul →'}
+                    {priceSearching ? t('datalab.priceSearching') : t('datalab.priceSearchButton')}
                   </button>
                 </div>
               </form>
@@ -1321,7 +1323,7 @@ export default function DataLabPage() {
               {/* Quick search suggestions */}
               {!priceResults && !priceSearching && (
                 <div style={{ marginBottom: '1.5rem' }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', color: '#9CA3AF', margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Hızlı Örnekler</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', color: '#9CA3AF', margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('datalab.quickExamples')}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                     {[
                       'Sony WH-1000XM5 kulaklık', 'Shopify Plus plan price', 'Istanbul Airbnb 2 bedroom',
@@ -1341,8 +1343,8 @@ export default function DataLabPage() {
               {priceSearching && (
                 <div style={{ ...cardStyle, textAlign: 'center', padding: '3rem 2rem' }}>
                   <div style={{ fontSize: '2rem', marginBottom: '0.75rem', animation: 'pulse 1s infinite' }}>🔍</div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#111827', margin: 0 }}>İnternette en iyi fiyat aranıyor…</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#9CA3AF', margin: '0.5rem 0 0' }}>Fiyat karşılaştırma, alternatifler, değerlendirmeler…</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#111827', margin: 0 }}>{t('datalab.priceSearchLoading')}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#9CA3AF', margin: '0.5rem 0 0' }}>{t('datalab.priceSearchSubtext')}</p>
                 </div>
               )}
 
