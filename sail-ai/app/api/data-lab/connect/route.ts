@@ -610,6 +610,323 @@ function connectAmazon(token: string): { success: false; error: string; hint: st
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Klaviyo connector  (private API key → account + metrics info)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function connectKlaviyo(apiKey: string): Promise<
+  { success: true; source: SourceSummary } | { success: false; error: string; hint: string }
+> {
+  if (!apiKey || apiKey.length < 10) {
+    return {
+      success: false,
+      error: 'Klaviyo private API key is required.',
+      hint:  'Find it in Klaviyo → Settings → Account → Private API Keys. It starts with "pk_".',
+    }
+  }
+
+  try {
+    const r = await fetch('https://a.klaviyo.com/api/accounts/', {
+      headers: {
+        Authorization: `Klaviyo-API-Key ${apiKey}`,
+        revision: '2024-02-15',
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (r.status === 401 || r.status === 403) {
+      return {
+        success: false,
+        error:   'Invalid Klaviyo API key.',
+        hint:    'Make sure you are using a private key, not a public key. Private keys start with "pk_".',
+      }
+    }
+    if (!r.ok) {
+      return { success: false, error: `Klaviyo returned ${r.status}.`, hint: 'Check that your API key is active.' }
+    }
+
+    const json = await r.json()
+    const account = json.data?.[0]?.attributes ?? {}
+
+    return {
+      success: true,
+      source: {
+        type:       'api',
+        name:       account.contact_information?.organization_name ?? 'Klaviyo Account',
+        syncedAt:   now(),
+        revenue:    'N/A — use Klaviyo dashboard for revenue attribution',
+        orders:     'N/A',
+        aov:        'N/A',
+        topProduct: 'N/A',
+        extra: [
+          { label: 'Account',   value: account.contact_information?.organization_name ?? '—' },
+          { label: 'Timezone',  value: account.preferred_timezone ?? '—' },
+          { label: 'Currency',  value: account.preferred_currency ?? '—' },
+          { label: 'Tip',       value: 'Klaviyo revenue attribution is available in your Klaviyo dashboard under Analytics → Revenue.' },
+        ],
+      },
+    }
+  } catch (e: unknown) {
+    return { success: false, error: 'Could not reach Klaviyo.', hint: String(e instanceof Error ? e.message : e) }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stripe connector  (restricted key → balance + recent charges)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function connectStripe(apiKey: string): Promise<
+  { success: true; source: SourceSummary } | { success: false; error: string; hint: string }
+> {
+  if (!apiKey || !apiKey.startsWith('sk_') && !apiKey.startsWith('rk_')) {
+    return {
+      success: false,
+      error: 'Stripe API key not recognised.',
+      hint:  'Use a restricted key (rk_live_…) with read-only access. Find it in Stripe Dashboard → Developers → API Keys.',
+    }
+  }
+
+  try {
+    // Fetch balance
+    const balR = await fetch('https://api.stripe.com/v1/balance', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (balR.status === 401) {
+      return {
+        success: false,
+        error: 'Invalid Stripe API key.',
+        hint:  'Make sure you are using a live or test secret/restricted key from Stripe Dashboard → Developers.',
+      }
+    }
+    if (!balR.ok) {
+      return { success: false, error: `Stripe returned ${balR.status}.`, hint: 'Check your key permissions.' }
+    }
+    const balance = await balR.json()
+    const availableRaw = balance.available?.[0]?.amount ?? 0
+    const currency     = (balance.available?.[0]?.currency ?? 'usd').toUpperCase()
+    const available    = availableRaw / 100 // Stripe amounts are in cents
+
+    // Fetch last 30 days of charges (100 max)
+    const since = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000)
+    const chR   = await fetch(
+      `https://api.stripe.com/v1/charges?limit=100&created[gte]=${since}`,
+      { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(10_000) },
+    )
+
+    let totalRevenue = 0
+    let orderCount   = 0
+    if (chR.ok) {
+      const charges = await chR.json()
+      const list: Array<{ amount: number; status: string }> = charges.data ?? []
+      const successful = list.filter(c => c.status === 'succeeded')
+      totalRevenue = successful.reduce((s, c) => s + c.amount / 100, 0)
+      orderCount   = successful.length
+    }
+
+    const aov = orderCount > 0 ? totalRevenue / orderCount : 0
+
+    return {
+      success: true,
+      source: {
+        type:       'api',
+        name:       'Stripe Account',
+        syncedAt:   now(),
+        revenue:    totalRevenue > 0 ? fmt(totalRevenue, 0) + '/30d' : 'N/A',
+        orders:     orderCount > 0 ? fmtInt(orderCount) + '/30d' : 'N/A',
+        aov:        aov > 0 ? fmt(aov) : 'N/A',
+        topProduct: 'N/A — see Stripe dashboard',
+        extra: [
+          { label: 'Balance Available', value: `${currency} ${fmt(available, 2)}` },
+          { label: 'Currency',          value: currency },
+          { label: 'Data Window',       value: 'Last 30 days (up to 100 charges)' },
+          { label: 'Tip',               value: 'Use a restricted key with charges:read and balance:read permissions only.' },
+        ],
+      },
+    }
+  } catch (e: unknown) {
+    return { success: false, error: 'Could not reach Stripe.', hint: String(e instanceof Error ? e.message : e) }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WooCommerce connector  (Consumer Key + Secret via Basic Auth)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function connectWooCommerce(domain: string, consumerKey: string, consumerSecret: string): Promise<
+  { success: true; source: SourceSummary } | { success: false; error: string; hint: string }
+> {
+  const host = domain.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').trim()
+  if (!host) {
+    return {
+      success: false,
+      error: 'Store domain is required.',
+      hint:  'Enter your WordPress site domain in the first field, e.g. mystore.com',
+    }
+  }
+  if (!consumerKey || !consumerSecret) {
+    return {
+      success: false,
+      error: 'WooCommerce Consumer Key and Secret are required.',
+      hint:  'Generate them in WordPress → WooCommerce → Settings → Advanced → REST API.',
+    }
+  }
+
+  const credentials = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')
+  const base        = `https://${host}/wp-json/wc/v3`
+  const headers     = { Authorization: `Basic ${credentials}`, 'Content-Type': 'application/json' }
+
+  try {
+    // Fetch store info
+    const infoR = await fetch(`${base}/system_status`, { headers, signal: AbortSignal.timeout(10_000) })
+    if (infoR.status === 401 || infoR.status === 403) {
+      return {
+        success: false,
+        error: 'Invalid WooCommerce credentials.',
+        hint:  'Make sure the key has "Read" permissions. Regenerate in WooCommerce → Settings → Advanced → REST API.',
+      }
+    }
+    if (infoR.status === 404) {
+      return {
+        success: false,
+        error: `WooCommerce REST API not found at ${host}.`,
+        hint:  'Make sure WooCommerce is installed and permalinks are set to "Post name" in WordPress Settings.',
+      }
+    }
+
+    // Fetch recent orders
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    const ordR  = await fetch(
+      `${base}/orders?after=${since}&status=completed&per_page=100`,
+      { headers, signal: AbortSignal.timeout(12_000) },
+    )
+
+    let totalRevenue = 0
+    let orderCount   = 0
+    let topProduct   = 'N/A'
+
+    if (ordR.ok) {
+      const orders: Array<{ total: string; line_items: Array<{ name: string }> }> = await ordR.json()
+      orderCount   = orders.length
+      totalRevenue = orders.reduce((s, o) => s + parseFloat(o.total ?? '0'), 0)
+      topProduct   = orders[0]?.line_items?.[0]?.name ?? 'N/A'
+    }
+
+    const aov = orderCount > 0 ? totalRevenue / orderCount : 0
+
+    return {
+      success: true,
+      source: {
+        type:       'api',
+        name:       host,
+        syncedAt:   now(),
+        revenue:    totalRevenue > 0 ? fmt(totalRevenue, 0) + '/30d' : 'N/A',
+        orders:     fmtInt(orderCount) + '/30d',
+        aov:        aov > 0 ? fmt(aov) : 'N/A',
+        topProduct,
+        extra: [
+          { label: 'Platform', value: 'WooCommerce' },
+          { label: 'Domain',   value: host },
+          { label: 'Period',   value: 'Last 30 days (completed orders)' },
+        ],
+      },
+    }
+  } catch (e: unknown) {
+    return { success: false, error: 'Could not reach your WooCommerce store.', hint: String(e instanceof Error ? e.message : e) }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OAuth-required platform stubs — return clear, specific "coming soon" messages
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface OAuthPlatformConfig {
+  name:  string
+  error: string
+  hint:  string
+}
+
+const OAUTH_PLATFORMS: Record<string, OAuthPlatformConfig> = {
+  'meta-ads': {
+    name:  'Meta Ads',
+    error: 'Meta Ads requires OAuth login.',
+    hint:  'Meta Ads integration (Facebook + Instagram) requires OAuth via the Marketing API. Coming soon — connect your ad account directly through the Meta Business Suite in the meantime.',
+  },
+  'google-ads': {
+    name:  'Google Ads',
+    error: 'Google Ads requires OAuth login.',
+    hint:  'Google Ads uses OAuth 2.0 via the Google Ads API. Coming soon — you can export a CSV report from Google Ads and use the CSV connector now.',
+  },
+  'amazon-ppc': {
+    name:  'Amazon PPC',
+    error: 'Amazon Advertising requires OAuth.',
+    hint:  'Amazon Advertising API requires an OAuth flow through Seller Central. Coming soon — you can download an SB/SP report and use the CSV connector now.',
+  },
+  'tiktok-ads': {
+    name:  'TikTok Ads',
+    error: 'TikTok Ads requires OAuth login.',
+    hint:  'TikTok Marketing API requires app authorization via OAuth. Coming soon — export a CSV report from TikTok Ads Manager for now.',
+  },
+  'ga4': {
+    name:  'Google Analytics 4',
+    error: 'GA4 requires a Google Service Account.',
+    hint:  'GA4 Data API needs a Service Account JSON key or OAuth 2.0. Coming soon — you can use the GA4 Data Export (BigQuery) with our CSV connector in the meantime.',
+  },
+  'ebay': {
+    name:  'eBay',
+    error: 'eBay requires OAuth.',
+    hint:  'eBay Sell Analytics API requires OAuth via an eBay developer account. Coming soon — export your eBay seller report as CSV and use the CSV connector now.',
+  },
+  'etsy': {
+    name:  'Etsy',
+    error: 'Etsy requires OAuth.',
+    hint:  'Etsy Open API v3 requires OAuth 2.0 authorization. Coming soon — download your Etsy order CSV from Stats & Finances and use the CSV connector now.',
+  },
+  'tiktokshop': {
+    name:  'TikTok Shop',
+    error: 'TikTok Shop requires OAuth.',
+    hint:  'TikTok Shop Open Platform requires app authorization. Coming soon — you can export a CSV from TikTok Shop Seller Center for now.',
+  },
+  'booking': {
+    name:  'Booking.com',
+    error: 'Booking.com requires partner API access.',
+    hint:  'Booking.com Connectivity API requires formal partner approval and OAuth. Coming soon.',
+  },
+  'airbnb': {
+    name:  'Airbnb',
+    error: 'Airbnb requires OAuth.',
+    hint:  'Airbnb API requires OAuth via an approved host account. Coming soon — export a CSV from your Airbnb host dashboard for now.',
+  },
+  'expedia': {
+    name:  'Expedia',
+    error: 'Expedia requires partner API credentials.',
+    hint:  'Expedia EPS (Partner Solutions) API requires partner approval. Coming soon.',
+  },
+  'tripadvisor': {
+    name:  'Tripadvisor',
+    error: 'Tripadvisor requires Content API access.',
+    hint:  'Tripadvisor Content API requires approval from Tripadvisor. Coming soon.',
+  },
+  'fiverr': {
+    name:  'Fiverr',
+    error: 'Fiverr does not provide a seller revenue API.',
+    hint:  'Fiverr does not offer a public revenue API for sellers. Export your earnings CSV from Fiverr Analytics and use the CSV connector.',
+  },
+  'upwork': {
+    name:  'Upwork',
+    error: 'Upwork requires OAuth.',
+    hint:  'Upwork API requires OAuth 2.0. Coming soon — export your earnings report from Upwork Reports as CSV for now.',
+  },
+}
+
+function connectOAuthPlatform(type: string): { success: false; error: string; hint: string } {
+  const cfg = OAUTH_PLATFORMS[type]
+  if (!cfg) {
+    return { success: false, error: `Connector "${type}" is not yet supported.`, hint: 'More platforms are being added. Try the CSV or API connector in the meantime.' }
+  }
+  return { success: false, error: cfg.error, hint: cfg.hint }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POST handler
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -637,22 +954,70 @@ export async function POST(req: NextRequest) {
     | { success: false; error: string; hint: string }
 
   switch (connectorType) {
+    // ── Fully implemented ────────────────────────────────────────────────────
     case 'shopify':
-      // field 1 (key)    = store domain   e.g. mystore.myshopify.com
-      // field 2 (domain) = access token   e.g. shpat_xxxxx
+      // key = store domain (mystore.myshopify.com), domain = access token
       result = await connectShopify(credentials.key, credentials.domain ?? '')
       break
+
     case 'amazon':
       result = connectAmazon(credentials.key)
       break
+
     case 'csv':
       result = await connectCsv(credentials.key)
       break
+
     case 'api':
       result = await connectApi(credentials.key)
       break
+
+    case 'klaviyo':
+      result = await connectKlaviyo(credentials.key)
+      break
+
+    case 'stripe':
+      result = await connectStripe(credentials.key)
+      break
+
+    case 'woocommerce':
+      // key = consumer key, domain = consumer secret  (domain field reused as secret)
+      // First field label in UI should be: "Consumer Key"
+      // Second field label in UI should be: "Consumer Secret + store domain"
+      // We need store domain too — encode as "domain|secret" or use key as "domain" and domain as key
+      // Convention: credentials.key = store domain, credentials.domain = consumer key:secret (colon-separated)
+      {
+        const parts  = (credentials.domain ?? '').split(':')
+        const ck     = parts[0] ?? ''
+        const cs     = parts.slice(1).join(':')
+        result = await connectWooCommerce(credentials.key, ck, cs)
+      }
+      break
+
+    // ── OAuth-required / coming soon ─────────────────────────────────────────
+    case 'ebay':
+    case 'etsy':
+    case 'tiktokshop':
+    case 'meta-ads':
+    case 'google-ads':
+    case 'amazon-ppc':
+    case 'tiktok-ads':
+    case 'ga4':
+    case 'booking':
+    case 'airbnb':
+    case 'expedia':
+    case 'tripadvisor':
+    case 'fiverr':
+    case 'upwork':
+      result = connectOAuthPlatform(connectorType)
+      break
+
     default:
-      result = { success: false, error: `Unknown connector type: ${connectorType}`, hint: '' }
+      result = {
+        success: false,
+        error:   `Connector "${connectorType}" is not yet supported.`,
+        hint:    'Check back soon — more platforms are being added. Use the CSV or API connector in the meantime.',
+      }
   }
 
   return NextResponse.json(result)

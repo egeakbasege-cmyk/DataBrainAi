@@ -140,7 +140,7 @@ const INDUSTRY_GROUPS: IndustryGroup[] = [
     connectors: [
       { id: 'shopify',    name: 'Shopify',       icon: '🟢', description: 'Admin API ile gerçek sipariş, gelir ve ürün verisi', fieldLabel: 'Store Domain', placeholder: 'mystore.myshopify.com', field2Label: 'Admin API Access Token', field2Placeholder: 'shpat_xxxxxxxxxxxxxxxxxxxxxxxx' },
       { id: 'amazon',     name: 'Amazon',         icon: '📦', description: 'SP-API ile satış hızı, BSR, stok sağlığı ve iadeler', fieldLabel: 'SP-API Refresh Token', placeholder: 'Atzr|xxxxxxxxxxxxxxxxxxxxxxxx' },
-      { id: 'woocommerce',name: 'WooCommerce',    icon: '🔵', description: 'REST API ile WordPress mağaza verisi', fieldLabel: 'Site URL', placeholder: 'https://mysite.com', field2Label: 'Consumer Key', field2Placeholder: 'ck_xxxxxxxxxxxxxxxxxxxxxxxx' },
+      { id: 'woocommerce',name: 'WooCommerce',    icon: '🔵', description: 'REST API ile WordPress mağaza verisi', fieldLabel: 'Site URL', placeholder: 'mysite.com', field2Label: 'Consumer Key:Secret', field2Placeholder: 'ck_xxx:cs_xxx (colon-separated)' },
       { id: 'ebay',       name: 'eBay',           icon: '🟡', description: 'Satıcı merkezi URL veya mağaza sayfası analizi', fieldLabel: 'Store URL', placeholder: 'https://www.ebay.com/str/yourstore' },
       { id: 'etsy',       name: 'Etsy',           icon: '🟤', description: 'Mağaza URL ile ürün ve satış analizi', fieldLabel: 'Shop URL', placeholder: 'https://www.etsy.com/shop/yourshop' },
       { id: 'tiktokshop', name: 'TikTok Shop',    icon: '🎵', description: 'TikTok mağaza ve içerik performansı', fieldLabel: 'Shop/Profile URL', placeholder: 'https://www.tiktok.com/@yourstore' },
@@ -162,7 +162,7 @@ const INDUSTRY_GROUPS: IndustryGroup[] = [
       { id: 'google-ads',  name: 'Google Ads',     icon: '🔴', description: 'Search, Display, Shopping kampanya verisi', fieldLabel: 'Website Domain', placeholder: 'https://yoursite.com' },
       { id: 'amazon-ppc',  name: 'Amazon PPC',     icon: '📦', description: 'Sponsored Products, Brands, Display ACOS analizi', fieldLabel: 'SP-API Token', placeholder: 'Atzr|xxxxxxxxxxxxxxxxxxxxxxxx' },
       { id: 'tiktok-ads',  name: 'TikTok Ads',     icon: '🎵', description: 'TikTok for Business kampanya ve creative analizi', fieldLabel: 'Business URL or Account', placeholder: 'https://www.tiktok.com/@yourbrand' },
-      { id: 'klaviyo',     name: 'Klaviyo',         icon: '📧', description: 'Email & SMS pazarlama gelir analizi', fieldLabel: 'Brand URL or Public API Key', placeholder: 'https://yoursite.com or pk_xxx' },
+      { id: 'klaviyo',     name: 'Klaviyo',         icon: '📧', description: 'Email & SMS pazarlama gelir analizi', fieldLabel: 'Private API Key', placeholder: 'pk_xxxxxxxxxxxxxxxxxxxxxxxx' },
       { id: 'api',         name: 'Custom Ad Data',  icon: '🔗', description: 'Herhangi bir reklam platformu API\'si', fieldLabel: 'Endpoint URL', placeholder: 'https://your-ads-platform.com/api/stats' },
     ],
     queryCategories: [
@@ -193,7 +193,7 @@ const INDUSTRY_GROUPS: IndustryGroup[] = [
     id: 'services', name: 'Hizmet & SaaS', icon: '⚙️', color: '#EC4899',
     description: 'Freelance, ajans, SaaS ve abonelik işletmeleri',
     connectors: [
-      { id: 'stripe',  name: 'Stripe',   icon: '🟣', description: 'Ödeme ve abonelik gelir analizi', fieldLabel: 'Business Website or Stripe Dashboard URL', placeholder: 'https://yoursite.com' },
+      { id: 'stripe',  name: 'Stripe',   icon: '🟣', description: 'Ödeme ve abonelik gelir analizi', fieldLabel: 'Restricted API Key', placeholder: 'Stripe restricted key (rk_live_…)' },
       { id: 'fiverr',  name: 'Fiverr',   icon: '🟢', description: 'Freelancer profil ve gig performans analizi', fieldLabel: 'Profile URL', placeholder: 'https://www.fiverr.com/yourprofile' },
       { id: 'upwork',  name: 'Upwork',   icon: '🟢', description: 'Freelancer profil, proje ve kazanç analizi', fieldLabel: 'Profile URL', placeholder: 'https://www.upwork.com/freelancers/...' },
       { id: 'api',     name: 'Custom API', icon: '🔗', description: 'Kendi sisteminizdeki herhangi bir veri kaynağı', fieldLabel: 'Endpoint URL', placeholder: 'https://your-app.com/api/analytics' },

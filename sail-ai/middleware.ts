@@ -131,7 +131,13 @@ export default auth(async (req: NextRequest & { auth?: any }) => {
   }
 
   // ── Auth guard for protected API endpoints ───────────────────────────────
-  const guarded = ['/api/chat', '/api/analyze', '/api/checkout']
+  const guarded = [
+    '/api/chat',
+    '/api/analyze',
+    '/api/checkout',
+    '/api/data-lab',   // all data-lab routes (connect, analyze, price-scout)
+    '/api/kairos',     // all kairos routes (analyze, chat)
+  ]
   if (guarded.some((p) => path.startsWith(p)) && !req.auth) {
     return NextResponse.json(
       { statusCode: 401, errorCode: 'UNAUTHORIZED', message: 'Please sign in to use Sail AI.' },
