@@ -101,6 +101,12 @@ import {
 } from '@/lib/cache/responseCache'
 import { checkRateLimit }      from '@/lib/cache/rateLimiter'
 
+// ── Semantic memory ───────────────────────────────────────────────────────────
+import {
+  recallRelevant,
+  formatMemoryContext,
+} from '@/lib/vector/memory'
+
 const { auth } = NextAuth(authConfig)
 export const runtime = 'edge'
 
@@ -494,6 +500,23 @@ export async function POST(req: NextRequest) {
       },
       { status: 429 },
     )
+  }
+
+  // ── 4b. Semantic memory recall (non-blocking, best-effort) ───────────────────
+  // Fire recall in parallel with other setup. Injects relevant past analyses
+  // into body.context so the LLM gains cross-session strategic continuity.
+  // Gracefully skips if Pinecone/Cohere are not configured.
+  const memoryMatches = await recallRelevant(
+    session.user.email!,
+    body.message?.trim() ?? '',
+    3,   // topK
+    0.72, // minScore
+  )
+  if (memoryMatches.length > 0) {
+    const memCtx = formatMemoryContext(memoryMatches)
+    body.context = body.context
+      ? `${body.context}\n\n${memCtx}`
+      : memCtx
   }
 
   // ── 5. AUTO mode: Gateway Router ───────────────────────────────────────────

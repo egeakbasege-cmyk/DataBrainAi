@@ -480,6 +480,17 @@ export default function ChatPage() {
           }),
         }).catch(() => undefined)
       }
+      // Save to semantic vector memory (best-effort, graceful no-op if Pinecone unconfigured)
+      fetch('/api/memory', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          sessionId: crypto.randomUUID(),
+          query:     input,
+          summary,
+          mode,
+        }),
+      }).catch(() => undefined)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, response])
