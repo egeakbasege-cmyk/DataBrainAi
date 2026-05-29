@@ -1,69 +1,67 @@
 'use client'
 
+/**
+ * app/chat/page.tsx — Thin Orchestrator
+ * ─────────────────────────────────────────────────────────────────────────────
+ * All business logic lives here. UI rendering is delegated entirely to
+ * components/chat/* and components/ChatThread.tsx.
+ *
+ * This file: state · effects · event handlers · route-level auth guard.
+ * Nothing else.
+ */
+
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSession }                    from 'next-auth/react'
-import { useRouter }                     from 'next/navigation'
-import { motion, AnimatePresence }       from 'framer-motion'
-import { Nav }                           from '@/components/Nav'
-import { BrandSetupModal, BrandNameplate, useBrandConfig } from '@/components/BrandSetupModal'
-import type { BrandConfig }              from '@/components/BrandSetupModal'
-import { HelmButton }                    from '@/components/HelmButton'
-import { ExecutiveResponseCard }         from '@/components/ExecutiveResponseCard'
-import { PredictiveAlertList }           from '@/components/PredictiveAlertBanner'
-import { DailyCounter }                  from '@/components/DailyCounter'
-import { PaywallModal }                  from '@/components/PaywallModal'
-import { FeedbackModal }                 from '@/components/FeedbackModal'
-import { FileAttachmentPill }            from '@/components/FileAttachmentPill'
-import { useConnectorState }             from '@/components/ConnectorDock'
-import { useUserSources }                from '@/components/UserDataImport'
-import type { Attachment }               from '@/components/FileAttachmentPill'
-import { ModeSelector }                  from '@/components/ModeSelector'
-import type { AnalysisMode }             from '@/components/ModeSelector'
-import { SovereignDashboard }            from '@/components/SovereignDashboard'
-import type { SovereignMode }            from '@/components/SovereignDashboard'
-import { VoiceInput }                    from '@/components/VoiceInput'
-import { ExportModal }                   from '@/components/ExportModal'
-import { AgentStatusBar }                from '@/components/AgentStatusBar'
-import { TrimTimelineCard }              from '@/components/TrimTimelineCard'
-import type { TrimResponse }             from '@/components/TrimTimelineCard'
-import { CatamaranResponseCard }         from '@/components/CatamaranResponseCard'
-import { SynergyResponseCard }           from '@/components/SynergyResponseCard'
-import type { CatamaranResponse }        from '@/types/chat'
-import { useAetherisSubmit }             from '@/hooks/useAetherisSubmit'
-import { useSailState }                  from '@/hooks/useSailState'
-import type { ConvMessage }              from '@/hooks/useSailState'
-import { AnswerCard }                    from '@/components/AnswerCard'
-import { useLanguage }                   from '@/lib/i18n/LanguageContext'
-import { useSubscription }               from '@/hooks/useSubscription'
-import { useBusinessContext }            from '@/lib/context/BusinessContext'
+import { useSession }                   from 'next-auth/react'
+import { useRouter }                    from 'next/navigation'
+import { motion, AnimatePresence }      from 'framer-motion'
+import { Nav }                          from '@/components/Nav'
+import { BrandSetupModal }              from '@/components/BrandSetupModal'
+import { useBrandConfig }               from '@/components/BrandSetupModal'
+import type { BrandConfig }             from '@/components/BrandSetupModal'
+import { ExecutiveResponseCard }        from '@/components/ExecutiveResponseCard'
+import { PredictiveAlertList }          from '@/components/PredictiveAlertBanner'
+import { PaywallModal }                 from '@/components/PaywallModal'
+import { FeedbackModal }                from '@/components/FeedbackModal'
+import { FileAttachmentPill }           from '@/components/FileAttachmentPill'
+import { useConnectorState }            from '@/components/ConnectorDock'
+import { useUserSources }               from '@/components/UserDataImport'
+import type { Attachment }              from '@/components/FileAttachmentPill'
+import type { AnalysisMode }            from '@/components/ModeSelector'
+import { SovereignDashboard }           from '@/components/SovereignDashboard'
+import type { SovereignMode }           from '@/components/SovereignDashboard'
+import { ExportModal }                  from '@/components/ExportModal'
+import { AgentStatusBar }               from '@/components/AgentStatusBar'
+import type { TrimResponse }            from '@/components/TrimTimelineCard'
+import type { CatamaranResponse }       from '@/types/chat'
+import { useAetherisSubmit }            from '@/hooks/useAetherisSubmit'
+import { useSailState }                 from '@/hooks/useSailState'
+import type { ConvMessage }             from '@/hooks/useSailState'
+import { useLanguage }                  from '@/lib/i18n/LanguageContext'
+import { useSubscription }              from '@/hooks/useSubscription'
+import { useBusinessContext }           from '@/lib/context/BusinessContext'
 import { useAetherisStore, selectAgentMode, selectActiveAlerts } from '@/lib/aetherisStore'
-import { SailAdapter }                    from '@/components/SailAdapter'
-import type { SailIntent }                from '@/lib/intent'
-import { MoodGuideCard }                  from '@/components/MoodGuideCard'
-import type { MoodGuideData }             from '@/components/MoodGuideCard'
-// ── New architecture imports ──────────────────────────────────────────────────
-import { ChatThread }                    from '@/components/ChatThread'
-import { InChatModeSwitcher }            from '@/components/InChatModeSwitcher'
-import { useChatMessages }               from '@/hooks/useChatMessages'
-// ── Dual interface ────────────────────────────────────────────────────────────
-import { ConsumerChat }                  from '@/components/ConsumerChat'
-import { useUserType }                   from '@/components/Dock'
-import { SwanLoader }                    from '@/components/SwanLoader'
+import { SailAdapter }                  from '@/components/SailAdapter'
+import type { SailIntent }              from '@/lib/intent'
+import { MoodGuideCard }                from '@/components/MoodGuideCard'
+import type { MoodGuideData }           from '@/components/MoodGuideCard'
+import { useChatMessages }              from '@/hooks/useChatMessages'
+import { ConsumerChat }                 from '@/components/ConsumerChat'
+import { useUserType }                  from '@/components/Dock'
+// ── New architecture UI components ────────────────────────────────────────────
+import { ChatHeader }                   from '@/components/chat/ChatHeader'
+import { ChatStage }                    from '@/components/chat/ChatStage'
+import { ChatComposer }                 from '@/components/chat/ChatComposer'
 
-// Placeholders are derived from translations — built inside the component
-const PLACEHOLDER_KEYS = [
-  'chat.placeholder.0',
-  'chat.placeholder.1',
-  'chat.placeholder.2',
-  'chat.placeholder.3',
-] as const
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-const MAX               = 2000
-const API_KEY_STORE     = 'sail_groq_key'
-const MAX_FILE_BYTES    = 5 * 1024 * 1024
+const MAX             = 2000
+const API_KEY_STORE   = 'sail_groq_key'
+const MAX_FILE_BYTES  = 5 * 1024 * 1024
 const CONTEXT_TOGGLE_KEY = 'sail_use_profile_context'
+const PLACEHOLDER_KEYS = ['chat.placeholder.0','chat.placeholder.1','chat.placeholder.2','chat.placeholder.3'] as const
 
-/* ── Client-side file → Attachment ──────────────────────────── */
+// ── File parser ───────────────────────────────────────────────────────────────
+
 async function parseFile(file: File): Promise<Attachment> {
   const isImage = file.type.startsWith('image/')
 
@@ -72,23 +70,13 @@ async function parseFile(file: File): Promise<Attachment> {
       const reader = new FileReader()
       reader.onload = () => {
         const dataUrl = reader.result as string
-        // dataUrl = "data:image/png;base64,<b64>"
-        const base64  = dataUrl.split(',')[1]
-        resolve({
-          name:     file.name,
-          size:     file.size,
-          mimeType: file.type,
-          isImage:  true,
-          content:  base64,
-          preview:  dataUrl,
-        })
+        resolve({ name: file.name, size: file.size, mimeType: file.type, isImage: true, content: dataUrl.split(',')[1], preview: dataUrl })
       }
       reader.onerror = reject
       reader.readAsDataURL(file)
     })
   }
 
-  // CSV / TSV
   if (file.type === 'text/csv' || file.name.endsWith('.csv') || file.name.endsWith('.tsv')) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -97,23 +85,20 @@ async function parseFile(file: File): Promise<Attachment> {
         const lines  = text.split('\n').filter(l => l.trim())
         const header = lines[0] ?? ''
         const sample = lines.slice(1, 51).join('\n')
-        const summary = `Rows: ${lines.length - 1}\nColumns: ${header}\n\nSample data (first 50 rows):\n${header}\n${sample}`
-        resolve({ name: file.name, size: file.size, mimeType: file.type, isImage: false, content: summary })
+        resolve({ name: file.name, size: file.size, mimeType: file.type, isImage: false, content: `Rows: ${lines.length - 1}\nColumns: ${header}\n\nSample data (first 50 rows):\n${header}\n${sample}` })
       }
       reader.onerror = reject
       reader.readAsText(file)
     })
   }
 
-  // XLSX — dynamic import to avoid SSR issues
-  if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') ||
-      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+  if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = async () => {
         try {
-          const XLSX    = await import('xlsx')
-          const wb      = XLSX.read(reader.result, { type: 'array' })
+          const XLSX  = await import('xlsx')
+          const wb    = XLSX.read(reader.result, { type: 'array' })
           const parts: string[] = []
           for (const sheetName of wb.SheetNames.slice(0, 3)) {
             const ws   = wb.Sheets[sheetName]
@@ -130,271 +115,140 @@ async function parseFile(file: File): Promise<Attachment> {
     })
   }
 
-  // PDF — text extraction (best-effort; binary PDF will show garbled text)
   if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = () => {
         const raw   = reader.result as string
-        // Extract readable ASCII text from PDF binary
         const clean = raw.replace(/[^\x20-\x7E\n\t]/g, ' ').replace(/\s{3,}/g, '\n').slice(0, 12000)
-        const content = clean.length > 200
-          ? `PDF content (extracted text):\n${clean}`
-          : `[PDF: ${file.name} — text could not be extracted from this file. Please describe the key metrics manually.]`
-        resolve({ name: file.name, size: file.size, mimeType: file.type, isImage: false, content })
+        resolve({ name: file.name, size: file.size, mimeType: file.type, isImage: false, content: clean.length > 200 ? `PDF content (extracted text):\n${clean}` : `[PDF: ${file.name} — text could not be extracted. Please describe the key metrics manually.]` })
       }
       reader.onerror = reject
       reader.readAsBinaryString(file)
     })
   }
 
-  // Unsupported
   throw new Error(`Unsupported file type: ${file.type || file.name}`)
 }
 
-const WELCOME_DISMISSED_KEY = 'sail_welcome_dismissed_v1'
-
-function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
-  const { t } = useLanguage()
-  const steps = [
-    { icon: '1', text: t('chat.welcomeStep1') },
-    { icon: '2', text: t('chat.welcomeStep2') },
-    { icon: '3', text: t('chat.welcomeStep3') },
-  ]
-  return (
-    <div style={{
-      background:   'linear-gradient(135deg, #0C0C0E 0%, #1A1A20 100%)',
-      borderRadius: '12px',
-      border:       '1px solid rgba(201,169,110,0.25)',
-      padding:      '1rem 1.25rem',
-      marginBottom: '0.75rem',
-      position:     'relative',
-    }}>
-      {/* Gold accent top line */}
-      <div style={{ position: 'absolute', top: 0, left: '10%', right: '10%', height: 1, background: 'linear-gradient(90deg, transparent, #C9A96E, transparent)' }} />
-
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#FFFFFF', margin: '0 0 0.75rem', lineHeight: 1.3 }}>
-            {t('chat.welcomeTitle')}
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {steps.map(s => (
-              <div key={s.icon} style={{
-                display:      'flex',
-                alignItems:   'flex-start',
-                gap:          '0.5rem',
-                background:   'rgba(255,255,255,0.05)',
-                border:       '1px solid rgba(255,255,255,0.09)',
-                borderRadius: '8px',
-                padding:      '0.5rem 0.75rem',
-                flex:         '1 1 200px',
-              }}>
-                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 700, color: '#C9A96E', flexShrink: 0, lineHeight: 1 }}>
-                  {s.icon}
-                </span>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5, margin: 0 }}>
-                  {s.text}
-                </p>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-            <a href="/research" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: '#C9A96E', textDecoration: 'none', letterSpacing: '0.06em' }}>
-              {t('chat.welcomeResearch')}
-            </a>
-            <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.7rem' }}>|</span>
-            <a href="/#tutorial" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none', letterSpacing: '0.06em' }}>
-              {t('chat.welcomeTutorial')}
-            </a>
-          </div>
-        </div>
-        <button
-          onClick={onDismiss}
-          aria-label="Dismiss welcome"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: '1.1rem', lineHeight: 1, flexShrink: 0, padding: '0.1rem' }}
-        >
-          ×
-        </button>
-      </div>
-    </div>
-  )
-}
+// ── Page component ────────────────────────────────────────────────────────────
 
 export default function ChatPage() {
-  // ── Auth gate: redirect unauthenticated visitors to login ─────────────────
+  // Auth gate
   const { status: authStatus } = useSession()
   const router = useRouter()
   useEffect(() => {
-    if (authStatus === 'unauthenticated') {
-      router.replace('/login?callbackUrl=%2Fchat')
-    }
+    if (authStatus === 'unauthenticated') router.replace('/login?callbackUrl=%2Fchat')
   }, [authStatus, router])
 
+  // ── Core UI state ──────────────────────────────────────────────────────────
   const [input,        setInput]        = useState('')
   const [phIdx,        setPhIdx]        = useState(0)
   const [isMac,        setIsMac]        = useState(true)
-  const [showWelcome,  setShowWelcome]  = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const [showKeyPanel, setShowKeyPanel] = useState(false)
   const [showHistory,  setShowHistory]  = useState(false)
   const [showExport,   setShowExport]   = useState(false)
   const [expandedSession, setExpandedSession] = useState<string | null>(null)
-  // Brand customisation
+
+  // Brand
   const { config: brandConfig, ready: brandReady, save: saveBrand } = useBrandConfig()
   const [showBrandSetup, setShowBrandSetup] = useState(false)
+  const handleBrandComplete = (cfg: BrandConfig) => { saveBrand(cfg); setShowBrandSetup(false) }
 
-  // Brand setup is opened manually (via "Use Profile Context" button) — NOT auto-shown on first visit.
-  // This prevents overwhelming new users before they understand the product.
+  // API key
+  const [apiKey,      setApiKey]      = useState('')
+  const [apiKeyInput, setApiKeyInput] = useState('')
 
-  const handleBrandComplete = (cfg: BrandConfig) => {
-    saveBrand(cfg)
-    setShowBrandSetup(false)
-  }
+  // File
+  const [attachment, setAttachment] = useState<Attachment | null>(null)
+  const [fileError,  setFileError]  = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef  = useRef<HTMLTextAreaElement>(null)
 
-  const [apiKey,       setApiKey]       = useState('')
-  const [apiKeyInput,  setApiKeyInput]  = useState('')
-  const [attachment,   setAttachment]   = useState<Attachment | null>(null)
-  const [fileError,    setFileError]    = useState('')
-  const [mode,         setMode]         = useState<AnalysisMode>('upwind')
-  // Synergy sub-mode selection (2–4 modes picked from the inline sub-selector)
-  const [synergyModes, setSynergyModes] = useState<AnalysisMode[]>(['upwind', 'sail'])
-  // Downwind multi-turn conversation history
-  const [convHistory,  setConvHistory]  = useState<ConvMessage[]>([])
-  // SAIL streaming state
-  const [sailText,     setSailText]   = useState('')
-  const [sailIntent,   setSailIntent] = useState<SailIntent>('analytic')
-  const [sailPhase,    setSailPhase]  = useState<'idle'|'streaming'|'complete'>('idle')
-  const [sailError,    setSailError]  = useState<string|null>(null)
-  const sailAbortRef                 = useRef<AbortController|null>(null)
+  // Mode
+  const [mode,        setMode]        = useState<AnalysisMode>('upwind')
+  const [synergyModes,setSynergyModes]= useState<AnalysisMode[]>(['upwind', 'sail'])
+  const [businessMode,setBusinessMode]= useState(true)
+  const [autoMode,    setAutoMode]    = useState(false)
+  const [autoPhase,   setAutoPhase]   = useState<'idle'|'routing'|'guiding'|'error'>('idle')
+  const [moodGuide,   setMoodGuide]   = useState<MoodGuideData | null>(null)
+  const [autoError,   setAutoError]   = useState<string | null>(null)
+  const pendingAutoTextRef = useRef('')
 
-  // TRIM state
-  const [trimResponse,      setTrimResponse]     = useState<TrimResponse|null>(null)
-  const [trimPhase,         setTrimPhase]        = useState<'idle'|'loading'|'complete'>('idle')
-  const [trimError,         setTrimError]        = useState<string|null>(null)
+  // Conversation history
+  const [convHistory, setConvHistory] = useState<ConvMessage[]>([])
+  const lastDownwindInput = useRef('')
+  const processedCoachResult = useRef<import('@/hooks/useSailState').AIResponse | null>(null)
 
-  // CATAMARAN state
-  const [catamaranResponse, setCatamaranResponse] = useState<import('@/types/chat').CatamaranResponse|null>(null)
+  // Mode-specific state
+  const [sailText,     setSailText]     = useState('')
+  const [sailIntent,   setSailIntent]   = useState<SailIntent>('analytic')
+  const [sailPhase,    setSailPhase]    = useState<'idle'|'streaming'|'complete'>('idle')
+  const [sailError,    setSailError]    = useState<string|null>(null)
+  const sailAbortRef = useRef<AbortController|null>(null)
+
+  const [trimResponse, setTrimResponse] = useState<TrimResponse|null>(null)
+  const [trimPhase,    setTrimPhase]    = useState<'idle'|'loading'|'complete'>('idle')
+  const [trimError,    setTrimError]    = useState<string|null>(null)
+
+  const [catamaranResponse, setCatamaranResponse] = useState<CatamaranResponse|null>(null)
   const [catamaranPhase,    setCatamaranPhase]    = useState<'idle'|'loading'|'complete'>('idle')
   const [catamaranError,    setCatamaranError]    = useState<string|null>(null)
 
-  // SYNERGY state
   const [synergyText,  setSynergyText]  = useState('')
   const [synergyPhase, setSynergyPhase] = useState<'idle'|'streaming'|'complete'>('idle')
   const [synergyError, setSynergyError] = useState<string|null>(null)
-  const [synergyMeta,  setSynergyMeta]  = useState<{ modes: string[]; companyName: string|null } | null>(null)
+  const [synergyMeta,  setSynergyMeta]  = useState<{ modes: string[]; companyName: string|null }|null>(null)
   const synergyAbortRef = useRef<AbortController|null>(null)
 
-  // OPERATOR state
   const [operatorText,  setOperatorText]  = useState('')
   const [operatorPhase, setOperatorPhase] = useState<'idle'|'streaming'|'complete'>('idle')
   const [operatorError, setOperatorError] = useState<string|null>(null)
   const operatorAbortRef = useRef<AbortController|null>(null)
 
-  // SCENARIO state — Mirofish predictive simulation
   const [scenarioText,  setScenarioText]  = useState('')
   const [scenarioPhase, setScenarioPhase] = useState<'idle'|'streaming'|'complete'>('idle')
   const [scenarioError, setScenarioError] = useState<string|null>(null)
   const scenarioAbortRef = useRef<AbortController|null>(null)
 
-  // AUTO mode — Gateway Router state
-  const [autoMode,  setAutoMode]  = useState(false)
-  const [autoPhase, setAutoPhase] = useState<'idle'|'routing'|'guiding'|'error'>('idle')
-  const [moodGuide, setMoodGuide] = useState<MoodGuideData | null>(null)
-  const [autoError, setAutoError] = useState<string | null>(null)
-  // Stores the original query text while the mood guide card is shown
-  const pendingAutoTextRef = useRef<string>('')
-
-  // Vanishing mode grid state
-  const [showModeGrid, setShowModeGrid] = useState(true)
-  const [prevTurns, setPrevTurns] = useState<Array<{q:string; a:string; m:AnalysisMode}>>([])
-
-  // Sovereign Dashboard — fullscreen mode picker shown before first message
+  // Sovereign / UI
   const [showSovereign, setShowSovereign] = useState(true)
-
-  // ── Dual interface: business vs consumer ─────────────────────────────────
-  const { type: userType, setType: setUserType } = useUserType()
-
-  // ── Unified chat thread (new architecture) ───────────────────────────────
-  const {
-    messages:          chatMessages,
-    addUserMessage,
-    startAssistantMessage,
-    updateStreaming,
-    finalizeMessage,
-    clearThread,
-    compressedHistory,
-  } = useChatMessages()
-
-  // Sovereign Dashboard handler — mode selected → collapse into chat
-  const handleSovereignSelect = useCallback((sovereignMode: SovereignMode) => {
-    setMode(sovereignMode as AnalysisMode)
-    setShowSovereign(false)
-    setTimeout(() => textareaRef.current?.focus(), 120)
-  }, [])
-
-  // Auto-dismiss sovereign when a conversation has already started
-  useEffect(() => {
-    if (chatMessages.length > 0) setShowSovereign(false)
-  }, [chatMessages.length])
-
-  // Follow-up chip handler — pre-fills input and submits
-  const handleFollowUp = useCallback((text: string) => {
-    setInput(text)
-    setTimeout(() => textareaRef.current?.focus(), 20)
-  }, [])
-
-  // Context toggle + inline paywall
-  const [useProfileCtx,     setUseProfileCtx]    = useState(true)
   const [showInlinePaywall, setShowInlinePaywall] = useState(false)
+  const [useProfileCtx, setUseProfileCtx] = useState(true)
 
-  // Business / Free-chat mode toggle
-  const [businessMode, setBusinessMode] = useState(true)
-
-  // Connector dock state
-  const { enabledIds, analysisActive, toggle: toggleConnector, setActive: setConnectorActive, enableAll: enableAllConnectors, disableAll: disableAllConnectors, activeConnectorIds } = useConnectorState()
-  const { userUrls } = useUserSources()
-  const [importOpen, setImportOpen] = useState(false)
-
-  // Aetheris store — agent mode + drift alerts (filter locally for stable refs)
+  // Aetheris
   const agentMode    = useAetherisStore(selectAgentMode)
-  const setAgentMode = useAetherisStore((s) => s.setAgentMode)
   const language     = useAetherisStore((s) => s.language)
   const sessionId    = useAetherisStore((s) => s.sessionId)
   const userId       = useAetherisStore((s) => s.userId)
   const allAlerts    = useAetherisStore(selectActiveAlerts)
   const activeAlerts = allAlerts.filter((a) => !a.isResolved)
-  const textareaRef          = useRef<HTMLTextAreaElement>(null)
-  const fileInputRef         = useRef<HTMLInputElement>(null)
-  const lastDownwindInput    = useRef('')
-  const processedCoachResult = useRef<import('@/hooks/useSailState').AIResponse | null>(null)
 
+  // Hooks
   const { t } = useLanguage()
   const PLACEHOLDERS = PLACEHOLDER_KEYS.map(k => t(k as import('@/lib/i18n/translations').TranslationKey))
-
-  // ── Upwind: single-shot Aetheris (ExecutiveResponse JSON) ────────────────────
-  const { state, response, error, submit, reset } = useAetherisSubmit()
-
-  // ── Downwind: guided captain coaching (chatMessage / StrategyResult) ─────────
-  const {
-    state:  coachState,
-    streamText,
-    result: coachResult,
-    error:  coachError,
-    submit: coachSubmit,
-    reset:  coachReset,
-  } = useSailState()
+  const { state, response, error, submit, reset }                                  = useAetherisSubmit()
+  const { state: coachState, streamText, result: coachResult, error: coachError,
+          submit: coachSubmit, reset: coachReset }                                  = useSailState()
   const { isPro, usedToday, canAnalyse, showPaywall, recordUsage, triggerPaywall, closePaywall, activatePro } = useSubscription()
-  const { buildContext, addSession, profile } = useBusinessContext()
+  const { buildContext, addSession, profile }                                       = useBusinessContext()
+  const { type: userType, setType: setUserType }                                   = useUserType()
+  const { enabledIds, analysisActive, toggle: toggleConnector, activeConnectorIds } = useConnectorState()
+  const { userUrls }                                                                = useUserSources()
+
+  const { messages: chatMessages, addUserMessage, startAssistantMessage,
+          updateStreaming, finalizeMessage, clearThread, compressedHistory }        = useChatMessages()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const primaryConstraint: string | undefined = useProfileCtx
     ? ((profile.diagnostic as any)?.obstacle || undefined)
     : undefined
 
+  // ── Effects ────────────────────────────────────────────────────────────────
+
   useEffect(() => { setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent)) }, [])
 
-  // ── Stream cleanup on unmount — abort all active SSE connections ────────────
   useEffect(() => {
     return () => {
       sailAbortRef.current?.abort()
@@ -404,121 +258,74 @@ export default function ChatPage() {
     }
   }, [])
 
-  // Welcome banner: show only on first visit, dismiss stores to localStorage
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(WELCOME_DISMISSED_KEY)) setShowWelcome(true)
-    } catch { /* ignore */ }
-  }, [])
-
-  function dismissWelcome() {
-    setShowWelcome(false)
-    try { localStorage.setItem(WELCOME_DISMISSED_KEY, '1') } catch { /* ignore */ }
-  }
   useEffect(() => {
     const iv = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 4000)
     return () => clearInterval(iv)
   }, [])
+
   useEffect(() => {
     const ta = textareaRef.current
     if (!ta) return
     ta.style.height = 'auto'
-    ta.style.height = `${Math.min(ta.scrollHeight, 220)}px`
+    ta.style.height = `${Math.min(ta.scrollHeight, 168)}px`
   }, [input])
 
-  // Load API key, context toggle + handle URL params
   useEffect(() => {
     try {
       const stored = localStorage.getItem(API_KEY_STORE) ?? ''
-      setApiKey(stored)
-      setApiKeyInput(stored)
+      setApiKey(stored); setApiKeyInput(stored)
     } catch { /* ignore */ }
     try {
       const ctxStored = localStorage.getItem(CONTEXT_TOGGLE_KEY)
       if (ctxStored !== null) setUseProfileCtx(ctxStored === 'true')
     } catch { /* ignore */ }
-
     const params = new URLSearchParams(window.location.search)
     const q = params.get('q')
-    if (q) {
-      try { setInput(decodeURIComponent(q)) } catch { setInput(q) }
-      window.history.replaceState({}, '', '/chat')
-    }
-    if (params.get('pro') === '1') {
-      activatePro()
-      window.history.replaceState({}, '', '/chat')
-    }
+    if (q) { try { setInput(decodeURIComponent(q)) } catch { setInput(q) }; window.history.replaceState({}, '', '/chat') }
+    if (params.get('pro') === '1') { activatePro(); window.history.replaceState({}, '', '/chat') }
   }, [activatePro])
 
-  // Save completed analyses + deduct 1 credit when ExecutiveResponse is received
   useEffect(() => {
     if (state === 'COMPLETE' && response) {
       const summary = response.insight.slice(0, 120)
       addSession(input, summary)
       recordUsage()
-      // Save to dashboard history
       try {
         const prev: unknown[] = JSON.parse(localStorage.getItem('sail_analysis_history') ?? '[]')
-        prev.push({
-          id:        crypto.randomUUID(),
-          prompt:    input.slice(0, 120),
-          headline:  summary,
-          createdAt: new Date().toISOString(),
-        })
+        prev.push({ id: crypto.randomUUID(), prompt: input.slice(0, 120), headline: summary, createdAt: new Date().toISOString() })
         localStorage.setItem('sail_analysis_history', JSON.stringify(prev.slice(-100)))
       } catch { /* ignore */ }
-      // Persist to DB for Pro users
       if (isPro) {
-        fetch('/api/sessions', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({
-            prompt:  input,
-            summary,
-            sector:  input.slice(0, 120),
-            output:  { headline: summary },
-          }),
+        fetch('/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: input, summary, sector: input.slice(0, 120), output: { headline: summary } }),
         }).catch(() => undefined)
       }
-      // Save to semantic vector memory (best-effort, graceful no-op if Pinecone unconfigured)
-      fetch('/api/memory', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          sessionId: crypto.randomUUID(),
-          query:     input,
-          summary,
-          mode,
-        }),
+      fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: crypto.randomUUID(), query: input, summary, mode }),
       }).catch(() => undefined)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, response])
 
-  // Accumulate downwind conversation history on each completed coach turn
   useEffect(() => {
     if (mode !== 'downwind') return
     if (coachState !== 'COMPLETE' && coachState !== 'CONVERSING') return
     if (!coachResult) return
     if (coachResult === processedCoachResult.current) return
     processedCoachResult.current = coachResult
-
     const assistantContent = 'chatMessage' in coachResult
       ? coachResult.chatMessage + (coachResult.followUpQuestion ? `\n\n${coachResult.followUpQuestion}` : '')
       : 'headline' in coachResult ? coachResult.headline
       : 'question' in coachResult ? coachResult.question
-      : 'freeText' in coachResult ? coachResult.freeText
-      : ''
-
+      : 'freeText' in coachResult ? coachResult.freeText : ''
     setConvHistory(prev => [
       ...prev,
-      { role: 'user' as const,      content: lastDownwindInput.current },
-      { role: 'assistant' as const,  content: assistantContent },
+      { role: 'user' as const, content: lastDownwindInput.current },
+      { role: 'assistant' as const, content: assistantContent },
     ])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coachState, coachResult])
 
-  // Clear downwind history when leaving downwind mode
   useEffect(() => {
     if (mode !== 'downwind') {
       setConvHistory([])
@@ -528,19 +335,19 @@ export default function ChatPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode])
 
-  // Show key panel on any AI failure that could be fixed with BYOK
   useEffect(() => {
     const e = error ?? sailError ?? trimError
     if (!e) return
-    const isAiError = e.includes('quota') || e.includes('aistudio') ||
-      e.includes('API key') || e.includes('Unable to reach') ||
-      e.includes('AI_') || e.includes('exhausted') || e.includes('unavailable')
+    const isAiError = e.includes('quota') || e.includes('aistudio') || e.includes('API key') ||
+      e.includes('Unable to reach') || e.includes('AI_') || e.includes('exhausted') || e.includes('unavailable')
     if (isAiError) setShowKeyPanel(true)
   }, [error, sailError, trimError])
 
-  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    if (e.target.value.length <= MAX) setInput(e.target.value)
-  }
+  useEffect(() => {
+    if (chatMessages.length > 0) setShowSovereign(false)
+  }, [chatMessages.length])
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   function getContext(): string {
     if (!useProfileCtx) return ''
@@ -562,15 +369,11 @@ export default function ChatPage() {
   function buildModeBody(text: string, analysisMode: string): Record<string, unknown> {
     const body: Record<string, unknown> = {
       message: text, sessionId: sessionId || 'init', userId: userId || 'anonymous',
-      language, agentMode, analysisMode,
-      businessMode,
-      connector_ids: activeConnectorIds,
-      user_urls:     userUrls,
+      language, agentMode, analysisMode, businessMode,
+      connector_ids: activeConnectorIds, user_urls: userUrls,
     }
-    // ── A-01: inject compressed conversation history for multi-turn context ──
     const history = compressedHistory({ keepTail: 6, maxTotalChars: 12_000 })
     if (history.length > 0) body.messages = history
-
     const ctx = getContext()
     if (ctx)               body.context           = ctx
     if (apiKey)            body.apiKey            = apiKey
@@ -580,43 +383,32 @@ export default function ChatPage() {
     return body
   }
 
+  // ── Submit handlers ────────────────────────────────────────────────────────
+
   async function handleSailSubmit(text: string) {
     setSailError(null); setSailText(''); setSailPhase('streaming')
     sailAbortRef.current = new AbortController()
-    // ── Thread integration ───────────────────────────────────────────────
     addUserMessage(text, 'sail')
     const assistantId = startAssistantMessage('sail')
     try {
       const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
-        body: JSON.stringify(buildModeBody(text, 'sail')),
-        signal: sailAbortRef.current.signal,
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body: JSON.stringify(buildModeBody(text, 'sail')), signal: sailAbortRef.current.signal,
       })
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as Record<string,unknown>).error as string ?? 'SAIL request failed.')
-      }
-      const reader = res.body!.getReader()
-      const decoder = new TextDecoder()
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'SAIL request failed.') }
+      const reader = res.body!.getReader(); const decoder = new TextDecoder()
       let buf = '', metaDone = false
       while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const { done, value } = await reader.read(); if (done) break
         buf += decoder.decode(value, { stream: true })
         if (!metaDone) { const nl = buf.indexOf('\n'); if (nl !== -1) { try { const m = JSON.parse(buf.slice(0, nl)); if (m.__sailMeta?.intent) setSailIntent(m.__sailMeta.intent) } catch {} buf = buf.slice(nl + 1); metaDone = true } }
-        setSailText(buf)
-        updateStreaming(assistantId, buf)
+        setSailText(buf); updateStreaming(assistantId, buf)
       }
-      setSailPhase('complete')
-      finalizeMessage(assistantId, { type: 'text', text: buf })
-      saveAnalysis(text, buf.slice(0, 120))
+      setSailPhase('complete'); finalizeMessage(assistantId, { type: 'text', text: buf }); saveAnalysis(text, buf.slice(0, 120))
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
       const msg = err instanceof Error ? err.message : 'SAIL request failed.'
-      setSailError(msg)
-      setSailPhase('idle')
-      finalizeMessage(assistantId, { type: 'error', message: msg })
+      setSailError(msg); setSailPhase('idle'); finalizeMessage(assistantId, { type: 'error', message: msg })
     }
   }
 
@@ -624,44 +416,26 @@ export default function ChatPage() {
     setTrimError(null); setTrimResponse(null); setTrimPhase('loading')
     try {
       const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
         body: JSON.stringify(buildModeBody(text, 'trim')),
       })
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as Record<string,unknown>).error as string ?? 'TRIM request failed.')
-      }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'TRIM request failed.') }
       const data = await res.json() as TrimResponse
-      setTrimResponse(data)
-      setTrimPhase('complete')
-      saveAnalysis(text, data.summary?.slice(0, 120) ?? data.trimTitle ?? 'TRIM Plan')
-    } catch (err: unknown) {
-      setTrimError(err instanceof Error ? err.message : 'TRIM request failed.')
-      setTrimPhase('idle')
-    }
+      setTrimResponse(data); setTrimPhase('complete'); saveAnalysis(text, data.summary?.slice(0, 120) ?? data.trimTitle ?? 'TRIM Plan')
+    } catch (err: unknown) { setTrimError(err instanceof Error ? err.message : 'TRIM request failed.'); setTrimPhase('idle') }
   }
 
   async function handleCatamaranSubmit(text: string) {
     setCatamaranError(null); setCatamaranResponse(null); setCatamaranPhase('loading')
     try {
       const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
         body: JSON.stringify(buildModeBody(text, 'catamaran')),
       })
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as Record<string,unknown>).error as string ?? 'CATAMARAN request failed.')
-      }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'CATAMARAN request failed.') }
       const data = await res.json() as CatamaranResponse
-      setCatamaranResponse(data)
-      setCatamaranPhase('complete')
-      saveAnalysis(text, data.catamaranTitle ?? 'CATAMARAN Plan')
-    } catch (err: unknown) {
-      setCatamaranError(err instanceof Error ? err.message : 'CATAMARAN request failed.')
-      setCatamaranPhase('idle')
-    }
+      setCatamaranResponse(data); setCatamaranPhase('complete'); saveAnalysis(text, data.catamaranTitle ?? 'CATAMARAN Plan')
+    } catch (err: unknown) { setCatamaranError(err instanceof Error ? err.message : 'CATAMARAN request failed.'); setCatamaranPhase('idle') }
   }
 
   async function handleSynergySubmit(text: string) {
@@ -672,180 +446,94 @@ export default function ChatPage() {
       body.synergyModes = synergyModes as unknown as Record<string, unknown>
       body.synergyName  = (brandConfig?.aiName ?? brandConfig?.companyName) as unknown as Record<string, unknown>
       const res = await fetch('/api/chat', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
-        body:    JSON.stringify(body),
-        signal:  synergyAbortRef.current.signal,
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body: JSON.stringify(body), signal: synergyAbortRef.current.signal,
       })
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as Record<string,unknown>).error as string ?? 'SYNERGY request failed.')
-      }
-      const reader  = res.body!.getReader()
-      const decoder = new TextDecoder()
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'SYNERGY request failed.') }
+      const reader = res.body!.getReader(); const decoder = new TextDecoder()
       let buf = '', metaDone = false
       while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const { done, value } = await reader.read(); if (done) break
         buf += decoder.decode(value, { stream: true })
-        if (!metaDone) {
-          const nl = buf.indexOf('\n')
-          if (nl !== -1) {
-            try {
-              const m = JSON.parse(buf.slice(0, nl))
-              if (m.__synMeta) setSynergyMeta(m.__synMeta)
-            } catch { /* ignore */ }
-            buf = buf.slice(nl + 1)
-            metaDone = true
-          }
-        }
+        if (!metaDone) { const nl = buf.indexOf('\n'); if (nl !== -1) { try { const m = JSON.parse(buf.slice(0, nl)); if (m.__synMeta) setSynergyMeta(m.__synMeta) } catch {} buf = buf.slice(nl + 1); metaDone = true } }
         setSynergyText(buf)
       }
-      setSynergyPhase('complete')
-      saveAnalysis(text, buf.slice(0, 120))
+      setSynergyPhase('complete'); saveAnalysis(text, buf.slice(0, 120))
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
-      setSynergyError(err instanceof Error ? err.message : 'SYNERGY request failed.')
-      setSynergyPhase('idle')
+      setSynergyError(err instanceof Error ? err.message : 'SYNERGY request failed.'); setSynergyPhase('idle')
     }
   }
 
   async function handleOperatorSubmit(text: string) {
     setOperatorError(null); setOperatorText(''); setOperatorPhase('streaming')
     operatorAbortRef.current = new AbortController()
-    addUserMessage(text, 'operator')
-    const assistantId = startAssistantMessage('operator')
+    addUserMessage(text, 'operator'); const assistantId = startAssistantMessage('operator')
     try {
       const res = await fetch('/api/chat', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
-        body:    JSON.stringify(buildModeBody(text, 'operator')),
-        signal:  operatorAbortRef.current.signal,
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body: JSON.stringify(buildModeBody(text, 'operator')), signal: operatorAbortRef.current.signal,
       })
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as Record<string,unknown>).error as string ?? 'OPERATOR request failed.')
-      }
-      const reader  = res.body!.getReader()
-      const decoder = new TextDecoder()
-      let   buf     = ''
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'OPERATOR request failed.') }
+      const reader = res.body!.getReader(); const decoder = new TextDecoder(); let buf = ''
       while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buf += decoder.decode(value, { stream: true })
-        setOperatorText(buf)
-        updateStreaming(assistantId, buf)
+        const { done, value } = await reader.read(); if (done) break
+        buf += decoder.decode(value, { stream: true }); setOperatorText(buf); updateStreaming(assistantId, buf)
       }
-      setOperatorPhase('complete')
-      finalizeMessage(assistantId, { type: 'text', text: buf })
-      saveAnalysis(text, buf.slice(0, 120))
+      setOperatorPhase('complete'); finalizeMessage(assistantId, { type: 'text', text: buf }); saveAnalysis(text, buf.slice(0, 120))
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
       const msg = err instanceof Error ? err.message : 'OPERATOR request failed.'
-      setOperatorError(msg)
-      setOperatorPhase('idle')
-      finalizeMessage(assistantId, { type: 'error', message: msg })
+      setOperatorError(msg); setOperatorPhase('idle'); finalizeMessage(assistantId, { type: 'error', message: msg })
     }
   }
 
-  // ── SCENARIO mode: Mirofish predictive simulation ────────────────────────
   async function handleScenarioSubmit(text: string) {
     setScenarioError(null); setScenarioText(''); setScenarioPhase('streaming')
     scenarioAbortRef.current = new AbortController()
     try {
       const res = await fetch('/api/chat', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
-        body:    JSON.stringify(buildModeBody(text, 'scenario')),
-        signal:  scenarioAbortRef.current.signal,
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
+        body: JSON.stringify(buildModeBody(text, 'scenario')), signal: scenarioAbortRef.current.signal,
       })
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as Record<string, unknown>).error as string ?? 'SCENARIO request failed.')
-      }
-      const reader  = res.body!.getReader()
-      const decoder = new TextDecoder()
-      let   buf     = ''
-      let   metaDone = false
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'SCENARIO request failed.') }
+      const reader = res.body!.getReader(); const decoder = new TextDecoder(); let buf = '', metaDone = false
       while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const { done, value } = await reader.read(); if (done) break
         buf += decoder.decode(value, { stream: true })
-        // Strip meta JSON line (first newline-terminated JSON object)
-        if (!metaDone) {
-          const nl = buf.indexOf('\n')
-          if (nl !== -1) {
-            try { JSON.parse(buf.slice(0, nl)) } catch { /* not meta */ }
-            buf = buf.slice(nl + 1)
-            metaDone = true
-          }
-        }
+        if (!metaDone) { const nl = buf.indexOf('\n'); if (nl !== -1) { try { JSON.parse(buf.slice(0, nl)) } catch {} buf = buf.slice(nl + 1); metaDone = true } }
         setScenarioText(buf)
       }
-      setScenarioPhase('complete')
-      saveAnalysis(text, buf.slice(0, 120))
+      setScenarioPhase('complete'); saveAnalysis(text, buf.slice(0, 120))
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
-      setScenarioError(err instanceof Error ? err.message : 'SCENARIO request failed.')
-      setScenarioPhase('idle')
+      setScenarioError(err instanceof Error ? err.message : 'SCENARIO request failed.'); setScenarioPhase('idle')
     }
   }
 
-  // ── AUTO mode handlers ────────────────────────────────────────────────────
-
   async function handleAutoSubmit(text: string) {
-    setAutoError(null)
-    setMoodGuide(null)
-    setAutoPhase('routing')
-    pendingAutoTextRef.current = text
-
+    setAutoError(null); setMoodGuide(null); setAutoPhase('routing'); pendingAutoTextRef.current = text
     try {
       const res = await fetch('/api/chat', {
-        method:  'POST',
-        headers: {
-          'Content-Type':       'application/json',
-          'X-Client-Language':  language,
-          'X-Aetheris-Session': sessionId || 'init',
-        },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
         body: JSON.stringify(buildModeBody(text, 'auto')),
       })
-
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as Record<string, unknown>).error as string ?? 'Routing request failed.')
-      }
-
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'Routing request failed.') }
       const data = await res.json() as { __moodGuide?: MoodGuideData }
-
-      if (data.__moodGuide) {
-        setMoodGuide(data.__moodGuide)
-        setAutoPhase('guiding')
-        // High urgency: MoodGuideCard fires onProceed automatically after 800ms
-      } else {
-        // Unexpected response — fall back to upwind
-        setAutoPhase('idle')
-        await submit(text, { context: getContext() || undefined, attachment: attachment ?? undefined, analysisMode: 'upwind', apiKey: apiKey || undefined, primaryConstraint })
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Routing failed. Please try again.'
-      setAutoError(msg)
-      setAutoPhase('error')
-    }
+      if (data.__moodGuide) { setMoodGuide(data.__moodGuide); setAutoPhase('guiding') }
+      else { setAutoPhase('idle'); await submit(text, { context: getContext() || undefined, attachment: attachment ?? undefined, analysisMode: 'upwind', apiKey: apiKey || undefined, primaryConstraint }) }
+    } catch (err: unknown) { setAutoError(err instanceof Error ? err.message : 'Routing failed.'); setAutoPhase('error') }
   }
 
   function proceedWithMode(selectedMode: string, text: string) {
-    // Clear mood guide state, lock in the chosen mode
-    setAutoPhase('idle')
-    setMoodGuide(null)
-    setMode(selectedMode as AnalysisMode)
-
-    // Dispatch to the correct mode handler
-    if      (selectedMode === 'sail')     void handleSailSubmit(text)
-    else if (selectedMode === 'trim')     void handleTrimSubmit(text)
+    setAutoPhase('idle'); setMoodGuide(null); setMode(selectedMode as AnalysisMode)
+    if      (selectedMode === 'sail')      void handleSailSubmit(text)
+    else if (selectedMode === 'trim')      void handleTrimSubmit(text)
     else if (selectedMode === 'catamaran') void handleCatamaranSubmit(text)
-    else if (selectedMode === 'synergy')  void handleSynergySubmit(text)
-    else if (selectedMode === 'operator') void handleOperatorSubmit(text)
-    else if (selectedMode === 'scenario') void handleScenarioSubmit(text)
+    else if (selectedMode === 'synergy')   void handleSynergySubmit(text)
+    else if (selectedMode === 'operator')  void handleOperatorSubmit(text)
+    else if (selectedMode === 'scenario')  void handleScenarioSubmit(text)
     else if (selectedMode === 'downwind') {
       lastDownwindInput.current = text
       void coachSubmit(text, getContext() || undefined, apiKey || undefined, attachment ?? undefined, 'downwind', convHistory.length > 0 ? convHistory : undefined, undefined, primaryConstraint)
@@ -858,159 +546,106 @@ export default function ChatPage() {
     if (!text) return
     if (!canAnalyse) { setShowInlinePaywall(true); return }
     setShowInlinePaywall(false)
-    setShowModeGrid(false)
+    setInput('')
 
-    // AUTO mode: run gateway router before dispatching to any specific mode
-    if (autoMode) {
-      if (autoPhase === 'routing') return  // already routing
-      await handleAutoSubmit(text)
-      return
-    }
-
+    if (autoMode) { if (autoPhase === 'routing') return; await handleAutoSubmit(text); return }
     if (mode === 'sail')     { if (sailPhase      !== 'streaming') await handleSailSubmit(text);      return }
     if (mode === 'trim')     { if (trimPhase      !== 'loading')   await handleTrimSubmit(text);      return }
     if (mode === 'catamaran'){ if (catamaranPhase !== 'loading')   await handleCatamaranSubmit(text); return }
     if (mode === 'synergy')  { if (synergyPhase   !== 'streaming' && synergyModes.length >= 2) await handleSynergySubmit(text); return }
     if (mode === 'operator') { if (operatorPhase  !== 'streaming') await handleOperatorSubmit(text);  return }
     if (mode === 'scenario') { if (scenarioPhase  !== 'streaming') await handleScenarioSubmit(text);  return }
-
     if (mode === 'downwind') {
       if (coachState === 'THINKING' || coachState === 'STREAMING') return
       lastDownwindInput.current = text
-      setInput('')
-      await coachSubmit(
-        text,
-        getContext() || undefined,
-        apiKey || undefined,
-        attachment ?? undefined,
-        'downwind',
-        convHistory.length > 0 ? convHistory : undefined,
-        undefined,
-        primaryConstraint,
-      )
+      await coachSubmit(text, getContext() || undefined, apiKey || undefined, attachment ?? undefined, 'downwind',
+        convHistory.length > 0 ? convHistory : undefined, undefined, primaryConstraint)
       return
     }
-
     if (state === 'THINKING') return
-    await submit(text, {
-      context:            getContext() || undefined,
-      attachment:         attachment ?? undefined,
-      analysisMode:       mode,
-      apiKey:             apiKey || undefined,
-      primaryConstraint,
-    })
-  }
-
-  function toggleProfileCtx() {
-    const next = !useProfileCtx
-    setUseProfileCtx(next)
-    try { localStorage.setItem(CONTEXT_TOGGLE_KEY, String(next)) } catch { /* ignore */ }
-  }
-
-  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!fileInputRef.current) return
-    fileInputRef.current.value = ''
-    if (!file) return
-    setFileError('')
-
-    if (file.size > MAX_FILE_BYTES) {
-      setFileError(t('chat.fileTooLarge').replace('{size}', (file.size / (1024 * 1024)).toFixed(1)))
-      return
-    }
-
-    try {
-      const parsed = await parseFile(file)
-      setAttachment(parsed)
-    } catch {
-      setFileError(t('chat.fileReadError'))
-    }
+    await submit(text, { context: getContext() || undefined, attachment: attachment ?? undefined, analysisMode: mode, apiKey: apiKey || undefined, primaryConstraint })
   }
 
   function handleReset() {
-    setShowModeGrid(true)
-    setPrevTurns([])
-    clearThread()
-    sailAbortRef.current?.abort()
-    setSailText('')
-    setSailPhase('idle')
-    setSailError(null)
-    reset()
-    coachReset()
-    processedCoachResult.current = null
-    sailAbortRef.current?.abort()
-    setInput('')
-    setAttachment(null)
-    setFileError('')
-    setConvHistory([])
+    clearThread(); sailAbortRef.current?.abort(); operatorAbortRef.current?.abort(); synergyAbortRef.current?.abort(); scenarioAbortRef.current?.abort()
+    setInput(''); setAttachment(null); setFileError(''); setConvHistory([])
     setSailText(''); setSailPhase('idle'); setSailError(null)
     setTrimResponse(null); setTrimPhase('idle'); setTrimError(null)
     setCatamaranResponse(null); setCatamaranPhase('idle'); setCatamaranError(null)
-    synergyAbortRef.current?.abort()
     setSynergyText(''); setSynergyPhase('idle'); setSynergyError(null); setSynergyMeta(null)
-    operatorAbortRef.current?.abort()
     setOperatorText(''); setOperatorPhase('idle'); setOperatorError(null)
-    scenarioAbortRef.current?.abort()
     setScenarioText(''); setScenarioPhase('idle'); setScenarioError(null)
-    setShowInlinePaywall(false)
-    setAutoPhase('idle'); setMoodGuide(null); setAutoError(null)
-    pendingAutoTextRef.current = ''
+    setShowInlinePaywall(false); setAutoPhase('idle'); setMoodGuide(null); setAutoError(null)
+    pendingAutoTextRef.current = ''; processedCoachResult.current = null
+    reset(); coachReset()
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
 
+  function toggleProfileCtx() {
+    const next = !useProfileCtx; setUseProfileCtx(next)
+    try { localStorage.setItem(CONTEXT_TOGGLE_KEY, String(next)) } catch { /* ignore */ }
+  }
+
   function saveApiKey() {
-    const k = apiKeyInput.trim()
-    setApiKey(k)
+    const k = apiKeyInput.trim(); setApiKey(k)
     try { localStorage.setItem(API_KEY_STORE, k) } catch { /* ignore */ }
     setShowKeyPanel(false)
   }
 
-  const isActive = autoPhase === 'routing'
-    ? true
-    : mode === 'sail'
-    ? sailPhase === 'streaming'
-    : mode === 'trim'
-    ? trimPhase === 'loading'
-    : mode === 'catamaran'
-    ? catamaranPhase === 'loading'
-    : mode === 'synergy'
-    ? synergyPhase === 'streaming'
-    : mode === 'operator'
-    ? operatorPhase === 'streaming'
-    : mode === 'scenario'
-    ? scenarioPhase === 'streaming'
-    : mode === 'downwind'
-    ? coachState === 'THINKING' || coachState === 'STREAMING'
+  const handleFollowUp = useCallback((text: string) => {
+    setInput(text); setTimeout(() => textareaRef.current?.focus(), 20)
+  }, [])
+
+  const handleSovereignSelect = useCallback((sovereignMode: SovereignMode) => {
+    setMode(sovereignMode as AnalysisMode); setShowSovereign(false)
+    setTimeout(() => textareaRef.current?.focus(), 120)
+  }, [])
+
+  // ── Derived state ──────────────────────────────────────────────────────────
+
+  const isActive = autoPhase === 'routing' ? true
+    : mode === 'sail'      ? sailPhase      === 'streaming'
+    : mode === 'trim'      ? trimPhase      === 'loading'
+    : mode === 'catamaran' ? catamaranPhase === 'loading'
+    : mode === 'synergy'   ? synergyPhase   === 'streaming'
+    : mode === 'operator'  ? operatorPhase  === 'streaming'
+    : mode === 'scenario'  ? scenarioPhase  === 'streaming'
+    : mode === 'downwind'  ? coachState === 'THINKING' || coachState === 'STREAMING'
     : state === 'THINKING'
 
-  const isComplete = mode === 'sail'
-    ? sailPhase === 'complete'
-    : mode === 'trim'
-    ? trimPhase === 'complete'
-    : mode === 'catamaran'
-    ? catamaranPhase === 'complete'
-    : mode === 'synergy'
-    ? synergyPhase === 'complete'
-    : mode === 'operator'
-    ? operatorPhase === 'complete'
-    : mode === 'scenario'
-    ? scenarioPhase === 'complete'
-    : mode === 'downwind'
-    ? coachState === 'COMPLETE'
+  const isComplete = mode === 'sail'      ? sailPhase      === 'complete'
+    : mode === 'trim'      ? trimPhase      === 'complete'
+    : mode === 'catamaran' ? catamaranPhase === 'complete'
+    : mode === 'synergy'   ? synergyPhase   === 'complete'
+    : mode === 'operator'  ? operatorPhase  === 'complete'
+    : mode === 'scenario'  ? scenarioPhase  === 'complete'
+    : mode === 'downwind'  ? coachState === 'COMPLETE'
     : state === 'COMPLETE' || state === 'ERROR'
 
   const isConversing = mode === 'downwind' && coachState === 'CONVERSING'
 
-  const activeError = mode === 'sail' ? sailError : mode === 'trim' ? trimError : mode === 'catamaran' ? catamaranError : mode === 'synergy' ? synergyError : mode === 'operator' ? operatorError : mode === 'scenario' ? scenarioError : mode === 'downwind' ? coachError : error
-
   const sailState = (
     isActive ? 'THINKING' : isConversing ? 'CONVERSING' : isComplete ? 'COMPLETE' : 'IDLE'
   ) as import('@/hooks/useSailState').SailState
-  const charsLeft  = MAX - input.length
-  const warn       = charsLeft < 200
-  const hasContext = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
 
-  // ── Consumer mode — render simplified personal AI interface ──────────────
+  const activeError = mode === 'sail' ? sailError
+    : mode === 'trim'      ? trimError
+    : mode === 'catamaran' ? catamaranError
+    : mode === 'synergy'   ? synergyError
+    : mode === 'operator'  ? operatorError
+    : mode === 'scenario'  ? scenarioError
+    : mode === 'downwind'  ? coachError
+    : error
+
+  const hasContext  = profile.sessions.length > 0 || profile.metrics.length > 0 || !!profile.diagnostic
+  const contextLabel = profile.diagnostic
+    ? `${profile.diagnostic.industry} · ${profile.diagnostic.teamSize}`
+    : profile.sessions.length > 0
+    ? `${profile.sessions.length} sessions`
+    : ''
+
+  // ── Consumer mode ──────────────────────────────────────────────────────────
+
   if (userType === 'consumer') {
     return (
       <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column' }}>
@@ -1020,1227 +655,295 @@ export default function ChatPage() {
     )
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
     <>
-    {/* Brand Setup Modal — first visit only */}
-    <AnimatePresence>
-      {showBrandSetup && (
-        <BrandSetupModal onComplete={handleBrandComplete} />
-      )}
-    </AnimatePresence>
+      {/* Brand setup modal */}
+      <AnimatePresence>
+        {showBrandSetup && <BrandSetupModal onComplete={handleBrandComplete} />}
+      </AnimatePresence>
 
-    {/* ── Sovereign Dashboard — fullscreen mode picker (pre-conversation) ── */}
-    <AnimatePresence>
-      {showSovereign && (
-        <motion.div
-          key="sovereign"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 0.985 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          style={{ position: 'fixed', inset: 0, zIndex: 45 }}
-        >
-          <SovereignDashboard
-            initialMode={(['upwind','synergy','sail','trim','catamaran'] as SovereignMode[]).includes(mode as SovereignMode)
-              ? mode as SovereignMode
-              : 'upwind'
-            }
-            onModeSelect={handleSovereignSelect}
-            companyName={brandConfig?.aiName ?? brandConfig?.companyName}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
-
-    {/* Aetheris agent status bar — fixed top-right */}
-    <div style={{ position: 'fixed', top: '1px', right: 0, zIndex: 50, padding: '6px 16px' }}>
-      <AgentStatusBar />
-    </div>
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(160deg, #E6F4F1 0%, #D8EDE8 35%, #E2F2EE 65%, #EAF6F3 100%)', paddingBottom: '6rem' }}>
-      <Nav />
-
-      <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 flex flex-col gap-4">
-
-        {/* ── First-use welcome banner ── */}
-        {showWelcome && <WelcomeBanner onDismiss={dismissWelcome} />}
-
-        {/* ── Header: Boat animation + counter ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          style={{
-            background:          'rgba(255,255,255,0.65)',
-            backdropFilter:      'blur(32px)',
-            WebkitBackdropFilter:'blur(32px)',
-            border:              '1px solid rgba(255,255,255,0.9)',
-            borderRadius:        '20px',
-            overflow:            'hidden',
-            position:            'relative',
-            boxShadow:           '0 8px 40px rgba(12,25,41,0.08), 0 1px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,1)',
-          }}
-        >
-          {/* Gold gradient accent line */}
-          <div style={{ position: 'absolute', top: 0, left: '10%', right: '10%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.6), transparent)' }} />
-          {/* Background photo */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/sail-horizontal.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.04, pointerEvents: 'none', userSelect: 'none', mixBlendMode: 'luminosity' }} />
-          {/* Brand nameplate — shown above animation when configured */}
-          {brandConfig && (
-            <BrandNameplate
-              config={brandConfig}
-              onEdit={() => setShowBrandSetup(true)}
-            />
-          )}
-
-          {/* Context + counter bar */}
-          <div style={{
-            display:        'flex',
-            alignItems:     'center',
-            justifyContent: 'space-between',
-            padding:        '0.625rem 1.125rem',
-            borderTop:      '1px solid rgba(201,169,110,0.1)',
-            background:     'rgba(201,169,110,0.03)',
-            gap:            '0.75rem',
-            flexWrap:       'wrap',
-          }}>
-            {hasContext ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', flex: 1 }}>
-                <span style={{ color: '#C9A96E', fontSize: '0.5rem' }}>◆</span>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#8B7355', letterSpacing: '0.02em' }}>
-                  {profile.diagnostic
-                    ? `${profile.diagnostic.industry} · ${profile.diagnostic.teamSize} · ${t('chat.diagnosticLoaded')}`
-                    : `${profile.sessions.length} ${t('chat.sessionMemory')}`}
-                </span>
-                {profile.sessions.length > 0 && (
-                  <button
-                    onClick={() => setShowHistory(true)}
-                    title={t('chat.sessionHistoryTitle')}
-                    style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.25)', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.55rem', color: '#B8935A' }}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/>
-                    </svg>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 500 }}>History</span>
-                  </button>
-                )}
-                {/* ── Profile Context toggle — opens Brand Setup on long-press / secondary click ── */}
-                <motion.button
-                  onClick={toggleProfileCtx}
-                  onContextMenu={e => { e.preventDefault(); setShowBrandSetup(true) }}
-                  onDoubleClick={() => setShowBrandSetup(true)}
-                  title={useProfileCtx ? 'Profile context active · Double-click to edit setup' : 'Click to enable · Double-click to set up profile'}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  animate={useProfileCtx ? {
-                    boxShadow: ['0 0 6px rgba(16,185,129,0.15)', '0 0 14px rgba(16,185,129,0.3)', '0 0 6px rgba(16,185,129,0.15)'],
-                  } : { boxShadow: '0 0 0px rgba(0,0,0,0)' }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.3rem',
-                    padding: '0.2rem 0.6rem',
-                    cursor: 'pointer',
-                    background: useProfileCtx
-                      ? 'linear-gradient(135deg, rgba(6,78,59,0.55) 0%, rgba(16,185,129,0.12) 100%)'
-                      : 'rgba(0,0,0,0.04)',
-                    border: `1px solid ${useProfileCtx ? 'rgba(16,185,129,0.45)' : 'rgba(0,0,0,0.08)'}`,
-                    borderRadius: '6px',
-                    transition: 'background 0.2s, border-color 0.2s',
-                  }}
-                >
-                  {/* Shield icon */}
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={useProfileCtx ? '#10B981' : '#9CA3AF'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    <polyline points="9 12 11 14 15 10"/>
-                  </svg>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: useProfileCtx ? '#34D399' : '#9CA3AF', letterSpacing: '0.01em' }}>
-                    {t('chat.useProfileContext')}
-                  </span>
-                </motion.button>
-                {/* ── Business / Free-chat mode — emerald glow CTA ── */}
-                <motion.button
-                  onClick={() => setBusinessMode(v => !v)}
-                  title={businessMode ? 'Business mode active — click for free chat' : 'Free chat mode — click for business intelligence'}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  animate={businessMode ? {
-                    boxShadow: ['0 0 6px rgba(16,185,129,0.12)', '0 0 16px rgba(16,185,129,0.28)', '0 0 6px rgba(16,185,129,0.12)'],
-                  } : { boxShadow: '0 0 0px rgba(0,0,0,0)' }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.3rem',
-                    padding: '0.2rem 0.6rem',
-                    cursor: 'pointer',
-                    background: businessMode
-                      ? 'linear-gradient(135deg, rgba(6,78,59,0.55) 0%, rgba(16,185,129,0.12) 100%)'
-                      : 'rgba(0,0,0,0.04)',
-                    border: `1px solid ${businessMode ? 'rgba(16,185,129,0.45)' : 'rgba(0,0,0,0.08)'}`,
-                    borderRadius: '6px',
-                    transition: 'background 0.2s, border-color 0.2s',
-                  }}
-                >
-                  <span style={{ fontSize: '0.58rem', lineHeight: 1, flexShrink: 0 }}>{businessMode ? '💼' : '💬'}</span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: businessMode ? '#34D399' : '#9CA3AF' }}>
-                    {businessMode ? 'Business' : 'Free Chat'}
-                  </span>
-                </motion.button>
-                {/* ── Upgrade Pro — gold shimmer CTA ── */}
-                {!isPro && (
-                  <motion.button
-                    onClick={triggerPaywall}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.96 }}
-                    animate={{
-                      boxShadow: [
-                        '0 0 8px rgba(16,185,129,0.12), 0 0 0px rgba(201,169,110,0)',
-                        '0 0 18px rgba(16,185,129,0.28), 0 0 10px rgba(201,169,110,0.15)',
-                        '0 0 8px rgba(16,185,129,0.12), 0 0 0px rgba(201,169,110,0)',
-                      ],
-                    }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{
-                      position: 'relative',
-                      display: 'flex', alignItems: 'center', gap: '0.3rem',
-                      padding: '0.28rem 0.85rem',
-                      background: 'linear-gradient(135deg, #064E3B 0%, #065F46 45%, #0F2417 100%)',
-                      border: '1.5px solid rgba(16,185,129,0.55)',
-                      borderRadius: '999px',
-                      cursor: 'pointer',
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '0.6rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: '#6EE7B7',
-                      flexShrink: 0,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {/* Shimmer sweep */}
-                    <motion.span
-                      animate={{ x: ['-120%', '220%'] }}
-                      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 1.5 }}
-                      style={{
-                        position: 'absolute', inset: 0,
-                        background: 'linear-gradient(90deg, transparent 0%, rgba(110,231,183,0.2) 50%, transparent 100%)',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#6EE7B7" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, position: 'relative' }}>
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                    </svg>
-                    <span style={{ position: 'relative' }}>Upgrade Pro</span>
-                  </motion.button>
-                )}
-              </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#C4C4CC', letterSpacing: '0.03em' }}>
-                  {t('chat.noContext')}
-                </span>
-                {!isPro && (
-                  <motion.button
-                    onClick={triggerPaywall}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.96 }}
-                    animate={{
-                      boxShadow: [
-                        '0 0 8px rgba(16,185,129,0.12)',
-                        '0 0 18px rgba(16,185,129,0.28)',
-                        '0 0 8px rgba(16,185,129,0.12)',
-                      ],
-                    }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{
-                      position: 'relative',
-                      display: 'flex', alignItems: 'center', gap: '0.3rem',
-                      padding: '0.28rem 0.85rem',
-                      background: 'linear-gradient(135deg, #064E3B 0%, #065F46 45%, #0F2417 100%)',
-                      border: '1.5px solid rgba(16,185,129,0.55)',
-                      borderRadius: '999px',
-                      cursor: 'pointer',
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '0.6rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: '#6EE7B7',
-                      flexShrink: 0,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <motion.span
-                      animate={{ x: ['-120%', '220%'] }}
-                      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 1.5 }}
-                      style={{
-                        position: 'absolute', inset: 0,
-                        background: 'linear-gradient(90deg, transparent 0%, rgba(110,231,183,0.2) 50%, transparent 100%)',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#6EE7B7" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, position: 'relative' }}>
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                    </svg>
-                    <span style={{ position: 'relative' }}>Upgrade Pro</span>
-                  </motion.button>
-                )}
-              </div>
-            )}
-            <DailyCounter used={usedToday} isPro={isPro} />
-            {!showModeGrid && (
-              <button
-                onClick={() => { handleReset() }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.35rem',
-                  padding: '0.25rem 0.75rem',
-                  background: 'rgba(201,169,110,0.08)',
-                  border: '1px solid rgba(201,169,110,0.35)',
-                  borderRadius: '999px',
-                  cursor: 'pointer',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '0.6rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: '#C9A96E',
-                  flexShrink: 0,
-                  transition: 'all 0.15s',
-                }}
-              >
-                ⊕ Select Mode
-              </button>
-            )}
-          </div>
-        </motion.div>
-
-        {/* ── API key indicator (compact) ── */}
-        {apiKey && !isActive && !isComplete && (
+      {/* Sovereign dashboard overlay */}
+      <AnimatePresence>
+        {showSovereign && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              padding:       '0.4rem 0.875rem',
-              background:    'rgba(201,169,110,0.06)',
-              border:        '1px solid rgba(201,169,110,0.2)',
-              borderRadius:  '6px',
-              display:       'flex',
-              alignItems:    'center',
-              justifyContent:'space-between',
-              gap:           '0.5rem',
-            }}
+            key="sovereign"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.985 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            style={{ position: 'fixed', inset: 0, zIndex: 45 }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.5" strokeLinecap="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A' }}>
-                Custom key · {apiKey.slice(0, 8)}…
-              </span>
-            </div>
-            <button
-              onClick={() => setShowKeyPanel(true)}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#C9A96E', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              Change
-            </button>
+            <SovereignDashboard
+              initialMode={(['upwind','synergy','sail','trim','catamaran'] as SovereignMode[]).includes(mode as SovereignMode)
+                ? mode as SovereignMode : 'upwind'}
+              onModeSelect={handleSovereignSelect}
+              companyName={brandConfig?.aiName ?? brandConfig?.companyName}
+            />
           </motion.div>
         )}
+      </AnimatePresence>
 
-        {/* ── Input area ── */}
-        <AnimatePresence mode="wait">
-          {(true) && (
-            <motion.div
-              key="input"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.28 }}
-            >
-              {/* Status label above input */}
-              <AnimatePresence mode="wait">
-                {isActive && (
-                  <motion.div
-                    key="status"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    style={{
-                      display:       'flex',
-                      alignItems:    'center',
-                      gap:           '0.5rem',
-                      marginBottom:  '0.5rem',
-                      paddingLeft:   '0.25rem',
-                    }}
-                  >
-                    <motion.span
-                      animate={{ opacity: [1, 0.3, 1] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                      style={{
-                        display:      'inline-block',
-                        width:         6,
-                        height:        6,
-                        borderRadius: '50%',
-                        background:   '#C9A96E',
-                        flexShrink:   0,
-                      }}
-                    />
-                    <span className="label-caps" style={{ color: '#71717A' }}>
-                      {mode === 'sail' ? t('sail.streaming') : mode === 'trim' ? t('trim.streaming') : mode === 'synergy' ? `${brandConfig?.aiName ?? brandConfig?.companyName ?? 'War Room'} assembling…` : mode === 'operator' ? 'Operator calculating…' : mode === 'downwind' ? 'Analyzing Strategic Drift…' : t('chat.thinking')}
-                    </span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Mode selector — hidden while active or after submit */}
-              {!isActive && showModeGrid && (
-                <motion.div
-                  key="mode-grid"
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6, height: 0 }}
-                  transition={{ duration: 0.22 }}
-                  style={{ marginBottom: '0.625rem' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {/* Auto mode hides the manual selector */}
-                    {!autoMode && (
-                      <ModeSelector
-                        mode={mode}
-                        onChange={setMode}
-                        synergyModes={synergyModes}
-                        onSynergyChange={setSynergyModes}
-                        brandName={brandConfig?.aiName ?? brandConfig?.companyName}
-                      />
-                    )}
-
-                    {/* ⊕ AUTO toggle */}
-                    <button
-                      onClick={() => { setAutoMode(m => !m); setAutoPhase('idle'); setMoodGuide(null); setAutoError(null) }}
-                      title={autoMode ? 'Switch to manual mode selection' : 'Let Aetheris pick the best mode automatically'}
-                      style={{
-                        display:       'flex',
-                        alignItems:    'center',
-                        gap:           '0.35rem',
-                        padding:       '0.3rem 0.75rem',
-                        borderRadius:  '999px',
-                        background:    autoMode ? 'rgba(201,169,110,0.12)' : 'rgba(0,0,0,0.04)',
-                        border:        `1px solid ${autoMode ? 'rgba(201,169,110,0.45)' : 'rgba(0,0,0,0.1)'}`,
-                        cursor:        'pointer',
-                        transition:    'all 0.18s',
-                        flexShrink:    0,
-                        marginLeft:    autoMode ? 0 : 'auto',
-                      }}
-                    >
-                      <span style={{
-                        fontFamily:    'Inter, sans-serif',
-                        fontSize:      '0.6rem',
-                        fontWeight:    700,
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        color:         autoMode ? '#C9A96E' : '#9CA3AF',
-                      }}>
-                        ⊕ AUTO
-                      </span>
-                      {autoMode && (
-                        <span style={{
-                          width:        5,
-                          height:       5,
-                          borderRadius: '50%',
-                          background:   '#C9A96E',
-                          flexShrink:   0,
-                        }} />
-                      )}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Downwind conversation indicator */}
-              {isConversing && convHistory.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.625rem', padding: '0.4rem 0.75rem', background: 'rgba(0,105,92,0.1)', border: '1px solid rgba(0,150,136,0.2)', borderRadius: '6px' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00695C', flexShrink: 0 }} />
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#00695C', fontWeight: 500 }}>
-                    {t('chat.guidedSession')} · {Math.floor(convHistory.length / 2)} {convHistory.length > 2 ? t('chat.exchangesPlural') : t('chat.exchanges')} so far
-                  </span>
-                  <button onClick={handleReset} style={{ marginLeft: 'auto', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-                    {t('chat.startOver')}
-                  </button>
-                </div>
-              )}
-
-              {/* Input card — premium frosted glass */}
-              <div
-                style={{
-                  background:          'rgba(255,255,255,0.78)',
-                  backdropFilter:      'blur(32px)',
-                  WebkitBackdropFilter:'blur(32px)',
-                  border:              isActive
-                    ? '1.5px solid rgba(20,184,166,0.50)'
-                    : '1.5px solid rgba(255,255,255,0.95)',
-                  borderRadius:        '18px',
-                  overflow:            'hidden',
-                  boxShadow:           isActive
-                    ? '0 0 0 3px rgba(20,184,166,0.10), 0 8px 32px rgba(12,25,41,0.10)'
-                    : '0 8px 32px rgba(12,25,41,0.08), 0 1px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,1)',
-                  transition:          'border-color 0.3s, box-shadow 0.3s',
-                }}
-              >
-                {/* Attachment pill (above textarea, inside card) */}
-                <AnimatePresence>
-                  {attachment && (
-                    <div style={{ padding: '0.625rem 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <FileAttachmentPill
-                        attachment={attachment}
-                        analyzing={isActive}
-                        onRemove={() => { setAttachment(null); setFileError('') }}
-                      />
-                    </div>
-                  )}
-                </AnimatePresence>
-
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={handleChange}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void handleSubmit() }
-                  }}
-                  placeholder={PLACEHOLDERS[phIdx]}
-                  disabled={isActive}
-                  rows={4}
-                  className="w-full bg-transparent disabled:opacity-40"
-                  style={{
-                    padding:    '1.125rem 1.25rem 0.875rem',
-                    color:      '#0C1929',
-                    caretColor: 'rgba(20,184,166,0.9)',
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize:   '0.92rem',
-                    lineHeight: 1.75,
-                    resize:     'none',
-                  }}
-                />
-
-                {/* Toolbar */}
-                <div
-                  style={{
-                    display:       'flex',
-                    alignItems:    'center',
-                    justifyContent:'space-between',
-                    padding:       '0.625rem 1.25rem 0.875rem',
-                    borderTop:     '1px solid rgba(0,0,0,0.06)',
-                    gap:           '0.75rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-
-                    {/* + Attach button */}
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isActive}
-                      title="Attach file (CSV, XLSX, PDF, image)"
-                      aria-label="Attach file"
-                      style={{
-                        display:        'flex',
-                        alignItems:     'center',
-                        justifyContent: 'center',
-                        width:           30,
-                        height:          30,
-                        borderRadius:    '6px',
-                        background:      attachment ? 'rgba(201,169,110,0.1)' : 'rgba(0,0,0,0.05)',
-                        border:          attachment ? '1px solid rgba(201,169,110,0.4)' : '1px solid transparent',
-                        cursor:          isActive ? 'not-allowed' : 'pointer',
-                        opacity:         isActive ? 0.4 : 1,
-                        transition:      'all 0.15s',
-                        flexShrink:      0,
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke={attachment ? '#C9A96E' : '#71717A'}
-                        strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"/>
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                      </svg>
-                    </button>
-
-                    {/* Hidden file input */}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".csv,.tsv,.xlsx,.xls,.pdf,image/png,image/jpeg,image/webp,image/gif"
-                      onChange={handleFileSelect}
-                      style={{ display: 'none' }}
-                    />
-
-                    {/* Voice input */}
-                    <VoiceInput
-                      disabled={isActive}
-                      onTranscript={text => setInput(prev => prev ? `${prev} ${text}` : text)}
-                    />
-
-                    {/* Keyboard shortcut hint */}
-                    <span className="label-caps hidden sm:block" style={{ color: '#C4C4CC' }}>
-                      {isMac ? '⌘' : 'Ctrl'} + Enter
-                    </span>
-
-                    {/* Char counter */}
-                    {input.length > 0 && (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="label-caps tabular-nums"
-                        style={{ color: warn ? '#991B1B' : '#C4C4CC' }}
-                      >
-                        {charsLeft}
-                      </motion.span>
-                    )}
-                  </div>
-                  {/* In-Chat Mode Switcher — compact dropdown next to Send */}
-                  <InChatModeSwitcher
-                    mode={mode}
-                    onChange={setMode}
-                    disabled={isActive}
-                  />
-                  <HelmButton state={sailState} onClick={() => void handleSubmit()} disabled={isActive || !input.trim()} />
-                </div>
-              </div>
-
-              {/* File error */}
-              <AnimatePresence>
-                {fileError && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#991B1B', marginTop: '0.375rem', paddingLeft: '0.25rem' }}
-                  >
-                    {fileError}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-
-              {/* Quick picks */}
-              {!isActive && input.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  style={{ marginTop: '0.625rem', display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}
-                >
-                  {([
-                    ['chat.pick.firstCustomers', 'chat.q.firstCustomers'],
-                    ['chat.pick.findLosses',     'chat.q.loseMoney'],
-                    ['chat.pick.monthlyFocus',   'chat.q.monthlyFocus'],
-                    ['chat.pick.raisePrices',    'chat.q.raisePrices'],
-                  ] as const).map(([labelKey, questionKey], i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        setInput(t(questionKey as import('@/lib/i18n/translations').TranslationKey))
-                        textareaRef.current?.focus()
-                      }}
-                      style={{
-                        padding:       '0.3rem 0.75rem',
-                        border:        '1px solid rgba(0,0,0,0.09)',
-                        borderRadius:  '999px',
-                        background:    '#FFFFFF',
-                        fontFamily:    'Inter, sans-serif',
-                        fontSize:      '0.72rem',
-                        color:         '#71717A',
-                        cursor:        'pointer',
-                        whiteSpace:    'nowrap',
-                        transition:    'border-color 0.15s, color 0.15s',
-                      }}
-                    >
-                      {t(labelKey as import('@/lib/i18n/translations').TranslationKey)}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── AUTO / Mood Guide card ── */}
-        <AnimatePresence>
-          {(autoPhase === 'routing' || autoPhase === 'guiding') && (
-            <motion.div
-              key="mood-guide"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.28 }}
-            >
-              <MoodGuideCard
-                data={moodGuide ?? {
-                  detectedMood:    'analytical',
-                  selectedMode:    'upwind',
-                  alternativeMode: 'sail',
-                  reasoning:       '',
-                  urgencyLevel:    0.3,
-                  confidence:      0.7,
-                  autoProceeding:  false,
-                }}
-                phase={autoPhase}
-                onProceed={(selectedMode) => proceedWithMode(selectedMode, pendingAutoTextRef.current)}
-                onSwitch={(altMode)       => proceedWithMode(altMode,      pendingAutoTextRef.current)}
-              />
-            </motion.div>
-          )}
-          {autoPhase === 'error' && autoError && (
-            <motion.div
-              key="auto-error"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              style={{ padding: '0.75rem 1rem', background: 'rgba(153,27,27,0.04)', border: '1px solid rgba(153,27,27,0.15)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.625rem' }}
-            >
-              <span style={{ color: '#991B1B', fontSize: '0.85rem' }}>⚠</span>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#991B1B', flex: 1 }}>
-                {autoError}
-              </span>
-              <button
-                onClick={() => { setAutoPhase('idle'); setAutoError(null) }}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#991B1B', background: 'none', border: '1px solid rgba(153,27,27,0.3)', borderRadius: '5px', padding: '0.2rem 0.6rem', cursor: 'pointer' }}
-              >
-                Dismiss
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Inline Paywall ── */}
-        <AnimatePresence>
-          {showInlinePaywall && (
-            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              style={{ padding: '1rem 1.25rem', background: 'rgba(201,169,110,0.05)', border: '1px solid rgba(201,169,110,0.3)', borderRadius: '10px' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
-                <div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: '#92400E', margin: '0 0 0.375rem' }}>
-                    {t('paywall.inlineTitle')}
-                  </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', margin: 0, lineHeight: 1.5 }}>
-                    {t('paywall.inlineCta')}
-                  </p>
-                </div>
-                <button onClick={() => { setShowInlinePaywall(false); triggerPaywall() }}
-                  style={{ padding: '0.45rem 1rem', background: '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', cursor: 'pointer', flexShrink: 0 }}>
-                  Upgrade →
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Error ── */}
-        <AnimatePresence>
-          {activeError && (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              style={{
-                padding:      '0.875rem 1rem',
-                display:      'flex',
-                alignItems:   'flex-start',
-                gap:          '0.75rem',
-                background:   'rgba(153,27,27,0.04)',
-                border:       '1px solid rgba(153,27,27,0.15)',
-                borderRadius: '8px',
-              }}
-            >
-              <span style={{ color: '#991B1B', lineHeight: 1.5, flexShrink: 0, fontSize: '0.85rem' }}>⚠</span>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.6, color: '#991B1B', margin: 0 }}>
-                {activeError === 'RATE_LIMIT'
-                  ? 'Request limit reached. Please wait a moment before trying again.'
-                  : activeError?.toLowerCase().includes('sign in') || activeError?.toLowerCase().includes('unauthorized')
-                  ? <span>Session expired. <a href="/login?callbackUrl=%2Fchat" style={{ color: '#991B1B', textDecoration: 'underline' }}>Sign in again →</a></span>
-                  : activeError}
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── API Key Panel ── */}
-        <AnimatePresence>
-          {showKeyPanel && (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              style={{
-                padding:      '1.25rem',
-                background:   '#FFFFFF',
-                border:       '1px solid rgba(0,0,0,0.09)',
-                borderRadius: '12px',
-                boxShadow:    '0 4px 20px rgba(0,0,0,0.07)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#A1A1AA', margin: 0 }}>
-                  Groq API Key
-                </p>
-                <button onClick={() => setShowKeyPanel(false)} style={{ color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              </div>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', marginBottom: '0.875rem', lineHeight: 1.5 }}>
-                Paste your own key from{' '}
-                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E' }}>console.groq.com</a>
-                {' '}→ API Keys → Create API key.
-              </p>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  type="password"
-                  value={apiKeyInput}
-                  onChange={e => setApiKeyInput(e.target.value)}
-                  placeholder="gsk_…"
-                  style={{
-                    flex: 1, padding: '0.625rem 0.75rem',
-                    border: '1px solid rgba(0,0,0,0.12)', borderRadius: '6px',
-                    background: 'transparent', outline: 'none',
-                    fontFamily: 'Inter, monospace', fontSize: '0.8rem', color: '#0C0C0E',
-                  }}
-                />
-                <button onClick={saveApiKey} style={{
-                  padding: '0.625rem 1rem', background: '#0C0C0E', color: '#FAFAF8',
-                  border: 'none', borderRadius: '6px', cursor: 'pointer',
-                  fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase',
-                }}>
-                  Save
-                </button>
-                {apiKey && (
-                  <button
-                    onClick={() => { setApiKey(''); setApiKeyInput(''); localStorage.removeItem(API_KEY_STORE); setShowKeyPanel(false) }}
-                    style={{ padding: '0.625rem 0.75rem', background: 'transparent', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#71717A' }}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Drift alerts (from Zustand store) ── */}
-        <AnimatePresence>
-          {activeAlerts.length > 0 && (
-            <motion.div
-              key="alerts"
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              <PredictiveAlertList alerts={activeAlerts} variant="light" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Unified Chat Thread (continuous multi-turn dialogue) ── */}
-        {chatMessages.length > 0 && (
-          <ChatThread
-            messages={chatMessages}
-            onFollowUp={handleFollowUp}
-          />
-        )}
-
-        {/* ── SAIL streaming result (legacy — kept for downwind/upwind/trim/catamaran) ── */}
-        <AnimatePresence>
-          {mode === 'sail' && (sailPhase === 'streaming' || sailPhase === 'complete') && (
-            <motion.div key="sail-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(124,58,237,0.15)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(124,58,237,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
-                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(124,58,237,0.08)', background: 'rgba(124,58,237,0.025)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {sailPhase === 'streaming' && (
-                    <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#7C3AED', flexShrink: 0 }} />
-                  )}
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7C3AED', fontWeight: 700 }}>
-                    SAIL · Adaptive Intelligence
-                  </span>
-                </div>
-                <div style={{ padding: '1.5rem 1.25rem' }}>
-                  <SailAdapter text={sailText} intent={sailIntent} streaming={sailPhase === 'streaming'} />
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── TRIM timeline result ── */}
-        <AnimatePresence>
-          {mode === 'trim' && (trimPhase === 'loading' || trimPhase === 'complete') && (
-            <motion.div key="trim-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(201,169,110,0.18)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(201,169,110,0.06), 0 1px 4px rgba(0,0,0,0.04)', padding: '1.5rem' }}>
-                <TrimTimelineCard response={trimResponse} isLoading={trimPhase === 'loading'} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── CATAMARAN dual-track result ── */}
-        <AnimatePresence>
-          {mode === 'catamaran' && (catamaranPhase === 'loading' || catamaranPhase === 'complete') && (
-            <motion.div key="catamaran-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <CatamaranResponseCard 
-                response={catamaranResponse} 
-                isStreaming={catamaranPhase === 'loading'} 
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── SYNERGY war room result ── */}
-        <AnimatePresence>
-          {mode === 'synergy' && (synergyPhase === 'streaming' || synergyPhase === 'complete') && (
-            <motion.div key="synergy-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <SynergyResponseCard
-                text={synergyText}
-                streaming={synergyPhase === 'streaming'}
-                modes={synergyMeta?.modes ?? synergyModes as string[]}
-                companyName={synergyMeta?.companyName ?? brandConfig?.aiName ?? brandConfig?.companyName ?? undefined}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── OPERATOR deep intelligence result ── */}
-        <AnimatePresence>
-          {mode === 'operator' && (operatorPhase === 'streaming' || operatorPhase === 'complete') && (
-            <motion.div key="operator-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(204,34,0,0.15)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(204,34,0,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
-                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(204,34,0,0.08)', background: 'rgba(204,34,0,0.025)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {operatorPhase === 'streaming' && (
-                    <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#CC2200', flexShrink: 0 }} />
-                  )}
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#CC2200', fontWeight: 700 }}>
-                    OPERATOR · Universal Intelligence
-                  </span>
-                </div>
-                <div style={{ padding: '1.5rem 1.25rem' }}>
-                  <SailAdapter text={operatorText} intent="analytic" streaming={operatorPhase === 'streaming'} />
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── SCENARIO predictive simulation result ── */}
-        <AnimatePresence>
-          {mode === 'scenario' && (scenarioPhase === 'streaming' || scenarioPhase === 'complete') && (
-            <motion.div key="scenario-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,201,177,0.18)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,201,177,0.07), 0 1px 4px rgba(0,0,0,0.04)' }}>
-                <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(0,201,177,0.10)', background: 'rgba(0,201,177,0.03)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {scenarioPhase === 'streaming' && (
-                    <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#00C9B1', flexShrink: 0 }} />
-                  )}
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#00C9B1', fontWeight: 700 }}>
-                    SCENARIO · Predictive Simulation
-                  </span>
-                </div>
-                <div style={{ padding: '1.5rem 1.25rem' }}>
-                  <SailAdapter text={scenarioText} intent="scenario" streaming={scenarioPhase === 'streaming'} />
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Upwind executive result ── */}
-        <AnimatePresence mode="wait">
-          {mode === 'upwind' && state === 'THINKING' && (
-            <motion.div
-              key="swan-loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.4 }}
-              style={{
-                background:    'rgba(255,255,255,0.55)',
-                backdropFilter:'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border:        '1px solid rgba(20,184,166,0.18)',
-                borderRadius:  '16px',
-                overflow:      'hidden',
-                boxShadow:     '0 8px 40px rgba(20,184,166,0.08), inset 0 1px 0 rgba(255,255,255,0.8)',
-              }}
-            >
-              <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.5), rgba(201,169,110,0.4), transparent)' }} />
-              <SwanLoader label="Synthesising strategic intelligence…" />
-            </motion.div>
-          )}
-          {mode === 'upwind' && state === 'COMPLETE' && (
-            <motion.div
-              key="answer"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.35 }}
-            >
-              <ExecutiveResponseCard
-                response={response}
-                isStreaming={false}
-                variant="light"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Downwind momentum result ── */}
-        <AnimatePresence>
-          {mode === 'downwind' && coachState !== 'IDLE' && coachState !== 'ERROR' && (
-            <motion.div key="downwind-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-              <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '14px' }}>
-                {/* Silver shimmer while computing */}
-                <AnimatePresence>
-                  {(coachState === 'THINKING' || coachState === 'STREAMING') && (
-                    <motion.div
-                      key="shimmer"
-                      initial={{ x: '-100%' }}
-                      animate={{ x: '150%' }}
-                      transition={{ duration: 1.6, repeat: Infinity, ease: 'linear' }}
-                      style={{
-                        position: 'absolute', top: 0, left: 0, bottom: 0, width: '60%', zIndex: 2, pointerEvents: 'none',
-                        background: 'linear-gradient(90deg, transparent, rgba(192,192,192,0.12), transparent)',
-                      }}
-                    />
-                  )}
-                </AnimatePresence>
-
-                <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,105,92,0.15)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,105,92,0.06)' }}>
-                  {/* Header */}
-                  <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(0,105,92,0.08)', background: 'rgba(0,105,92,0.025)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {(coachState === 'THINKING' || coachState === 'STREAMING') && (
-                      <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#00695C', flexShrink: 0 }} />
-                    )}
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#00695C', fontWeight: 700 }}>
-                      Downwind · Momentum Engine
-                    </span>
-                    {convHistory.length > 0 && (
-                      <span style={{ marginLeft: 'auto', fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(0,105,92,0.5)', letterSpacing: '0.05em' }}>
-                        {Math.floor(convHistory.length / 2)} turn{convHistory.length > 2 ? 's' : ''}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Body */}
-                  <div style={{ padding: '1.25rem 1.25rem' }}>
-                    {(coachState === 'THINKING' || coachState === 'STREAMING') && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.4, repeat: Infinity }} style={{ width: 28, height: 3, borderRadius: 2, background: 'rgba(0,105,92,0.25)' }} />
-                        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.2 }} style={{ width: 20, height: 3, borderRadius: 2, background: 'rgba(0,105,92,0.2)' }} />
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#C9A96E', marginLeft: 4 }}>Analyzing strategic drift…</span>
-                      </div>
-                    )}
-
-                    {(coachState === 'CONVERSING' || coachState === 'COMPLETE') && coachResult && (
-                      <>
-                        {'chatMessage' in coachResult && (
-                          <div>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.75, color: '#C9A96E', margin: 0 }}>
-                              {coachResult.chatMessage}
-                            </p>
-                            {coachResult.followUpQuestion && (
-                              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', lineHeight: 1.65, color: '#00695C', margin: '0.875rem 0 0', fontStyle: 'italic', paddingLeft: '0.75rem', borderLeft: '2px solid rgba(0,105,92,0.3)' }}>
-                                {coachResult.followUpQuestion}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                        {'headline' in coachResult && (
-                          <div>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: 600, color: '#C9A96E', margin: '0 0 0.5rem', lineHeight: 1.5 }}>{coachResult.headline}</p>
-                            {'signal' in coachResult && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#D4B980', margin: 0, lineHeight: 1.6 }}>{coachResult.signal}</p>}
-                          </div>
-                        )}
-                        {'question' in coachResult && (
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: '#00695C', margin: 0, fontStyle: 'italic', lineHeight: 1.7 }}>{coachResult.question}</p>
-                        )}
-                        {'freeText' in coachResult && (
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.75, color: '#C9A96E', margin: 0 }}>{coachResult.freeText}</p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── New analysis CTA + Export ── */}
-        <AnimatePresence>
-          {isComplete && state !== 'ERROR' && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', paddingBottom: '2rem' }}
-            >
-              <button
-                onClick={handleReset}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  padding: '0.5rem 1.25rem',
-                  background: 'rgba(0,0,0,0.05)',
-                  border: '1px solid rgba(0,0,0,0.1)',
-                  borderRadius: '8px', cursor: 'pointer',
-                  fontFamily: 'Inter, sans-serif', fontSize: '0.75rem',
-                  fontWeight: 600, letterSpacing: '0.04em',
-                  color: '#374151',
-                  transition: 'all 0.15s',
-                }}
-              >
-                <HelmSVG /> New Topic
-              </button>
-              {response && mode !== 'sail' && mode !== 'trim' && (
-                <button
-                  onClick={() => setShowExport(true)}
-                  style={{
-                    display:     'flex',
-                    alignItems:  'center',
-                    gap:         '0.4rem',
-                    padding:     '0.5rem 1rem',
-                    background:  'transparent',
-                    border:      '1px solid rgba(201,169,110,0.4)',
-                    borderRadius:'8px',
-                    cursor:      'pointer',
-                    fontFamily:  'Inter, sans-serif',
-                    fontSize:    '0.72rem',
-                    fontWeight:  600,
-                    letterSpacing:'0.06em',
-                    textTransform:'uppercase',
-                    color:       '#C9A96E',
-                    transition:  'all 0.15s',
-                  }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                    <path d="M4 4h16v2H4z"/><path d="M4 10h10"/><path d="M4 16h7"/><path d="M15 14l5 5m0-5l-5 5"/>
-                  </svg>
-                  {t('chat.export')}
-                </button>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Agent status bar */}
+      <div style={{ position: 'fixed', top: 1, right: 0, zIndex: 50, padding: '6px 16px' }}>
+        <AgentStatusBar />
       </div>
 
-      <PaywallModal open={showPaywall} onClose={closePaywall} />
+      {/* ── Main layout: fixed, full-screen, column flex ── */}
+      <div style={{
+        position:        'fixed',
+        inset:            0,
+        display:         'flex',
+        flexDirection:   'column',
+        background:      'linear-gradient(160deg, #E8F5F2 0%, #DAF0EA 30%, #E4F3EF 65%, #ECF7F4 100%)',
+        overflow:        'hidden',
+      }}>
+        {/* Nav bar */}
+        <Nav />
 
-      {/* Settings button */}
-      <button
-        onClick={() => setShowKeyPanel(o => !o)}
-        aria-label="API key settings"
-        title="Configure Groq API key"
-        style={{
-          position: 'fixed', bottom: '5.5rem', right: '4rem', zIndex: 50,
-          width: '2.25rem', height: '2.25rem', borderRadius: '50%',
-          background: apiKey ? 'rgba(201,169,110,0.1)' : 'rgba(0,0,0,0.06)',
-          border: apiKey ? '1.5px solid rgba(201,169,110,0.4)' : '1.5px solid rgba(0,0,0,0.1)',
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.15s', boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        }}
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={apiKey ? '#C9A96E' : '#71717A'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </svg>
-      </button>
+        {/* Content below nav */}
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {/* Center column */}
+          <div style={{
+            flex:          1,
+            overflow:     'hidden',
+            display:      'flex',
+            flexDirection:'column',
+            maxWidth:      720,
+            width:        '100%',
+            margin:       '0 auto',
+            minHeight:     0,
+          }}>
 
-      {/* Feedback button */}
+            {/* Precision header */}
+            <ChatHeader
+              mode={mode}
+              isActive={isActive}
+              isPro={isPro}
+              usedToday={usedToday}
+              hasContext={hasContext}
+              useProfileCtx={useProfileCtx}
+              businessMode={businessMode}
+              hasHistory={profile.sessions.length > 0}
+              hasMessages={chatMessages.length > 0 || isComplete}
+              apiKey={apiKey}
+              brandConfig={brandConfig}
+              contextLabel={contextLabel}
+              onToggleCtx={toggleProfileCtx}
+              onToggleBusiness={() => setBusinessMode(v => !v)}
+              onUpgradePro={triggerPaywall}
+              onHistory={() => setShowHistory(true)}
+              onReset={handleReset}
+              onBrandEdit={() => setShowBrandSetup(true)}
+              onSettings={() => setShowKeyPanel(o => !o)}
+            />
+
+            {/* Scrollable stage */}
+            <ChatStage
+              messages={chatMessages}
+              onFollowUp={handleFollowUp}
+              onModeSelect={(m) => { setMode(m); setShowSovereign(false) }}
+              onQuickPick={(text) => { setInput(text); setTimeout(() => textareaRef.current?.focus(), 20) }}
+              mode={mode}
+              sailState={sailState}
+              isActive={isActive}
+              isComplete={isComplete}
+              response={response as Record<string, unknown> | null}
+              upwindState={state}
+              sailText={sailText}
+              sailPhase={sailPhase}
+              sailIntent={sailIntent}
+              trimResponse={trimResponse}
+              trimPhase={trimPhase}
+              catamaranResponse={catamaranResponse}
+              catamaranPhase={catamaranPhase}
+              synergyText={synergyText}
+              synergyPhase={synergyPhase}
+              synergyMeta={synergyMeta}
+              synergyModes={synergyModes}
+              brandName={brandConfig?.aiName ?? brandConfig?.companyName}
+              operatorText={operatorText}
+              operatorPhase={operatorPhase}
+              scenarioText={scenarioText}
+              scenarioPhase={scenarioPhase}
+              coachState={coachState}
+              coachResult={coachResult}
+              convHistory={convHistory}
+              autoPhase={autoPhase}
+              moodGuide={moodGuide}
+              autoError={autoError}
+              onAutoProceed={(m) => proceedWithMode(m, pendingAutoTextRef.current)}
+              onAutoSwitch={(m)  => proceedWithMode(m, pendingAutoTextRef.current)}
+              onDismissAutoError={() => { setAutoPhase('idle'); setAutoError(null) }}
+              activeAlerts={activeAlerts}
+              activeError={activeError ?? null}
+              showInlinePaywall={showInlinePaywall}
+              onUpgradePro={triggerPaywall}
+              onDismissPaywall={() => setShowInlinePaywall(false)}
+              onReset={handleReset}
+              onExport={() => setShowExport(true)}
+            />
+
+            {/* Bottom composer */}
+            <ChatComposer
+              input={input}
+              mode={mode}
+              sailState={sailState}
+              isActive={isActive}
+              isMac={isMac}
+              phIdx={phIdx}
+              attachment={attachment}
+              fileError={fileError}
+              autoMode={autoMode}
+              isConversing={isConversing}
+              convHistory={convHistory}
+              textareaRef={textareaRef}
+              fileInputRef={fileInputRef}
+              onChange={e => { if (e.target.value.length <= MAX) setInput(e.target.value) }}
+              onSubmit={() => void handleSubmit()}
+              onModeChange={setMode}
+              onAutoToggle={() => { setAutoMode(m => !m); setAutoPhase('idle'); setMoodGuide(null); setAutoError(null) }}
+              onFileSelect={async (e) => {
+                const file = e.target.files?.[0]; if (fileInputRef.current) fileInputRef.current.value = ''
+                if (!file) return; setFileError('')
+                if (file.size > MAX_FILE_BYTES) { setFileError(t('chat.fileTooLarge').replace('{size}', (file.size / (1024 * 1024)).toFixed(1))); return }
+                try { setAttachment(await parseFile(file)) } catch { setFileError(t('chat.fileReadError')) }
+              }}
+              onAttachClick={() => fileInputRef.current?.click()}
+              onRemoveFile={() => { setAttachment(null); setFileError('') }}
+              onVoiceTranscript={text => setInput(prev => prev ? `${prev} ${text}` : text)}
+              onStartOver={handleReset}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── API Key panel ── */}
+      <AnimatePresence>
+        {showKeyPanel && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position:     'fixed',
+              bottom:        160,
+              right:          24,
+              zIndex:         60,
+              width:          320,
+              padding:        20,
+              background:    '#FFFFFF',
+              border:        '1px solid rgba(0,0,0,0.08)',
+              borderRadius:   12,
+              boxShadow:     '0 8px 32px rgba(0,0,0,0.12)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', margin: 0, fontWeight: 600 }}>Groq API Key</p>
+              <button onClick={() => setShowKeyPanel(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A1A1AA', lineHeight: 1, padding: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#6B7280', marginBottom: 14, lineHeight: 1.5 }}>
+              Paste your key from{' '}
+              <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E' }}>console.groq.com</a>
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input type="password" value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} placeholder="gsk_…"
+                style={{ flex: 1, padding: '8px 12px', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 8, background: 'transparent', outline: 'none', fontFamily: 'Inter, monospace', fontSize: 12, color: '#0C0C0E' }} />
+              <button onClick={saveApiKey} style={{ padding: '8px 16px', background: '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                Save
+              </button>
+              {apiKey && (
+                <button onClick={() => { setApiKey(''); setApiKeyInput(''); localStorage.removeItem(API_KEY_STORE); setShowKeyPanel(false) }}
+                  style={{ padding: '8px 12px', background: 'transparent', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#6B7280' }}>
+                  Clear
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Feedback FAB */}
       <button
         onClick={() => setShowFeedback(true)}
         aria-label="Send feedback"
         style={{
-          position: 'fixed', bottom: '5.5rem', right: '1.25rem', zIndex: 50,
-          width: '2.25rem', height: '2.25rem', borderRadius: '50%',
+          position: 'fixed', bottom: 24, right: 24, zIndex: 50,
+          width: 40, height: 40, borderRadius: '50%',
           background: '#0C0C0E', border: 'none', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
         }}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FAFAF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FAFAF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
       </button>
 
+      {/* Modals */}
+      <PaywallModal open={showPaywall} onClose={closePaywall} />
       <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
-
       {response && mode !== 'sail' && mode !== 'trim' && (
-        <ExportModal
-          open={showExport}
-          onClose={() => setShowExport(false)}
-          result={response}
-          sector={input.slice(0, 60)}
-        />
+        <ExportModal open={showExport} onClose={() => setShowExport(false)} result={response} sector={input.slice(0, 60)} />
       )}
 
-      {/* ── History Panel ── */}
+      {/* ── History panel ── */}
       {showHistory && (
         <>
-          <div onClick={() => setShowHistory(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 50 }} />
-          <div style={{
-            position:   'fixed',
-            top:        0,
-            right:      0,
-            bottom:     0,
-            width:      'min(380px, 92vw)',
-            background: '#FAFAF8',
-            boxShadow:  '-8px 0 32px rgba(0,0,0,0.12)',
-            zIndex:     51,
-            display:    'flex',
-            flexDirection: 'column',
-            overflow:   'hidden',
-          }}>
-            {/* Header */}
-            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div onClick={() => setShowHistory(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 60, backdropFilter: 'blur(4px)' }} />
+          <motion.div
+            initial={{ x: 40, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 40, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+            style={{
+              position: 'fixed', top: 0, right: 0, bottom: 0,
+              width: 'min(380px, 92vw)',
+              background: '#FAFAF8',
+              boxShadow: '-8px 0 40px rgba(0,0,0,0.14)',
+              zIndex: 61,
+              display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            }}
+          >
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 600, color: '#0C0C0E', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#71717A', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 600, color: '#0C0C0E', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
               </div>
-              <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: '#71717A', lineHeight: 1 }}>×</button>
+              <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#9CA3AF', lineHeight: 1, padding: 4 }}>×</button>
             </div>
-
-            {/* List */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
               {profile.sessions.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#A1A1AA', textAlign: 'center', marginTop: '2rem' }}>{t('chat.noAnalysesYet')}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#A1A1AA', textAlign: 'center', marginTop: 32 }}>{t('chat.noAnalysesYet')}</p>
               ) : (
                 [...profile.sessions].reverse().map((s, i) => {
-                  const key      = s.id ?? String(i)
-                  const expanded = expandedSession === key
+                  const key = s.id ?? String(i); const expanded = expandedSession === key
                   return (
-                    <div
-                      key={key}
-                      onClick={() => setExpandedSession(expanded ? null : key)}
+                    <div key={key} onClick={() => setExpandedSession(expanded ? null : key)}
                       style={{
-                        padding:      '0.875rem 1rem',
-                        marginBottom: '0.5rem',
-                        background:   expanded ? '#FFF9F0' : '#FFFFFF',
-                        border:       `1px solid ${expanded ? 'rgba(201,169,110,0.4)' : 'rgba(0,0,0,0.07)'}`,
-                        borderRadius: '8px',
-                        cursor:       'pointer',
-                        transition:   'background 0.15s, border-color 0.15s',
+                        padding: '14px 16px', marginBottom: 8, cursor: 'pointer',
+                        background: expanded ? '#FFF9F0' : '#FFFFFF',
+                        border: `1px solid ${expanded ? 'rgba(201,169,110,0.4)' : 'rgba(0,0,0,0.07)'}`,
+                        borderRadius: 10, transition: 'all 0.15s',
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>
-                          {s.prompt}
-                        </p>
-                        <span style={{ color: '#C9A96E', fontSize: '0.65rem', flexShrink: 0, marginTop: '2px' }}>{expanded ? '▲' : '▼'}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>{s.prompt}</p>
+                        <span style={{ color: '#C9A96E', fontSize: 10, flexShrink: 0 }}>{expanded ? '▲' : '▼'}</span>
                       </div>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#71717A', margin: '0 0 6px', lineHeight: 1.5 }}>
-                        {expanded ? s.summary : `${s.summary?.slice(0, 120) ?? ''}${(s.summary?.length ?? 0) > 120 ? '…' : ''}`}
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#6B7280', margin: '0 0 6px', lineHeight: 1.5 }}>
+                        {expanded ? s.summary : `${s.summary?.slice(0, 100) ?? ''}${(s.summary?.length ?? 0) > 100 ? '…' : ''}`}
                       </p>
                       {s.createdAt && (
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#A1A1AA', margin: 0 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#A1A1AA', margin: 0 }}>
                           {new Date(s.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       )}
                       {expanded && (
-                        <button
-                          onClick={e => { e.stopPropagation(); setInput(s.prompt ?? ''); setShowHistory(false) }}
-                          style={{ marginTop: '0.75rem', padding: '0.35rem 0.75rem', background: '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '4px', fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', cursor: 'pointer' }}
-                        >
+                        <button onClick={e => { e.stopPropagation(); setInput(s.prompt ?? ''); setShowHistory(false) }}
+                          style={{ marginTop: 12, padding: '6px 14px', background: '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: 6, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                           {t('chat.rerunAnalysis')}
                         </button>
                       )}
@@ -2249,23 +952,9 @@ export default function ChatPage() {
                 })
               )}
             </div>
-          </div>
+          </motion.div>
         </>
       )}
-    </div>
     </>
-  )
-}
-
-function HelmSVG() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9.5"  stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="12" cy="12" r="2.5"  stroke="currentColor" strokeWidth="1.5" />
-      <line x1="12" y1="2.5"  x2="12" y2="9.5"  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="12" y1="14.5" x2="12" y2="21.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="2.5"  y1="12" x2="9.5"  y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="14.5" y1="12" x2="21.5" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
   )
 }

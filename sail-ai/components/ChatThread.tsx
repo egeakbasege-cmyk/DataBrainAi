@@ -1,146 +1,99 @@
 'use client'
 
 /**
- * components/ChatThread.tsx
+ * components/ChatThread.tsx — Swiss Precision Rebuild
  * ─────────────────────────────────────────────────────────────────────────────
- * Continuous, infinite-scroll conversation thread for Sail AI.
+ * Continuous multi-turn conversation thread.
  *
- * Features:
- *   • Auto-scrolls to latest message on every append
- *   • User messages render as right-aligned bubbles
- *   • Assistant messages render their native card per mode
- *   • Streaming indicator (animated gold dot + text)
- *   • Follow-up question chips below each completed response
- *   • "Jump to bottom" FAB when user has scrolled up
- *   • Timestamps on hover
- *
- * The component is intentionally display-only — it receives messages and
- * fires callbacks; all state lives in useChatMessages.
+ * Design pillars:
+ *   • 8pt grid throughout — all spacing in multiples of 4/8px
+ *   • 4-level typography: LABEL / BODY / SUBHEAD / DISPLAY
+ *   • UserBubble: right-aligned, deep navy (#0C1929), 16px radius
+ *   • AssistantCard: left-aligned, glass surface, mode-color 2px top border
+ *   • StreamingCursor: teal blinking I-beam
+ *   • FollowUpRail: chips staggered in 0.5s after completion
  */
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  memo,
-} from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import type { ChatMessage }        from '@/hooks/useChatMessages'
-import type { AnalysisMode }       from '@/components/ModeSelector'
-import { SailAdapter }             from '@/components/SailAdapter'
-import { ExecutiveResponseCard }   from '@/components/ExecutiveResponseCard'
-import { TrimTimelineCard }        from '@/components/TrimTimelineCard'
-import { CatamaranResponseCard }   from '@/components/CatamaranResponseCard'
-import { SynergyResponseCard }     from '@/components/SynergyResponseCard'
+import { useRef, useState, useCallback, memo } from 'react'
+import { motion, AnimatePresence }             from 'framer-motion'
+import type { ChatMessage }                    from '@/hooks/useChatMessages'
+import type { AnalysisMode }                   from '@/components/ModeSelector'
+import { SailAdapter }                         from '@/components/SailAdapter'
+import { ExecutiveResponseCard }               from '@/components/ExecutiveResponseCard'
+import { TrimTimelineCard }                    from '@/components/TrimTimelineCard'
+import { CatamaranResponseCard }               from '@/components/CatamaranResponseCard'
+import { SynergyResponseCard }                 from '@/components/SynergyResponseCard'
+import { StreamingCursor }                     from '@/components/chat/StreamingCursor'
 
-// ── Mode meta ─────────────────────────────────────────────────────────────────
+// ── Design tokens ──────────────────────────────────────────────────────────────
 
-const MODE_META: Record<AnalysisMode, { label: string; color: string; bg: string }> = {
-  upwind:    { label: 'Upwind',         color: '#1A5276', bg: 'rgba(26,82,118,0.06)'   },
-  downwind:  { label: 'Downwind',       color: '#00695C', bg: 'rgba(0,105,92,0.06)'    },
-  sail:      { label: 'SAIL',           color: '#7C3AED', bg: 'rgba(124,58,237,0.06)'  },
-  trim:      { label: 'TRIM',           color: '#B45309', bg: 'rgba(201,169,110,0.06)' },
-  catamaran: { label: 'Catamaran',      color: '#D4AF37', bg: 'rgba(212,175,55,0.06)'  },
-  operator:  { label: 'Operator',       color: '#CC2200', bg: 'rgba(204,34,0,0.06)'    },
-  synergy:   { label: 'Synergy',        color: '#C9A96E', bg: 'rgba(201,169,110,0.06)' },
-  scenario:  { label: 'Scenario',       color: '#00C9B1', bg: 'rgba(0,201,177,0.06)'   },
+const MODE_META: Record<AnalysisMode, { label: string; color: string }> = {
+  upwind:    { label: 'Upwind',    color: '#0F6CBD' },
+  downwind:  { label: 'Downwind',  color: '#00695C' },
+  sail:      { label: 'SAIL',      color: '#7C3AED' },
+  trim:      { label: 'TRIM',      color: '#B45309' },
+  catamaran: { label: 'Catamaran', color: '#D4AF37' },
+  operator:  { label: 'Operator',  color: '#CC2200' },
+  synergy:   { label: 'Synergy',   color: '#C9A96E' },
+  scenario:  { label: 'Scenario',  color: '#00C9B1' },
 }
-
-// ── Follow-up question chips per mode ─────────────────────────────────────────
 
 const FOLLOW_UPS: Record<AnalysisMode, string[]> = {
-  upwind:    [
-    'What are the biggest execution risks in this plan?',
-    'How should we prioritize these action steps?',
-    'Build a 90-day milestone roadmap for this.',
-  ],
-  downwind:  [
-    'How do I overcome the main obstacle you identified?',
-    'What metrics should I track to stay on course?',
-    'Give me a one-week action list.',
-  ],
-  sail:      [
-    'Drill deeper into the highest-impact insight.',
-    'What competitive threats should I monitor?',
-    'Turn this into a board-ready executive summary.',
-  ],
-  trim:      [
-    'Which milestone is most at risk of slipping?',
-    'Who should own each of these milestones?',
-    'Add contingency buffers to the critical path.',
-  ],
-  catamaran: [
-    'How do we balance both tracks simultaneously?',
-    'What happens if we focus only on Track A first?',
-    'Build the resource allocation plan.',
-  ],
-  operator:  [
-    'Give me the next 3 tactical moves right now.',
-    'What is the highest-leverage action this week?',
-    'Identify the single biggest constraint.',
-  ],
-  synergy:   [
-    "Which mode's perspective is most critical here?",
-    'Where do the modes disagree and why?',
-    'Synthesise all perspectives into one action.',
-  ],
-  scenario:  [
-    'What is the worst-case scenario probability?',
-    'How do I hedge against the downside?',
-    'Run the bull-case scenario instead.',
-  ],
+  upwind:    ['What are the biggest execution risks?', 'How should we prioritize these steps?', 'Build a 90-day milestone roadmap.'],
+  downwind:  ['How do I overcome the main obstacle?', 'What metrics should I track?', 'Give me a one-week action list.'],
+  sail:      ['Drill deeper into the highest-impact insight.', 'What competitive threats should I monitor?', 'Turn this into a board-ready summary.'],
+  trim:      ['Which milestone is most at risk?', 'Who should own each milestone?', 'Add contingency buffers to the critical path.'],
+  catamaran: ['How do we balance both tracks?', 'What if we focus only on Track A first?', 'Build the resource allocation plan.'],
+  operator:  ['Give me the next 3 tactical moves right now.', 'What is the highest-leverage action this week?', 'Identify the single biggest constraint.'],
+  synergy:   ["Which mode's perspective is most critical?", 'Where do the modes disagree and why?', 'Synthesise all perspectives into one action.'],
+  scenario:  ['What is the worst-case scenario probability?', 'How do I hedge against the downside?', 'Run the bull-case scenario instead.'],
 }
 
-// ── User message bubble ───────────────────────────────────────────────────────
+// ── User bubble ────────────────────────────────────────────────────────────────
 
 const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage }) {
-  const text = message.payload.type === 'text' ? message.payload.text : ''
-  const ts   = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const text      = message.payload.type === 'text' ? message.payload.text : ''
+  const ts        = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const modeLabel = MODE_META[message.mode]?.label ?? message.mode
+  const color     = MODE_META[message.mode]?.color ?? '#14B8A6'
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.97 }}
+      initial={{ opacity: 0, y: 8, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
-      style={{
-        display:        'flex',
-        justifyContent: 'flex-end',
-        paddingLeft:    '3rem',
-      }}
+      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+      style={{ display: 'flex', justifyContent: 'flex-end', paddingLeft: 48 }}
     >
-      <div style={{ maxWidth: '82%' }}>
+      <div style={{ maxWidth: '84%' }}>
         {/* Bubble */}
         <div style={{
-          background:          'linear-gradient(145deg, #0C1929 0%, #112033 60%, #0A1628 100%)',
-          borderRadius:        '18px 18px 5px 18px',
-          padding:             '0.875rem 1.125rem',
-          boxShadow:           '0 4px 20px rgba(12,25,41,0.25), 0 1px 4px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.07)',
+          background:          'linear-gradient(145deg, #0C1929 0%, #112237 55%, #0A1628 100%)',
+          borderRadius:        '16px 16px 4px 16px',
+          padding:             '12px 16px',
           position:            'relative',
-          backdropFilter:      'blur(12px)',
-          WebkitBackdropFilter:'blur(12px)',
-          border:              '1px solid rgba(255,255,255,0.07)',
+          overflow:            'hidden',
+          boxShadow:           '0 4px 20px rgba(12,25,41,0.22), 0 1px 4px rgba(0,0,0,0.1)',
+          border:              '1px solid rgba(255,255,255,0.06)',
         }}>
-          {/* Teal accent hairline */}
+          {/* Teal-to-gold hairline */}
           <div style={{
             position:   'absolute',
-            top:        0,
-            left:       '12%',
-            right:      '12%',
-            height:     '1px',
-            background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.45), rgba(201,169,110,0.3), transparent)',
+            top:         0,
+            left:       '10%',
+            right:      '10%',
+            height:      1,
+            background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.4), rgba(201,169,110,0.25), transparent)',
           }} />
           <p style={{
             fontFamily:    'Inter, sans-serif',
-            fontSize:      '0.9rem',
-            fontWeight:    400,
-            lineHeight:    1.7,
-            color:         '#F0F4F6',
-            margin:        0,
+            fontSize:       14,
+            fontWeight:     400,
+            lineHeight:     1.65,
+            letterSpacing: '-0.01em',
+            color:         '#EEF2F5',
+            margin:         0,
             whiteSpace:    'pre-wrap',
             wordBreak:     'break-word',
-            letterSpacing: '0.005em',
           }}>
             {text}
           </p>
@@ -149,21 +102,22 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
         <div style={{
           display:        'flex',
           justifyContent: 'flex-end',
-          gap:            '0.45rem',
-          marginTop:      '0.3rem',
           alignItems:     'center',
+          gap:             6,
+          marginTop:       4,
         }}>
           <span style={{
             fontFamily:    'Inter, sans-serif',
-            fontSize:      '0.55rem',
-            fontWeight:    600,
-            letterSpacing: '0.1em',
+            fontSize:       9,
+            fontWeight:     700,
+            letterSpacing: '0.14em',
             textTransform: 'uppercase',
-            color:         'rgba(20,184,166,0.6)',
+            color,
+            opacity:        0.7,
           }}>
             {modeLabel}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(12,25,41,0.35)' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(12,25,41,0.3)', letterSpacing: '0.02em' }}>
             {ts}
           </span>
         </div>
@@ -172,14 +126,14 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
   )
 })
 
-// ── Assistant response card ───────────────────────────────────────────────────
+// ── Assistant card ─────────────────────────────────────────────────────────────
 
 const AssistantCard = memo(function AssistantCard({
   message,
   onFollowUp,
 }: {
-  message:     ChatMessage
-  onFollowUp:  (text: string) => void
+  message:    ChatMessage
+  onFollowUp: (text: string) => void
 }) {
   const meta  = MODE_META[message.mode] ?? MODE_META.upwind
   const chips = FOLLOW_UPS[message.mode] ?? []
@@ -187,25 +141,19 @@ const AssistantCard = memo(function AssistantCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 14 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      style={{ paddingRight: '1.25rem' }}
+      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+      style={{ paddingRight: 16 }}
     >
       {/* Mode header row */}
-      <div style={{
-        display:       'flex',
-        alignItems:    'center',
-        gap:           '0.5rem',
-        marginBottom:  '0.5rem',
-        paddingLeft:   '0.5rem',
-      }}>
-        {/* Animated status dot */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, paddingLeft: 4 }}>
+        {/* Status dot */}
         <motion.span
           animate={message.streaming
-            ? { opacity: [1, 0.15, 1], scale: [1, 0.7, 1] }
-            : { opacity: 0.6, scale: 1 }}
-          transition={{ duration: 1.2, repeat: message.streaming ? Infinity : 0 }}
+            ? { opacity: [1, 0.15, 1], scale: [1, 0.65, 1] }
+            : { opacity: 0.55, scale: 1 }}
+          transition={{ duration: 1.1, repeat: message.streaming ? Infinity : 0 }}
           style={{
             display:      'inline-block',
             width:         7,
@@ -213,101 +161,105 @@ const AssistantCard = memo(function AssistantCard({
             borderRadius: '50%',
             background:   meta.color,
             flexShrink:   0,
-            boxShadow:    `0 0 6px ${meta.color}88`,
+            boxShadow:    message.streaming ? `0 0 8px ${meta.color}88` : 'none',
           }}
         />
+        {/* Mode label */}
         <span style={{
           fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.6rem',
-          fontWeight:    700,
+          fontSize:       10,
+          fontWeight:     700,
           letterSpacing: '0.14em',
           textTransform: 'uppercase',
           color:         meta.color,
         }}>
           {meta.label}
         </span>
+        {/* Status text */}
         <span style={{
-          fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.58rem',
-          letterSpacing: '0.06em',
-          color:         message.streaming ? 'rgba(20,184,166,0.7)' : 'rgba(12,25,41,0.35)',
-          fontStyle:     message.streaming ? 'italic' : 'normal',
+          fontFamily:  'Inter, sans-serif',
+          fontSize:     10,
+          color:       message.streaming ? 'rgba(20,184,166,0.65)' : 'rgba(12,25,41,0.3)',
+          fontStyle:   message.streaming ? 'italic' : 'normal',
+          letterSpacing:'0.02em',
         }}>
           {message.streaming ? '· Processing intelligence…' : `· ${ts}`}
         </span>
       </div>
 
-      {/* Glassmorphism card */}
+      {/* Glass card */}
       <div style={{
-        background:          'rgba(255,255,255,0.72)',
+        background:          'rgba(255,255,255,0.78)',
         backdropFilter:      'blur(24px)',
         WebkitBackdropFilter:'blur(24px)',
-        border:              `1px solid rgba(255,255,255,0.9)`,
-        borderTop:           `1px solid ${meta.color}40`,
-        borderRadius:        '4px 18px 18px 18px',
+        border:              '1px solid rgba(255,255,255,0.95)',
+        borderTop:           `2px solid ${meta.color}`,
+        borderRadius:        '4px 16px 16px 16px',
         overflow:            'hidden',
-        boxShadow:           `0 4px 28px ${meta.color}0d, 0 1px 6px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.95)`,
+        boxShadow:           `0 4px 24px ${meta.color}0d, 0 1px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)`,
         position:            'relative',
       }}>
-        {/* Mode accent hairline at top */}
-        <div style={{
-          position:   'absolute',
-          top:        0,
-          left:       0,
-          right:      0,
-          height:     '2px',
-          background: `linear-gradient(90deg, ${meta.color}60 0%, ${meta.color}90 40%, rgba(201,169,110,0.5) 70%, transparent 100%)`,
-        }} />
         {renderPayload(message)}
+
+        {/* Streaming cursor at end of text content */}
+        {message.streaming && message.payload.type === 'text' && message.payload.text && (
+          <div style={{ paddingBottom: 16, paddingLeft: 20 }}>
+            <StreamingCursor streaming />
+          </div>
+        )}
       </div>
 
-      {/* Follow-up suggestion chips */}
+      {/* Follow-up chips */}
       {!message.streaming && message.payload.type !== 'error' && chips.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.25 }}
+          transition={{ delay: 0.45, duration: 0.25 }}
           style={{
             display:     'flex',
             flexWrap:    'wrap',
-            gap:         '0.4rem',
-            marginTop:   '0.75rem',
-            paddingLeft: '0.5rem',
+            gap:          6,
+            marginTop:    12,
+            paddingLeft:  4,
             alignItems:  'center',
           }}
         >
           <span style={{
             fontFamily:    'Inter, sans-serif',
-            fontSize:      '0.58rem',
-            fontWeight:    500,
-            letterSpacing: '0.06em',
-            color:         'rgba(12,25,41,0.35)',
+            fontSize:       9,
+            fontWeight:     600,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color:         'rgba(12,25,41,0.3)',
           }}>
             Continue →
           </span>
-          {chips.slice(0, 2).map(chip => (
-            <button
+          {chips.slice(0, 2).map((chip, i) => (
+            <motion.button
               key={chip}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 + i * 0.06, duration: 0.2 }}
               onClick={() => onFollowUp(chip)}
               style={{
-                padding:         '0.3rem 0.75rem',
-                background:      'rgba(255,255,255,0.75)',
+                padding:         '5px 12px',
+                background:      'rgba(255,255,255,0.8)',
                 backdropFilter:  'blur(12px)',
-                border:          `1px solid ${meta.color}44`,
-                borderRadius:    '999px',
+                border:          `1px solid ${meta.color}40`,
+                borderRadius:    9999,
                 fontFamily:      'Inter, sans-serif',
-                fontSize:        '0.7rem',
+                fontSize:        11,
                 fontWeight:      500,
                 color:           meta.color,
                 cursor:          'pointer',
-                transition:      'all 0.18s',
                 lineHeight:      1.4,
-                letterSpacing:   '0.02em',
-                boxShadow:       '0 2px 8px rgba(0,0,0,0.05)',
+                letterSpacing:   '0.01em',
+                boxShadow:       '0 1px 4px rgba(0,0,0,0.04)',
+                transition:      'all 0.15s',
               }}
             >
               {chip}
-            </button>
+            </motion.button>
           ))}
         </motion.div>
       )}
@@ -315,16 +267,17 @@ const AssistantCard = memo(function AssistantCard({
   )
 })
 
-/** Render the correct card component based on payload type. */
+// ── Payload renderer ──────────────────────────────────────────────────────────
+
 function renderPayload(message: ChatMessage) {
   const { payload, mode, streaming } = message
 
   switch (payload.type) {
     case 'error':
       return (
-        <div style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-          <span style={{ color: '#991B1B', fontSize: '0.85rem' }}>⚠</span>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#991B1B', margin: 0, lineHeight: 1.5 }}>
+        <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <span style={{ color: '#991B1B', flexShrink: 0 }}>⚠</span>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#991B1B', margin: 0, lineHeight: 1.55 }}>
             {payload.message}
           </p>
         </div>
@@ -332,39 +285,32 @@ function renderPayload(message: ChatMessage) {
 
     case 'executive':
       return (
-        <div style={{ padding: '0' }}>
-          <ExecutiveResponseCard
-            response={payload.data as never}
-            isStreaming={streaming}
-            variant="light"
-          />
-        </div>
+        <ExecutiveResponseCard
+          response={payload.data as never}
+          isStreaming={streaming}
+          variant="light"
+        />
       )
 
     case 'trim':
       return (
-        <div style={{ padding: '1.25rem' }}>
+        <div style={{ padding: 20 }}>
           <TrimTimelineCard response={payload.data} isLoading={streaming} />
         </div>
       )
 
     case 'catamaran':
       return (
-        <CatamaranResponseCard
-          response={payload.data}
-          isStreaming={streaming}
-        />
+        <CatamaranResponseCard response={payload.data} isStreaming={streaming} />
       )
 
     case 'text':
     default: {
-      const intent = mode === 'operator' ? 'analytic' as const
-        : mode === 'scenario' ? 'scenario' as const
-        : 'analytic' as const
+      const intent = mode === 'scenario' ? 'scenario' as const : 'analytic' as const
 
       if (mode === 'sail') {
         return (
-          <div style={{ padding: '1.25rem 1.25rem' }}>
+          <div style={{ padding: '20px 20px 16px' }}>
             <SailAdapter text={payload.text} intent={intent} streaming={streaming} />
           </div>
         )
@@ -378,114 +324,57 @@ function renderPayload(message: ChatMessage) {
           />
         )
       }
-      // downwind, operator, scenario, generic
+      // downwind, operator, scenario, generic text
       return (
-        <div style={{ padding: '1.25rem' }}>
+        <div style={{ padding: '20px 20px 16px' }}>
           {streaming && !payload.text && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-              <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.4, repeat: Infinity }} style={{ width: 28, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.12)' }} />
-              <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.2 }} style={{ width: 20, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.08)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <motion.div animate={{ opacity: [0.25, 0.9, 0.25] }} transition={{ duration: 1.4, repeat: Infinity }}
+                style={{ width: 32, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.1)' }} />
+              <motion.div animate={{ opacity: [0.25, 0.9, 0.25] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.18 }}
+                style={{ width: 24, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.07)' }} />
+              <motion.div animate={{ opacity: [0.25, 0.9, 0.25] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.36 }}
+                style={{ width: 16, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.05)' }} />
             </div>
           )}
-          <SailAdapter text={payload.text} intent={intent} streaming={streaming} />
+          {payload.text && (
+            <SailAdapter text={payload.text} intent={intent} streaming={streaming} />
+          )}
         </div>
       )
     }
   }
 }
 
-// ── Main ChatThread component ─────────────────────────────────────────────────
+// ── Main thread component ──────────────────────────────────────────────────────
 
 interface ChatThreadProps {
-  messages:    ChatMessage[]
-  onFollowUp:  (text: string, mode?: AnalysisMode) => void
-  className?:  string
+  messages:   ChatMessage[]
+  onFollowUp: (text: string, mode?: AnalysisMode) => void
+  className?: string
 }
 
 export function ChatThread({ messages, onFollowUp, className }: ChatThreadProps) {
-  const scrollRef      = useRef<HTMLDivElement>(null)
-  const bottomRef      = useRef<HTMLDivElement>(null)
-  const [atBottom, setAtBottom] = useState(true)
-
-  // Auto-scroll on new messages
-  useEffect(() => {
-    if (atBottom) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-    }
-  }, [messages, atBottom])
-
-  // Track scroll position
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-    setAtBottom(distFromBottom < 80)
-  }, [])
-
   if (messages.length === 0) return null
 
   return (
-    <div style={{ position: 'relative' }}>
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className={className}
-        style={{
-          display:       'flex',
-          flexDirection: 'column',
-          gap:           '1.25rem',
-          paddingBottom: '0.5rem',
-        }}
-      >
-        {messages.map(msg => (
-          msg.role === 'user'
-            ? <UserBubble key={msg.id} message={msg} />
-            : <AssistantCard
-                key={msg.id}
-                message={msg}
-                onFollowUp={text => onFollowUp(text, msg.mode)}
-              />
-        ))}
-        <div ref={bottomRef} style={{ height: 1 }} />
-      </div>
-
-      {/* Jump to bottom FAB */}
-      <AnimatePresence>
-        {!atBottom && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' })}
-            style={{
-              position:       'sticky',
-              bottom:         '1rem',
-              left:           '50%',
-              transform:      'translateX(-50%)',
-              display:        'flex',
-              alignItems:     'center',
-              gap:            '0.35rem',
-              padding:        '0.4rem 1rem',
-              background:     '#0C0C0E',
-              border:         '1px solid rgba(201,169,110,0.35)',
-              borderRadius:   '999px',
-              cursor:         'pointer',
-              boxShadow:      '0 4px 16px rgba(0,0,0,0.2)',
-              fontFamily:     'Inter, sans-serif',
-              fontSize:       '0.65rem',
-              fontWeight:     600,
-              letterSpacing:  '0.06em',
-              color:          '#C9A96E',
-              zIndex:         10,
-            }}
-          >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
-            </svg>
-            Latest
-          </motion.button>
-        )}
-      </AnimatePresence>
+    <div
+      className={className}
+      style={{
+        display:       'flex',
+        flexDirection: 'column',
+        gap:            20,
+      }}
+    >
+      {messages.map(msg => (
+        msg.role === 'user'
+          ? <UserBubble key={msg.id} message={msg} />
+          : <AssistantCard
+              key={msg.id}
+              message={msg}
+              onFollowUp={text => onFollowUp(text, msg.mode)}
+            />
+      ))}
     </div>
   )
 }
