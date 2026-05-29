@@ -140,7 +140,7 @@ export function Nav() {
               transition:    'color 0.4s',
             }}
           >
-            Data Lab
+            {t('nav.dataLab')}
           </Link>
           <Link
             href="/pricing"
@@ -223,7 +223,7 @@ export function Nav() {
 
                     <MenuItem href="/chat"        onClick={() => setMenuOpen(false)} label={t('nav.chartCourse')} />
                     <MenuItem href="/research"   onClick={() => setMenuOpen(false)} label={t('nav.research')}    />
-                    <MenuItem href="/data-lab"   onClick={() => setMenuOpen(false)} label="Data Lab"             />
+                    <MenuItem href="/data-lab"   onClick={() => setMenuOpen(false)} label={t('nav.dataLab')}      />
                     <MenuItem href="/dashboard"  onClick={() => setMenuOpen(false)} label={t('nav.dashboard')}   />
                     <MenuItem href="/pricing"   onClick={() => setMenuOpen(false)} label={t('nav.pricing')}     />
 

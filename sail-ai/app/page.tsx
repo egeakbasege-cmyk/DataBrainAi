@@ -273,7 +273,7 @@ export default function LandingPage() {
             </span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.4), transparent)' }} />
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>
-              Est. 2024
+              {t('landing.est')}
             </span>
           </motion.div>
 
@@ -876,7 +876,7 @@ export default function LandingPage() {
                 </span>
               </Link>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', lineHeight: 1.6, maxWidth: '24ch', fontWeight: 300 }}>
-                Sovereign intelligence for independent operators.
+                {t('landing.footerTagline')}
               </p>
             </div>
 
@@ -884,12 +884,12 @@ export default function LandingPage() {
             <div style={{ display: 'flex', gap: '4rem', flexWrap: 'wrap' }}>
               <div>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
-                  Product
+                  {t('landing.footerProduct')}
                 </p>
                 {[
                   { href: '/chat',      label: t('landing.footerChat') },
                   { href: '/research',  label: t('landing.footerResearch') },
-                  { href: '/data-lab',  label: 'Data Lab' },
+                  { href: '/data-lab',  label: t('landing.footerDataLab') },
                   { href: '/dashboard', label: t('landing.footerDashboard') },
                 ].map(l => (
                   <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
@@ -899,11 +899,11 @@ export default function LandingPage() {
               </div>
               <div>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
-                  Company
+                  {t('landing.footerCompany')}
                 </p>
                 {[
                   { href: '/pricing',    label: t('landing.footerPricing') },
-                  { href: '/welcome',    label: 'Get Started' },
+                  { href: '/welcome',    label: t('landing.footerGetStarted') },
                 ].map(l => (
                   <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
                     {l.label}
@@ -915,7 +915,7 @@ export default function LandingPage() {
             {/* Copyright + Est. */}
             <div style={{ textAlign: 'right' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.85rem', color: '#C9A96E', marginBottom: '0.25rem' }}>
-                Est. 2024
+                {t('landing.est')}
               </p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#A1A1AA', letterSpacing: '0.04em' }}>
                 © {new Date().getFullYear()} Sail AI

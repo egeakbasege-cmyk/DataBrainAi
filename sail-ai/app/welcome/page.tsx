@@ -30,67 +30,7 @@ const stagger = {
   show:   { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
 }
 
-// ── Adım göstergesi ───────────────────────────────────────────────────────────
-
-const STEPS = [
-  { n: 1, label: 'Ürünü İzle',        icon: '▶' },
-  { n: 2, label: 'Hesap Oluştur',     icon: '👤' },
-  { n: 3, label: 'Ücretsiz Başla',    icon: '🚀' },
-  { n: 4, label: 'Pro\'ya Geç',       icon: '◆' },
-]
-
-// ── Gerçek AI yanıt örneği (subscription sayfasında) ─────────────────────────
-
-const EXAMPLE_RESPONSE = {
-  query:    'Shopify mağazam var. Dönüşüm oranım %1.3. Ne yapmalıyım?',
-  insight:  'CVR\'niz %1.3 ile Türkiye ortalamasının (%2.3) 1 puan altında. Checkout sadeleştirmesi + sepet terk e-postası ile 90 günde %1.8\'e ulaşmak mümkün.',
-  actions: [
-    'Checkout adımlarını 5\'ten 3\'e indirin',
-    'Sepet terk e-postası: 1h / 24h / 72h dizisi kurun',
-    'Ürün sayfasına ≥50 müşteri yorumu ekleyin',
-  ],
-  target: 'CVR: %1.3 → %1.8 (90 gün)',
-  source: 'Baymard Institute · Klaviyo 2026 · Statista',
-}
-
-// ── Pricing tier data ─────────────────────────────────────────────────────────
-
-const FREE_FEATURES = [
-  '5 detaylı analiz / gün',
-  'Upwind · SAIL · Operator · TRIM modları',
-  'Deep Research (Tavily + Serper)',
-  'Gerçek web verileri',
-  'Sektör benchmark karşılaştırması',
-]
-
-const PRO_FEATURES = [
-  'Sınırsız analiz',
-  'Tüm 7 mod + Custom Synergy',
-  'Session hafızası — bağlamı tekrar girme',
-  'İş profili kalıcı kayıt',
-  'E-posta raporu gönderme',
-  'Öncelikli yanıt hızı',
-  'Veri dashboard\'u',
-]
-
-const FAQ = [
-  {
-    q: 'Ücretsiz planda ne var?',
-    a: 'Günlük 5 tam analiz, tüm modlar, Deep Research ve gerçek web verisi. Kredi kartı gerekmez, süre sınırı yoktur.',
-  },
-  {
-    q: 'AI gerçekten canlı web verisi kullanıyor mu?',
-    a: 'Evet. Tavily + Serper API\'leri ile her sorguda gerçek zamanlı arama yapılır. Groq 70B bu verileri sentezler — eğitim verisi değil, bugünün verisi.',
-  },
-  {
-    q: 'Session hafızası ne işe yarıyor?',
-    a: 'Pro üyelerde iş profiliniz (sektör, metrikler, önceki stratejiler) korunur. Her seferinde tekrar anlatmanıza gerek kalmaz.',
-  },
-  {
-    q: 'İptal edebilir miyim?',
-    a: 'Evet. Stripe üzerinden tek tıkla, herhangi bir zamanda, bildirim süresi olmaksızın.',
-  },
-]
+// ── Static arrays below are intentionally removed — components use t() directly
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -151,14 +91,14 @@ function ExampleCard() {
       <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
         <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#C9A96E', flexShrink: 0 }} />
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', margin: 0, fontStyle: 'italic' }}>
-          "{EXAMPLE_RESPONSE.query}"
+          &ldquo;{t('walk.demoQuery')}&rdquo;
         </p>
       </div>
 
       <div style={{ padding: '1rem' }}>
         {/* Insight */}
         <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.65, marginBottom: '0.875rem' }}>
-          {EXAMPLE_RESPONSE.insight}
+          {t('walk.demoInsight')}
         </p>
 
         {/* Benchmark bar */}
@@ -178,7 +118,7 @@ function ExampleCard() {
 
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.875rem' }}>
-          {EXAMPLE_RESPONSE.actions.map((a, i) => (
+          {[t('walk.demoAction1'), t('walk.demoAction2'), t('walk.demoAction3')].map((a, i) => (
             <div key={i} style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#C9A96E', fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.45 }}>{a}</p>
@@ -188,8 +128,8 @@ function ExampleCard() {
 
         {/* Target + source */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.625rem', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#10B981', fontWeight: 600 }}>🎯 {EXAMPLE_RESPONSE.target}</span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', color: 'rgba(255,255,255,0.2)' }}>{EXAMPLE_RESPONSE.source}</span>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#10B981', fontWeight: 600 }}>🎯 {t('walk.demo30dTarget')}</span>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', color: 'rgba(255,255,255,0.2)' }}>Baymard Institute · Klaviyo 2026 · Statista</span>
         </div>
       </div>
     </div>
@@ -360,6 +300,24 @@ function PricingSection({ onUpgrade }: { onUpgrade: () => void }) {
   const [loading, setLoading] = useState(false)
   const [yearly,  setYearly]  = useState(false)
 
+  const FREE_FEATURES = [
+    t('welcome.free.f1'),
+    t('welcome.free.f2'),
+    t('welcome.free.f3'),
+    t('welcome.free.f4'),
+    t('welcome.free.f5'),
+  ]
+
+  const PRO_FEATURES = [
+    t('welcome.pro.f1'),
+    t('welcome.pro.f2'),
+    t('welcome.pro.f3'),
+    t('welcome.pro.f4'),
+    t('welcome.pro.f5'),
+    t('welcome.pro.f6'),
+    t('welcome.pro.f7'),
+  ]
+
   async function handleStripe() {
     setLoading(true)
     try {
@@ -404,7 +362,7 @@ function PricingSection({ onUpgrade }: { onUpgrade: () => void }) {
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#71717A' }}>Starter</span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginTop: '0.4rem' }}>
               <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '2.2rem', fontWeight: 700, color: '#0C0C0E', lineHeight: 1 }}>$0</span>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA' }}>/süresiz</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA' }}>/{t('pricing.noCharge')}</span>
             </div>
           </div>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>

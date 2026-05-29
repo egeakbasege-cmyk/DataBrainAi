@@ -131,97 +131,96 @@ interface AnalysisResult {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Connector definitions
+// Connector definitions (localised — built at runtime using t())
 // ─────────────────────────────────────────────────────────────────────────────
 
-const INDUSTRY_GROUPS: IndustryGroup[] = [
-  {
-    id: 'ecommerce', name: 'E-Commerce', icon: '🛍️', color: '#14B8A6',
-    description: 'Satış kanalları, mağaza verisi ve ürün analizi',
-    connectors: [
-      { id: 'shopify',    name: 'Shopify',       icon: '🟢', description: 'Admin API ile gerçek sipariş, gelir ve ürün verisi', fieldLabel: 'Store Domain', placeholder: 'mystore.myshopify.com', field2Label: 'Admin API Access Token', field2Placeholder: 'shpat_xxxxxxxxxxxxxxxxxxxxxxxx' },
-      { id: 'amazon',     name: 'Amazon',         icon: '📦', description: 'SP-API ile satış hızı, BSR, stok sağlığı ve iadeler', fieldLabel: 'SP-API Refresh Token', placeholder: 'Atzr|xxxxxxxxxxxxxxxxxxxxxxxx' },
-      { id: 'woocommerce',name: 'WooCommerce',    icon: '🔵', description: 'REST API ile WordPress mağaza verisi', fieldLabel: 'Site URL', placeholder: 'mysite.com', field2Label: 'Consumer Key:Secret', field2Placeholder: 'ck_xxx:cs_xxx (colon-separated)' },
-      { id: 'ebay',       name: 'eBay',           icon: '🟡', description: 'Satıcı merkezi URL veya mağaza sayfası analizi', fieldLabel: 'Store URL', placeholder: 'https://www.ebay.com/str/yourstore' },
-      { id: 'etsy',       name: 'Etsy',           icon: '🟤', description: 'Mağaza URL ile ürün ve satış analizi', fieldLabel: 'Shop URL', placeholder: 'https://www.etsy.com/shop/yourshop' },
-      { id: 'tiktokshop', name: 'TikTok Shop',    icon: '🎵', description: 'TikTok mağaza ve içerik performansı', fieldLabel: 'Shop/Profile URL', placeholder: 'https://www.tiktok.com/@yourstore' },
-      { id: 'csv',        name: 'CSV / Spreadsheet', icon: '📄', description: 'Dışa aktarılan CSV URL — satış geçmişi, siparişler', fieldLabel: 'Public CSV URL', placeholder: 'https://docs.google.com/spreadsheets/.../export?format=csv' },
-    ],
-    queryCategories: [
-      { label: 'Ürün & SKU Analizi',    icon: '📦', queries: ['Run ABC analysis — which SKUs drive 80% of revenue?', 'Which products have the highest return rate and why?', 'Identify products I should discontinue or bundle', 'What is my top product revenue concentration risk?'] },
-      { label: 'Gelir & Kar Marjı',      icon: '💰', queries: ['Calculate my real profit margin after all fees and returns', 'Where am I losing the most revenue right now?', 'What is my cart abandonment costing me per month?', 'Analyse my AOV trend and upsell opportunities'] },
-      { label: 'Müşteri Segmentasyonu',  icon: '👥', queries: ['Run RFM segmentation — who are my champion customers?', 'Which customers are at risk of churning this month?', 'What is my customer LTV by acquisition channel?', 'Identify my repeat purchase rate and loyalty drivers'] },
-      { label: 'Stok & Operasyon',       icon: '📋', queries: ['Which products are at stockout risk in the next 30 days?', 'Calculate my optimal reorder point and safety stock level', 'What is my inventory turnover rate vs category benchmark?', 'Analyse my supplier concentration and single-source risk'] },
-      { label: 'Büyüme Fırsatları',      icon: '🚀', queries: ['What are my top 3 revenue growth opportunities right now?', 'Which new markets or categories should I expand into?', 'Find cross-sell and bundle opportunities in my catalogue', 'Compare my performance to top 10% sellers in my category'] },
-    ],
-  },
-  {
-    id: 'advertising', name: 'Reklam & Büyüme', icon: '📢', color: '#8B5CF6',
-    description: 'Reklam performansı, ROAS analizi ve büyüme optimizasyonu',
-    connectors: [
-      { id: 'meta-ads',    name: 'Meta Ads',       icon: '🔵', description: 'Facebook & Instagram reklam performansı', fieldLabel: 'Brand Page or Ad Account URL', placeholder: 'https://facebook.com/yourbrand' },
-      { id: 'google-ads',  name: 'Google Ads',     icon: '🔴', description: 'Search, Display, Shopping kampanya verisi', fieldLabel: 'Website Domain', placeholder: 'https://yoursite.com' },
-      { id: 'amazon-ppc',  name: 'Amazon PPC',     icon: '📦', description: 'Sponsored Products, Brands, Display ACOS analizi', fieldLabel: 'SP-API Token', placeholder: 'Atzr|xxxxxxxxxxxxxxxxxxxxxxxx' },
-      { id: 'tiktok-ads',  name: 'TikTok Ads',     icon: '🎵', description: 'TikTok for Business kampanya ve creative analizi', fieldLabel: 'Business URL or Account', placeholder: 'https://www.tiktok.com/@yourbrand' },
-      { id: 'klaviyo',     name: 'Klaviyo',         icon: '📧', description: 'Email & SMS pazarlama gelir analizi', fieldLabel: 'Private API Key', placeholder: 'pk_xxxxxxxxxxxxxxxxxxxxxxxx' },
-      { id: 'api',         name: 'Custom Ad Data',  icon: '🔗', description: 'Herhangi bir reklam platformu API\'si', fieldLabel: 'Endpoint URL', placeholder: 'https://your-ads-platform.com/api/stats' },
-    ],
-    queryCategories: [
-      { label: 'ROAS & Verimlilik',      icon: '📈', queries: ['Which ad campaigns have the best ROAS right now?', 'Which campaigns should I scale or kill immediately?', 'Calculate my blended ROAS across all channels', 'Compare Meta vs Google vs TikTok efficiency'] },
-      { label: 'Creative & Audience',    icon: '🎨', queries: ['Which ad creatives are driving the most conversions?', 'Which audience segments have the lowest CPA?', 'Analyse my CTR vs industry benchmark by channel', 'Identify audience fatigue signals in my campaigns'] },
-      { label: 'Budget Optimizasyonu',   icon: '💸', queries: ['Where should I reallocate budget for maximum return?', 'What is my true CAC by channel?', 'Calculate payback period for new customer acquisition', 'Forecast revenue if I scale ad spend by 30%'] },
-      { label: 'Email & Retention ROI',  icon: '📧', queries: ['What is my email revenue contribution vs paid ads?', 'Which email flows or sequences generate the most revenue?', 'Calculate my email list ROI per subscriber', 'Analyse list health, open rates, and unsubscribe trend'] },
-    ],
-  },
-  {
-    id: 'hospitality', name: 'Konaklama & Seyahat', icon: '🏨', color: '#F59E0B',
-    description: 'Otel, kiralık mülk, tatil evi ve seyahat acentaları',
-    connectors: [
-      { id: 'booking',     name: 'Booking.com',    icon: '💙', description: 'Mülk sayfası veya URL ile doluluk ve fiyat analizi', fieldLabel: 'Property URL', placeholder: 'https://www.booking.com/hotel/...' },
-      { id: 'airbnb',      name: 'Airbnb',          icon: '🔴', description: 'İlan URL ile fiyat, doluluk ve review analizi', fieldLabel: 'Listing URL', placeholder: 'https://www.airbnb.com/rooms/...' },
-      { id: 'expedia',     name: 'Expedia / Hotels.com', icon: '🟡', description: 'Expedia grup platformu fiyat ve rekabet analizi', fieldLabel: 'Property URL', placeholder: 'https://www.expedia.com/...' },
-      { id: 'tripadvisor', name: 'TripAdvisor',    icon: '🟢', description: 'Review sentiment, sıralama ve rekabet analizi', fieldLabel: 'Property URL', placeholder: 'https://www.tripadvisor.com/Hotel_Review-...' },
-      { id: 'api',         name: 'PMS / Channel Manager', icon: '🔗', description: 'Opera, Cloudbeds, Guesty, vb. API entegrasyonu', fieldLabel: 'API Endpoint', placeholder: 'https://api.cloudbeds.com/...' },
-    ],
-    queryCategories: [
-      { label: 'Doluluk & RevPAR',       icon: '🏨', queries: ['Calculate my RevPAR and compare to local comp set', 'What is my optimal occupancy rate for maximum profitability?', 'Analyse my ADR trend vs competitor set this season', 'Identify my highest and lowest performing date ranges'] },
-      { label: 'OTA & Kanal Stratejisi', icon: '💻', queries: ['What OTA commission am I paying and what is the net margin?', 'How does my direct booking rate compare to OTA share?', 'Which OTA drives the most profitable bookings?', 'Should I adjust my rate parity or close-out strategy?'] },
-      { label: 'Fiyatlandırma Zekası',   icon: '💰', queries: ['Find optimal pricing for next peak season dates', 'How do my rates compare to similar properties in my area?', 'What happens to occupancy if I raise rates by 15%?', 'Identify last-minute pricing and yield opportunities'] },
-      { label: 'Review & Deneyim',       icon: '⭐', queries: ['Analyse my review sentiment and main guest pain points', 'How do my review scores affect my OTA search ranking?', 'Revenue impact of improving my rating by 0.5 stars?', 'Compare my amenities vs top-rated competitors nearby'] },
-    ],
-  },
-  {
-    id: 'services', name: 'Hizmet & SaaS', icon: '⚙️', color: '#EC4899',
-    description: 'Freelance, ajans, SaaS ve abonelik işletmeleri',
-    connectors: [
-      { id: 'stripe',  name: 'Stripe',   icon: '🟣', description: 'Ödeme ve abonelik gelir analizi', fieldLabel: 'Restricted API Key', placeholder: 'Stripe restricted key (rk_live_…)' },
-      { id: 'fiverr',  name: 'Fiverr',   icon: '🟢', description: 'Freelancer profil ve gig performans analizi', fieldLabel: 'Profile URL', placeholder: 'https://www.fiverr.com/yourprofile' },
-      { id: 'upwork',  name: 'Upwork',   icon: '🟢', description: 'Freelancer profil, proje ve kazanç analizi', fieldLabel: 'Profile URL', placeholder: 'https://www.upwork.com/freelancers/...' },
-      { id: 'api',     name: 'Custom API', icon: '🔗', description: 'Kendi sisteminizdeki herhangi bir veri kaynağı', fieldLabel: 'Endpoint URL', placeholder: 'https://your-app.com/api/analytics' },
-    ],
-    queryCategories: [
-      { label: 'MRR & Büyüme',           icon: '📈', queries: ['What is my MRR trend and growth rate?', 'Calculate my ARR and forecast for next 12 months', 'What is my revenue churn and its LTV impact?', 'Identify my fastest and slowest growing segments'] },
-      { label: 'Müşteri Ekonomisi',       icon: '👥', queries: ['What is my average LTV vs CAC ratio?', 'Which service tier has the best margin?', 'Identify at-risk accounts by payment or usage signals', 'Calculate payback period by customer segment'] },
-      { label: 'Proje & Kapasite',        icon: '⚙️', queries: ['What is my revenue per billable hour?', 'Which project types have the highest margin?', 'Calculate my team utilization rate vs target', 'Identify upsell and expansion opportunities in current accounts'] },
-    ],
-  },
-  {
-    id: 'analytics', name: 'Veri & Analitik', icon: '📊', color: '#6366F1',
-    description: 'Web analitik, trafik, dönüşüm ve kohort analizi',
-    connectors: [
-      { id: 'ga4',  name: 'Google Analytics 4', icon: '📊', description: 'Trafik, dönüşüm ve kullanıcı davranışı analizi', fieldLabel: 'Website URL', placeholder: 'https://yoursite.com' },
-      { id: 'csv',  name: 'CSV / Spreadsheet',  icon: '📄', description: 'GA4, Mixpanel veya özel export CSV verisi', fieldLabel: 'Public CSV URL', placeholder: 'https://docs.google.com/.../export?format=csv' },
-      { id: 'api',  name: 'Analytics API',      icon: '🔗', description: 'Mixpanel, Amplitude, Segment veya özel API', fieldLabel: 'Endpoint URL', placeholder: 'https://api.mixpanel.com/...' },
-    ],
-    queryCategories: [
-      { label: 'Trafik & Dönüşüm',       icon: '🌐', queries: ['Which traffic sources convert best and at what CPA?', 'Analyse my conversion funnel — where are users dropping off?', 'Compare organic vs paid traffic quality and value', 'What is my mobile vs desktop conversion gap?'] },
-      { label: 'Kohort & Retention',      icon: '📅', queries: ['Run cohort retention analysis — which month performs best?', 'Identify my stickiest features or content by engagement', 'Calculate 30/60/90 day user retention curves', 'Which acquisition channel produces the best long-term retention?'] },
-    ],
-  },
-]
-
-// Flat list of all connectors (used for modal lookup)
-const ALL_CONNECTORS: ConnectorDef[] = INDUSTRY_GROUPS.flatMap(g => g.connectors)
+function getIndustryGroups(t: (key: string) => string): IndustryGroup[] {
+  return [
+    {
+      id: 'ecommerce', name: 'E-Commerce', icon: '🛍️', color: '#14B8A6',
+      description: t('datalab.group.ecommerce.desc'),
+      connectors: [
+        { id: 'shopify',    name: 'Shopify',          icon: '🟢', description: t('datalab.conn.shopify.desc'),     fieldLabel: 'Store Domain',            placeholder: 'mystore.myshopify.com',                                        field2Label: 'Admin API Access Token', field2Placeholder: 'shpat_xxxxxxxxxxxxxxxxxxxxxxxx' },
+        { id: 'amazon',     name: 'Amazon',            icon: '📦', description: t('datalab.conn.amazon.desc'),      fieldLabel: 'SP-API Refresh Token',    placeholder: 'Atzr|xxxxxxxxxxxxxxxxxxxxxxxx' },
+        { id: 'woocommerce',name: 'WooCommerce',       icon: '🔵', description: t('datalab.conn.woocommerce.desc'), fieldLabel: 'Site URL',                 placeholder: 'mysite.com',                                                   field2Label: 'Consumer Key:Secret',    field2Placeholder: 'ck_xxx:cs_xxx (colon-separated)' },
+        { id: 'ebay',       name: 'eBay',              icon: '🟡', description: t('datalab.conn.ebay.desc'),        fieldLabel: 'Store URL',                placeholder: 'https://www.ebay.com/str/yourstore' },
+        { id: 'etsy',       name: 'Etsy',              icon: '🟤', description: t('datalab.conn.etsy.desc'),        fieldLabel: 'Shop URL',                 placeholder: 'https://www.etsy.com/shop/yourshop' },
+        { id: 'tiktokshop', name: 'TikTok Shop',       icon: '🎵', description: t('datalab.conn.tiktokshop.desc'), fieldLabel: 'Shop/Profile URL',         placeholder: 'https://www.tiktok.com/@yourstore' },
+        { id: 'csv',        name: 'CSV / Spreadsheet', icon: '📄', description: t('datalab.conn.csv.desc'),         fieldLabel: 'Public CSV URL',           placeholder: 'https://docs.google.com/spreadsheets/.../export?format=csv' },
+      ],
+      queryCategories: [
+        { label: t('datalab.cat.skuAnalysis'),   icon: '📦', queries: ['Run ABC analysis — which SKUs drive 80% of revenue?', 'Which products have the highest return rate and why?', 'Identify products I should discontinue or bundle', 'What is my top product revenue concentration risk?'] },
+        { label: t('datalab.cat.revenueMargin'), icon: '💰', queries: ['Calculate my real profit margin after all fees and returns', 'Where am I losing the most revenue right now?', 'What is my cart abandonment costing me per month?', 'Analyse my AOV trend and upsell opportunities'] },
+        { label: t('datalab.cat.customerSeg'),   icon: '👥', queries: ['Run RFM segmentation — who are my champion customers?', 'Which customers are at risk of churning this month?', 'What is my customer LTV by acquisition channel?', 'Identify my repeat purchase rate and loyalty drivers'] },
+        { label: t('datalab.cat.stockOps'),      icon: '📋', queries: ['Which products are at stockout risk in the next 30 days?', 'Calculate my optimal reorder point and safety stock level', 'What is my inventory turnover rate vs category benchmark?', 'Analyse my supplier concentration and single-source risk'] },
+        { label: t('datalab.cat.growthOpp'),     icon: '🚀', queries: ['What are my top 3 revenue growth opportunities right now?', 'Which new markets or categories should I expand into?', 'Find cross-sell and bundle opportunities in my catalogue', 'Compare my performance to top 10% sellers in my category'] },
+      ],
+    },
+    {
+      id: 'advertising', name: t('datalab.group.advertising.name'), icon: '📢', color: '#8B5CF6',
+      description: t('datalab.group.advertising.desc'),
+      connectors: [
+        { id: 'meta-ads',   name: 'Meta Ads',      icon: '🔵', description: t('datalab.conn.metaads.desc'),   fieldLabel: 'Brand Page or Ad Account URL', placeholder: 'https://facebook.com/yourbrand' },
+        { id: 'google-ads', name: 'Google Ads',    icon: '🔴', description: t('datalab.conn.googleads.desc'), fieldLabel: 'Website Domain',               placeholder: 'https://yoursite.com' },
+        { id: 'amazon-ppc', name: 'Amazon PPC',    icon: '📦', description: t('datalab.conn.amazonppc.desc'), fieldLabel: 'SP-API Token',                 placeholder: 'Atzr|xxxxxxxxxxxxxxxxxxxxxxxx' },
+        { id: 'tiktok-ads', name: 'TikTok Ads',    icon: '🎵', description: t('datalab.conn.tiktokads.desc'), fieldLabel: 'Business URL or Account',      placeholder: 'https://www.tiktok.com/@yourbrand' },
+        { id: 'klaviyo',    name: 'Klaviyo',        icon: '📧', description: t('datalab.conn.klaviyo.desc'),   fieldLabel: 'Private API Key',              placeholder: 'pk_xxxxxxxxxxxxxxxxxxxxxxxx' },
+        { id: 'api',        name: 'Custom Ad Data', icon: '🔗', description: t('datalab.conn.customad.desc'),  fieldLabel: 'Endpoint URL',                 placeholder: 'https://your-ads-platform.com/api/stats' },
+      ],
+      queryCategories: [
+        { label: t('datalab.cat.roasEfficiency'),   icon: '📈', queries: ['Which ad campaigns have the best ROAS right now?', 'Which campaigns should I scale or kill immediately?', 'Calculate my blended ROAS across all channels', 'Compare Meta vs Google vs TikTok efficiency'] },
+        { label: t('datalab.cat.creativeAudience'), icon: '🎨', queries: ['Which ad creatives are driving the most conversions?', 'Which audience segments have the lowest CPA?', 'Analyse my CTR vs industry benchmark by channel', 'Identify audience fatigue signals in my campaigns'] },
+        { label: t('datalab.cat.budgetOpt'),        icon: '💸', queries: ['Where should I reallocate budget for maximum return?', 'What is my true CAC by channel?', 'Calculate payback period for new customer acquisition', 'Forecast revenue if I scale ad spend by 30%'] },
+        { label: t('datalab.cat.emailRetention'),   icon: '📧', queries: ['What is my email revenue contribution vs paid ads?', 'Which email flows or sequences generate the most revenue?', 'Calculate my email list ROI per subscriber', 'Analyse list health, open rates, and unsubscribe trend'] },
+      ],
+    },
+    {
+      id: 'hospitality', name: t('datalab.group.hospitality.name'), icon: '🏨', color: '#F59E0B',
+      description: t('datalab.group.hospitality.desc'),
+      connectors: [
+        { id: 'booking',     name: 'Booking.com',         icon: '💙', description: t('datalab.conn.booking.desc'),     fieldLabel: 'Property URL', placeholder: 'https://www.booking.com/hotel/...' },
+        { id: 'airbnb',      name: 'Airbnb',               icon: '🔴', description: t('datalab.conn.airbnb.desc'),      fieldLabel: 'Listing URL',  placeholder: 'https://www.airbnb.com/rooms/...' },
+        { id: 'expedia',     name: 'Expedia / Hotels.com', icon: '🟡', description: t('datalab.conn.expedia.desc'),     fieldLabel: 'Property URL', placeholder: 'https://www.expedia.com/...' },
+        { id: 'tripadvisor', name: 'TripAdvisor',          icon: '🟢', description: t('datalab.conn.tripadvisor.desc'), fieldLabel: 'Property URL', placeholder: 'https://www.tripadvisor.com/Hotel_Review-...' },
+        { id: 'api',         name: 'PMS / Channel Manager',icon: '🔗', description: t('datalab.conn.pms.desc'),         fieldLabel: 'API Endpoint', placeholder: 'https://api.cloudbeds.com/...' },
+      ],
+      queryCategories: [
+        { label: t('datalab.cat.occupancyRevpar'), icon: '🏨', queries: ['Calculate my RevPAR and compare to local comp set', 'What is my optimal occupancy rate for maximum profitability?', 'Analyse my ADR trend vs competitor set this season', 'Identify my highest and lowest performing date ranges'] },
+        { label: t('datalab.cat.otaStrategy'),     icon: '💻', queries: ['What OTA commission am I paying and what is the net margin?', 'How does my direct booking rate compare to OTA share?', 'Which OTA drives the most profitable bookings?', 'Should I adjust my rate parity or close-out strategy?'] },
+        { label: t('datalab.cat.pricingIntel'),    icon: '💰', queries: ['Find optimal pricing for next peak season dates', 'How do my rates compare to similar properties in my area?', 'What happens to occupancy if I raise rates by 15%?', 'Identify last-minute pricing and yield opportunities'] },
+        { label: t('datalab.cat.reviewExp'),       icon: '⭐', queries: ['Analyse my review sentiment and main guest pain points', 'How do my review scores affect my OTA search ranking?', 'Revenue impact of improving my rating by 0.5 stars?', 'Compare my amenities vs top-rated competitors nearby'] },
+      ],
+    },
+    {
+      id: 'services', name: t('datalab.group.services.name'), icon: '⚙️', color: '#EC4899',
+      description: t('datalab.group.services.desc'),
+      connectors: [
+        { id: 'stripe',  name: 'Stripe',     icon: '🟣', description: t('datalab.conn.stripe.desc'),    fieldLabel: 'Restricted API Key', placeholder: 'Stripe restricted key (rk_live_…)' },
+        { id: 'fiverr',  name: 'Fiverr',     icon: '🟢', description: t('datalab.conn.fiverr.desc'),    fieldLabel: 'Profile URL',        placeholder: 'https://www.fiverr.com/yourprofile' },
+        { id: 'upwork',  name: 'Upwork',     icon: '🟢', description: t('datalab.conn.upwork.desc'),    fieldLabel: 'Profile URL',        placeholder: 'https://www.upwork.com/freelancers/...' },
+        { id: 'api',     name: 'Custom API', icon: '🔗', description: t('datalab.conn.customapi.desc'), fieldLabel: 'Endpoint URL',        placeholder: 'https://your-app.com/api/analytics' },
+      ],
+      queryCategories: [
+        { label: t('datalab.cat.mrrGrowth'),      icon: '📈', queries: ['What is my MRR trend and growth rate?', 'Calculate my ARR and forecast for next 12 months', 'What is my revenue churn and its LTV impact?', 'Identify my fastest and slowest growing segments'] },
+        { label: t('datalab.cat.customerEcon'),   icon: '👥', queries: ['What is my average LTV vs CAC ratio?', 'Which service tier has the best margin?', 'Identify at-risk accounts by payment or usage signals', 'Calculate payback period by customer segment'] },
+        { label: t('datalab.cat.projectCapacity'),icon: '⚙️', queries: ['What is my revenue per billable hour?', 'Which project types have the highest margin?', 'Calculate my team utilization rate vs target', 'Identify upsell and expansion opportunities in current accounts'] },
+      ],
+    },
+    {
+      id: 'analytics', name: t('datalab.group.analytics.name'), icon: '📊', color: '#6366F1',
+      description: t('datalab.group.analytics.desc'),
+      connectors: [
+        { id: 'ga4',  name: 'Google Analytics 4', icon: '📊', description: t('datalab.conn.ga4.desc'),           fieldLabel: 'Website URL',    placeholder: 'https://yoursite.com' },
+        { id: 'csv',  name: 'CSV / Spreadsheet',  icon: '📄', description: t('datalab.conn.analyticscsv.desc'), fieldLabel: 'Public CSV URL', placeholder: 'https://docs.google.com/.../export?format=csv' },
+        { id: 'api',  name: 'Analytics API',      icon: '🔗', description: t('datalab.conn.analyticsapi.desc'), fieldLabel: 'Endpoint URL',   placeholder: 'https://api.mixpanel.com/...' },
+      ],
+      queryCategories: [
+        { label: t('datalab.cat.trafficConv'),     icon: '🌐', queries: ['Which traffic sources convert best and at what CPA?', 'Analyse my conversion funnel — where are users dropping off?', 'Compare organic vs paid traffic quality and value', 'What is my mobile vs desktop conversion gap?'] },
+        { label: t('datalab.cat.cohortRetention'), icon: '📅', queries: ['Run cohort retention analysis — which month performs best?', 'Identify my stickiest features or content by engagement', 'Calculate 30/60/90 day user retention curves', 'Which acquisition channel produces the best long-term retention?'] },
+      ],
+    },
+  ]
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock data per connector
@@ -629,6 +628,11 @@ const SEVERITY_COLOUR: Record<string, string> = {
 export default function DataLabPage() {
   const { t } = useLanguage()
   const { data: session, status } = useSession()
+
+  // Build localised industry groups and flat connector list from t()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const INDUSTRY_GROUPS = getIndustryGroups(t as (key: string) => string)
+  const ALL_CONNECTORS: ConnectorDef[] = INDUSTRY_GROUPS.flatMap(g => g.connectors)
 
   const [step, setStep] = useState<Step>(1)
   const [activeTab, setActiveTab] = useState<TabType>('analysis')
@@ -1129,7 +1133,7 @@ export default function DataLabPage() {
         </button>
         <span style={{ color: '#D1D5DB', fontSize: '0.7rem' }}>|</span>
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#9CA3AF' }}>
-          {INDUSTRY_GROUPS.reduce((s, g) => s + g.connectors.length, 0)} platform · 5 sektör
+          {INDUSTRY_GROUPS.reduce((s, g) => s + g.connectors.length, 0)} platform · {INDUSTRY_GROUPS.length} {t('datalab.sectors')}
         </span>
       </div>
     </div>
@@ -1361,15 +1365,15 @@ export default function DataLabPage() {
 
                   {priceResults.length === 0 ? (
                     <div style={{ ...cardStyle, textAlign: 'center', padding: '2.5rem' }}>
-                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#111827', margin: 0 }}>Sonuç bulunamadı</p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: '#9CA3AF', margin: '0.4rem 0 0' }}>Farklı bir ürün adı veya daha genel bir arama deneyin.</p>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#111827', margin: 0 }}>{t('datalab.priceNoResults')}</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: '#9CA3AF', margin: '0.4rem 0 0' }}>{t('datalab.priceNoResultsSub')}</p>
                     </div>
                   ) : (
                     <>
                       {/* Direct matches */}
                       {priceResults.filter(r => !r.isAlternative).length > 0 && (
                         <div style={{ marginBottom: '1.25rem' }}>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#374151', margin: '0 0 0.6rem' }}>En İyi Fiyatlar</p>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#374151', margin: '0 0 0.6rem' }}>{t('datalab.priceBestPrices')}</p>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
                             {priceResults.filter(r => !r.isAlternative).map((r, i) => (
                               <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
@@ -1395,14 +1399,14 @@ export default function DataLabPage() {
                       {/* Alternatives */}
                       {priceResults.filter(r => r.isAlternative).length > 0 && (
                         <div>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#374151', margin: '0 0 0.6rem' }}>Alternatifler & Benzer Ürünler</p>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#374151', margin: '0 0 0.6rem' }}>{t('datalab.priceAlternatives')}</p>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
                             {priceResults.filter(r => r.isAlternative).map((r, i) => (
                               <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                                 <div style={{ ...cardStyle, padding: '1rem', cursor: 'pointer', transition: 'all 0.15s', background: 'rgba(248,250,252,0.9)' }}
                                   onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)' }}
                                   onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)' }}>
-                                  <div style={{ display: 'inline-block', background: 'rgba(201,169,110,0.12)', color: '#92683A', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem' }}>ALTERNATİF</div>
+                                  <div style={{ display: 'inline-block', background: 'rgba(201,169,110,0.12)', color: '#92683A', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem' }}>{t('datalab.priceAltLabel')}</div>
                                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#374151', margin: '0 0 0.35rem', lineHeight: 1.35, fontWeight: 500 }}>{r.title}</p>
                                   <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 700, color: '#0C0C0E', margin: '0 0 0.25rem' }}>{r.price}</p>
                                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
