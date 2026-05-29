@@ -179,7 +179,7 @@ const AssistantCard = memo(function AssistantCard({
         <span style={{
           fontFamily:  'Inter, sans-serif',
           fontSize:     10,
-          color:       message.streaming ? 'rgba(20,184,166,0.65)' : 'rgba(12,25,41,0.3)',
+          color:       message.streaming ? 'rgba(20,184,166,0.65)' : 'rgba(232,237,243,0.35)',
           fontStyle:   message.streaming ? 'italic' : 'normal',
           letterSpacing:'0.02em',
         }}>
@@ -189,14 +189,14 @@ const AssistantCard = memo(function AssistantCard({
 
       {/* Glass card */}
       <div style={{
-        background:          'rgba(255,255,255,0.78)',
+        background:          'rgba(255,255,255,0.04)',
         backdropFilter:      'blur(24px)',
         WebkitBackdropFilter:'blur(24px)',
-        border:              '1px solid rgba(255,255,255,0.95)',
+        border:              '1px solid rgba(255,255,255,0.09)',
         borderTop:           `2px solid ${meta.color}`,
         borderRadius:        '4px 16px 16px 16px',
         overflow:            'hidden',
-        boxShadow:           `0 4px 24px ${meta.color}0d, 0 1px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)`,
+        boxShadow:           `0 4px 24px ${meta.color}18, 0 1px 4px rgba(0,0,0,0.3)`,
         position:            'relative',
       }}>
         {renderPayload(message)}
@@ -230,7 +230,7 @@ const AssistantCard = memo(function AssistantCard({
             fontWeight:     600,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color:         'rgba(12,25,41,0.3)',
+            color:         'rgba(232,237,243,0.3)',
           }}>
             Continue →
           </span>
@@ -243,7 +243,7 @@ const AssistantCard = memo(function AssistantCard({
               onClick={() => onFollowUp(chip)}
               style={{
                 padding:         '5px 12px',
-                background:      'rgba(255,255,255,0.8)',
+                background:      'rgba(255,255,255,0.05)',
                 backdropFilter:  'blur(12px)',
                 border:          `1px solid ${meta.color}40`,
                 borderRadius:    9999,
@@ -254,7 +254,7 @@ const AssistantCard = memo(function AssistantCard({
                 cursor:          'pointer',
                 lineHeight:      1.4,
                 letterSpacing:   '0.01em',
-                boxShadow:       '0 1px 4px rgba(0,0,0,0.04)',
+                boxShadow:       '0 1px 4px rgba(0,0,0,0.2)',
                 transition:      'all 0.15s',
               }}
             >

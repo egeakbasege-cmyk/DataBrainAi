@@ -48,7 +48,7 @@ import { useChatMessages }              from '@/hooks/useChatMessages'
 import { ConsumerChat }                 from '@/components/ConsumerChat'
 import { useUserType }                  from '@/components/Dock'
 // ── New architecture UI components ────────────────────────────────────────────
-import { ChatHeader }                   from '@/components/chat/ChatHeader'
+import { GuideRail }                    from '@/components/chat/GuideRail'
 import { ChatStage }                    from '@/components/chat/ChatStage'
 import { ChatComposer }                 from '@/components/chat/ChatComposer'
 
@@ -695,7 +695,7 @@ export default function ChatPage() {
         inset:            0,
         display:         'flex',
         flexDirection:   'column',
-        background:      'linear-gradient(160deg, #E8F5F2 0%, #DAF0EA 30%, #E4F3EF 65%, #ECF7F4 100%)',
+        background:      '#0A0D14',
         overflow:        'hidden',
       }}>
         {/* Nav bar */}
@@ -715,27 +715,23 @@ export default function ChatPage() {
             minHeight:     0,
           }}>
 
-            {/* Precision header */}
-            <ChatHeader
+            {/* Guide rail — persistent orientation header */}
+            <GuideRail
               mode={mode}
               isActive={isActive}
               isPro={isPro}
               usedToday={usedToday}
-              hasContext={hasContext}
               useProfileCtx={useProfileCtx}
               businessMode={businessMode}
               hasHistory={profile.sessions.length > 0}
               hasMessages={chatMessages.length > 0 || isComplete}
-              apiKey={apiKey}
-              brandConfig={brandConfig}
               contextLabel={contextLabel}
+              onModeSelect={(m) => { setMode(m); setShowSovereign(false) }}
               onToggleCtx={toggleProfileCtx}
               onToggleBusiness={() => setBusinessMode(v => !v)}
-              onUpgradePro={triggerPaywall}
               onHistory={() => setShowHistory(true)}
               onReset={handleReset}
-              onBrandEdit={() => setShowBrandSetup(true)}
-              onSettings={() => setShowKeyPanel(o => !o)}
+              onUpgradePro={triggerPaywall}
             />
 
             {/* Scrollable stage */}
@@ -832,25 +828,26 @@ export default function ChatPage() {
               zIndex:         60,
               width:          320,
               padding:        20,
-              background:    '#FFFFFF',
-              border:        '1px solid rgba(0,0,0,0.08)',
+              background:    'rgba(10,13,20,0.98)',
+              backdropFilter:'blur(40px)',
+              border:        '1px solid rgba(255,255,255,0.1)',
               borderRadius:   12,
-              boxShadow:     '0 8px 32px rgba(0,0,0,0.12)',
+              boxShadow:     '0 8px 32px rgba(0,0,0,0.6)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', margin: 0, fontWeight: 600 }}>Groq API Key</p>
-              <button onClick={() => setShowKeyPanel(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A1A1AA', lineHeight: 1, padding: 0 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(232,237,243,0.5)', margin: 0, fontWeight: 600 }}>Groq API Key</p>
+              <button onClick={() => setShowKeyPanel(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(232,237,243,0.5)', lineHeight: 1, padding: 0 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#6B7280', marginBottom: 14, lineHeight: 1.5 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(232,237,243,0.45)', marginBottom: 14, lineHeight: 1.5 }}>
               Paste your key from{' '}
               <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E' }}>console.groq.com</a>
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
               <input type="password" value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} placeholder="gsk_…"
-                style={{ flex: 1, padding: '8px 12px', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 8, background: 'transparent', outline: 'none', fontFamily: 'Inter, monospace', fontSize: 12, color: '#0C0C0E' }} />
+                style={{ flex: 1, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, background: 'rgba(255,255,255,0.05)', outline: 'none', fontFamily: 'Inter, monospace', fontSize: 12, color: '#E8EDF3' }} />
               <button onClick={saveApiKey} style={{ padding: '8px 16px', background: '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Save
               </button>
@@ -892,7 +889,7 @@ export default function ChatPage() {
       {/* ── History panel ── */}
       {showHistory && (
         <>
-          <div onClick={() => setShowHistory(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 60, backdropFilter: 'blur(4px)' }} />
+          <div onClick={() => setShowHistory(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 60, backdropFilter: 'blur(8px)' }} />
           <motion.div
             initial={{ x: 40, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -901,22 +898,24 @@ export default function ChatPage() {
             style={{
               position: 'fixed', top: 0, right: 0, bottom: 0,
               width: 'min(380px, 92vw)',
-              background: '#FAFAF8',
-              boxShadow: '-8px 0 40px rgba(0,0,0,0.14)',
+              background: 'rgba(10,13,20,0.98)',
+              backdropFilter: 'blur(40px)',
+              borderLeft: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '-8px 0 40px rgba(0,0,0,0.5)',
               zIndex: 61,
               display: 'flex', flexDirection: 'column', overflow: 'hidden',
             }}
           >
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 600, color: '#0C0C0E', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 300, color: '#E8EDF3', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.38)', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
               </div>
-              <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#9CA3AF', lineHeight: 1, padding: 4 }}>×</button>
+              <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'rgba(232,237,243,0.4)', lineHeight: 1, padding: 4 }}>×</button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
               {profile.sessions.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#A1A1AA', textAlign: 'center', marginTop: 32 }}>{t('chat.noAnalysesYet')}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(232,237,243,0.35)', textAlign: 'center', marginTop: 32 }}>{t('chat.noAnalysesYet')}</p>
               ) : (
                 [...profile.sessions].reverse().map((s, i) => {
                   const key = s.id ?? String(i); const expanded = expandedSession === key
@@ -924,26 +923,26 @@ export default function ChatPage() {
                     <div key={key} onClick={() => setExpandedSession(expanded ? null : key)}
                       style={{
                         padding: '14px 16px', marginBottom: 8, cursor: 'pointer',
-                        background: expanded ? '#FFF9F0' : '#FFFFFF',
-                        border: `1px solid ${expanded ? 'rgba(201,169,110,0.4)' : 'rgba(0,0,0,0.07)'}`,
+                        background: expanded ? 'rgba(201,169,110,0.06)' : 'rgba(255,255,255,0.03)',
+                        border: `1px solid ${expanded ? 'rgba(201,169,110,0.3)' : 'rgba(255,255,255,0.07)'}`,
                         borderRadius: 10, transition: 'all 0.15s',
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>{s.prompt}</p>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#E8EDF3', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>{s.prompt}</p>
                         <span style={{ color: '#C9A96E', fontSize: 10, flexShrink: 0 }}>{expanded ? '▲' : '▼'}</span>
                       </div>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#6B7280', margin: '0 0 6px', lineHeight: 1.5 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.45)', margin: '0 0 6px', lineHeight: 1.5 }}>
                         {expanded ? s.summary : `${s.summary?.slice(0, 100) ?? ''}${(s.summary?.length ?? 0) > 100 ? '…' : ''}`}
                       </p>
                       {s.createdAt && (
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#A1A1AA', margin: 0 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.28)', margin: 0 }}>
                           {new Date(s.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       )}
                       {expanded && (
                         <button onClick={e => { e.stopPropagation(); setInput(s.prompt ?? ''); setShowHistory(false) }}
-                          style={{ marginTop: 12, padding: '6px 14px', background: '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: 6, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                          style={{ marginTop: 12, padding: '6px 14px', background: 'rgba(255,255,255,0.06)', color: '#E8EDF3', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                           {t('chat.rerunAnalysis')}
                         </button>
                       )}
