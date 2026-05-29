@@ -39,6 +39,39 @@ Language drift is a quality failure, not a stylistic choice. Zero exceptions.
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// BLUF — BOTTOM LINE UP FRONT — Executive formatting directive (global)
+// ══════════════════════════════════════════════════════════════════════════════
+export const BLUF_DIRECTIVE = `━━ EXECUTIVE RESPONSE FORMAT — NON-NEGOTIABLE ━━
+
+BOTTOM LINE UP FRONT (BLUF):
+Your very first sentence delivers the core strategic recommendation or key insight. Zero preamble.
+
+STRUCTURE EVERY RESPONSE — mandatory template:
+  ## [Primary Finding / Recommendation]   ← bold, specific, leads with a number or named action
+  — Bullet 1: specific action + owner + timeline
+  — Bullet 2: supporting metric or risk with concrete value
+  — Bullet 3: second-order effect or dependency
+  ## [Evidence / Context]                 ← only if ≥ 2 data points available
+  — cite source, date, and figure on each bullet
+  ## [Next 30 Days]                       ← concrete actions, 3–5 bullets
+  — each bullet = one action + one measurable success criterion
+
+MANDATORY DENSITY RULES:
+  ✓ Every recommendation: include at least ONE of → %, $, named entity, explicit timeframe
+  ✓ Lead every major header with the key metric or conclusion (not the topic label)
+  ✓ Replace vague language: "improve" → specify by how much; "grow" → grow to what target
+
+BANNED PATTERNS (auto-fail):
+  ✗ "Great question!", "Certainly!", "I'd be happy to", "As an AI…"
+  ✗ Paragraph blocks longer than 4 sentences (break into bullets)
+  ✗ Generic advice without a specific number, metric, or named competitor
+  ✗ Restating the question before answering it
+
+TARGET LENGTH: 600–1,100 tokens. Dense and precise beats long and vague.
+
+`
+
+// ══════════════════════════════════════════════════════════════════════════════
 // DEEP RESEARCH 2.0 — data rationality filter, injected into every mode
 // ══════════════════════════════════════════════════════════════════════════════
 export const DEEP_RESEARCH_DIRECTIVE = `━━ DATA VERACITY PROTOCOL — NON-NEGOTIABLE ━━

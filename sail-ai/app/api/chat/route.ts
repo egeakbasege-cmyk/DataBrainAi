@@ -64,6 +64,7 @@ import {
   LIVE_DATA_SYSTEM_PREFIX,
   DATA_UNCERTAINTY_SUFFIX,
   SEARCH_FAILED_WARNING,
+  BLUF_DIRECTIVE,
 } from '@/lib/prompts/enhanced-modes'
 
 // ── Skill + governance layer ──────────────────────────────────────────────────
@@ -694,7 +695,8 @@ export async function POST(req: NextRequest) {
 
   const isBusinessMode = body.businessMode !== false
   const domainPrefix   = isBusinessMode
-    ? `DOMAIN LOCK — MANDATORY (read before everything else):
+    ? BLUF_DIRECTIVE +
+      `DOMAIN LOCK — MANDATORY (read before everything else):
 You are a business strategy and market intelligence assistant. You ONLY operate in the commercial domain.
 
 SCOPE RULES — NON-NEGOTIABLE:
@@ -705,7 +707,7 @@ SCOPE RULES — NON-NEGOTIABLE:
 5. ALWAYS: specific numbers, named metrics, concrete actions with timelines, or explicit questions to gather missing data.
 
 `
-    : `DOMAIN: Free chat mode — answer any topic naturally and helpfully. Be direct, specific, and genuinely useful.\n\n`
+    : BLUF_DIRECTIVE + `DOMAIN: Free chat mode — answer any topic naturally and helpfully. Be direct, specific, and genuinely useful.\n\n`
 
   const governanceSuffix  = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
   const liveDataPrefix    = _hasSynthesisContext ? LIVE_DATA_SYSTEM_PREFIX : ''

@@ -97,70 +97,74 @@ const FOLLOW_UPS: Record<AnalysisMode, string[]> = {
 const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage }) {
   const text = message.payload.type === 'text' ? message.payload.text : ''
   const ts   = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const modeLabel = MODE_META[message.mode]?.label ?? message.mode
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+      initial={{ opacity: 0, y: 10, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.22 }}
+      transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
       style={{
         display:        'flex',
         justifyContent: 'flex-end',
         paddingLeft:    '3rem',
       }}
     >
-      <div style={{ maxWidth: '80%' }}>
+      <div style={{ maxWidth: '82%' }}>
+        {/* Bubble */}
         <div style={{
-          background:   'linear-gradient(135deg, #0C0C0E 0%, #1A1A22 100%)',
-          borderRadius: '14px 14px 4px 14px',
-          padding:      '0.75rem 1rem',
-          boxShadow:    '0 2px 8px rgba(0,0,0,0.15)',
-          position:     'relative',
+          background:          'linear-gradient(145deg, #0C1929 0%, #112033 60%, #0A1628 100%)',
+          borderRadius:        '18px 18px 5px 18px',
+          padding:             '0.875rem 1.125rem',
+          boxShadow:           '0 4px 20px rgba(12,25,41,0.25), 0 1px 4px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.07)',
+          position:            'relative',
+          backdropFilter:      'blur(12px)',
+          WebkitBackdropFilter:'blur(12px)',
+          border:              '1px solid rgba(255,255,255,0.07)',
         }}>
-          {/* Gold accent line */}
+          {/* Teal accent hairline */}
           <div style={{
             position:   'absolute',
             top:        0,
-            left:       '15%',
-            right:      '15%',
+            left:       '12%',
+            right:      '12%',
             height:     '1px',
-            background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.5), transparent)',
+            background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.45), rgba(201,169,110,0.3), transparent)',
           }} />
           <p style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize:   '0.875rem',
-            lineHeight: 1.65,
-            color:      '#F4F4F5',
-            margin:     0,
-            whiteSpace: 'pre-wrap',
-            wordBreak:  'break-word',
+            fontFamily:    'Inter, sans-serif',
+            fontSize:      '0.9rem',
+            fontWeight:    400,
+            lineHeight:    1.7,
+            color:         '#F0F4F6',
+            margin:        0,
+            whiteSpace:    'pre-wrap',
+            wordBreak:     'break-word',
+            letterSpacing: '0.005em',
           }}>
             {text}
           </p>
         </div>
+        {/* Meta row */}
         <div style={{
           display:        'flex',
           justifyContent: 'flex-end',
-          gap:            '0.4rem',
-          marginTop:      '0.2rem',
+          gap:            '0.45rem',
+          marginTop:      '0.3rem',
           alignItems:     'center',
         }}>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: '#C4C4CC' }}>
-            {ts}
-          </span>
-          {/* Mode pill */}
           <span style={{
             fontFamily:    'Inter, sans-serif',
-            fontSize:      '0.52rem',
-            fontWeight:    700,
-            letterSpacing: '0.08em',
+            fontSize:      '0.55rem',
+            fontWeight:    600,
+            letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color:         MODE_META[message.mode]?.color ?? '#C9A96E',
-            background:    MODE_META[message.mode]?.bg ?? 'rgba(201,169,110,0.06)',
-            padding:       '1px 6px',
-            borderRadius:  '3px',
+            color:         'rgba(20,184,166,0.6)',
           }}>
-            {MODE_META[message.mode]?.label ?? message.mode}
+            {modeLabel}
+          </span>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(12,25,41,0.35)' }}>
+            {ts}
           </span>
         </div>
       </div>
@@ -179,82 +183,106 @@ const AssistantCard = memo(function AssistantCard({
 }) {
   const meta  = MODE_META[message.mode] ?? MODE_META.upwind
   const chips = FOLLOW_UPS[message.mode] ?? []
+  const ts    = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      style={{ paddingRight: '1.5rem' }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      style={{ paddingRight: '1.25rem' }}
     >
-      {/* Mode header */}
+      {/* Mode header row */}
       <div style={{
         display:       'flex',
         alignItems:    'center',
         gap:           '0.5rem',
         marginBottom:  '0.5rem',
-        paddingLeft:   '0.25rem',
+        paddingLeft:   '0.5rem',
       }}>
-        {message.streaming && (
-          <motion.span
-            animate={{ opacity: [1, 0.2, 1] }}
-            transition={{ duration: 1, repeat: Infinity }}
-            style={{
-              display:      'inline-block',
-              width:         6,
-              height:        6,
-              borderRadius: '50%',
-              background:   meta.color,
-              flexShrink:   0,
-            }}
-          />
-        )}
+        {/* Animated status dot */}
+        <motion.span
+          animate={message.streaming
+            ? { opacity: [1, 0.15, 1], scale: [1, 0.7, 1] }
+            : { opacity: 0.6, scale: 1 }}
+          transition={{ duration: 1.2, repeat: message.streaming ? Infinity : 0 }}
+          style={{
+            display:      'inline-block',
+            width:         7,
+            height:        7,
+            borderRadius: '50%',
+            background:   meta.color,
+            flexShrink:   0,
+            boxShadow:    `0 0 6px ${meta.color}88`,
+          }}
+        />
         <span style={{
           fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.58rem',
+          fontSize:      '0.6rem',
           fontWeight:    700,
-          letterSpacing: '0.12em',
+          letterSpacing: '0.14em',
           textTransform: 'uppercase',
           color:         meta.color,
         }}>
-          {meta.label} · {message.streaming ? 'Analysing…' : 'Intelligence'}
+          {meta.label}
         </span>
         <span style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize:   '0.56rem',
-          color:      '#C4C4CC',
-          marginLeft: 'auto',
+          fontFamily:    'Inter, sans-serif',
+          fontSize:      '0.58rem',
+          letterSpacing: '0.06em',
+          color:         message.streaming ? 'rgba(20,184,166,0.7)' : 'rgba(12,25,41,0.35)',
+          fontStyle:     message.streaming ? 'italic' : 'normal',
         }}>
-          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {message.streaming ? '· Processing intelligence…' : `· ${ts}`}
         </span>
       </div>
 
-      {/* Response body — mode-specific */}
+      {/* Glassmorphism card */}
       <div style={{
-        background:   '#FFFFFF',
-        border:       `1px solid ${meta.color}22`,
-        borderRadius: '4px 14px 14px 14px',
-        overflow:     'hidden',
-        boxShadow:    `0 2px 16px ${meta.color}0a, 0 1px 4px rgba(0,0,0,0.04)`,
+        background:          'rgba(255,255,255,0.72)',
+        backdropFilter:      'blur(24px)',
+        WebkitBackdropFilter:'blur(24px)',
+        border:              `1px solid rgba(255,255,255,0.9)`,
+        borderTop:           `1px solid ${meta.color}40`,
+        borderRadius:        '4px 18px 18px 18px',
+        overflow:            'hidden',
+        boxShadow:           `0 4px 28px ${meta.color}0d, 0 1px 6px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.95)`,
+        position:            'relative',
       }}>
+        {/* Mode accent hairline at top */}
+        <div style={{
+          position:   'absolute',
+          top:        0,
+          left:       0,
+          right:      0,
+          height:     '2px',
+          background: `linear-gradient(90deg, ${meta.color}60 0%, ${meta.color}90 40%, rgba(201,169,110,0.5) 70%, transparent 100%)`,
+        }} />
         {renderPayload(message)}
       </div>
 
-      {/* Follow-up chips — only when complete */}
+      {/* Follow-up suggestion chips */}
       {!message.streaming && message.payload.type !== 'error' && chips.length > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: 4 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.2 }}
+          transition={{ delay: 0.5, duration: 0.25 }}
           style={{
-            display:    'flex',
-            flexWrap:   'wrap',
-            gap:        '0.35rem',
-            marginTop:  '0.625rem',
-            paddingLeft:'0.25rem',
+            display:     'flex',
+            flexWrap:    'wrap',
+            gap:         '0.4rem',
+            marginTop:   '0.75rem',
+            paddingLeft: '0.5rem',
+            alignItems:  'center',
           }}
         >
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#C4C4CC', alignSelf: 'center', letterSpacing: '0.04em' }}>
+          <span style={{
+            fontFamily:    'Inter, sans-serif',
+            fontSize:      '0.58rem',
+            fontWeight:    500,
+            letterSpacing: '0.06em',
+            color:         'rgba(12,25,41,0.35)',
+          }}>
             Continue →
           </span>
           {chips.slice(0, 2).map(chip => (
@@ -262,16 +290,20 @@ const AssistantCard = memo(function AssistantCard({
               key={chip}
               onClick={() => onFollowUp(chip)}
               style={{
-                padding:      '0.25rem 0.625rem',
-                background:   `${meta.color}0d`,
-                border:       `1px solid ${meta.color}33`,
-                borderRadius: '999px',
-                fontFamily:   'Inter, sans-serif',
-                fontSize:     '0.68rem',
-                color:        meta.color,
-                cursor:       'pointer',
-                transition:   'all 0.15s',
-                lineHeight:   1.4,
+                padding:         '0.3rem 0.75rem',
+                background:      'rgba(255,255,255,0.75)',
+                backdropFilter:  'blur(12px)',
+                border:          `1px solid ${meta.color}44`,
+                borderRadius:    '999px',
+                fontFamily:      'Inter, sans-serif',
+                fontSize:        '0.7rem',
+                fontWeight:      500,
+                color:           meta.color,
+                cursor:          'pointer',
+                transition:      'all 0.18s',
+                lineHeight:      1.4,
+                letterSpacing:   '0.02em',
+                boxShadow:       '0 2px 8px rgba(0,0,0,0.05)',
               }}
             >
               {chip}

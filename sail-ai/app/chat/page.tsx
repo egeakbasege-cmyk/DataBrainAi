@@ -49,6 +49,7 @@ import { useChatMessages }               from '@/hooks/useChatMessages'
 // ── Dual interface ────────────────────────────────────────────────────────────
 import { ConsumerChat }                  from '@/components/ConsumerChat'
 import { useUserType }                   from '@/components/Dock'
+import { SwanLoader }                    from '@/components/SwanLoader'
 
 // Placeholders are derived from translations — built inside the component
 const PLACEHOLDER_KEYS = [
@@ -1055,7 +1056,7 @@ export default function ChatPage() {
     <div style={{ position: 'fixed', top: '1px', right: 0, zIndex: 50, padding: '6px 16px' }}>
       <AgentStatusBar />
     </div>
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(160deg, #F8F7F4 0%, #F2F1ED 50%, #F8F7F4 100%)', paddingBottom: '6rem' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(160deg, #E6F4F1 0%, #D8EDE8 35%, #E2F2EE 65%, #EAF6F3 100%)', paddingBottom: '6rem' }}>
       <Nav />
 
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 flex flex-col gap-4">
@@ -1069,12 +1070,14 @@ export default function ChatPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           style={{
-            background:   'linear-gradient(135deg, #FFFFFF 0%, #FAFAF8 100%)',
-            border:       '1px solid rgba(201,169,110,0.18)',
-            borderRadius: '16px',
-            overflow:     'hidden',
-            position:     'relative',
-            boxShadow:    '0 4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(201,169,110,0.12)',
+            background:          'rgba(255,255,255,0.65)',
+            backdropFilter:      'blur(32px)',
+            WebkitBackdropFilter:'blur(32px)',
+            border:              '1px solid rgba(255,255,255,0.9)',
+            borderRadius:        '20px',
+            overflow:            'hidden',
+            position:            'relative',
+            boxShadow:           '0 8px 40px rgba(12,25,41,0.08), 0 1px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,1)',
           }}
         >
           {/* Gold gradient accent line */}
@@ -1466,15 +1469,21 @@ export default function ChatPage() {
                 </div>
               )}
 
-              {/* Input card */}
+              {/* Input card — premium frosted glass */}
               <div
                 style={{
-                  background:   '#FFFFFF',
-                  border:       `1.5px solid ${isActive ? 'rgba(201,169,110,0.55)' : 'rgba(0,0,0,0.09)'}`,
-                  borderRadius: '14px',
-                  overflow:     'hidden',
-                  boxShadow:    isActive ? '0 0 0 3px rgba(201,169,110,0.08), 0 4px 16px rgba(0,0,0,0.06)' : '0 2px 8px rgba(0,0,0,0.04)',
-                  transition:   'border-color 0.25s, box-shadow 0.25s',
+                  background:          'rgba(255,255,255,0.78)',
+                  backdropFilter:      'blur(32px)',
+                  WebkitBackdropFilter:'blur(32px)',
+                  border:              isActive
+                    ? '1.5px solid rgba(20,184,166,0.50)'
+                    : '1.5px solid rgba(255,255,255,0.95)',
+                  borderRadius:        '18px',
+                  overflow:            'hidden',
+                  boxShadow:           isActive
+                    ? '0 0 0 3px rgba(20,184,166,0.10), 0 8px 32px rgba(12,25,41,0.10)'
+                    : '0 8px 32px rgba(12,25,41,0.08), 0 1px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,1)',
+                  transition:          'border-color 0.3s, box-shadow 0.3s',
                 }}
               >
                 {/* Attachment pill (above textarea, inside card) */}
@@ -1503,11 +1512,11 @@ export default function ChatPage() {
                   className="w-full bg-transparent disabled:opacity-40"
                   style={{
                     padding:    '1.125rem 1.25rem 0.875rem',
-                    color:      '#0C0C0E',
-                    caretColor: '#C9A96E',
+                    color:      '#0C1929',
+                    caretColor: 'rgba(20,184,166,0.9)',
                     fontFamily: 'Inter, sans-serif',
-                    fontSize:   '0.9rem',
-                    lineHeight: 1.7,
+                    fontSize:   '0.92rem',
+                    lineHeight: 1.75,
                     resize:     'none',
                   }}
                 />
@@ -1939,8 +1948,29 @@ export default function ChatPage() {
         </AnimatePresence>
 
         {/* ── Upwind executive result ── */}
-        <AnimatePresence>
-          {mode === 'upwind' && (state === 'THINKING' || state === 'COMPLETE') && (
+        <AnimatePresence mode="wait">
+          {mode === 'upwind' && state === 'THINKING' && (
+            <motion.div
+              key="swan-loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.4 }}
+              style={{
+                background:    'rgba(255,255,255,0.55)',
+                backdropFilter:'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border:        '1px solid rgba(20,184,166,0.18)',
+                borderRadius:  '16px',
+                overflow:      'hidden',
+                boxShadow:     '0 8px 40px rgba(20,184,166,0.08), inset 0 1px 0 rgba(255,255,255,0.8)',
+              }}
+            >
+              <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.5), rgba(201,169,110,0.4), transparent)' }} />
+              <SwanLoader label="Synthesising strategic intelligence…" />
+            </motion.div>
+          )}
+          {mode === 'upwind' && state === 'COMPLETE' && (
             <motion.div
               key="answer"
               initial={{ opacity: 0, y: 10 }}
@@ -1950,7 +1980,7 @@ export default function ChatPage() {
             >
               <ExecutiveResponseCard
                 response={response}
-                isStreaming={state === 'THINKING'}
+                isStreaming={false}
                 variant="light"
               />
             </motion.div>
