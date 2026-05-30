@@ -653,8 +653,10 @@ export function isStaleSource(publishedDate: string | undefined): boolean {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-/** Timeout for the entire parallel search operation (ms). */
-const SEARCH_TIMEOUT_MS = 15_000
+/** Timeout for the entire parallel search operation (ms).
+ * Kept at 7 s so two sequential calls (main + critic guardrail) fit within
+ * the Vercel Edge 30 s limit alongside the Groq call (~10 s). */
+const SEARCH_TIMEOUT_MS = 7_000
 
 /**
  * executeDeepSearch

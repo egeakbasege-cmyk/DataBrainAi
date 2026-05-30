@@ -251,9 +251,9 @@ async function criticGuardrailSearch(
   researchAttempted: boolean,
 ): Promise<SearchResult[]> {
   if (
-    healthReport.confidenceScore >= 0.85 ||   // confidence adequate
+    healthReport.confidenceScore >= 0.75 ||   // confidence adequate — was 0.85
     !researchAttempted                    ||   // no search was triggered
-    existingResults.length >= 4               // already have enough sources
+    existingResults.length >= 2               // already have 2+ sources — was 4
   ) return existingResults
 
   // Enrich with explicit evidence/statistics signal
@@ -602,10 +602,10 @@ export async function POST(req: NextRequest) {
     _searchResults     = searchResponse.results
     _staleSourceCount  = searchResponse.staleSourceCount
 
-    console.error(
+    console.log(
       `[SEARCH] mode=${analysisMode} lang=${_queryLanguage} ` +
       `results=${_searchResults.length} provider=${searchResponse.provider} ` +
-      `queries=${JSON.stringify(_researchQueries)}`,
+      `ms=${Date.now() - startedAt}`,
     )
 
     if (_searchResults.length > 0) {
@@ -1224,6 +1224,17 @@ SCOPE RULES — NON-NEGOTIABLE:
 
   const fullSystemPrompt = liveDataPrefix + domainPrefix + activeSystemPrompt + synthesisSuffix
   const groqMessages     = buildGroqMessages(fullSystemPrompt, userMessage, undefined)
+
+  // ── Budget check: bail early if research already burned >18 s ──────────────
+  // Edge functions have a 30 s hard limit; Groq needs at least 5 s.
+  // If we're already past 18 s, skip the LLM and return a graceful error now.
+  const elapsedSoFar = Date.now() - startedAt
+  if (elapsedSoFar > 18_000) {
+    return Response.json(
+      { error: 'Analysis took too long during web research. Please try again — shorter queries are faster.' },
+      { status: 504 },
+    )
+  }
 
   // Fire speculative fetch — both models start simultaneously
   const groqResPromise = speculativeFetch(
