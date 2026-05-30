@@ -163,6 +163,14 @@ const config: Config = {
           '0%, 100%': { opacity: '1' },
           '50%':       { opacity: '0' },
         },
+        'shimmer': {
+          '0%':   { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        'slide-in-from-bottom-2': {
+          '0%':   { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
         'fade-up':         'fade-up 0.4s ease both',
@@ -174,6 +182,7 @@ const config: Config = {
         'chrome-shimmer':  'chrome-shimmer 2.4s linear infinite',
         'matrix-appear':   'matrix-appear 0.3s ease both',
         'blink':           'blink 0.9s step-end infinite',
+        'shimmer':         'shimmer 1.6s ease-in-out infinite',
       },
 
       // ── Border radius ──────────────────────────────────────────────────────
