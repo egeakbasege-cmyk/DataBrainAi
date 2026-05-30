@@ -419,13 +419,13 @@ export function ChatStage(props: ChatStageProps) {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(20px)', border: '1px solid rgba(220,38,38,0.22)', borderLeft: '3px solid #DC2626', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
+              style={{ padding: '12px 16px', background: 'rgba(10,13,20,0.92)', backdropFilter: 'blur(20px)', border: '1px solid rgba(248,113,113,0.22)', borderLeft: '3px solid #F87171', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
             >
-              <span style={{ color: '#DC2626' }}>⚠</span>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#991B1B', flex: 1 }}>{autoError}</span>
+              <span style={{ color: '#F87171' }}>⚠</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(248,113,113,0.88)', flex: 1 }}>{autoError}</span>
               <button
                 onClick={onDismissAutoError}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#991B1B', background: 'none', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#F87171', background: 'none', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
               >
                 Dismiss
               </button>
@@ -484,7 +484,7 @@ export function ChatStage(props: ChatStageProps) {
                 borderRadius:  12, overflow: 'hidden',
                 boxShadow:    '0 4px 28px rgba(180,83,9,0.14), 0 2px 8px rgba(0,0,0,0.35)',
               }}>
-                <div style={{ background: 'rgba(255,255,255,0.97)', margin: '1px', borderRadius: '0 0 11px 11px', padding: 24 }}>
+                <div style={{ background: 'rgba(12,15,24,0.90)', margin: '1px', borderRadius: '0 0 11px 11px', padding: 24, color: '#DDE3EC' }}>
                   <TrimTimelineCard response={trimResponse} isLoading={trimPhase === 'loading'} />
                 </div>
               </div>
@@ -561,7 +561,7 @@ export function ChatStage(props: ChatStageProps) {
               <ExecutiveResponseCard
                 response={response as never}
                 isStreaming={false}
-                variant="light"
+                variant="dark"
               />
             </motion.div>
           )}
@@ -654,16 +654,16 @@ export function ChatStage(props: ChatStageProps) {
                   alignItems:    'center',
                   gap:            8,
                   padding:       '8px 20px',
-                  background:    'rgba(255,255,255,0.68)',
+                  background:    'rgba(255,255,255,0.06)',
                   backdropFilter:'blur(20px)',
-                  border:        '1px solid rgba(129,199,185,0.28)',
+                  border:        '1px solid rgba(255,255,255,0.12)',
                   borderRadius:   8,
                   cursor:        'pointer',
                   fontFamily:    'Inter, sans-serif',
                   fontSize:       12,
                   fontWeight:     600,
                   letterSpacing: '0.06em',
-                  color:         '#1A2B3C',
+                  color:         'rgba(232,237,243,0.75)',
                   transition:    'all 0.15s',
                 }}
               >
