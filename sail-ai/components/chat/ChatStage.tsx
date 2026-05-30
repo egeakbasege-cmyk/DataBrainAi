@@ -25,6 +25,11 @@ import type { SailIntent }                           from '@/lib/intent'
 import type { MoodGuideData }                        from '@/components/MoodGuideCard'
 import { ChatThread }                                from '@/components/ChatThread'
 import { SwanLoader }                                from '@/components/SwanLoader'
+import dynamic                                        from 'next/dynamic'
+const AbyssLoader = dynamic(
+  () => import('@/components/chat/AbyssLoader').then(m => m.AbyssLoader),
+  { ssr: false, loading: () => null }
+)
 import { ExecutiveResponseCard }                     from '@/components/ExecutiveResponseCard'
 import { TrimTimelineCard }                          from '@/components/TrimTimelineCard'
 import { CatamaranResponseCard }                     from '@/components/CatamaranResponseCard'
@@ -431,6 +436,32 @@ export function ChatStage(props: ChatStageProps) {
           <ChatThread messages={messages} onFollowUp={onFollowUp} />
         )}
 
+        {/* ── Abyss loader — non-upwind modes while waiting for first token ── */}
+        <AnimatePresence>
+          {(
+            (mode === 'sail'      && sailPhase      === 'streaming' && !sailText) ||
+            (mode === 'trim'      && trimPhase      === 'loading'               ) ||
+            (mode === 'catamaran' && catamaranPhase === 'loading'               ) ||
+            (mode === 'synergy'   && synergyPhase   === 'streaming' && !synergyText) ||
+            (mode === 'operator'  && operatorPhase  === 'streaming' && !operatorText) ||
+            (mode === 'scenario'  && scenarioPhase  === 'streaming' && !scenarioText)
+          ) && (
+            <motion.div
+              key="abyss-general"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.35 }}
+            >
+              <AbyssLoader
+                modeLabel={mode.charAt(0).toUpperCase() + mode.slice(1)}
+                isActive
+                isComplete={false}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── SAIL ── */}
         <AnimatePresence>
           {mode === 'sail' && (sailPhase === 'streaming' || sailPhase === 'complete') && (
@@ -500,27 +531,21 @@ export function ChatStage(props: ChatStageProps) {
           )}
         </AnimatePresence>
 
-        {/* ── UPWIND: Swan loader + ExecutiveResponseCard ── */}
+        {/* ── UPWIND: Abyss loader + ExecutiveResponseCard ── */}
         <AnimatePresence mode="wait">
           {mode === 'upwind' && upwindState === 'THINKING' && (
             <motion.div
-              key="swan"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              key="abyss-upwind"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97 }}
               transition={{ duration: 0.4 }}
-              style={{
-                background:          'rgba(248,253,251,0.90)',
-                backdropFilter:      'blur(20px)',
-                WebkitBackdropFilter:'blur(20px)',
-                border:              '1px solid rgba(201,169,110,0.30)',
-                borderRadius:         16,
-                overflow:            'hidden',
-                boxShadow:           '0 8px 40px rgba(20,184,166,0.10), 0 2px 8px rgba(0,0,0,0.06)',
-              }}
             >
-              <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.5), rgba(201,169,110,0.4), transparent)' }} />
-              <SwanLoader label="Synthesising strategic intelligence…" />
+              <AbyssLoader
+                modeLabel="Upwind"
+                isActive
+                isComplete={false}
+              />
             </motion.div>
           )}
           {mode === 'upwind' && upwindState === 'COMPLETE' && (
