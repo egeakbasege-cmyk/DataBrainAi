@@ -32,7 +32,6 @@ import { Vector2 }                       from 'three'
 import { Canvas, useThree }              from '@react-three/fiber'
 import { Float, Environment }            from '@react-three/drei'
 import { EffectComposer, Bloom, Glitch } from '@react-three/postprocessing'
-import { GlitchMode }                    from 'postprocessing'
 import gsap                              from 'gsap'
 
 // ── State machine ─────────────────────────────────────────────────────────────
@@ -250,13 +249,13 @@ export function AbyssLoader({
         <CyberFisher appState={appState} setAppState={setAppState} />
         <ModeCard    appState={appState} />
 
+        {/* Glitch strength=Vector2(0,0) = invisible when not in GLITCH state */}
         <EffectComposer enableNormalPass={false}>
           <Bloom
             luminanceThreshold={0.18}
             mipmapBlur
             intensity={1.6}
           />
-          {/* Always render Glitch — only active + strong during GLITCH state */}
           <Glitch
             delay={new Vector2(0, 0)}
             duration={new Vector2(0.1, 0.3)}
@@ -265,8 +264,6 @@ export function AbyssLoader({
                 ? new Vector2(0.4, 0.8)
                 : new Vector2(0, 0)
             }
-            mode={GlitchMode.CONSTANT_WILD}
-            active={appState === S.GLITCH}
           />
         </EffectComposer>
       </Canvas>
