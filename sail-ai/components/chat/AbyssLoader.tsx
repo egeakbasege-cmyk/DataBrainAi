@@ -1,277 +1,284 @@
 'use client'
 
 /**
- * AbyssLoader — Ultra-Premium 3D Cyber-Fisher Loading Panel
+ * AbyssLoader — Code Art Swan
  * ─────────────────────────────────────────────────────────────────────────────
- * Layout contract (solves all overflow/mobile issues):
+ * ASCII / code-art loading animation inspired by Perplexity Comet's character
+ * field effect.  A swan silhouette emerges from animated code characters:
  *
- *   ┌─ wrapper (position:relative, h:320px) ── participates in DOM flow ──┐
- *   │  ┌─ Canvas (position:absolute, inset:0) ── background layer ────────┐│
- *   │  │   3D scene renders here, behind everything                       ││
- *   │  └────────────────────────────────────────────────────────────────────┘│
- *   │  ┌─ status overlay  (position:absolute, z:10) ────────────────────── ┐│
- *   │  └──────────────────────────────────────────────────────────────────── ┘│
- *   │  ┌─ reveal overlay  (position:absolute, z:10) ────────────────────── ┐│
- *   │  └──────────────────────────────────────────────────────────────────── ┘│
- *   └────────────────────────────────────────────────────────────────────────┘
+ *   • Dark glass card, dark teal/gold palette
+ *   • ~650 character cells in a uniform grid
+ *   • Each cell is checked against 3 Path2D regions (body / neck / head)
+ *   • Swan cells breathe at individual speeds; background cells are near-invisible
+ *   • A shimmer wave sweeps through the swan periodically
+ *   • Pure Canvas2D — zero Three.js / WebGL dependency
  *
- * Key improvements over v1:
- *   • Canvas is position:absolute → never pushes DOM siblings, no overflow
- *   • dpr={[1,2]}  → Retina-sharp on HiDPI screens, mobile-safe
- *   • CameraRig    → useThree monitors container size, adjusts FOV in real time
- *   • SceneObjects → scale adapts to narrow viewports (no clipping on mobile)
- *   • Glassmorphism v2: blur(16px), rgba channels tuned, razor-thin borders
- *   • Typography: SF Pro / Inter stack, optical letter-spacing
- *   • All transitions: cubic-bezier(0.22, 1, 0.36, 1) — Apple easing
- *   • State machine: IDLE → CASTING → GLITCH → REVEAL (external-prop driven)
+ * isPointInPath safety note:
+ *   Path2D coordinates are in CSS pixels.
+ *   We call ctx.isPointInPath() BEFORE ctx.scale(DPR) so the test-point
+ *   coordinates (also in CSS pixels) match the path coordinates.
+ *   After the hit-test the DPR scale is applied only for crisp rasterisation.
  */
 
-import { useRef, useState, useEffect }  from 'react'
-import type { PerspectiveCamera }        from 'three'
-import { Vector2 }                       from 'three'
-import { Canvas, useThree }              from '@react-three/fiber'
-import { Float, Environment }            from '@react-three/drei'
-import { EffectComposer, Bloom, Glitch } from '@react-three/postprocessing'
-import gsap                              from 'gsap'
+import { useRef, useEffect, useState } from 'react'
 
-// ── State machine ─────────────────────────────────────────────────────────────
+// ── Character sets ────────────────────────────────────────────────────────────
 
-const S = {
-  IDLE:    'IDLE',
-  CASTING: 'CASTING',
-  GLITCH:  'GLITCH',
-  REVEAL:  'REVEAL',
-} as const
+const CHARS_BODY: string[] = ['@', '#', '$', '0', '8', 'S', 'X', '@', '#', '0', '$', 'S', '8']
+const CHARS_NECK: string[] = ['@', '#', '$', '0', '8', 'S', '#', '$', '0']
+const CHARS_HEAD: string[] = ['@', '#', '$', '0', '8', '@', '#', '$', 'S']
+const CHARS_BG:   string[] = ['.', '+', 'x', '·', '°', '0', 'S', '.', ' ', ' ']
 
-type AppState = typeof S[keyof typeof S]
+// ── Colour helpers ────────────────────────────────────────────────────────────
 
-// ── Adaptive camera ───────────────────────────────────────────────────────────
-//  Lives inside Canvas so it has access to useThree()
+type RGB = readonly [number, number, number]
 
-function CameraRig() {
-  const { camera, size } = useThree()
+const TEAL: RGB  = [20,  184, 166]
+const GOLD: RGB  = [201, 169, 110]
+const WHITE: RGB = [220, 235, 250]
 
-  useEffect(() => {
-    const cam = camera as PerspectiveCamera
-    if (!('fov' in cam)) return
-    // Wider FOV on narrow containers keeps all objects visible without clipping
-    cam.fov = size.width < 400 ? 82
-            : size.width < 640 ? 70
-            : 60
-    cam.updateProjectionMatrix()
-  }, [camera, size.width])
-
-  return null
+function rgba([r, g, b]: RGB, a: number): string {
+  const clamped = Math.max(0, Math.min(1, a))
+  return `rgba(${r},${g},${b},${clamped.toFixed(3)})`
 }
 
-// ── Cyber Fisher ──────────────────────────────────────────────────────────────
+// ── Swan Path2D factories (all coords in CSS px for a W×H canvas) ─────────────
 
-function CyberFisher({
-  appState, setAppState,
-}: {
-  appState: AppState
-  setAppState: (s: AppState) => void
-}) {
-  const fishermanRef = useRef<import('three').Group>(null)
-  const rodRef       = useRef<import('three').Mesh>(null)
-  const { size }     = useThree()
-
-  // Scale objects down on mobile so they never clip the canvas edge
-  const s = size.width < 400 ? 0.68 : size.width < 640 ? 0.84 : 1.0
-  const px = 2 * s          // x-position scales with object
-  const py = -1 * s         // y-position
-
-  useEffect(() => {
-    if (!fishermanRef.current || !rodRef.current) return
-    if (appState === S.CASTING) {
-      const tl = gsap.timeline()
-      tl.to(fishermanRef.current.rotation, {
-          y: Math.PI / 4, duration: 0.8, ease: 'power2.out',
-        })
-        .to(rodRef.current.scale, {
-          y: 8, duration: 1.5, ease: 'elastic.out(1, 0.5)',
-        })
-        .call(() => setAppState(S.GLITCH))
-    } else if (appState === S.IDLE) {
-      gsap.to(fishermanRef.current.rotation, { y: 0, duration: 1 })
-      gsap.to(rodRef.current.scale,          { y: 1, duration: 1 })
-    }
-  }, [appState, setAppState])
-
-  return (
-    <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
-      <group ref={fishermanRef} position={[px, py, 0]} scale={s}>
-        {/* Body — neon wireframe capsule */}
-        <mesh castShadow>
-          <capsuleGeometry args={[0.5, 1, 4, 8]} />
-          <meshPhysicalMaterial
-            color="#00ffcc"
-            wireframe
-            roughness={0.2}
-            metalness={0.8}
-          />
-        </mesh>
-        {/* Rod */}
-        <mesh ref={rodRef} position={[-0.5, 1, 0]} scale={[1, 1, 1]}>
-          <cylinderGeometry args={[0.02, 0.02, 1]} />
-          <meshBasicMaterial color="#ff00a0" />
-        </mesh>
-      </group>
-    </Float>
-  )
+function buildBodyPath(W: number, H: number): Path2D {
+  const sx = W / 640, sy = H / 300
+  const p  = new Path2D()
+  // Large body ellipse, slightly rotated clockwise
+  p.ellipse(232 * sx, 192 * sy, 170 * sx, 78 * sy, -0.08, 0, Math.PI * 2)
+  return p
 }
 
-// ── Mode Card ─────────────────────────────────────────────────────────────────
+function buildNeckPath(W: number, H: number): Path2D {
+  const sx = W / 640, sy = H / 300
+  const p  = new Path2D()
+  // Curved trapezoidal band — upper edge curves up toward head, lower follows body
+  p.moveTo(394 * sx, 130 * sy)
+  p.quadraticCurveTo(440 * sx,  82 * sy, 464 * sx, 100 * sy)
+  p.lineTo(478 * sx, 124 * sy)
+  p.quadraticCurveTo(450 * sx, 152 * sy, 426 * sx, 166 * sy)
+  p.closePath()
+  return p
+}
 
-function ModeCard({ appState }: { appState: AppState }) {
-  const { size } = useThree()
-  const s = size.width < 400 ? 0.55 : size.width < 640 ? 0.72 : 1.0
+function buildHeadPath(W: number, H: number): Path2D {
+  const sx = W / 640, sy = H / 300
+  const p  = new Path2D()
+  // Slightly tilted ellipse for a side-profile head
+  p.ellipse(492 * sx, 110 * sy, 43 * sx, 38 * sy, 0.22, 0, Math.PI * 2)
+  return p
+}
 
-  return (
-    <Float speed={1.5} rotationIntensity={0.5} floatIntensity={1}>
-      <mesh position={[-1 * s, -1.5 * s, -2]}>
-        {appState === S.IDLE ? (
-          <planeGeometry args={[1.2 * s, 1.8 * s]} />
-        ) : (
-          <sphereGeometry args={[0.8 * s, 32, 32]} />
-        )}
-        <meshPhysicalMaterial
-          color="#0088ff"
-          emissive="#001133"
-          roughness={0.1}
-          transmission={0.9}
-          thickness={0.5}
-        />
-      </mesh>
-    </Float>
-  )
+// ── Cell type ─────────────────────────────────────────────────────────────────
+
+type Region = 'body' | 'neck' | 'head' | 'bg'
+
+interface Cell {
+  x:      number    // CSS px
+  y:      number    // CSS px
+  chars:  string[]
+  region: Region
+  phase:  number    // random offset 0–1 for independent animation
+  speed:  number    // individual animation speed multiplier
+  size:   number    // font-size px
+  isEye:  boolean   // true for the single eye cell
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface AbyssLoaderProps {
-  /** Mode name shown in the status label */
   modeLabel?:  string
-  /** True while the AI is processing */
   isActive:    boolean
-  /** True when the response has arrived */
   isComplete:  boolean
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function AbyssLoader({
-  modeLabel = 'Intelligence',
+  modeLabel  = 'Intelligence',
   isActive,
   isComplete,
 }: AbyssLoaderProps) {
-  const [appState, setAppState] = useState<AppState>(S.IDLE)
+  const canvasRef   = useRef<HTMLCanvasElement>(null)
+  const frameRef    = useRef(0)
+  const phaseRef    = useRef<'idle' | 'active' | 'complete'>('idle')
+  const [uiPhase, setUiPhase] = useState<'idle' | 'active' | 'complete'>('idle')
 
-  // ── External prop → state machine ─────────────────────────────────────────
+  // Sync external props → internal ref (readable inside rAF without re-init)
   useEffect(() => {
-    if (isActive && appState === S.IDLE) setAppState(S.CASTING)
-  }, [isActive, appState])
-
-  useEffect(() => {
-    if (!isActive && !isComplete) setAppState(S.IDLE)
+    const p = isActive ? 'active' : isComplete ? 'complete' : 'idle'
+    phaseRef.current = p
+    setUiPhase(p)
   }, [isActive, isComplete])
 
-  // ── Auto-advance GLITCH → REVEAL ──────────────────────────────────────────
+  // ── Canvas setup + animation loop (runs once on mount) ─────────────────────
   useEffect(() => {
-    if (appState !== S.GLITCH) return
-    const t = setTimeout(() => setAppState(S.REVEAL), 2500)
-    return () => clearTimeout(t)
-  }, [appState])
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rawCtx = canvas.getContext('2d')
+    if (!rawCtx) return
+    // Cast to non-null — we just proved it's non-null; TypeScript doesn't narrow across closures
+    const cx = rawCtx as CanvasRenderingContext2D
 
-  // ── Derived display values ─────────────────────────────────────────────────
-  const isReveal  = appState === S.REVEAL
-  const dotColor  = isReveal ? '#00ffcc' : '#ff00a0'
-  const labelColor = isReveal ? '#00ffcc' : 'rgba(0,255,204,0.55)'
+    // CSS dimensions
+    const W   = canvas.offsetWidth  || 640
+    const H   = canvas.offsetHeight || 300
+    const DPR = Math.min(window.devicePixelRatio || 1, 2)
 
-  const statusText =
-    appState === S.IDLE    ? `${modeLabel} · Standby`                  :
-    appState === S.CASTING ? `${modeLabel} · Casting…`                  :
-    appState === S.GLITCH  ? `${modeLabel} · Intercepting data stream`  :
-                             `${modeLabel} · Intelligence compiled`
+    // Physical canvas size — DPR scale applied AFTER isPointInPath calls
+    canvas.width  = W * DPR
+    canvas.height = H * DPR
+
+    // ── Build swan paths (CSS coordinates) ──────────────────────────────────
+    const bodyPath = buildBodyPath(W, H)
+    const neckPath = buildNeckPath(W, H)
+    const headPath = buildHeadPath(W, H)
+
+    // Eye position in CSS px (upper-right of head ellipse)
+    const EYE_X = 504 * (W / 640)
+    const EYE_Y = 100 * (H / 300)
+
+    // ── Build cell grid ──────────────────────────────────────────────────────
+    const COLS  = 40
+    const ROWS  = 17
+    const cellW = W / COLS
+    const cellH = H / ROWS
+    const cells: Cell[] = []
+
+    for (let col = 0; col < COLS; col++) {
+      for (let row = 0; row < ROWS; row++) {
+        const x = (col + 0.5) * cellW
+        const y = (row + 0.5) * cellH
+
+        // isPointInPath ignores ctx transform → works in CSS coords ✓
+        const inHead = cx.isPointInPath(headPath, x, y)
+        const inNeck = !inHead && cx.isPointInPath(neckPath, x, y)
+        const inBody = !inHead && !inNeck && cx.isPointInPath(bodyPath, x, y)
+
+        const region: Region = inHead ? 'head'
+                             : inNeck ? 'neck'
+                             : inBody ? 'body'
+                             : 'bg'
+
+        const isEye = inHead &&
+          Math.hypot(x - EYE_X, y - EYE_Y) < Math.min(cellW, cellH) * 0.9
+
+        cells.push({
+          x, y, region, isEye,
+          chars: region === 'head' ? CHARS_HEAD
+               : region === 'neck' ? CHARS_NECK
+               : region === 'body' ? CHARS_BODY
+               : CHARS_BG,
+          phase: Math.random(),
+          speed: 0.45 + Math.random() * 0.75,
+          size:  region !== 'bg' ? 13 : 10,
+        })
+      }
+    }
+
+    // ── Apply DPR scale for crisp text rendering ─────────────────────────────
+    cx.scale(DPR, DPR)
+
+    // ── Animation loop ───────────────────────────────────────────────────────
+    const t0 = performance.now()
+
+    function draw(now: DOMHighResTimeStamp) {
+      frameRef.current = requestAnimationFrame(draw)
+      const t       = (now - t0) / 1000
+      const current = phaseRef.current
+
+      cx.clearRect(0, 0, W, H)
+      cx.textAlign    = 'center'
+      cx.textBaseline = 'middle'
+
+      // Shimmer wave: brightness pulse sweeping left→right every 4 s
+      const shimmerPx = ((t % 4) / 4) * W
+
+      for (const cell of cells) {
+        const localT = t * cell.speed + cell.phase * 9.1
+
+        // Character cycling
+        const idx  = Math.floor(localT * 1.6) % cell.chars.length
+        const char = cell.chars[idx]!
+
+        // Breathing (per-cell sine)
+        const breath = Math.sin(localT * 2.3) * 0.5 + 0.5   // 0..1
+
+        // Shimmer boost for swan cells
+        const shimmerBoost = cell.region !== 'bg'
+          ? Math.max(0, 1 - Math.abs(cell.x - shimmerPx) / 60) * 0.28
+          : 0
+
+        // Per-region colour + opacity
+        let color:   RGB
+        let opacity: number
+
+        if (cell.isEye) {
+          color   = WHITE
+          opacity = 0.90 + breath * 0.10
+          cx.font = `bold 14px "JetBrains Mono","SF Mono",monospace`
+        } else if (cell.region === 'head') {
+          color   = GOLD
+          opacity = 0.52 + breath * 0.32 + shimmerBoost
+          cx.font = `bold ${cell.size}px "JetBrains Mono","SF Mono",monospace`
+        } else if (cell.region === 'neck') {
+          color   = GOLD
+          opacity = 0.38 + breath * 0.28 + shimmerBoost
+          cx.font = `${cell.size}px "JetBrains Mono","SF Mono",monospace`
+        } else if (cell.region === 'body') {
+          color   = TEAL
+          opacity = (0.35 + breath * 0.30 + shimmerBoost) * (current === 'idle' ? 0.55 : 1)
+          cx.font = `${cell.size}px "JetBrains Mono","SF Mono",monospace`
+        } else {
+          color   = TEAL
+          opacity = 0.030 + breath * 0.028
+          cx.font = `${cell.size}px "JetBrains Mono","SF Mono",monospace`
+        }
+
+        cx.fillStyle = rgba(color, opacity)
+        cx.fillText(char, cell.x, cell.y)
+      }
+    }
+
+    frameRef.current = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(frameRef.current)
+  }, []) // runs once — phaseRef keeps in sync via the other useEffect
+
+  // ── Derived UI values ─────────────────────────────────────────────────────
+  const dotColor = uiPhase === 'complete' ? '#C9A96E' : '#14B8A6'
+
+  const statusText = uiPhase === 'active'
+    ? `${modeLabel} · Analysing…`
+    : uiPhase === 'complete'
+    ? `${modeLabel} · Complete`
+    : `${modeLabel} · Standby`
 
   return (
-    /*
-     * ── Wrapper ──────────────────────────────────────────────────────────────
-     * position:relative  → establishes stacking context for children
-     * height:320px       → explicit height so DOM flow is predictable
-     * overflow:hidden    → clips 3D canvas & rounded corners
-     * Canvas, overlays   → all position:absolute inside here
-     */
     <div style={{
       position:     'relative',
       width:        '100%',
-      height:        320,
+      height:        300,
       borderRadius:  16,
       overflow:     'hidden',
-      background:   'rgba(2, 2, 6, 0.95)',
-      border:       '1px solid rgba(0,255,204,0.12)',
-      boxShadow:    [
-        '0 0 0 1px rgba(0,255,204,0.06)',
-        '0 8px 40px rgba(0,255,204,0.07)',
+      background:   'rgba(2,2,8,0.96)',
+      border:       '1px solid rgba(20,184,166,0.14)',
+      boxShadow: [
+        '0 0 0 1px rgba(20,184,166,0.05)',
+        '0 8px 40px rgba(20,184,166,0.07)',
         '0 2px 12px rgba(0,0,0,0.50)',
       ].join(', '),
     }}>
 
-      {/* ────────────────────────────────────────────────────────────────────
-          3-D Canvas — background layer
-          position:absolute + inset:0 → fills wrapper, zero DOM flow impact
-          dpr=[1,2]                   → Retina-sharp, no mobile jank
-          ──────────────────────────────────────────────────────────────── */}
-      <Canvas
-        camera={{ position: [0, 0, 6], fov: 60 }}
-        dpr={[1, 2]}
-        style={{
-          position: 'absolute',
-          inset:     0,
-          width:    '100%',
-          height:   '100%',
-        }}
-      >
-        {/* Adaptive camera — adjusts FOV on resize */}
-        <CameraRig />
+      {/* Code art canvas */}
+      <canvas
+        ref={canvasRef}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+      />
 
-        <Environment preset="night" />
-        <ambientLight intensity={0.45} />
-        <spotLight
-          position={[5, 10, 5]}
-          angle={0.3}
-          penumbra={1}
-          color="#00ffcc"
-          intensity={2.2}
-          castShadow
-        />
-
-        <CyberFisher appState={appState} setAppState={setAppState} />
-        <ModeCard    appState={appState} />
-
-        {/* Glitch strength=Vector2(0,0) = invisible when not in GLITCH state */}
-        <EffectComposer enableNormalPass={false}>
-          <Bloom
-            luminanceThreshold={0.18}
-            mipmapBlur
-            intensity={1.6}
-          />
-          <Glitch
-            delay={new Vector2(0, 0)}
-            duration={new Vector2(0.1, 0.3)}
-            strength={
-              appState === S.GLITCH
-                ? new Vector2(0.4, 0.8)
-                : new Vector2(0, 0)
-            }
-          />
-        </EffectComposer>
-      </Canvas>
-
-      {/* ────────────────────────────────────────────────────────────────────
-          Status label overlay
-          position:absolute, z:10 → floats above Canvas, pointer-events:none
-          ──────────────────────────────────────────────────────────────── */}
+      {/* Top-left: pulsing dot + status label */}
       <div style={{
         position:      'absolute',
         top:            14,
@@ -283,7 +290,6 @@ export function AbyssLoader({
         gap:            8,
         pointerEvents: 'none',
       }}>
-        {/* Pulsing activity dot */}
         <span style={{
           display:      'inline-block',
           width:         6,
@@ -293,78 +299,44 @@ export function AbyssLoader({
           flexShrink:   0,
           animation:    'abyss-pulse 1.1s ease-in-out infinite',
           boxShadow:    `0 0 10px ${dotColor}90`,
-          transition:   'background 0.4s cubic-bezier(0.22,1,0.36,1)',
+          transition:   'background 0.4s ease',
         }} />
-
-        {/* Mode + phase text */}
         <span style={{
-          fontFamily:    [
-            '-apple-system', 'BlinkMacSystemFont',
-            '"SF Pro Text"', '"Inter"',
-            '"JetBrains Mono"', 'monospace',
-          ].join(', '),
+          fontFamily:    '"JetBrains Mono","SF Mono","Fira Code",monospace',
           fontSize:       10,
           fontWeight:     600,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color:          labelColor,
-          transition:    'color 0.5s cubic-bezier(0.22,1,0.36,1)',
+          color:          uiPhase === 'complete' ? '#C9A96E' : 'rgba(20,184,166,0.60)',
+          transition:    'color 0.5s ease',
         }}>
           {statusText}
         </span>
       </div>
 
-      {/* ────────────────────────────────────────────────────────────────────
-          Reveal overlay — mounts on REVEAL, animates in
-          position:absolute, z:10 → stays above Canvas at all times
-          ──────────────────────────────────────────────────────────────── */}
-      {appState === S.REVEAL && (
-        <div style={{
-          position:       'absolute',
-          bottom:          16,
-          left:            16,
-          right:           16,
-          zIndex:          10,
-          background:     'rgba(0,255,204,0.04)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          border:         '1px solid rgba(0,255,204,0.14)',
-          borderRadius:    12,
-          padding:        '14px 18px',
-          animation:      'abyss-reveal 0.7s cubic-bezier(0.22,1,0.36,1) both',
+      {/* Bottom-right: quiet signature */}
+      <div style={{
+        position:      'absolute',
+        bottom:         12,
+        right:          16,
+        zIndex:         10,
+        pointerEvents: 'none',
+      }}>
+        <span style={{
+          fontFamily:    '"JetBrains Mono","SF Mono",monospace',
+          fontSize:       9,
+          color:         'rgba(20,184,166,0.16)',
+          letterSpacing: '0.08em',
         }}>
-          <p style={{
-            margin:        0,
-            fontFamily:   '"SF Mono", "JetBrains Mono", "Fira Code", monospace',
-            fontSize:      10,
-            color:         'rgba(0,255,204,0.38)',
-            letterSpacing: '0.08em',
-          }}>
-            // Hook Connected
-          </p>
-          <p style={{
-            margin:        '6px 0 0',
-            fontFamily:   '"SF Mono", "JetBrains Mono", "Fira Code", monospace',
-            fontSize:      12,
-            color:         '#00ffcc',
-            fontWeight:    600,
-            letterSpacing: '0.02em',
-            lineHeight:    1.5,
-          }}>
-            $ {modeLabel} algorithm compiled successfully.
-          </p>
-        </div>
-      )}
+          // sail · intelligence
+        </span>
+      </div>
 
-      {/* ── Keyframe animations ── */}
+      {/* Keyframe for pulsing dot */}
       <style>{`
         @keyframes abyss-pulse {
           0%, 100% { opacity: 1;    transform: scale(1);    }
           50%       { opacity: 0.2; transform: scale(0.52); }
-        }
-        @keyframes abyss-reveal {
-          from { opacity: 0; transform: translateY(12px) scale(0.97); }
-          to   { opacity: 1; transform: translateY(0)    scale(1);    }
         }
       `}</style>
     </div>
