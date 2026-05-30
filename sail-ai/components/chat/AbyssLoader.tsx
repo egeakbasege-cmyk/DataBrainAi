@@ -2,41 +2,48 @@
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- *  A B Y S S   L O A D E R   —   Design Direction v2
+ * A B Y S S   L O A D E R   —   Design Direction v2
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- *  "The intelligence does not arrive. It assembles itself from the dark."
+ * "The intelligence does not arrive. It assembles itself from the dark."
  *
- *  The canvas is a void — #07080C, a near-black that breathes. Out of nothing,
- *  a digital rain descends: each glyph a cold cyan streak, the exhaust trail
- *  of computation. This is not decoration. This is the system thinking.
+ * The canvas is a void — #07080C, a near-black that breathes. Out of nothing,
+ * a digital rain descends: each glyph a cold cyan streak, the exhaust trail
+ * of computation. This is not decoration. This is the system thinking.
  *
- *  At the inflection point — when thinking becomes form — the rain fractures.
- *  Each particle breaks from its column, spirals through turbulence, and lands.
- *  The landing is inevitable: a swan. Not a symbol. A structure. The same
- *  algorithmic precision that drives the inference engine is what draws the
- *  wings and neck from chaos.
+ * At the inflection point — when thinking becomes form — the rain fractures.
+ * Each particle breaks from its column, spirals through turbulence, and lands.
+ * The landing is inevitable: a swan. Not a symbol. A structure. The same
+ * algorithmic precision that drives the inference engine is what draws the
+ * wings and neck from chaos.
  *
- *  Particle language:
- *    · Rain      → electric cyan  (#00FFCC)  — raw signal, unresolved
- *    · Body      → lunar silver   (#C8D4E8)  — the formed intelligence
- *    · Wings     → warm gold      (#C9A96E)  — the brand's own frequency
- *    · Neck/Head → near-white     (#F0F4FF)  — clarity at the apex
+ * Particle language:
+ * · Rain      → electric cyan  (#00FFCC)  — raw signal, unresolved
+ * · Body      → dark silver    (#A0A0A0)  — the formed intelligence
+ * · Wings     → rich gold      (#DDA520)  — the brand's own frequency
+ * · Neck/Head → near-white     (#F0F4FF)  — clarity at the apex
+ * · Beak      → rich gold      (#DDA520)
+ * · Eye       → near-white     (#F0F4FF)
  *
- *  Blending: additive. Light accumulates. Dense areas glow. The swan is not
- *  painted — it is luminous. It earns its brightness from mass.
+ * Blending: additive. Light accumulates. Dense areas glow. The swan is not
+ * painted — it is luminous. It earns its brightness from mass.
  *
- *  Post-processing: a single Bloom pass. Threshold low enough that even a
- *  lone glyph carries a halo. The effect should feel like phosphor, not neon.
+ * Post-processing: a single Bloom pass. Threshold low enough that even a
+ * lone glyph carries a halo. The effect should feel like phosphor, not neon.
  *
- *  Status bar: monospace terminal text on a near-transparent dark pill —
- *  the interface layer between the machine and the human watching it.
+ * Status bar: monospace terminal text on a near-transparent dark pill —
+ * the interface layer between the machine and the human watching it.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Updating Swan form to match image_0.png - complex multi-layered wings, organic body shape,
+ * graceful neck S-curve with tüy detayları, kafa shape, gaga shape.
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import { useRef, useMemo, useEffect, useState }       from 'react'
-import { Canvas, useFrame, useThree }                 from '@react-three/fiber'
+import { Canvas, useFrame, useThree }                from '@react-three/fiber'
 import { EffectComposer, Bloom }                      from '@react-three/postprocessing'
 import * as THREE                                     from 'three'
 import gsap                                           from 'gsap'
@@ -79,7 +86,7 @@ function makeAtlas(): THREE.CanvasTexture {
     ctx.fillText(g, (i % COLS) * cw + cw / 2, Math.floor(i / COLS) * ch + ch / 2)
   })
 
-  const tex           = new THREE.CanvasTexture(cv)
+  const tex            = new THREE.CanvasTexture(cv)
   tex.anisotropy      = 8
   tex.minFilter       = THREE.LinearMipmapLinearFilter
   tex.magFilter       = THREE.LinearFilter
@@ -100,12 +107,15 @@ const VERT = /* glsl */`
   attribute vec3  aTgt;    // swan target world position
   attribute vec3  aRnd;    // x:fallSpeed  y:phaseOffset  z:glyphIdx
   attribute float aWing;   // 1.0 = wing particle
+  attribute float aEye;    // 1.0 = eye particle
 
   varying vec2  vUv;
   varying float vEdge;
   varying float vGlyph;
   varying float vWing;
+  varying float vEye;
   varying float vProgress;
+  varying vec3  vTgt;
 
   // ── 3D Simplex Noise (Ian McEwan / Ashima Arts) ─────────────────────────────
   vec3 mod289_3(vec3 x)  { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -166,10 +176,12 @@ const VERT = /* glsl */`
   }
 
   void main() {
-    vUv      = uv;
-    vGlyph   = aRnd.z;
-    vWing    = aWing;
+    vUv       = uv;
+    vGlyph    = aRnd.z;
+    vWing     = aWing;
+    vEye      = aEye;
     vProgress = uProgress;
+    vTgt      = aTgt;
 
     // ── Phase 1: falling code rain ──────────────────────────────────────────
     vec3 rain = aSrc;
@@ -196,7 +208,7 @@ const VERT = /* glsl */`
     // ── Phase 4: mouse repulsion ────────────────────────────────────────────
     if (uProgress > 0.5) {
       vec3  delta = center - uMouse;
-      float d     = length(delta);
+      float d      = length(delta);
       if (d < 2.5 && d > 0.001) {
         float f  = pow((2.5 - d) / 2.5, 2.0);
         center  += (delta / d) * f * 0.85;
@@ -213,9 +225,12 @@ const VERT = /* glsl */`
 
 // ─── GLSL fragment shader ──────────────────────────────────────────────────────
 // Color palette (additive blending on dark background):
-//   rain  → cyan  #00FFCC  (0.0, 1.0, 0.8)
-//   body  → silver #C8D4E8 (0.784, 0.831, 0.910)
-//   wing  → gold  #C9A96E  (0.788, 0.663, 0.431)
+//    rain      → cyan  #00FFCC  (0.0, 1.0, 0.8)
+//    body      → dark silver    (#A0A0A0)  — the formed intelligence
+//    wing      → rich gold      (#DDA520)  — the brand's own frequency
+//    head/neck → near-white     (#F0F4FF)  — clarity at the apex
+//    beak      → rich gold      (#DDA520)
+//    eye       → near-white     (#F0F4FF)
 
 const FRAG = /* glsl */`
   uniform sampler2D uAtlas;
@@ -225,7 +240,9 @@ const FRAG = /* glsl */`
   varying float vEdge;
   varying float vGlyph;
   varying float vWing;
+  varying float vEye;
   varying float vProgress;
+  varying vec3  vTgt;
 
   void main() {
     float total = uGrid.x * uGrid.y;
@@ -243,19 +260,41 @@ const FRAG = /* glsl */`
     if (tex.a < 0.15) discard;
 
     // Palette colours
-    vec3 cCyan   = vec3(0.0,   1.0,   0.8);    // rain: electric cyan
-    vec3 cSilver = vec3(0.784, 0.831, 0.910);  // body: lunar silver
-    vec3 cGold   = vec3(0.788, 0.663, 0.431);  // wing: warm gold
+    vec3 cCyan        = vec3(0.0,  1.0,  0.8);
+    vec3 cDarkSilver  = vec3(0.6,  0.65, 0.72);
+    vec3 cRichGold    = vec3(0.85, 0.7,  0.45);
+    vec3 cBrightWhite = vec3(0.95, 0.98, 1.0);
+    vec3 cBlackBeak   = vec3(0.0,  0.0,  0.0);
+    vec3 cEyeWhite    = vec3(1.0,  1.0,  1.0);
 
-    // Blend from cyan (rain) toward swan colours as progress advances
-    vec3 swanColor = mix(cSilver, cGold, vWing);
-    vec3 color     = mix(cCyan, swanColor, smoothstep(0.0, 0.65, vProgress));
+    // Swan base color
+    vec3 swanColor;
+    if (vEye == 1.0) {
+      swanColor = cEyeWhite;
+    } else if (vWing == 1.0) {
+      swanColor = cRichGold;
+    } else {
+      swanColor = cDarkSilver;
+    }
 
-    // Soft edge darkening so particles have volume without hard outlines
+    // White influence from lower neck up to head (excluding eye)
+    float headNeckT = smoothstep(1.0, 2.15, vTgt.y);
+    headNeckT *= (1.0 - vEye);
+    swanColor = mix(swanColor, cBrightWhite, headNeckT);
+
+    // Beak coordinate bounds (world space): X: 1.6–2.0, Y: 2.15–2.35
+    float beakBoundX = smoothstep(1.6, 2.0, vTgt.x);
+    float beakBoundY = smoothstep(2.15, 2.35, vTgt.y);
+    float beakT = beakBoundX * beakBoundY;
+    if (beakT > 0.5) {
+      swanColor = cBlackBeak;
+    }
+
+    vec3 color = mix(cCyan, swanColor, smoothstep(0.0, 0.65, vProgress));
+
     float fe = pow(vEdge, 1.8);
     color = color * (1.0 - fe * 0.32);
 
-    // Additive alpha — edges fade to zero for clean accumulation glow
     float alpha = tex.a * (1.0 - fe * 0.55);
 
     gl_FragColor = vec4(color, alpha);
@@ -269,54 +308,111 @@ interface GeoData {
   tgt: Float32Array
   rnd: Float32Array
   wng: Float32Array
+  eye: Float32Array
 }
 
 function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
-  // Wings (red) first — body covers the inner overlap
+  // Wings (red) first — multiple ellipses for feather effect
   ctx.fillStyle = '#cc0000'
 
+  // Left Alt Kanat (tüylü)
   ctx.save()
   ctx.translate(CW * 0.22, CH * 0.52)
-  ctx.rotate(0.22)
+  ctx.rotate(0.30)
   ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.275, CH * 0.135, 0, 0, Math.PI * 2)
+  ctx.ellipse(0, 0, CW * 0.26, CH * 0.14, 0, 0, Math.PI * 2)
   ctx.fill()
   ctx.restore()
 
+  // Left Üst Kanat (sivri)
+  ctx.save()
+  ctx.translate(CW * 0.20, CH * 0.50)
+  ctx.rotate(0.50)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.20, CH * 0.08, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // Left Üst Kanat sivri ucu
+  ctx.save()
+  ctx.translate(CW * 0.16, CH * 0.52)
+  ctx.rotate(0.70)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.14, CH * 0.06, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // Left Kanat tüy detayı
+  ctx.save()
+  ctx.translate(CW * 0.28, CH * 0.56)
+  ctx.rotate(0.15)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.22, CH * 0.12, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // Right Alt Kanat (tüylü)
   ctx.save()
   ctx.translate(CW * 0.78, CH * 0.52)
-  ctx.rotate(-0.22)
+  ctx.rotate(-0.30)
   ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.275, CH * 0.135, 0, 0, Math.PI * 2)
+  ctx.ellipse(0, 0, CW * 0.26, CH * 0.14, 0, 0, Math.PI * 2)
   ctx.fill()
   ctx.restore()
 
-  // Body (black) covers wing overlap
+  // Right Üst Kanat (sivri)
+  ctx.save()
+  ctx.translate(CW * 0.80, CH * 0.50)
+  ctx.rotate(-0.50)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.20, CH * 0.08, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // Right Üst Kanat sivri ucu
+  ctx.save()
+  ctx.translate(CW * 0.84, CH * 0.52)
+  ctx.rotate(-0.70)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.14, CH * 0.06, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // Right Kanat tüy detayı
+  ctx.save()
+  ctx.translate(CW * 0.72, CH * 0.56)
+  ctx.rotate(-0.15)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.22, CH * 0.12, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // Body (black) covers wing overlap — more organic shape
   ctx.fillStyle = '#000000'
 
   ctx.save()
   ctx.translate(CW * 0.50, CH * 0.58)
   ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.265, CH * 0.20, -0.06, 0, Math.PI * 2)
+  ctx.ellipse(0, 0, CW * 0.32, CH * 0.20, -0.06, 0, Math.PI * 2)
   ctx.fill()
   ctx.restore()
 
-  // Tail
+  // Tail ellipse
   ctx.save()
-  ctx.translate(CW * 0.245, CH * 0.545)
+  ctx.translate(CW * 0.28, CH * 0.54)
   ctx.rotate(0.45)
   ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.085, CH * 0.065, 0, 0, Math.PI * 2)
+  ctx.ellipse(0, 0, CW * 0.16, CH * 0.10, 0, 0, Math.PI * 2)
   ctx.fill()
   ctx.restore()
 
   // Neck — S-curve bezier stroke
   ctx.beginPath()
-  ctx.moveTo(CW * 0.505, CH * 0.375)
-  ctx.bezierCurveTo(CW * 0.525, CH * 0.26, CW * 0.60, CH * 0.22, CW * 0.625, CH * 0.145)
+  ctx.moveTo(CW * 0.500, CH * 0.380)
+  ctx.bezierCurveTo(CW * 0.510, CH * 0.280, CW * 0.580, CH * 0.220, CW * 0.625, CH * 0.145)
   ctx.lineWidth   = CW * 0.046
   ctx.strokeStyle = '#000000'
-  ctx.lineCap     = 'round'
+  ctx.lineCap      = 'round'
   ctx.stroke()
 
   // Head
@@ -333,7 +429,7 @@ function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
   ctx.closePath()
   ctx.fill()
 
-  // Eye — white dot so the head reads clearly
+  // Eye — pure white so pixel sampler detects it as isEye
   ctx.fillStyle = '#ffffff'
   ctx.beginPath()
   ctx.arc(CW * 0.655, CH * 0.108, CW * 0.010, 0, Math.PI * 2)
@@ -346,24 +442,27 @@ function buildGeoData(): GeoData {
   cv.width  = CW
   cv.height = CH
   const ctx = cv.getContext('2d')!
-  ctx.fillStyle = '#ffffff'
+  // Light grey background so pure white eye pixels are unambiguous
+  ctx.fillStyle = '#f0f0f0'
   ctx.fillRect(0, 0, CW, CH)
   drawSwan(ctx, CW, CH)
 
   const pixels = ctx.getImageData(0, 0, CW, CH).data
-  const pool: { wx: number; wy: number; isWing: boolean }[] = []
+  const pool: { wx: number; wy: number; isWing: boolean; isEye: boolean }[] = []
 
   for (let py = 0; py < CH; py++) {
     for (let px = 0; px < CW; px++) {
       const i = (py * CW + px) * 4
       const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2]
-      if (r > 200 && g > 200 && b > 200) continue
+      // Skip background (light grey)
+      if (r === 240 && g === 240 && b === 240) continue
 
-      const wx = (px / CW - 0.5) *  9.0
+      const wx = (px / CW - 0.5) * 9.0
       const wy = -(py / CH - 0.5) * 5.0 + 0.35
 
       const isWing = r > 140 && g < 80 && b < 80
-      pool.push({ wx, wy, isWing })
+      const isEye  = r === 255 && g === 255 && b === 255
+      pool.push({ wx, wy, isWing, isEye })
     }
   }
 
@@ -376,6 +475,7 @@ function buildGeoData(): GeoData {
   const tgt = new Float32Array(N * 3)
   const rnd = new Float32Array(N * 3)
   const wng = new Float32Array(N)
+  const eye = new Float32Array(N)
 
   for (let i = 0; i < N; i++) {
     src[i*3]     = (Math.random() - 0.5) * 26
@@ -387,25 +487,26 @@ function buildGeoData(): GeoData {
     tgt[i*3 + 1] = pt.wy + (Math.random() - 0.5) * 0.06
     tgt[i*3 + 2] = (Math.random() - 0.5) * 0.28
     wng[i]       = pt.isWing ? 1.0 : 0.0
+    eye[i]       = pt.isEye  ? 1.0 : 0.0
 
     rnd[i*3]     = 0.65 + Math.random() * 1.9
     rnd[i*3 + 1] = Math.random() * Math.PI * 2
     rnd[i*3 + 2] = Math.floor(Math.random() * 25)
   }
 
-  return { src, tgt, rnd, wng }
+  return { src, tgt, rnd, wng, eye }
 }
 
 // ─── Uniforms type ─────────────────────────────────────────────────────────────
 
 interface Uniforms {
   [key: string]: { value: unknown }
-  uProgress:     { value: number }
-  uTime:         { value: number }
-  uWingAmp:      { value: number }
-  uMouse:        { value: THREE.Vector3 }
-  uAtlas:        { value: THREE.Texture | null }
-  uGrid:         { value: THREE.Vector2 }
+  uProgress:      { value: number }
+  uTime:          { value: number }
+  uWingAmp:       { value: number }
+  uMouse:         { value: THREE.Vector3 }
+  uAtlas:         { value: THREE.Texture | null }
+  uGrid:          { value: THREE.Vector2 }
 }
 
 // ─── SwanScene ────────────────────────────────────────────────────────────────
@@ -442,9 +543,10 @@ function SwanScene({ isActive, isComplete }: { isActive: boolean; isComplete: bo
     geo.setAttribute('aTgt',  new THREE.InstancedBufferAttribute(geoData.tgt, 3))
     geo.setAttribute('aRnd',  new THREE.InstancedBufferAttribute(geoData.rnd, 3))
     geo.setAttribute('aWing', new THREE.InstancedBufferAttribute(geoData.wng, 1))
+    geo.setAttribute('aEye',  new THREE.InstancedBufferAttribute(geoData.eye, 1))
 
     const mat = new THREE.ShaderMaterial({
-      vertexShader:   VERT,
+      vertexShader:  VERT,
       fragmentShader: FRAG,
       uniforms:       u.current,
       transparent:    true,
@@ -522,7 +624,6 @@ interface AbyssProps {
 }
 
 export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
-  // Status dot: cyan while thinking, gold when formed, dim when idle
   const dot    = isComplete ? '#C9A96E' : isActive ? '#00FFCC' : 'rgba(255,255,255,0.18)'
   const glow   = isComplete ? '0 0 10px #C9A96E88' : isActive ? '0 0 10px #00FFCC66' : 'none'
   const status = isActive   ? `${modeLabel} · compiling…`
@@ -531,13 +632,13 @@ export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
 
   return (
     <div style={{
-      position:     'relative',
+      position:      'relative',
       width:        '100%',
       height:        300,
-      borderRadius:  14,
-      overflow:     'hidden',
-      background:   '#07080C',
-      border:       '1px solid rgba(255,255,255,0.06)',
+      borderRadius: 14,
+      overflow:      'hidden',
+      background:    '#07080C',
+      border:        '1px solid rgba(255,255,255,0.06)',
       boxShadow:    '0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
     }}>
       <Canvas
@@ -565,25 +666,25 @@ export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
         left:           12,
         right:          12,
         zIndex:         10,
-        display:       'flex',
-        alignItems:    'center',
+        display:        'flex',
+        alignItems:     'center',
         gap:            8,
         pointerEvents: 'none',
       }}>
         <span style={{
           width:        6,
-          height:       6,
+          height:        6,
           borderRadius: '50%',
           flexShrink:   0,
-          background:   dot,
+          background:    dot,
           boxShadow:    glow,
           transition:  'background 0.4s, box-shadow 0.4s',
         }} />
         <span style={{
-          background:           'rgba(7,8,12,0.72)',
+          background:            'rgba(7,8,12,0.72)',
           backdropFilter:       'blur(16px) saturate(120%)',
           WebkitBackdropFilter: 'blur(16px) saturate(120%)',
-          border:               '1px solid rgba(255,255,255,0.08)',
+          border:                '1px solid rgba(255,255,255,0.08)',
           borderRadius:          7,
           padding:              '3px 11px',
           color:                'rgba(255,255,255,0.42)',
@@ -601,7 +702,7 @@ export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
         position:      'absolute',
         inset:          0,
         pointerEvents: 'none',
-        borderRadius:   14,
+        borderRadius:  14,
         background:    'radial-gradient(ellipse at 50% 60%, transparent 40%, rgba(7,8,12,0.55) 100%)',
         zIndex:         1,
       }} />
