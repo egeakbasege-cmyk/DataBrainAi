@@ -1,339 +1,381 @@
 'use client'
 
 /**
- * AbyssLoader — SwanReveal Particle System (Points-based, CPU morphing)
- * ──────────────────────────────────────────────────────────────────────────
- * Architecture (reliability-first):
- *   • THREE.Points — single draw call, universally supported, no shader compile risk
- *   • CPU morphing in useFrame — spring-lerp positions each frame
- *   • Phase 1 — Matrix Rain:  particles fall from above (visible from frame 1)
- *   • Phase 2 — Formation:    spring-attraction toward swan silhouette targets
- *   • Phase 3 — Wing Flap:    wing particles oscillate via sin(time)
- *   • PointsMaterial with a sprite texture for glyph-like appearance
- *   • Bloom post-processing
+ * AbyssLoader — Code-glyph swan particle system
  *
- * Interface (unchanged — ChatStage.tsx needs no edits):
- *   export function AbyssLoader({ modeLabel, isActive, isComplete })
+ * Architecture:
+ *   • InstancedMesh<PlaneGeometry> — one quad per particle, GPU-instanced
+ *   • Custom ShaderMaterial         — simplex noise morphing, wing flap, mouse repulsion
+ *   • Billboard vertex trick        — add position.xy in view space so quads face camera
+ *   • Canvas atlas 5×5              — 25 code glyphs; correct flipY UV formula
+ *   • GSAP tweens uProgress / uWingAmp uniforms; cleanup on unmount / prop change
+ *   • Adaptive particle count       — halved on mobile / low-core CPUs
+ *   • Fully imperative Three.js     — no R3F JSX args[] type battles
+ *
+ * Export: AbyssLoader({ modeLabel, isActive, isComplete })
  */
 
-import { useRef, useMemo, useEffect } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { EffectComposer, Bloom }      from '@react-three/postprocessing'
-import * as THREE                     from 'three'
-import gsap                           from 'gsap'
+import { useRef, useMemo, useEffect, useState } from 'react'
+import { Canvas, useFrame, useThree }           from '@react-three/fiber'
+import * as THREE                               from 'three'
+import gsap                                     from 'gsap'
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+// ─── Adaptive N ───────────────────────────────────────────────────────────────
 
-function getN(): number {
-  if (typeof navigator === 'undefined') return 5_000
-  const mob  = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
-  const c    = navigator.hardwareConcurrency ?? 4
-  if (mob)      return c <= 4 ? 2_000 : 3_000
-  if (c <= 4)   return 3_500
-  if (c <= 7)   return 5_500
-  return 8_000
-}
-const N = getN()
+const N = (() => {
+  if (typeof navigator === 'undefined') return 8_000
+  if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) return 4_000
+  const c = navigator.hardwareConcurrency ?? 4
+  return c <= 4 ? 5_500 : c <= 8 ? 8_500 : 11_000
+})()
 
-// Phase timing (seconds)
-const T_RAIN = 2.0
-const T_FORM = 5.5
+// ─── Atlas (5 × 5 code glyphs) ───────────────────────────────────────────────
 
-// ─── Sprite texture (single glyph rendered to canvas) ─────────────────────────
+const ATLAS_COLS = 5
+const ATLAS_ROWS = 5
 
-function makeSprite(): THREE.CanvasTexture {
-  const size = 64
-  const cv   = Object.assign(document.createElement('canvas'), { width: size, height: size })
+function makeAtlas(): THREE.CanvasTexture {
+  const SIZE = 512
+  const cv   = document.createElement('canvas')
+  cv.width   = SIZE
+  cv.height  = SIZE
   const ctx  = cv.getContext('2d')!
-  ctx.clearRect(0, 0, size, size)
-  // Radial glow so points look like glowing chars
-  const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2)
-  grad.addColorStop(0,   'rgba(255,255,255,1)')
-  grad.addColorStop(0.35,'rgba(255,255,255,0.85)')
-  grad.addColorStop(0.7, 'rgba(255,255,255,0.3)')
-  grad.addColorStop(1,   'rgba(255,255,255,0)')
-  ctx.fillStyle = grad
-  ctx.fillRect(0, 0, size, size)
-  // Draw a random char in the centre
-  const chars = ['0','1','$','@','&','X','S','#']
-  ctx.fillStyle = 'rgba(0,255,204,0.9)'
-  ctx.font      = 'bold 36px "Courier New",monospace'
-  ctx.textAlign = 'center'
+
+  ctx.clearRect(0, 0, SIZE, SIZE)
+  ctx.font         = '700 68px "SFMono-Regular",Consolas,"Courier New",monospace'
+  ctx.textAlign    = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText(chars[Math.floor(Math.random() * chars.length)], size/2, size/2)
-  const tex = new THREE.CanvasTexture(cv)
-  tex.minFilter = THREE.LinearFilter
+  ctx.fillStyle    = '#ffffff'
+
+  const glyphs = [
+    '{', '}', ';', '(', ')', '[', ']', '=>', '||', '&&',
+    '!', '==', '+=', '>>', 'for', 'if', 'let', 'map', '<', '>',
+    '/', '*', '+', '-', '~',
+  ]
+
+  const cw = SIZE / ATLAS_COLS
+  const ch = SIZE / ATLAS_ROWS
+  glyphs.forEach((g, i) => {
+    ctx.fillText(g, (i % ATLAS_COLS) * cw + cw / 2, Math.floor(i / ATLAS_COLS) * ch + ch / 2)
+  })
+
+  const tex             = new THREE.CanvasTexture(cv)
+  tex.anisotropy        = 8
+  tex.minFilter         = THREE.LinearMipmapLinearFilter
+  tex.magFilter         = THREE.LinearFilter
+  tex.generateMipmaps   = true
   return tex
 }
 
-// ─── Swan silhouette target points ────────────────────────────────────────────
+// ─── GLSL ─────────────────────────────────────────────────────────────────────
 
-interface Pt { x: number; y: number; z: number; isWing: boolean }
+const VERT = /* glsl */`
+  uniform float uProgress;
+  uniform float uTime;
+  uniform float uWingAmp;
+  uniform vec3  uMouse;
 
-function ellOut(cx: number, cy: number, rx: number, ry: number, rot: number, n: number, wing = false): Pt[] {
-  return Array.from({ length: n }, (_, i) => {
-    const θ = i / n * Math.PI * 2
-    const lx = Math.cos(θ) * rx, ly = Math.sin(θ) * ry
-    return { x: cx + lx*Math.cos(rot) - ly*Math.sin(rot),
-             y: cy + lx*Math.sin(rot) + ly*Math.cos(rot),
-             z: (Math.random() - 0.5) * 0.3, isWing: wing }
-  })
-}
+  attribute vec3  aSrc;    // rain start world position
+  attribute vec3  aTgt;    // swan target world position
+  attribute vec3  aRnd;    // x: fall speed  y: phase  z: glyph index (0-24)
+  attribute float aWing;   // 1.0 = wing particle
 
-function ellFill(cx: number, cy: number, rx: number, ry: number, rot: number, n: number, wing = false): Pt[] {
-  const pts: Pt[] = []
-  let attempts = 0
-  while (pts.length < n && attempts < n * 12) {
-    attempts++
-    const r = Math.sqrt(Math.random()), θ = Math.random() * Math.PI * 2
-    const u = r * Math.cos(θ) * rx, v = r * Math.sin(θ) * ry
-    pts.push({ x: cx + u*Math.cos(rot) - v*Math.sin(rot),
-               y: cy + u*Math.sin(rot) + v*Math.cos(rot),
-               z: (Math.random() - 0.5) * 0.3, isWing: wing })
-  }
-  return pts
-}
+  varying vec2  vUv;
+  varying float vEdge;
+  varying float vGlyph;
 
-function neckBezier(n: number): Pt[] {
-  const P = [[1.55,0.0],[2.05,0.72],[2.55,0.95],[2.85,0.70]] as [number,number][]
-  return Array.from({ length: n }, (_, i) => {
-    const t = i / (n-1), mt = 1 - t
-    const bx = mt**3*P[0][0] + 3*mt**2*t*P[1][0] + 3*mt*t**2*P[2][0] + t**3*P[3][0]
-    const by = mt**3*P[0][1] + 3*mt**2*t*P[1][1] + 3*mt*t**2*P[2][1] + t**3*P[3][1]
-    return { x: bx + (Math.random()-.5)*.18, y: by + (Math.random()-.5)*.10, z: (Math.random()-.5)*.2, isWing: false }
-  })
-}
-
-function buildTargets(): Pt[] {
-  return [
-    ...ellOut (-0.5,-0.38, 2.35,0.92,-0.08, 220),
-    ...ellFill(-0.5,-0.38, 2.35,0.92,-0.08, 1350),
-    ...ellOut (-0.7, 0.55, 2.15,0.70,-0.14, 200, true),
-    ...ellFill(-0.7, 0.55, 2.15,0.70,-0.14, 2900, true),
-    ...neckBezier(260),
-    ...ellOut ( 3.0, 0.70, 0.48,0.45, 0.15, 110),
-    ...ellFill( 3.0, 0.70, 0.48,0.45, 0.15, 480),
-    ...ellOut ( 3.65,0.46, 0.47,0.17, 0.05,  90),
-    ...ellFill( 3.65,0.46, 0.47,0.17, 0.05, 180),
-    ...ellOut (-2.62,-0.20,0.70,0.40, 0.30,  70),
-    ...ellFill(-2.62,-0.20,0.70,0.40, 0.30, 290),
-    ...ellOut (-0.5,-1.35, 2.2,0.24,  0.0,   80),
-    ...ellFill(-0.5,-1.35, 2.2,0.24,  0.0,  180),
-  ]
-}
-
-// ─── Particle system data ─────────────────────────────────────────────────────
-
-interface PS {
-  // Rain start (world)
-  rx: Float32Array; ry: Float32Array; rz: Float32Array; rvy: Float32Array
-  // Swan target
-  tx: Float32Array; ty: Float32Array; tz: Float32Array; tw: Uint8Array
-  // Current (lerped) position
-  cx: Float32Array; cy: Float32Array; cz: Float32Array
-  // Wing base positions (stored so flap is computed as offset from target)
-  wy: Float32Array
-}
-
-function initPS(): PS {
-  const tgt = buildTargets()
-  while (tgt.length < N) tgt.push({ x:(Math.random()-.5)*8, y:(Math.random()-.5)*4, z:(Math.random()-.5)*.5, isWing:false })
-  const pts = tgt.slice(0, N)
-
-  const ps: PS = {
-    rx: new Float32Array(N), ry: new Float32Array(N), rz: new Float32Array(N),
-    rvy: new Float32Array(N),
-    tx: new Float32Array(N), ty: new Float32Array(N), tz: new Float32Array(N),
-    tw: new Uint8Array(N),
-    cx: new Float32Array(N), cy: new Float32Array(N), cz: new Float32Array(N),
-    wy: new Float32Array(N),
+  // ── Compact 3D Simplex Noise ──────────────────────────────────────────────
+  vec4 spm(vec4 x){ return mod(((x*34.)+1.)*x,289.); }
+  float snoise(vec3 v){
+    const vec2 C=vec2(1./6.,1./3.); const vec4 D=vec4(0.,.5,1.,2.);
+    vec3 i=floor(v+dot(v,C.yyy)), x0=v-i+dot(i,C.xxx);
+    vec3 g=step(x0.yzx,x0.xyz), l=1.-g;
+    vec3 i1=min(g.xyz,l.zxy), i2=max(g.xyz,l.zxy);
+    vec3 x1=x0-i1+C.xxx, x2=x0-i2+2.*C.xxx, x3=x0-D.yyy;
+    i=mod(i,289.);
+    vec4 p=spm(spm(spm(i.z+vec4(0.,i1.z,i2.z,1.))+i.y+vec4(0.,i1.y,i2.y,1.))+i.x+vec4(0.,i1.x,i2.x,1.));
+    vec3 ns=.142857142857*D.wyz-D.xzx;
+    vec4 j=p-49.*floor(p*ns.z), xf=floor(j*ns.z), yf=floor(j-7.*xf);
+    vec4 xx=xf*ns.x+ns.yyyy, yy=yf*ns.x+ns.yyyy, hh=1.-abs(xx)-abs(yy);
+    vec4 b0=vec4(xx.xy,yy.xy), b1=vec4(xx.zw,yy.zw);
+    vec4 s0=floor(b0)*2.+1., s1=floor(b1)*2.+1., sh=-step(hh,vec4(0.));
+    vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy, a1=b1.xzyw+s1.xzyw*sh.zzww;
+    vec3 p0=vec3(a0.xy,hh.x), p1=vec3(a0.zw,hh.y), p2=vec3(a1.xy,hh.z), p3=vec3(a1.zw,hh.w);
+    vec4 nm=1.79284291400159-.85373472095314*vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3));
+    p0*=nm.x; p1*=nm.y; p2*=nm.z; p3*=nm.w;
+    vec4 m=max(.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.); m*=m;
+    return 42.*dot(m*m, vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
   }
 
-  for (let i = 0; i < N; i++) {
-    // Rain start — within visible range immediately
-    ps.rx[i]  = (Math.random() - .5) * 12
-    ps.ry[i]  = 1 + Math.random() * 5     // y=[1..6], camera sees [-2.7..3.7]
-    ps.rz[i]  = (Math.random() - .5) * 2
-    ps.rvy[i] = -(1.8 + Math.random() * 3) // fall speed
+  void main() {
+    vUv   = uv;
+    vGlyph = aRnd.z;
 
-    ps.tx[i]  = pts[i].x
-    ps.ty[i]  = pts[i].y
-    ps.tz[i]  = pts[i].z
-    ps.tw[i]  = pts[i].isWing ? 1 : 0
-    ps.wy[i]  = pts[i].y
+    // ── Phase 1: code rain (particles fall from high y, wrap at bottom) ──────
+    vec3 rain = aSrc;
+    rain.y -= mod(uTime * aRnd.x * 2.5, 40.0);
 
-    // Start at rain position
-    ps.cx[i]  = ps.rx[i]
-    ps.cy[i]  = ps.ry[i]
-    ps.cz[i]  = ps.rz[i]
-  }
-  return ps
-}
+    // ── Phase 2: turbulence peak at progress = 0.5, quiet at 0 and 1 ────────
+    float turbMag = sin(uProgress * 3.14159265);
+    vec3 turb = vec3(
+      snoise(aTgt * 0.4 + vec3(uTime * 0.18, 0., 0.)),
+      snoise(aTgt * 0.4 + vec3(0., uTime * 0.18, 0.)),
+      snoise(aTgt * 0.4 + vec3(0., 0., uTime * 0.18))
+    ) * turbMag * 1.1;
 
-// ─── SwanPoints ───────────────────────────────────────────────────────────────
+    // World-space particle centre
+    vec3 center = mix(rain, aTgt, uProgress) + turb;
 
-interface SProps { isActive: boolean; isComplete: boolean }
-
-function SwanPoints({ isActive, isComplete }: SProps) {
-  const ptRef   = useRef<THREE.Points>(null!)
-  const elapsed = useRef(0)
-  const progRef = useRef(0)    // GSAP drives this
-  const ampRef  = useRef(0)    // wing amplitude
-
-  // Geometry + material built once
-  const { geo, mat, ps } = useMemo(() => {
-    const posArr = new Float32Array(N * 3)
-    const colArr = new Float32Array(N * 3)   // per-vertex RGB
-
-    const g = new THREE.BufferGeometry()
-    g.setAttribute('position', new THREE.BufferAttribute(posArr, 3))
-    g.setAttribute('color',    new THREE.BufferAttribute(colArr, 3))
-
-    const sprite = makeSprite()
-    const m = new THREE.PointsMaterial({
-      size:             0.12,
-      sizeAttenuation:  true,
-      map:              sprite,
-      vertexColors:     true,
-      transparent:      true,
-      opacity:          0.90,
-      depthWrite:       false,
-      blending:         THREE.AdditiveBlending,
-    })
-
-    const ps = initPS()
-
-    // Seed initial positions
-    for (let i = 0; i < N; i++) {
-      posArr[i*3]   = ps.cx[i]
-      posArr[i*3+1] = ps.cy[i]
-      posArr[i*3+2] = ps.cz[i]
-      colArr[i*3]   = 0.0   // cyan
-      colArr[i*3+1] = 1.0
-      colArr[i*3+2] = 0.8
+    // ── Phase 3: wing flap once formation is near complete ───────────────────
+    if (uProgress > 0.1 && aWing > 0.5) {
+      float dx    = abs(aTgt.x);
+      float wave  = sin(dx * 1.5 - uTime * 2.0) * uWingAmp;
+      center.y   += wave * dx * uProgress * 0.30;
+      center.z   += wave * dx * uProgress * 0.08;
     }
 
-    return { geo: g, mat: m, ps }
+    // ── Phase 4: magnetic mouse repulsion (active when mostly formed) ────────
+    if (uProgress > 0.5) {
+      vec3  delta = center - uMouse;
+      float d     = length(delta);
+      if (d < 2.5 && d > 0.001) {
+        float f  = pow((2.5 - d) / 2.5, 2.0);
+        center  += (delta / d) * f * 0.85;
+      }
+    }
+
+    // ── Billboard: transform centre to view space, add local vertex offset ───
+    // This makes every quad face the camera regardless of rotation.
+    vec4 mvCenter = modelViewMatrix * vec4(center, 1.0);
+    vec4 mvPos    = mvCenter + vec4(position.xy, 0.0, 0.0);
+    gl_Position   = projectionMatrix * mvPos;
+
+    // Edge factor for ink-edge colour blend (0 = centre, 1 = corner)
+    vEdge = clamp(length(uv - 0.5) * 2.0, 0.0, 1.0);
+  }
+`
+
+const FRAG = /* glsl */`
+  uniform sampler2D uAtlas;
+  uniform vec2      uGrid;    // (cols, rows) = (5, 5)
+
+  varying vec2  vUv;
+  varying float vEdge;
+  varying float vGlyph;
+
+  void main() {
+    float total = uGrid.x * uGrid.y;
+    float idx   = floor(mod(vGlyph, total));
+    float col   = mod(idx, uGrid.x);
+    float row   = floor(idx / uGrid.x);
+
+    // CanvasTexture has flipY = true by default:
+    //   canvas row 0 (top) maps to UV v = 1
+    //   canvas row R spans UV v: [(rows-1-R)/rows , (rows-R)/rows]
+    // Therefore: atlasV = (rows - 1 - row + vUv.y) / rows
+    vec2 atlasUv = vec2(
+      (vUv.x + col) / uGrid.x,
+      (uGrid.y - 1.0 - row + vUv.y) / uGrid.y
+    );
+
+    vec4 tex = texture2D(uAtlas, atlasUv);
+    if (tex.a < 0.15) discard;
+
+    // Ink palette: near-black core → subtle blue on glyph edges
+    vec3 inkCore  = vec3(0.05, 0.05, 0.08);
+    vec3 inkEdge  = vec3(0.10, 0.24, 0.54);
+    float fe      = pow(vEdge, 1.6);
+    vec3 color    = mix(inkCore, inkEdge, fe * 0.48);
+    float alpha   = tex.a * (0.88 + fe * 0.12);
+
+    gl_FragColor  = vec4(color, alpha);
+  }
+`
+
+// ─── Particle geometry data ────────────────────────────────────────────────────
+
+interface GeoData {
+  src: Float32Array  // rain start positions  N×3
+  tgt: Float32Array  // swan target positions  N×3
+  rnd: Float32Array  // randomness            N×3
+  wng: Float32Array  // wing flag             N×1
+}
+
+function buildGeoData(): GeoData {
+  const src = new Float32Array(N * 3)
+  const tgt = new Float32Array(N * 3)
+  const rnd = new Float32Array(N * 3)
+  const wng = new Float32Array(N)
+
+  // Swan spine — S-curve from bottom to top
+  const spine = new THREE.CatmullRomCurve3(
+    Array.from({ length: 35 }, (_, i) => {
+      const t = i / 34
+      return new THREE.Vector3(
+        Math.sin(t * Math.PI * 1.5) * 0.38,
+        t * 4.6 - 2.3,
+        Math.cos(t * Math.PI) * 0.28,
+      )
+    })
+  )
+
+  for (let i = 0; i < N; i++) {
+    // Rain start: scattered above the visible area
+    src[i*3]     = (Math.random() - .5) * 28
+    src[i*3 + 1] = Math.random() * 22 + 10
+    src[i*3 + 2] = (Math.random() - .5) * 16
+
+    const roll = Math.random()
+
+    if (roll < 0.28) {
+      // ── Body / neck along spine ──────────────────────────────────────────
+      const pt     = spine.getPointAt(Math.random())
+      tgt[i*3]     = pt.x + (Math.random() - .5) * .22
+      tgt[i*3 + 1] = pt.y + (Math.random() - .5) * .22
+      tgt[i*3 + 2] = pt.z + (Math.random() - .5) * .22
+      wng[i] = 0
+    } else {
+      // ── Wings (symmetric, power-law sweep) ──────────────────────────────
+      const side   = Math.random() > .5 ? 1 : -1
+      const sweep  = Math.pow(Math.random(), .70) * 3.8
+      tgt[i*3]     = side * (.30 + sweep)
+      tgt[i*3 + 1] = -.55 + Math.random() * 1.4 + sweep * .42
+      tgt[i*3 + 2] = (Math.random() - .5) * .90 - sweep * .30
+      wng[i] = 1
+    }
+
+    rnd[i*3]     = .65 + Math.random() * 1.9   // fall speed
+    rnd[i*3 + 1] = Math.random() * Math.PI * 2  // phase offset
+    rnd[i*3 + 2] = Math.floor(Math.random() * 25) // glyph index 0-24
+  }
+
+  return { src, tgt, rnd, wng }
+}
+
+// ─── Uniforms type ─────────────────────────────────────────────────────────────
+
+interface Uniforms {
+  [key: string]: { value: unknown }
+  uProgress:     { value: number }
+  uTime:         { value: number }
+  uWingAmp:      { value: number }
+  uMouse:        { value: THREE.Vector3 }
+  uAtlas:        { value: THREE.Texture | null }
+  uGrid:         { value: THREE.Vector2 }
+}
+
+// ─── SwanScene (inside Canvas) ────────────────────────────────────────────────
+
+function SwanScene({ isActive, isComplete }: { isActive: boolean; isComplete: boolean }) {
+  const groupRef    = useRef<THREE.Group>(null!)
+  const { pointer, viewport } = useThree()
+
+  // Atlas — created once on client
+  const [atlas, setAtlas] = useState<THREE.Texture | null>(null)
+  useEffect(() => {
+    const t = makeAtlas()
+    setAtlas(t)
+    return () => t.dispose()
   }, [])
 
-  // Dispose on unmount
-  useEffect(() => () => { geo.dispose(); mat.dispose() }, [geo, mat])
+  // Geometry data — computed once
+  const geoData = useMemo<GeoData>(() => buildGeoData(), [])
 
-  // GSAP drives progress on prop change
+  // Uniforms — stable object, mutated in-place each frame
+  const u = useRef<Uniforms>({
+    uProgress: { value: 0 },
+    uTime:     { value: 0 },
+    uWingAmp:  { value: 0 },
+    uMouse:    { value: new THREE.Vector3() },
+    uAtlas:    { value: null },
+    uGrid:     { value: new THREE.Vector2(ATLAS_COLS, ATLAS_ROWS) },
+  })
+
+  // Wire atlas into uniforms when ready
+  useEffect(() => { u.current.uAtlas.value = atlas }, [atlas])
+
+  // Build InstancedMesh imperatively after atlas loads
   useEffect(() => {
-    const target = isComplete ? 1.0 : isActive ? 0.82 : 0.02
-    const amp    = isComplete ? 0.08 : isActive ? 0.60 : 0.0
-    const t1 = gsap.to(progRef, { current: target, duration: 3.5, ease: 'power3.inOut' })
-    const t2 = gsap.to(ampRef,  { current: amp,    duration: 2.5, ease: 'elastic.out(1,.5)' })
+    if (!atlas || !groupRef.current) return
+
+    const geo = new THREE.PlaneGeometry(0.095, 0.095)
+    geo.setAttribute('aSrc',  new THREE.InstancedBufferAttribute(geoData.src, 3))
+    geo.setAttribute('aTgt',  new THREE.InstancedBufferAttribute(geoData.tgt, 3))
+    geo.setAttribute('aRnd',  new THREE.InstancedBufferAttribute(geoData.rnd, 3))
+    geo.setAttribute('aWing', new THREE.InstancedBufferAttribute(geoData.wng, 1))
+
+    const mat = new THREE.ShaderMaterial({
+      vertexShader:   VERT,
+      fragmentShader: FRAG,
+      uniforms:       u.current,
+      transparent:    true,
+      depthWrite:     false,
+      blending:       THREE.NormalBlending,
+      side:           THREE.DoubleSide,
+    })
+
+    const mesh         = new THREE.InstancedMesh(geo, mat, N)
+    mesh.frustumCulled = false
+    const identity     = new THREE.Matrix4()
+    for (let i = 0; i < N; i++) mesh.setMatrixAt(i, identity)
+    mesh.instanceMatrix.needsUpdate = true
+
+    groupRef.current.add(mesh)
+
+    return () => {
+      groupRef.current?.remove(mesh)
+      geo.dispose()
+      mat.dispose()
+    }
+  }, [atlas, geoData])
+
+  // GSAP-driven progress & wing amplitude
+  useEffect(() => {
+    const prog = isComplete ? 1.0 : isActive ? 0.86 : 0.0
+    const amp  = isComplete ? 0.38 : isActive ? 0.26 : 0.0
+    const t1   = gsap.to(u.current.uProgress, { value: prog, duration: 3.5, ease: 'power3.inOut' })
+    const t2   = gsap.to(u.current.uWingAmp,  { value: amp,  duration: 3.0, ease: 'elastic.out(1,0.6)' })
     return () => { t1.kill(); t2.kill() }
   }, [isActive, isComplete])
 
-  useFrame((_, dt) => {
-    elapsed.current = Math.min(elapsed.current + dt, 9999)
-    const t    = elapsed.current
-    const prog = progRef.current
-    const amp  = ampRef.current
-
-    const posAttr = geo.attributes.position as THREE.BufferAttribute
-    const colAttr = geo.attributes.color    as THREE.BufferAttribute
-    const posArr  = posAttr.array as Float32Array
-    const colArr  = colAttr.array as Float32Array
-
-    if (t < T_RAIN) {
-      // ── Phase 1: Rain ──
-      for (let i = 0; i < N; i++) {
-        ps.cy[i] += ps.rvy[i] * dt
-        if (ps.cy[i] < -4) {
-          ps.cy[i] = 3 + Math.random() * 4
-          ps.cx[i] = (Math.random() - .5) * 12
-        }
-        posArr[i*3]   = ps.cx[i]
-        posArr[i*3+1] = ps.cy[i]
-        posArr[i*3+2] = ps.cz[i]
-        // Bright cyan rain
-        colArr[i*3]   = 0.0 + Math.random() * 0.1
-        colArr[i*3+1] = 0.9 + Math.random() * 0.1
-        colArr[i*3+2] = 0.75 + Math.random() * 0.15
-      }
-    } else if (t < T_FORM) {
-      // ── Phase 2: Formation ──
-      const p     = (t - T_RAIN) / (T_FORM - T_RAIN)
-      const speed = 1.5 + p * 5.0
-
-      for (let i = 0; i < N; i++) {
-        const tx = ps.tx[i], ty = ps.ty[i], tz = ps.tz[i]
-        ps.cx[i] += (tx - ps.cx[i]) * Math.min(1, dt * speed)
-        ps.cy[i] += (ty - ps.cy[i]) * Math.min(1, dt * speed)
-        ps.cz[i] += (tz - ps.cz[i]) * Math.min(1, dt * speed)
-
-        posArr[i*3]   = ps.cx[i]
-        posArr[i*3+1] = ps.cy[i]
-        posArr[i*3+2] = ps.cz[i]
-
-        // Cyan → silver as formation completes
-        const silver = p * p
-        colArr[i*3]   = silver * 0.82
-        colArr[i*3+1] = silver * 0.88 + (1-silver) * 1.0
-        colArr[i*3+2] = silver * 1.0  + (1-silver) * 0.8
-      }
-    } else {
-      // ── Phase 3: Wing Flap ──
-      const flapT  = t - T_FORM
-      const fFreq  = isActive ? 2.3 : 0.6
-
-      for (let i = 0; i < N; i++) {
-        let wx = ps.tx[i], wy = ps.ty[i]
-
-        if (ps.tw[i]) {
-          const distX = ps.tx[i] - (-0.7)
-          const phase = flapT * fFreq * Math.PI * 2 + distX * 0.4
-          const rawS  = Math.sin(phase)
-          wy += (rawS - 0.18 * rawS * Math.abs(rawS)) * amp
-          wx += Math.cos(phase) * amp * 0.10
-        }
-
-        ps.cx[i] += (wx - ps.cx[i]) * Math.min(1, dt * 16)
-        ps.cy[i] += (wy - ps.cy[i]) * Math.min(1, dt * 16)
-
-        posArr[i*3]   = ps.cx[i]
-        posArr[i*3+1] = ps.cy[i]
-        posArr[i*3+2] = ps.cz[i]
-
-        // Silver-white for the formed swan, cyan tint on wing tips
-        const wingTip = ps.tw[i] ? Math.abs(ps.tx[i]) / 3.8 : 0
-        colArr[i*3]   = 0.82 - wingTip * 0.82
-        colArr[i*3+1] = 0.92 - wingTip * 0.02
-        colArr[i*3+2] = 1.0
-      }
-    }
-
-    posAttr.needsUpdate = true
-    colAttr.needsUpdate = true
-
-    // Morph-based opacity
-    if (ptRef.current) {
-      mat.opacity = prog < 0.05 ? 0.85 : 0.90
-    }
+  // Zero-allocation per-frame update
+  const mouseTarget = useRef(new THREE.Vector3())
+  useFrame(({ clock }) => {
+    u.current.uTime.value = clock.getElapsedTime()
+    mouseTarget.current.set(
+      (pointer.x * viewport.width)  / 2,
+      (pointer.y * viewport.height) / 2,
+      0,
+    )
+    u.current.uMouse.value.lerp(mouseTarget.current, 0.08)
   })
 
-  return <points ref={ptRef} geometry={geo} material={mat} frustumCulled={false} />
+  return <group ref={groupRef} />
 }
 
-// ─── Responsive Camera ────────────────────────────────────────────────────────
+// ─── Camera with mouse parallax ────────────────────────────────────────────────
 
-function CameraAdapter() {
-  const { camera, size } = useThree()
+function CameraRig() {
+  const { camera, size, pointer } = useThree()
+
   useEffect(() => {
     const cam = camera as THREE.PerspectiveCamera
-    cam.fov = size.width < 500 ? 62 : size.width < 900 ? 52 : 44
-    cam.position.set(0, 0.5, 7)
-    cam.lookAt(0, 0.3, 0)
+    cam.fov = size.width < 500 ? 48 : 42
+    cam.position.set(0, 1.0, 7.0)
+    cam.lookAt(0, 0.8, 0)
     cam.updateProjectionMatrix()
   }, [camera, size.width])
+
+  useFrame(() => {
+    camera.position.x += (pointer.x * 0.35 - camera.position.x) * 0.04
+    camera.position.y += (1.0 + pointer.y * 0.25 - camera.position.y) * 0.04
+    camera.lookAt(0, 0.8, 0)
+  })
+
   return null
 }
 
-// ─── AbyssLoader (named export — ChatStage.tsx import unchanged) ──────────────
+// ─── Public component ─────────────────────────────────────────────────────────
 
 interface AbyssProps {
   modeLabel:  string
@@ -342,74 +384,80 @@ interface AbyssProps {
 }
 
 export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
-  const dotColor = isComplete ? '#C9A96E' : '#00ffcc'
-  const status   = isActive   ? `${modeLabel} · Analysing…`
-                 : isComplete ? `${modeLabel} · Complete`
-                 :              `${modeLabel} · Standby`
+  const dot    = isComplete ? '#059669' : isActive ? '#0055ff' : 'rgba(0,0,0,0.22)'
+  const glow   = isActive || isComplete ? `0 0 8px ${dot}` : 'none'
+  const status = isActive   ? `${modeLabel} · compiling…`
+               : isComplete ? `${modeLabel} · unit_formed`
+               :              `${modeLabel} · standby`
 
   return (
-    <div
-      style={{
-        position:     'relative',
-        width:        '100%',
-        height:        300,
-        borderRadius:  16,
-        overflow:     'hidden',
-        background:   '#03050a',
-        border:       '1px solid rgba(255,255,255,0.07)',
-        boxShadow:    '0 2px 32px rgba(0,0,0,0.72)',
-      }}
-    >
-      {/* Canvas */}
+    <div style={{
+      position:     'relative',
+      width:        '100%',
+      height:        300,
+      borderRadius:  14,
+      overflow:     'hidden',
+      background:   '#fafaf8',
+      border:       '1px solid rgba(0,0,0,0.07)',
+      boxShadow:    '0 2px 16px rgba(0,0,0,0.06)',
+    }}>
       <Canvas
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-        camera={{ position: [0, 0.5, 7], fov: 44 }}
-        dpr={[1, 2]}
-        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
+        gl={{ antialias: true, alpha: false }}
+        dpr={[1, 1.5]}
       >
-        <CameraAdapter />
-        <SwanPoints isActive={isActive} isComplete={isComplete} />
-        <EffectComposer>
-          <Bloom intensity={1.6} luminanceThreshold={0.08} luminanceSmoothing={0.9} radius={0.8} />
-        </EffectComposer>
+        <color attach="background" args={['#fafaf8']} />
+        <CameraRig />
+        <SwanScene isActive={isActive} isComplete={isComplete} />
       </Canvas>
-
-      {/* Vignette */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
-        background: 'radial-gradient(ellipse at center, transparent 25%, rgba(3,5,10,0.65) 100%)',
-      }} />
 
       {/* Status bar */}
       <div style={{
-        position: 'absolute', top: 12, left: 14, right: 14,
-        zIndex: 10, display: 'flex', alignItems: 'center', gap: 8, pointerEvents: 'none',
+        position:   'absolute',
+        top:         10,
+        left:        12,
+        right:       12,
+        zIndex:      10,
+        display:    'flex',
+        alignItems: 'center',
+        gap:         8,
+        pointerEvents: 'none',
       }}>
         <span style={{
-          display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
-          background: dotColor, boxShadow: `0 0 10px ${dotColor}aa`,
-          animation: 'abyss-pulse 1.1s ease-in-out infinite', transition: 'background .4s',
+          width:        6,
+          height:       6,
+          borderRadius: '50%',
+          background:   dot,
+          boxShadow:    glow,
+          flexShrink:   0,
+          transition:  'background .4s, box-shadow .4s',
         }} />
         <span style={{
-          background: 'rgba(6,11,25,0.45)',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 8, padding: '3px 12px',
-          color: `${dotColor}cc`, fontSize: 11,
-          fontFamily: '"JetBrains Mono","Courier New",monospace',
-          letterSpacing: '0.14em', fontWeight: 600, transition: 'color .4s',
+          background:           'rgba(255,255,255,0.72)',
+          backdropFilter:       'blur(16px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+          border:               '1px solid rgba(0,0,0,0.07)',
+          borderRadius:          7,
+          padding:              '3px 11px',
+          color:                'rgba(0,0,0,0.55)',
+          fontSize:              11,
+          fontFamily:           '"SFMono-Regular","JetBrains Mono","Courier New",monospace',
+          letterSpacing:        '0.12em',
+          fontWeight:            600,
         }}>
           {status}
         </span>
       </div>
 
-      <style>{`
-        @keyframes abyss-pulse {
-          0%,100% { opacity:1; transform:scale(1); }
-          50% { opacity:.3; transform:scale(1.7); }
-        }
-      `}</style>
+      {/* Subtle inner vignette */}
+      <div style={{
+        position:     'absolute',
+        inset:         0,
+        pointerEvents:'none',
+        borderRadius:  14,
+        boxShadow:    'inset 0 0 48px rgba(250,250,248,0.55)',
+        zIndex:        1,
+      }} />
     </div>
   )
 }
