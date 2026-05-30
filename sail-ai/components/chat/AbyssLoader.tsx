@@ -1,27 +1,39 @@
 'use client'
 
 /**
- * AbyssLoader — 3D Cyber-Fisher Loading Animation
+ * AbyssLoader — Ultra-Premium 3D Cyber-Fisher Loading Panel
  * ─────────────────────────────────────────────────────────────────────────────
- * Adapted from AbyssOS for integration into the Sail AI chat panel.
+ * Layout contract (solves all overflow/mobile issues):
  *
- * State machine (driven by external props):
- *   IDLE     → isActive=false, isComplete=false  → fisherman at rest
- *   CASTING  → isActive=true                     → rod extends, line casts
- *   GLITCH   → internal (auto after CASTING)      → glitch FX 2.5s
- *   REVEAL   → isComplete=true                   → response overlay fades in
+ *   ┌─ wrapper (position:relative, h:320px) ── participates in DOM flow ──┐
+ *   │  ┌─ Canvas (position:absolute, inset:0) ── background layer ────────┐│
+ *   │  │   3D scene renders here, behind everything                       ││
+ *   │  └────────────────────────────────────────────────────────────────────┘│
+ *   │  ┌─ status overlay  (position:absolute, z:10) ────────────────────── ┐│
+ *   │  └──────────────────────────────────────────────────────────────────── ┘│
+ *   │  ┌─ reveal overlay  (position:absolute, z:10) ────────────────────── ┐│
+ *   │  └──────────────────────────────────────────────────────────────────── ┘│
+ *   └────────────────────────────────────────────────────────────────────────┘
  *
- * Renders in a fixed-height panel (360px) — not full-screen.
- * Transparent background lets the mint gradient show through.
+ * Key improvements over v1:
+ *   • Canvas is position:absolute → never pushes DOM siblings, no overflow
+ *   • dpr={[1,2]}  → Retina-sharp on HiDPI screens, mobile-safe
+ *   • CameraRig    → useThree monitors container size, adjusts FOV in real time
+ *   • SceneObjects → scale adapts to narrow viewports (no clipping on mobile)
+ *   • Glassmorphism v2: blur(16px), rgba channels tuned, razor-thin borders
+ *   • Typography: SF Pro / Inter stack, optical letter-spacing
+ *   • All transitions: cubic-bezier(0.22, 1, 0.36, 1) — Apple easing
+ *   • State machine: IDLE → CASTING → GLITCH → REVEAL (external-prop driven)
  */
 
-import { useRef, useState, useEffect } from 'react'
-import { Vector2 }                      from 'three'
-import { Canvas }                      from '@react-three/fiber'
-import { Float, Environment }          from '@react-three/drei'
+import { useRef, useState, useEffect }  from 'react'
+import type { PerspectiveCamera }        from 'three'
+import { Vector2 }                       from 'three'
+import { Canvas, useThree }              from '@react-three/fiber'
+import { Float, Environment }            from '@react-three/drei'
 import { EffectComposer, Bloom, Glitch } from '@react-three/postprocessing'
-import { GlitchMode }                  from 'postprocessing'
-import gsap                            from 'gsap'
+import { GlitchMode }                    from 'postprocessing'
+import gsap                              from 'gsap'
 
 // ── State machine ─────────────────────────────────────────────────────────────
 
@@ -34,39 +46,71 @@ const S = {
 
 type AppState = typeof S[keyof typeof S]
 
+// ── Adaptive camera ───────────────────────────────────────────────────────────
+//  Lives inside Canvas so it has access to useThree()
+
+function CameraRig() {
+  const { camera, size } = useThree()
+
+  useEffect(() => {
+    const cam = camera as PerspectiveCamera
+    if (!('fov' in cam)) return
+    // Wider FOV on narrow containers keeps all objects visible without clipping
+    cam.fov = size.width < 400 ? 82
+            : size.width < 640 ? 70
+            : 60
+    cam.updateProjectionMatrix()
+  }, [camera, size.width])
+
+  return null
+}
+
 // ── Cyber Fisher ──────────────────────────────────────────────────────────────
 
 function CyberFisher({
-  appState,
-  setAppState,
+  appState, setAppState,
 }: {
-  appState:    AppState
+  appState: AppState
   setAppState: (s: AppState) => void
 }) {
   const fishermanRef = useRef<import('three').Group>(null)
   const rodRef       = useRef<import('three').Mesh>(null)
+  const { size }     = useThree()
+
+  // Scale objects down on mobile so they never clip the canvas edge
+  const s = size.width < 400 ? 0.68 : size.width < 640 ? 0.84 : 1.0
+  const px = 2 * s          // x-position scales with object
+  const py = -1 * s         // y-position
 
   useEffect(() => {
     if (!fishermanRef.current || !rodRef.current) return
-
     if (appState === S.CASTING) {
       const tl = gsap.timeline()
-      tl.to(fishermanRef.current.rotation, { y: Math.PI / 4, duration: 0.8, ease: 'power2.out' })
-        .to(rodRef.current.scale, { y: 8, duration: 1.5, ease: 'elastic.out(1, 0.5)' })
+      tl.to(fishermanRef.current.rotation, {
+          y: Math.PI / 4, duration: 0.8, ease: 'power2.out',
+        })
+        .to(rodRef.current.scale, {
+          y: 8, duration: 1.5, ease: 'elastic.out(1, 0.5)',
+        })
         .call(() => setAppState(S.GLITCH))
     } else if (appState === S.IDLE) {
       gsap.to(fishermanRef.current.rotation, { y: 0, duration: 1 })
-      gsap.to(rodRef.current.scale, { y: 1, duration: 1 })
+      gsap.to(rodRef.current.scale,          { y: 1, duration: 1 })
     }
   }, [appState, setAppState])
 
   return (
     <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
-      <group ref={fishermanRef} position={[2, -1, 0]}>
-        {/* Body */}
+      <group ref={fishermanRef} position={[px, py, 0]} scale={s}>
+        {/* Body — neon wireframe capsule */}
         <mesh castShadow>
           <capsuleGeometry args={[0.5, 1, 4, 8]} />
-          <meshPhysicalMaterial color="#00ffcc" wireframe roughness={0.2} metalness={0.8} />
+          <meshPhysicalMaterial
+            color="#00ffcc"
+            wireframe
+            roughness={0.2}
+            metalness={0.8}
+          />
         </mesh>
         {/* Rod */}
         <mesh ref={rodRef} position={[-0.5, 1, 0]} scale={[1, 1, 1]}>
@@ -78,16 +122,19 @@ function CyberFisher({
   )
 }
 
-// ── Mode Card (morphs on hook hit) ────────────────────────────────────────────
+// ── Mode Card ─────────────────────────────────────────────────────────────────
 
 function ModeCard({ appState }: { appState: AppState }) {
+  const { size } = useThree()
+  const s = size.width < 400 ? 0.55 : size.width < 640 ? 0.72 : 1.0
+
   return (
     <Float speed={1.5} rotationIntensity={0.5} floatIntensity={1}>
-      <mesh position={[-1, -1.5, -2]}>
+      <mesh position={[-1 * s, -1.5 * s, -2]}>
         {appState === S.IDLE ? (
-          <planeGeometry args={[1.2, 1.8]} />
+          <planeGeometry args={[1.2 * s, 1.8 * s]} />
         ) : (
-          <sphereGeometry args={[0.8, 32, 32]} />
+          <sphereGeometry args={[0.8 * s, 32, 32]} />
         )}
         <meshPhysicalMaterial
           color="#0088ff"
@@ -104,137 +151,224 @@ function ModeCard({ appState }: { appState: AppState }) {
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface AbyssLoaderProps {
-  /** The mode currently active — used in the reveal label */
-  modeLabel?: string
+  /** Mode name shown in the status label */
+  modeLabel?:  string
   /** True while the AI is processing */
-  isActive:   boolean
+  isActive:    boolean
   /** True when the response has arrived */
-  isComplete: boolean
+  isComplete:  boolean
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function AbyssLoader({ modeLabel = 'Intelligence', isActive, isComplete }: AbyssLoaderProps) {
+export function AbyssLoader({
+  modeLabel = 'Intelligence',
+  isActive,
+  isComplete,
+}: AbyssLoaderProps) {
   const [appState, setAppState] = useState<AppState>(S.IDLE)
 
-  // Drive internal state machine from external props
+  // ── External prop → state machine ─────────────────────────────────────────
   useEffect(() => {
-    if (isActive && appState === S.IDLE) {
-      setAppState(S.CASTING)
-    }
+    if (isActive && appState === S.IDLE) setAppState(S.CASTING)
   }, [isActive, appState])
 
   useEffect(() => {
-    if (!isActive && !isComplete) {
-      setAppState(S.IDLE)
-    }
+    if (!isActive && !isComplete) setAppState(S.IDLE)
   }, [isActive, isComplete])
 
-  // Auto-advance GLITCH → REVEAL when analysis completes
+  // ── Auto-advance GLITCH → REVEAL ──────────────────────────────────────────
   useEffect(() => {
     if (appState !== S.GLITCH) return
-    const t = setTimeout(() => {
-      setAppState(S.REVEAL)
-    }, 2500)
+    const t = setTimeout(() => setAppState(S.REVEAL), 2500)
     return () => clearTimeout(t)
   }, [appState])
 
+  // ── Derived display values ─────────────────────────────────────────────────
+  const isReveal  = appState === S.REVEAL
+  const dotColor  = isReveal ? '#00ffcc' : '#ff00a0'
+  const labelColor = isReveal ? '#00ffcc' : 'rgba(0,255,204,0.55)'
+
+  const statusText =
+    appState === S.IDLE    ? `${modeLabel} · Standby`                  :
+    appState === S.CASTING ? `${modeLabel} · Casting…`                  :
+    appState === S.GLITCH  ? `${modeLabel} · Intercepting data stream`  :
+                             `${modeLabel} · Intelligence compiled`
+
   return (
+    /*
+     * ── Wrapper ──────────────────────────────────────────────────────────────
+     * position:relative  → establishes stacking context for children
+     * height:320px       → explicit height so DOM flow is predictable
+     * overflow:hidden    → clips 3D canvas & rounded corners
+     * Canvas, overlays   → all position:absolute inside here
+     */
     <div style={{
-      position:   'relative',
-      width:      '100%',
-      height:      320,
-      borderRadius: 12,
-      overflow:   'hidden',
-      background: 'rgba(1,1,4,0.92)',
-      border:     '1px solid rgba(0,255,204,0.18)',
-      boxShadow:  '0 4px 32px rgba(0,255,204,0.08)',
+      position:     'relative',
+      width:        '100%',
+      height:        320,
+      borderRadius:  16,
+      overflow:     'hidden',
+      background:   'rgba(2, 2, 6, 0.95)',
+      border:       '1px solid rgba(0,255,204,0.12)',
+      boxShadow:    [
+        '0 0 0 1px rgba(0,255,204,0.06)',
+        '0 8px 40px rgba(0,255,204,0.07)',
+        '0 2px 12px rgba(0,0,0,0.50)',
+      ].join(', '),
     }}>
 
-      {/* ── 3D Canvas ── */}
-      <Canvas camera={{ position: [0, 0, 6], fov: 60 }} style={{ width: '100%', height: '100%' }}>
+      {/* ────────────────────────────────────────────────────────────────────
+          3-D Canvas — background layer
+          position:absolute + inset:0 → fills wrapper, zero DOM flow impact
+          dpr=[1,2]                   → Retina-sharp, no mobile jank
+          ──────────────────────────────────────────────────────────────── */}
+      <Canvas
+        camera={{ position: [0, 0, 6], fov: 60 }}
+        dpr={[1, 2]}
+        style={{
+          position: 'absolute',
+          inset:     0,
+          width:    '100%',
+          height:   '100%',
+        }}
+      >
+        {/* Adaptive camera — adjusts FOV on resize */}
+        <CameraRig />
+
         <Environment preset="night" />
-        <ambientLight intensity={0.5} />
-        <spotLight position={[5, 10, 5]} angle={0.3} penumbra={1} color="#00ffcc" intensity={2} />
+        <ambientLight intensity={0.45} />
+        <spotLight
+          position={[5, 10, 5]}
+          angle={0.3}
+          penumbra={1}
+          color="#00ffcc"
+          intensity={2.2}
+          castShadow
+        />
 
         <CyberFisher appState={appState} setAppState={setAppState} />
-        <ModeCard appState={appState} />
+        <ModeCard    appState={appState} />
 
         <EffectComposer enableNormalPass={false}>
-          <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.5} />
+          <Bloom
+            luminanceThreshold={0.18}
+            mipmapBlur
+            intensity={1.6}
+          />
+          {/* Always render Glitch — only active + strong during GLITCH state */}
           <Glitch
             delay={new Vector2(0, 0)}
             duration={new Vector2(0.1, 0.3)}
-            strength={appState === S.GLITCH ? new Vector2(0.4, 0.8) : new Vector2(0, 0)}
+            strength={
+              appState === S.GLITCH
+                ? new Vector2(0.4, 0.8)
+                : new Vector2(0, 0)
+            }
             mode={GlitchMode.CONSTANT_WILD}
             active={appState === S.GLITCH}
           />
         </EffectComposer>
       </Canvas>
 
-      {/* ── Status label overlay ── */}
+      {/* ────────────────────────────────────────────────────────────────────
+          Status label overlay
+          position:absolute, z:10 → floats above Canvas, pointer-events:none
+          ──────────────────────────────────────────────────────────────── */}
       <div style={{
-        position:   'absolute',
-        top:         14,
-        left:        16,
-        right:       16,
-        display:    'flex',
-        alignItems: 'center',
-        gap:         8,
+        position:      'absolute',
+        top:            14,
+        left:           16,
+        right:          16,
+        zIndex:         10,
+        display:       'flex',
+        alignItems:    'center',
+        gap:            8,
         pointerEvents: 'none',
       }}>
-        {/* Pulsing dot */}
+        {/* Pulsing activity dot */}
         <span style={{
-          width:        6,
-          height:       6,
-          borderRadius: '50%',
-          background:   appState === S.REVEAL ? '#00ffcc' : '#ff00a0',
           display:      'inline-block',
-          animation:    'abyss-pulse 1.1s ease-in-out infinite',
+          width:         6,
+          height:        6,
+          borderRadius: '50%',
+          background:   dotColor,
           flexShrink:   0,
+          animation:    'abyss-pulse 1.1s ease-in-out infinite',
+          boxShadow:    `0 0 10px ${dotColor}90`,
+          transition:   'background 0.4s cubic-bezier(0.22,1,0.36,1)',
         }} />
+
+        {/* Mode + phase text */}
         <span style={{
-          fontFamily:    '"JetBrains Mono", "Fira Code", monospace',
+          fontFamily:    [
+            '-apple-system', 'BlinkMacSystemFont',
+            '"SF Pro Text"', '"Inter"',
+            '"JetBrains Mono"', 'monospace',
+          ].join(', '),
           fontSize:       10,
           fontWeight:     600,
-          letterSpacing: '0.14em',
+          letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color:          appState === S.REVEAL ? '#00ffcc' : 'rgba(0,255,204,0.55)',
+          color:          labelColor,
+          transition:    'color 0.5s cubic-bezier(0.22,1,0.36,1)',
         }}>
-          {appState === S.IDLE    && `${modeLabel} · Standby`}
-          {appState === S.CASTING && `${modeLabel} · Casting…`}
-          {appState === S.GLITCH  && `${modeLabel} · Intercepting data stream`}
-          {appState === S.REVEAL  && `${modeLabel} · Intelligence compiled`}
+          {statusText}
         </span>
       </div>
 
-      {/* ── Reveal overlay ── */}
+      {/* ────────────────────────────────────────────────────────────────────
+          Reveal overlay — mounts on REVEAL, animates in
+          position:absolute, z:10 → stays above Canvas at all times
+          ──────────────────────────────────────────────────────────────── */}
       {appState === S.REVEAL && (
         <div style={{
           position:       'absolute',
           bottom:          16,
           left:            16,
           right:           16,
-          background:     'rgba(0,255,204,0.06)',
-          backdropFilter: 'blur(12px)',
-          border:         '1px solid rgba(0,255,204,0.22)',
-          borderRadius:    10,
+          zIndex:          10,
+          background:     'rgba(0,255,204,0.04)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border:         '1px solid rgba(0,255,204,0.14)',
+          borderRadius:    12,
           padding:        '14px 18px',
-          animation:      'abyss-fade 0.8s ease-out',
+          animation:      'abyss-reveal 0.7s cubic-bezier(0.22,1,0.36,1) both',
         }}>
-          <p style={{ margin: 0, fontFamily: 'monospace', fontSize: 11, color: 'rgba(0,255,204,0.55)', letterSpacing: '0.06em' }}>
-            // Abyss OS — Hook Connected
+          <p style={{
+            margin:        0,
+            fontFamily:   '"SF Mono", "JetBrains Mono", "Fira Code", monospace',
+            fontSize:      10,
+            color:         'rgba(0,255,204,0.38)',
+            letterSpacing: '0.08em',
+          }}>
+            // Hook Connected
           </p>
-          <p style={{ margin: '6px 0 0', fontFamily: 'monospace', fontSize: 12, color: '#00ffcc', fontWeight: 600 }}>
+          <p style={{
+            margin:        '6px 0 0',
+            fontFamily:   '"SF Mono", "JetBrains Mono", "Fira Code", monospace',
+            fontSize:      12,
+            color:         '#00ffcc',
+            fontWeight:    600,
+            letterSpacing: '0.02em',
+            lineHeight:    1.5,
+          }}>
             $ {modeLabel} algorithm compiled successfully.
           </p>
         </div>
       )}
 
-      {/* ── Keyframes ── */}
+      {/* ── Keyframe animations ── */}
       <style>{`
-        @keyframes abyss-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.6)} }
-        @keyframes abyss-fade  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes abyss-pulse {
+          0%, 100% { opacity: 1;    transform: scale(1);    }
+          50%       { opacity: 0.2; transform: scale(0.52); }
+        }
+        @keyframes abyss-reveal {
+          from { opacity: 0; transform: translateY(12px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0)    scale(1);    }
+        }
       `}</style>
     </div>
   )
