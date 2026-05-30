@@ -1,323 +1,322 @@
 'use client'
 
 /**
- * AbyssLoader — SwanReveal GPU Particle Morphing System
+ * AbyssLoader — SwanReveal Particle System (Points-based, CPU morphing)
  * ──────────────────────────────────────────────────────────────────────────
- * Architecture:
- *   • All 9 500 particle positions computed entirely on GPU in vertex shader
- *   • Phase 1 — Matrix Rain:  vertex shader cascades particles from aSourcePosition
- *   • Phase 2 — Formation:    uProgress lerps + Simplex noise crystallisation path
- *   • Phase 3 — Wing Flap:    sinoid wave propagation when uProgress ≥ 0.95
- *   • instanceMatrix stays identity — shader does all morphing via custom attributes
- *   • Bloom post-processing (EffectComposer) for neon glow
+ * Architecture (reliability-first):
+ *   • THREE.Points — single draw call, universally supported, no shader compile risk
+ *   • CPU morphing in useFrame — spring-lerp positions each frame
+ *   • Phase 1 — Matrix Rain:  particles fall from above (visible from frame 1)
+ *   • Phase 2 — Formation:    spring-attraction toward swan silhouette targets
+ *   • Phase 3 — Wing Flap:    wing particles oscillate via sin(time)
+ *   • PointsMaterial with a sprite texture for glyph-like appearance
+ *   • Bloom post-processing
  *
  * Interface (unchanged — ChatStage.tsx needs no edits):
  *   export function AbyssLoader({ modeLabel, isActive, isComplete })
  */
 
 import { useRef, useMemo, useEffect } from 'react'
-import { Canvas, useFrame, useThree }   from '@react-three/fiber'
-import { EffectComposer, Bloom }        from '@react-three/postprocessing'
-import * as THREE                       from 'three'
-import gsap                             from 'gsap'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { EffectComposer, Bloom }      from '@react-three/postprocessing'
+import * as THREE                     from 'three'
+import gsap                           from 'gsap'
 
-// ─── GLSL — Vertex Shader ─────────────────────────────────────────────────────
-// GPU morphing: cascades source → target, Simplex noise along the path,
-// then organic wing-wave once progress reaches the flap threshold.
+// ─── Config ───────────────────────────────────────────────────────────────────
 
-const VERT = /* glsl */`
-  uniform float uProgress;
-  uniform float uTime;
-  uniform float uWingAmplitude;
-  uniform vec2  uAtlasGrid;
+function getN(): number {
+  if (typeof navigator === 'undefined') return 5_000
+  const mob  = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+  const c    = navigator.hardwareConcurrency ?? 4
+  if (mob)      return c <= 4 ? 2_000 : 3_000
+  if (c <= 4)   return 3_500
+  if (c <= 7)   return 5_500
+  return 8_000
+}
+const N = getN()
 
-  attribute vec3  aSourcePosition;
-  attribute vec3  aTargetPosition;
-  attribute vec3  aRandoms;      // x: fall speed, y: noise phase, z: char index
-  attribute float aIsWing;
+// Phase timing (seconds)
+const T_RAIN = 2.0
+const T_FORM = 5.5
 
-  varying vec2  vUv;
-  varying float vFresnel;
-  varying float vCharIndex;
+// ─── Sprite texture (single glyph rendered to canvas) ─────────────────────────
 
-  // 3D Simplex Noise (Ashima Arts)
-  vec4 permute(vec4 x){ return mod(((x*34.0)+1.0)*x, 289.0); }
-  vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314*r; }
-  float snoise(vec3 v){
-    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
-    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-    vec3 i  = floor(v + dot(v, C.yyy));
-    vec3 x0 = v - i + dot(i, C.xxx);
-    vec3 g  = step(x0.yzx, x0.xyz);
-    vec3 l  = 1.0 - g;
-    vec3 i1 = min(g.xyz, l.zxy);
-    vec3 i2 = max(g.xyz, l.zxy);
-    vec3 x1 = x0 - i1 + C.xxx;
-    vec3 x2 = x0 - i2 + 2.0*C.xxx;
-    vec3 x3 = x0 - D.yyy;
-    i = mod(i, 289.0);
-    vec4 p = permute(permute(permute(
-      i.z + vec4(0.0, i1.z, i2.z, 1.0))
-      + i.y + vec4(0.0, i1.y, i2.y, 1.0))
-      + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-    float n_ = 0.142857142857;
-    vec3  ns  = n_ * D.wyz - D.xzx;
-    vec4 j  = p - 49.0*floor(p*ns.z);
-    vec4 x_ = floor(j*ns.z);
-    vec4 y_ = floor(j - 7.0*x_);
-    vec4 x  = x_*ns.x + ns.yyyy;
-    vec4 y  = y_*ns.x + ns.yyyy;
-    vec4 h  = 1.0 - abs(x) - abs(y);
-    vec4 b0 = vec4(x.xy, y.xy);
-    vec4 b1 = vec4(x.zw, y.zw);
-    vec4 s0 = floor(b0)*2.0 + 1.0;
-    vec4 s1 = floor(b1)*2.0 + 1.0;
-    vec4 sh = -step(h, vec4(0.0));
-    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
-    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
-    vec3 p0 = vec3(a0.xy, h.x);
-    vec3 p1 = vec3(a0.zw, h.y);
-    vec3 p2 = vec3(a1.xy, h.z);
-    vec3 p3 = vec3(a1.zw, h.w);
-    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
-    p0*=norm.x; p1*=norm.y; p2*=norm.z; p3*=norm.w;
-    vec4 m = max(0.6 - vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)), 0.0);
-    m = m*m;
-    return 42.0*dot(m*m, vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
-  }
-
-  void main(){
-    vUv        = uv;
-    vCharIndex = aRandoms.z;
-
-    // Phase 1: cascade (rain)
-    // mod range 12 → particles cycle through the camera's ~6-unit visible height
-    // every 1.5–4 s, creating a dense continuous rain from the first frame.
-    vec3 cascadePos  = aSourcePosition;
-    cascadePos.y    -= mod(uTime * aRandoms.x * 3.0, 12.0);
-
-    // Phase 2: noise-guided crystallisation toward target
-    float noiseMag  = sin(uProgress * 3.14159265);
-    vec3 noiseOff   = vec3(
-      snoise(aTargetPosition * 0.5 + vec3(uTime,     0.0, 0.0)),
-      snoise(aTargetPosition * 0.5 + vec3(0.0, uTime,     0.0)),
-      snoise(aTargetPosition * 0.5 + vec3(0.0, 0.0,  uTime    ))
-    ) * noiseMag * 1.5;
-
-    vec3 mixedPos = mix(cascadePos, aTargetPosition, uProgress) + noiseOff;
-
-    // Phase 3: organic wing-wave propagation
-    if(uProgress > 0.1 && aIsWing > 0.5){
-      float dist    = abs(aTargetPosition.x);
-      float wave    = sin(dist * 1.8 - uTime * 3.0) * uWingAmplitude;
-      mixedPos.y   += wave * dist * uProgress * 0.4;
-      mixedPos.z   += wave * dist * uProgress * 0.1;
-    }
-
-    vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(mixedPos, 1.0);
-
-    // Fresnel for edge-glow
-    vec3 worldPos    = (modelMatrix * instanceMatrix * vec4(mixedPos, 1.0)).xyz;
-    vec3 worldNormal = normalize(mat3(modelMatrix * instanceMatrix) * normal);
-    vec3 viewDir     = normalize(cameraPosition - worldPos);
-    vFresnel         = pow(1.0 - max(dot(worldNormal, viewDir), 0.0), 3.0);
-
-    gl_Position = projectionMatrix * mvPosition;
-  }
-`
-
-// ─── GLSL — Fragment Shader ───────────────────────────────────────────────────
-
-const FRAG = /* glsl */`
-  uniform sampler2D uTextureAtlas;
-  uniform vec2      uAtlasGrid;
-
-  varying vec2  vUv;
-  varying float vFresnel;
-  varying float vCharIndex;
-
-  void main(){
-    float numChars = uAtlasGrid.x * uAtlasGrid.y;
-    float charIdx  = floor(mod(vCharIndex, numChars));
-    float col      = mod(charIdx, uAtlasGrid.x);
-    float row      = floor(charIdx / uAtlasGrid.x);
-
-    // CanvasTexture has flipY=true → row 0 sits at texture v ∈ [0.75, 1.0].
-    // Correct formula: row r → v_base = (ROWS-1-r)/ROWS, then add vUv.y/ROWS
-    vec2 charUv = vec2(
-      (col + vUv.x) / uAtlasGrid.x,
-      (uAtlasGrid.y - 1.0 - row + vUv.y) / uAtlasGrid.y
-    );
-
-    vec4 tex = texture2D(uTextureAtlas, charUv);
-    if(tex.a < 0.1) discard;
-
-    vec3 core = vec3(0.95, 0.95, 1.0);
-    vec3 edge = vec3(0.0,  1.0,  0.8);   // #00ffcc
-    vec3 col3 = mix(core, edge, vFresnel * 0.7);
-
-    gl_FragColor = vec4(col3 * tex.rgb, tex.a * (0.4 + vFresnel * 0.6));
-  }
-`
-
-// ─── Glyph Atlas ─────────────────────────────────────────────────────────────
-
-function createFontAtlas(): THREE.CanvasTexture {
-  const cv  = Object.assign(document.createElement('canvas'), { width: 512, height: 512 })
-  const ctx = cv.getContext('2d')!
-  ctx.clearRect(0, 0, 512, 512)
-  ctx.font         = 'bold 110px "JetBrains Mono","Courier New",monospace'
-  ctx.textAlign    = 'center'
+function makeSprite(): THREE.CanvasTexture {
+  const size = 64
+  const cv   = Object.assign(document.createElement('canvas'), { width: size, height: size })
+  const ctx  = cv.getContext('2d')!
+  ctx.clearRect(0, 0, size, size)
+  // Radial glow so points look like glowing chars
+  const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2)
+  grad.addColorStop(0,   'rgba(255,255,255,1)')
+  grad.addColorStop(0.35,'rgba(255,255,255,0.85)')
+  grad.addColorStop(0.7, 'rgba(255,255,255,0.3)')
+  grad.addColorStop(1,   'rgba(255,255,255,0)')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, size, size)
+  // Draw a random char in the centre
+  const chars = ['0','1','$','@','&','X','S','#']
+  ctx.fillStyle = 'rgba(0,255,204,0.9)'
+  ctx.font      = 'bold 36px "Courier New",monospace'
+  ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillStyle    = '#ffffff'
-
-  const glyphs = ['0','1','$','@','&','X','S','#','%','?','Z','K']
-  glyphs.forEach((g, i) => {
-    ctx.fillText(g, (i % 3) * 170 + 85, Math.floor(i / 3) * 128 + 64)
-  })
-
+  ctx.fillText(chars[Math.floor(Math.random() * chars.length)], size/2, size/2)
   const tex = new THREE.CanvasTexture(cv)
   tex.minFilter = THREE.LinearFilter
-  tex.magFilter = THREE.LinearFilter
   return tex
 }
 
-// ─── Adaptive particle count ─────────────────────────────────────────────────
-// Caps mobile / low-core devices to prevent thermal throttling.
-// Runs once at module init — navigator is safe here because the component
-// is dynamically imported with ssr:false in ChatStage.tsx.
+// ─── Swan silhouette target points ────────────────────────────────────────────
 
-function detectParticleCount(): number {
-  if (typeof navigator === 'undefined') return 6_000
-  const ua    = navigator.userAgent
-  const cores = navigator.hardwareConcurrency ?? 4
-  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua)
-  if (isMobile)       return cores <= 4 ? 2_500 : 3_800
-  if (cores <= 4)     return 4_000
-  if (cores <= 7)     return 6_500
-  return 9_500   // 8+ cores — desktop / M-series
+interface Pt { x: number; y: number; z: number; isWing: boolean }
+
+function ellOut(cx: number, cy: number, rx: number, ry: number, rot: number, n: number, wing = false): Pt[] {
+  return Array.from({ length: n }, (_, i) => {
+    const θ = i / n * Math.PI * 2
+    const lx = Math.cos(θ) * rx, ly = Math.sin(θ) * ry
+    return { x: cx + lx*Math.cos(rot) - ly*Math.sin(rot),
+             y: cy + lx*Math.sin(rot) + ly*Math.cos(rot),
+             z: (Math.random() - 0.5) * 0.3, isWing: wing }
+  })
 }
 
-const N = detectParticleCount()
+function ellFill(cx: number, cy: number, rx: number, ry: number, rot: number, n: number, wing = false): Pt[] {
+  const pts: Pt[] = []
+  let attempts = 0
+  while (pts.length < n && attempts < n * 12) {
+    attempts++
+    const r = Math.sqrt(Math.random()), θ = Math.random() * Math.PI * 2
+    const u = r * Math.cos(θ) * rx, v = r * Math.sin(θ) * ry
+    pts.push({ x: cx + u*Math.cos(rot) - v*Math.sin(rot),
+               y: cy + u*Math.sin(rot) + v*Math.cos(rot),
+               z: (Math.random() - 0.5) * 0.3, isWing: wing })
+  }
+  return pts
+}
 
-// ─── SwanScene ────────────────────────────────────────────────────────────────
-
-interface SceneProps { isActive: boolean; isComplete: boolean }
-
-function SwanScene({ isActive, isComplete }: SceneProps) {
-  const meshRef     = useRef<THREE.InstancedMesh>(null!)
-  const uniformsRef = useRef({
-    uProgress:     { value: 0 },
-    uTime:         { value: 0 },
-    uWingAmplitude:{ value: 0 },
-    uTextureAtlas: { value: null as THREE.Texture | null },
-    uAtlasGrid:    { value: new THREE.Vector2(3, 4) },
+function neckBezier(n: number): Pt[] {
+  const P = [[1.55,0.0],[2.05,0.72],[2.55,0.95],[2.85,0.70]] as [number,number][]
+  return Array.from({ length: n }, (_, i) => {
+    const t = i / (n-1), mt = 1 - t
+    const bx = mt**3*P[0][0] + 3*mt**2*t*P[1][0] + 3*mt*t**2*P[2][0] + t**3*P[3][0]
+    const by = mt**3*P[0][1] + 3*mt**2*t*P[1][1] + 3*mt*t**2*P[2][1] + t**3*P[3][1]
+    return { x: bx + (Math.random()-.5)*.18, y: by + (Math.random()-.5)*.10, z: (Math.random()-.5)*.2, isWing: false }
   })
+}
 
-  // ── Build geometry + material once ────────────────────────────────────────
-  const { geo, mat } = useMemo(() => {
-    const atlas = createFontAtlas()
-    uniformsRef.current.uTextureAtlas.value = atlas
+function buildTargets(): Pt[] {
+  return [
+    ...ellOut (-0.5,-0.38, 2.35,0.92,-0.08, 220),
+    ...ellFill(-0.5,-0.38, 2.35,0.92,-0.08, 1350),
+    ...ellOut (-0.7, 0.55, 2.15,0.70,-0.14, 200, true),
+    ...ellFill(-0.7, 0.55, 2.15,0.70,-0.14, 2900, true),
+    ...neckBezier(260),
+    ...ellOut ( 3.0, 0.70, 0.48,0.45, 0.15, 110),
+    ...ellFill( 3.0, 0.70, 0.48,0.45, 0.15, 480),
+    ...ellOut ( 3.65,0.46, 0.47,0.17, 0.05,  90),
+    ...ellFill( 3.65,0.46, 0.47,0.17, 0.05, 180),
+    ...ellOut (-2.62,-0.20,0.70,0.40, 0.30,  70),
+    ...ellFill(-2.62,-0.20,0.70,0.40, 0.30, 290),
+    ...ellOut (-0.5,-1.35, 2.2,0.24,  0.0,   80),
+    ...ellFill(-0.5,-1.35, 2.2,0.24,  0.0,  180),
+  ]
+}
 
-    // Source positions (rain start — high up, spread wide)
-    const src  = new Float32Array(N * 3)
-    // Target positions (swan silhouette)
-    const tgt  = new Float32Array(N * 3)
-    const rnd  = new Float32Array(N * 3)
-    const wing = new Float32Array(N)
+// ─── Particle system data ─────────────────────────────────────────────────────
 
-    // Spine curve: S-curve neck
-    const spinePts: THREE.Vector3[] = []
-    for (let i = 0; i < 30; i++) {
-      const t = i / 29
-      spinePts.push(new THREE.Vector3(
-        Math.sin(t * Math.PI * 1.5) * 0.4,
-        t * 4.5 - 2.0,
-        Math.cos(t * Math.PI) * 0.25,
-      ))
-    }
-    const spine = new THREE.CatmullRomCurve3(spinePts)
+interface PS {
+  // Rain start (world)
+  rx: Float32Array; ry: Float32Array; rz: Float32Array; rvy: Float32Array
+  // Swan target
+  tx: Float32Array; ty: Float32Array; tz: Float32Array; tw: Uint8Array
+  // Current (lerped) position
+  cx: Float32Array; cy: Float32Array; cz: Float32Array
+  // Wing base positions (stored so flap is computed as offset from target)
+  wy: Float32Array
+}
 
-    for (let i = 0; i < N; i++) {
-      // Rain start — spread across visible X range, Y just above/within camera view
-      // Camera sees Y ≈ [-2.7, 3.7] at z=0. Start at [2, 7] so rain enters view
-      // within the first second, not after 3+ seconds of off-screen cascade.
-      src[i*3]   = (Math.random() - 0.5) * 12
-      src[i*3+1] = 2 + Math.random() * 5
-      src[i*3+2] = (Math.random() - 0.5) * 4
+function initPS(): PS {
+  const tgt = buildTargets()
+  while (tgt.length < N) tgt.push({ x:(Math.random()-.5)*8, y:(Math.random()-.5)*4, z:(Math.random()-.5)*.5, isWing:false })
+  const pts = tgt.slice(0, N)
 
-      // Swan target
-      const f = Math.random()
-      if (f < 0.25) {
-        // Neck / spine
-        const pt = spine.getPointAt(Math.random())
-        tgt[i*3]   = pt.x + (Math.random() - 0.5) * 0.2
-        tgt[i*3+1] = pt.y + (Math.random() - 0.5) * 0.2
-        tgt[i*3+2] = pt.z + (Math.random() - 0.5) * 0.2
-        wing[i] = 0
-      } else {
-        // Wings (symmetric)
-        const side  = Math.random() > 0.5 ? 1 : -1
-        const sweep = Math.pow(Math.random(), 0.7) * 3.5
-        tgt[i*3]   = side * (0.3 + sweep)
-        tgt[i*3+1] = -0.5 + Math.random() * 1.2 + sweep * 0.4
-        tgt[i*3+2] = (Math.random() - 0.5) * 0.8 - sweep * 0.3
-        wing[i] = 1
-      }
+  const ps: PS = {
+    rx: new Float32Array(N), ry: new Float32Array(N), rz: new Float32Array(N),
+    rvy: new Float32Array(N),
+    tx: new Float32Array(N), ty: new Float32Array(N), tz: new Float32Array(N),
+    tw: new Uint8Array(N),
+    cx: new Float32Array(N), cy: new Float32Array(N), cz: new Float32Array(N),
+    wy: new Float32Array(N),
+  }
 
-      // Per-particle randoms
-      rnd[i*3]   = 0.8 + Math.random() * 1.5   // fall speed
-      rnd[i*3+1] = Math.random() * Math.PI * 2  // noise phase
-      rnd[i*3+2] = Math.floor(Math.random() * 12) // glyph index
-    }
+  for (let i = 0; i < N; i++) {
+    // Rain start — within visible range immediately
+    ps.rx[i]  = (Math.random() - .5) * 12
+    ps.ry[i]  = 1 + Math.random() * 5     // y=[1..6], camera sees [-2.7..3.7]
+    ps.rz[i]  = (Math.random() - .5) * 2
+    ps.rvy[i] = -(1.8 + Math.random() * 3) // fall speed
 
-    const g = new THREE.PlaneGeometry(0.09, 0.09)
-    g.setAttribute('aSourcePosition', new THREE.InstancedBufferAttribute(src,  3))
-    g.setAttribute('aTargetPosition', new THREE.InstancedBufferAttribute(tgt,  3))
-    g.setAttribute('aRandoms',        new THREE.InstancedBufferAttribute(rnd,  3))
-    g.setAttribute('aIsWing',         new THREE.InstancedBufferAttribute(wing, 1))
+    ps.tx[i]  = pts[i].x
+    ps.ty[i]  = pts[i].y
+    ps.tz[i]  = pts[i].z
+    ps.tw[i]  = pts[i].isWing ? 1 : 0
+    ps.wy[i]  = pts[i].y
 
-    const m = new THREE.ShaderMaterial({
-      uniforms:       uniformsRef.current,
-      vertexShader:   VERT,
-      fragmentShader: FRAG,
-      transparent:    true,
-      depthWrite:     false,
-      blending:       THREE.AdditiveBlending,
+    // Start at rain position
+    ps.cx[i]  = ps.rx[i]
+    ps.cy[i]  = ps.ry[i]
+    ps.cz[i]  = ps.rz[i]
+  }
+  return ps
+}
+
+// ─── SwanPoints ───────────────────────────────────────────────────────────────
+
+interface SProps { isActive: boolean; isComplete: boolean }
+
+function SwanPoints({ isActive, isComplete }: SProps) {
+  const ptRef   = useRef<THREE.Points>(null!)
+  const elapsed = useRef(0)
+  const progRef = useRef(0)    // GSAP drives this
+  const ampRef  = useRef(0)    // wing amplitude
+
+  // Geometry + material built once
+  const { geo, mat, ps } = useMemo(() => {
+    const posArr = new Float32Array(N * 3)
+    const colArr = new Float32Array(N * 3)   // per-vertex RGB
+
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(posArr, 3))
+    g.setAttribute('color',    new THREE.BufferAttribute(colArr, 3))
+
+    const sprite = makeSprite()
+    const m = new THREE.PointsMaterial({
+      size:             0.12,
+      sizeAttenuation:  true,
+      map:              sprite,
+      vertexColors:     true,
+      transparent:      true,
+      opacity:          0.90,
+      depthWrite:       false,
+      blending:         THREE.AdditiveBlending,
     })
 
-    return { geo: g, mat: m }
+    const ps = initPS()
+
+    // Seed initial positions
+    for (let i = 0; i < N; i++) {
+      posArr[i*3]   = ps.cx[i]
+      posArr[i*3+1] = ps.cy[i]
+      posArr[i*3+2] = ps.cz[i]
+      colArr[i*3]   = 0.0   // cyan
+      colArr[i*3+1] = 1.0
+      colArr[i*3+2] = 0.8
+    }
+
+    return { geo: g, mat: m, ps }
   }, [])
 
   // Dispose on unmount
   useEffect(() => () => { geo.dispose(); mat.dispose() }, [geo, mat])
 
-  // Seed all instance matrices to identity
-  useEffect(() => {
-    const id = new THREE.Matrix4()
-    for (let i = 0; i < N; i++) meshRef.current.setMatrixAt(i, id)
-    meshRef.current.instanceMatrix.needsUpdate = true
-  }, [])
-
-  // Drive progress and wing amplitude with GSAP whenever props change.
-  // Tweens are killed on cleanup to prevent memory leaks if the component
-  // unmounts mid-animation (e.g. AI response arrives before tween completes).
+  // GSAP drives progress on prop change
   useEffect(() => {
     const target = isComplete ? 1.0 : isActive ? 0.82 : 0.02
-    const amp    = isComplete ? 0.35 : isActive ? 0.28 : 0.0
-
-    const t1 = gsap.to(uniformsRef.current.uProgress,      { value: target, duration: 3.5, ease: 'power3.inOut' })
-    const t2 = gsap.to(uniformsRef.current.uWingAmplitude, { value: amp,    duration: 2.5, ease: 'elastic.out(1, 0.5)' })
-
+    const amp    = isComplete ? 0.08 : isActive ? 0.60 : 0.0
+    const t1 = gsap.to(progRef, { current: target, duration: 3.5, ease: 'power3.inOut' })
+    const t2 = gsap.to(ampRef,  { current: amp,    duration: 2.5, ease: 'elastic.out(1,.5)' })
     return () => { t1.kill(); t2.kill() }
   }, [isActive, isComplete])
 
-  // Clock → shader
-  useFrame(({ clock }) => {
-    uniformsRef.current.uTime.value = clock.getElapsedTime()
+  useFrame((_, dt) => {
+    elapsed.current = Math.min(elapsed.current + dt, 9999)
+    const t    = elapsed.current
+    const prog = progRef.current
+    const amp  = ampRef.current
+
+    const posAttr = geo.attributes.position as THREE.BufferAttribute
+    const colAttr = geo.attributes.color    as THREE.BufferAttribute
+    const posArr  = posAttr.array as Float32Array
+    const colArr  = colAttr.array as Float32Array
+
+    if (t < T_RAIN) {
+      // ── Phase 1: Rain ──
+      for (let i = 0; i < N; i++) {
+        ps.cy[i] += ps.rvy[i] * dt
+        if (ps.cy[i] < -4) {
+          ps.cy[i] = 3 + Math.random() * 4
+          ps.cx[i] = (Math.random() - .5) * 12
+        }
+        posArr[i*3]   = ps.cx[i]
+        posArr[i*3+1] = ps.cy[i]
+        posArr[i*3+2] = ps.cz[i]
+        // Bright cyan rain
+        colArr[i*3]   = 0.0 + Math.random() * 0.1
+        colArr[i*3+1] = 0.9 + Math.random() * 0.1
+        colArr[i*3+2] = 0.75 + Math.random() * 0.15
+      }
+    } else if (t < T_FORM) {
+      // ── Phase 2: Formation ──
+      const p     = (t - T_RAIN) / (T_FORM - T_RAIN)
+      const speed = 1.5 + p * 5.0
+
+      for (let i = 0; i < N; i++) {
+        const tx = ps.tx[i], ty = ps.ty[i], tz = ps.tz[i]
+        ps.cx[i] += (tx - ps.cx[i]) * Math.min(1, dt * speed)
+        ps.cy[i] += (ty - ps.cy[i]) * Math.min(1, dt * speed)
+        ps.cz[i] += (tz - ps.cz[i]) * Math.min(1, dt * speed)
+
+        posArr[i*3]   = ps.cx[i]
+        posArr[i*3+1] = ps.cy[i]
+        posArr[i*3+2] = ps.cz[i]
+
+        // Cyan → silver as formation completes
+        const silver = p * p
+        colArr[i*3]   = silver * 0.82
+        colArr[i*3+1] = silver * 0.88 + (1-silver) * 1.0
+        colArr[i*3+2] = silver * 1.0  + (1-silver) * 0.8
+      }
+    } else {
+      // ── Phase 3: Wing Flap ──
+      const flapT  = t - T_FORM
+      const fFreq  = isActive ? 2.3 : 0.6
+
+      for (let i = 0; i < N; i++) {
+        let wx = ps.tx[i], wy = ps.ty[i]
+
+        if (ps.tw[i]) {
+          const distX = ps.tx[i] - (-0.7)
+          const phase = flapT * fFreq * Math.PI * 2 + distX * 0.4
+          const rawS  = Math.sin(phase)
+          wy += (rawS - 0.18 * rawS * Math.abs(rawS)) * amp
+          wx += Math.cos(phase) * amp * 0.10
+        }
+
+        ps.cx[i] += (wx - ps.cx[i]) * Math.min(1, dt * 16)
+        ps.cy[i] += (wy - ps.cy[i]) * Math.min(1, dt * 16)
+
+        posArr[i*3]   = ps.cx[i]
+        posArr[i*3+1] = ps.cy[i]
+        posArr[i*3+2] = ps.cz[i]
+
+        // Silver-white for the formed swan, cyan tint on wing tips
+        const wingTip = ps.tw[i] ? Math.abs(ps.tx[i]) / 3.8 : 0
+        colArr[i*3]   = 0.82 - wingTip * 0.82
+        colArr[i*3+1] = 0.92 - wingTip * 0.02
+        colArr[i*3+2] = 1.0
+      }
+    }
+
+    posAttr.needsUpdate = true
+    colAttr.needsUpdate = true
+
+    // Morph-based opacity
+    if (ptRef.current) {
+      mat.opacity = prog < 0.05 ? 0.85 : 0.90
+    }
   })
 
-  return <instancedMesh ref={meshRef} args={[geo, mat, N]} frustumCulled={false} />
+  return <points ref={ptRef} geometry={geo} material={mat} frustumCulled={false} />
 }
 
 // ─── Responsive Camera ────────────────────────────────────────────────────────
@@ -326,16 +325,15 @@ function CameraAdapter() {
   const { camera, size } = useThree()
   useEffect(() => {
     const cam = camera as THREE.PerspectiveCamera
-    // Wide FOV for narrow card containers; pull back for extra width
-    cam.fov = size.width < 500 ? 65 : size.width < 900 ? 55 : 46
-    cam.position.set(0, 0.8, 7.5)
-    cam.lookAt(0, 0.5, 0)
+    cam.fov = size.width < 500 ? 62 : size.width < 900 ? 52 : 44
+    cam.position.set(0, 0.5, 7)
+    cam.lookAt(0, 0.3, 0)
     cam.updateProjectionMatrix()
   }, [camera, size.width])
   return null
 }
 
-// ─── AbyssLoader (named export — matches ChatStage.tsx import) ────────────────
+// ─── AbyssLoader (named export — ChatStage.tsx import unchanged) ──────────────
 
 interface AbyssProps {
   modeLabel:  string
@@ -358,88 +356,50 @@ export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
         borderRadius:  16,
         overflow:     'hidden',
         background:   '#03050a',
-        border:       '1px solid rgba(255,255,255,0.06)',
+        border:       '1px solid rgba(255,255,255,0.07)',
         boxShadow:    '0 2px 32px rgba(0,0,0,0.72)',
       }}
     >
-      {/* ── R3F Canvas — z-index: 0 ────────────────────────────────────── */}
+      {/* Canvas */}
       <Canvas
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}
-        camera={{ position: [0, 0.8, 7.5], fov: 46 }}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+        camera={{ position: [0, 0.5, 7], fov: 44 }}
         dpr={[1, 2]}
-        gl={{
-          antialias:           false,
-          alpha:               false,
-          powerPreference:     'high-performance',
-          preserveDrawingBuffer: false,
-        }}
+        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
       >
         <CameraAdapter />
-        <SwanScene isActive={isActive} isComplete={isComplete} />
+        <SwanPoints isActive={isActive} isComplete={isComplete} />
         <EffectComposer>
-          <Bloom
-            intensity={1.8}
-            luminanceThreshold={0.12}
-            luminanceSmoothing={0.9}
-            radius={0.8}
-          />
+          <Bloom intensity={1.6} luminanceThreshold={0.08} luminanceSmoothing={0.9} radius={0.8} />
         </EffectComposer>
       </Canvas>
 
-      {/* ── Vignette ────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          position:      'absolute',
-          inset:          0,
-          zIndex:         1,
-          pointerEvents: 'none',
-          background:    'radial-gradient(ellipse at center, transparent 30%, rgba(3,5,10,0.6) 100%)',
-        }}
-      />
+      {/* Vignette */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
+        background: 'radial-gradient(ellipse at center, transparent 25%, rgba(3,5,10,0.65) 100%)',
+      }} />
 
-      {/* ── Status bar — z-index: 10, glassmorphism ─────────────────────── */}
-      <div
-        style={{
-          position:       'absolute',
-          top:             12,
-          left:            14,
-          right:           14,
-          zIndex:          10,
-          display:        'flex',
-          alignItems:     'center',
-          gap:             8,
-          pointerEvents:  'none',
-        }}
-      >
-        <span
-          style={{
-            display:      'inline-block',
-            width:         6,
-            height:        6,
-            borderRadius: '50%',
-            flexShrink:    0,
-            background:   dotColor,
-            boxShadow:    `0 0 10px ${dotColor}aa`,
-            animation:    'abyss-pulse 1.1s ease-in-out infinite',
-            transition:   'background 0.4s',
-          }}
-        />
-        <span
-          style={{
-            background:           'rgba(6, 11, 25, 0.40)',
-            backdropFilter:       'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            border:               '1px solid rgba(255,255,255,0.05)',
-            borderRadius:          8,
-            padding:              '3px 12px',
-            color:                `${dotColor}cc`,
-            fontSize:              11,
-            fontFamily:           '"JetBrains Mono","Courier New",monospace',
-            letterSpacing:        '0.14em',
-            fontWeight:            600,
-            transition:           'color 0.4s',
-          }}
-        >
+      {/* Status bar */}
+      <div style={{
+        position: 'absolute', top: 12, left: 14, right: 14,
+        zIndex: 10, display: 'flex', alignItems: 'center', gap: 8, pointerEvents: 'none',
+      }}>
+        <span style={{
+          display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
+          background: dotColor, boxShadow: `0 0 10px ${dotColor}aa`,
+          animation: 'abyss-pulse 1.1s ease-in-out infinite', transition: 'background .4s',
+        }} />
+        <span style={{
+          background: 'rgba(6,11,25,0.45)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: 8, padding: '3px 12px',
+          color: `${dotColor}cc`, fontSize: 11,
+          fontFamily: '"JetBrains Mono","Courier New",monospace',
+          letterSpacing: '0.14em', fontWeight: 600, transition: 'color .4s',
+        }}>
           {status}
         </span>
       </div>
@@ -447,7 +407,7 @@ export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
       <style>{`
         @keyframes abyss-pulse {
           0%,100% { opacity:1; transform:scale(1); }
-          50%     { opacity:.35; transform:scale(1.65); }
+          50% { opacity:.3; transform:scale(1.7); }
         }
       `}</style>
     </div>

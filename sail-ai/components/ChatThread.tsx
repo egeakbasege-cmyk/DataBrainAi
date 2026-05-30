@@ -223,7 +223,7 @@ function renderPayload(message: ChatMessage) {
         <ExecutiveResponseCard
           response={payload.data as never}
           isStreaming={streaming}
-          variant="dark"
+          variant="light"
         />
       )
 
