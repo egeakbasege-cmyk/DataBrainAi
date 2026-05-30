@@ -338,8 +338,23 @@ export default function ChatPage() {
   useEffect(() => {
     const e = error ?? sailError ?? trimError
     if (!e) return
-    const isAiError = e.includes('quota') || e.includes('aistudio') || e.includes('API key') ||
-      e.includes('Unable to reach') || e.includes('AI_') || e.includes('exhausted') || e.includes('unavailable')
+    const isAiError =
+      e.includes('quota')           ||
+      e.includes('aistudio')        ||
+      e.includes('API key')         ||
+      e.includes('api key')         ||
+      e.includes('Unable to reach') ||
+      e.includes('AI_')             ||
+      e.includes('exhausted')       ||
+      e.includes('unavailable')     ||
+      e.includes('not configured')  ||
+      e.includes('provider')        ||
+      e.includes('Invalid API')     ||
+      e.includes('gsk_')            ||
+      e.includes('rate limit')      ||
+      e.includes('Rate limit')      ||
+      e.includes('429')             ||
+      e.includes('401')
     if (isAiError) setShowKeyPanel(true)
   }, [error, sailError, trimError])
 
@@ -732,6 +747,8 @@ export default function ChatPage() {
               onHistory={() => setShowHistory(true)}
               onReset={handleReset}
               onUpgradePro={triggerPaywall}
+              hasApiKey={!!apiKey}
+              onAddKey={() => setShowKeyPanel(true)}
             />
 
             {/* Scrollable stage */}
@@ -818,44 +835,104 @@ export default function ChatPage() {
       <AnimatePresence>
         {showKeyPanel && (
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 12, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0,  scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             style={{
               position:     'fixed',
-              bottom:        160,
+              bottom:        170,
               right:          24,
               zIndex:         60,
-              width:          320,
-              padding:        20,
-              background:    'rgba(248,253,251,0.96)',
+              width:          340,
+              padding:        0,
+              background:    'rgba(10,13,20,0.95)',
               backdropFilter:'blur(40px)',
-              border:        '1px solid rgba(129,199,185,0.30)',
-              borderRadius:   12,
-              boxShadow:     '0 8px 32px rgba(0,0,0,0.12)',
+              WebkitBackdropFilter: 'blur(40px)',
+              border:        '1px solid rgba(201,169,110,0.30)',
+              borderRadius:   16,
+              boxShadow:     '0 16px 48px rgba(0,0,0,0.50), 0 0 0 1px rgba(201,169,110,0.08)',
+              overflow:      'hidden',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.45)', margin: 0, fontWeight: 600 }}>Groq API Key</p>
-              <button onClick={() => setShowKeyPanel(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(26,43,60,0.45)', lineHeight: 1, padding: 0 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(26,43,60,0.50)', marginBottom: 14, lineHeight: 1.5 }}>
-              Paste your key from{' '}
-              <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E' }}>console.groq.com</a>
-            </p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input type="password" value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} placeholder="gsk_…"
-                style={{ flex: 1, padding: '8px 12px', border: '1px solid rgba(129,199,185,0.30)', borderRadius: 8, background: 'rgba(255,255,255,0.70)', outline: 'none', fontFamily: 'Inter, monospace', fontSize: 12, color: '#1A2B3C' }} />
-              <button onClick={saveApiKey} style={{ padding: '8px 16px', background: '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                Save
-              </button>
-              {apiKey && (
-                <button onClick={() => { setApiKey(''); setApiKeyInput(''); localStorage.removeItem(API_KEY_STORE); setShowKeyPanel(false) }}
-                  style={{ padding: '8px 12px', background: 'transparent', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#6B7280' }}>
-                  Clear
+            {/* Gold header bar */}
+            <div style={{ height: 3, background: 'linear-gradient(90deg, transparent, #C9A96E, transparent)' }} />
+
+            <div style={{ padding: '20px 22px 22px' }}>
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                <div>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#C9A96E', margin: '0 0 5px', fontWeight: 700 }}>
+                    🔑 Groq API Key Required
+                  </p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 400, color: '#E8EDF3', margin: 0, lineHeight: 1.2 }}>
+                    Connect your AI engine
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowKeyPanel(false)}
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', color: 'rgba(232,237,243,0.45)', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
+              </div>
+
+              {/* Steps */}
+              <ol style={{ margin: '0 0 16px', padding: '0 0 0 16px', fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.55)', lineHeight: 1.7 }}>
+                <li>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E', textDecoration: 'none', fontWeight: 600 }}>console.groq.com/keys</a></li>
+                <li>Create a free account and generate a key</li>
+                <li>Paste it below — stored locally, never sent to our servers</li>
+              </ol>
+
+              {/* Input row */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: apiKey ? 10 : 0 }}>
+                <input
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={e => setApiKeyInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && saveApiKey()}
+                  placeholder="gsk_…"
+                  autoFocus
+                  style={{
+                    flex: 1, padding: '9px 12px',
+                    border: '1px solid rgba(201,169,110,0.30)',
+                    borderRadius: 10, background: 'rgba(255,255,255,0.06)',
+                    outline: 'none', fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: 12, color: '#E8EDF3',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'rgba(201,169,110,0.60)' }}
+                  onBlur={e  => { e.target.style.borderColor = 'rgba(201,169,110,0.30)' }}
+                />
+                <button
+                  onClick={saveApiKey}
+                  style={{
+                    padding: '9px 18px', background: '#C9A96E', color: '#0A0F1E',
+                    border: 'none', borderRadius: 10, cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800,
+                    letterSpacing: '0.08em', textTransform: 'uppercase',
+                    transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                >
+                  Save
+                </button>
+              </div>
+
+              {/* Current key status */}
+              {apiKey && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,255,180,0.06)', border: '1px solid rgba(0,255,180,0.15)', borderRadius: 8 }}>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'rgba(0,255,180,0.8)' }}>
+                    ✓ Key active: gsk_••••{apiKey.slice(-6)}
+                  </span>
+                  <button
+                    onClick={() => { setApiKey(''); setApiKeyInput(''); localStorage.removeItem(API_KEY_STORE); setShowKeyPanel(false) }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.35)', padding: '0 2px' }}
+                  >
+                    Remove
+                  </button>
+                </div>
               )}
             </div>
           </motion.div>

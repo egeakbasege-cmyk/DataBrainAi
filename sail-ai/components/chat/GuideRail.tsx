@@ -61,6 +61,9 @@ interface GuideRailProps {
   onHistory:        () => void
   onReset:          () => void
   onUpgradePro:     () => void
+  // API key
+  hasApiKey?:       boolean
+  onAddKey?:        () => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -69,6 +72,7 @@ export function GuideRail({
   mode, isActive, isPro, usedToday,
   useProfileCtx, businessMode, hasHistory, hasMessages, contextLabel,
   onModeSelect, onToggleCtx, onToggleBusiness, onHistory, onReset, onUpgradePro,
+  hasApiKey = true, onAddKey,
 }: GuideRailProps) {
   const activeMeta = MODE_META[mode]
 
@@ -247,6 +251,29 @@ export function GuideRail({
         )}
 
         <DailyCounter used={usedToday} isPro={isPro} />
+
+        {/* API key badge — shown when no key is configured */}
+        {!hasApiKey && onAddKey && (
+          <motion.button
+            onClick={onAddKey}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            animate={{ opacity: [1, 0.6, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            title="Add your Groq API key to start chatting"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px',
+              background: 'rgba(234,179,8,0.1)',
+              border: '1px solid rgba(234,179,8,0.45)',
+              borderRadius: 9999, cursor: 'pointer', outline: 'none',
+              fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700,
+              letterSpacing: '0.1em', textTransform: 'uppercase', color: '#CA8A04',
+            }}
+          >
+            <span style={{ fontSize: 10 }}>🔑</span>
+            Add API Key
+          </motion.button>
+        )}
 
         {isPro ? (
           <span style={{

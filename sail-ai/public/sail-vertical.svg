@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" fill="none">
+  <!-- Sky gradient -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#0A0F1E"/>
+      <stop offset="60%" stop-color="#0D1A33"/>
+      <stop offset="100%" stop-color="#0A2840"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#051525"/>
+      <stop offset="100%" stop-color="#030D1A"/>
+    </linearGradient>
+    <linearGradient id="sail1" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#C9A96E" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#6B4E1E" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="moonGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#C9A96E" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#C9A96E" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#C9A96E" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#C9A96E" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background sky -->
+  <rect width="800" height="1200" fill="url(#sky)"/>
+
+  <!-- Moon glow -->
+  <ellipse cx="400" cy="180" rx="200" ry="200" fill="url(#moonGlow)"/>
+
+  <!-- Moon -->
+  <circle cx="400" cy="180" r="42" fill="#C9A96E" opacity="0.85" filter="url(#glow)"/>
+  <circle cx="418" cy="168" r="34" fill="#0D1A33"/>
+
+  <!-- Stars -->
+  <circle cx="120" cy="80" r="1.5" fill="#C9A96E" opacity="0.8"/>
+  <circle cx="200" cy="120" r="1" fill="white" opacity="0.6"/>
+  <circle cx="600" cy="60" r="1.5" fill="white" opacity="0.7"/>
+  <circle cx="680" cy="140" r="1" fill="#C9A96E" opacity="0.5"/>
+  <circle cx="150" cy="200" r="1" fill="white" opacity="0.4"/>
+  <circle cx="700" cy="220" r="1.5" fill="white" opacity="0.6"/>
+  <circle cx="50" cy="160" r="1" fill="#C9A96E" opacity="0.6"/>
+  <circle cx="750" cy="100" r="1" fill="white" opacity="0.5"/>
+
+  <!-- Water horizon -->
+  <rect x="0" y="750" width="800" height="450" fill="url(#water)"/>
+
+  <!-- Water shimmer lines -->
+  <path d="M0 780 Q400 770 800 785" stroke="#C9A96E" stroke-width="0.5" opacity="0.15"/>
+  <path d="M0 810 Q400 800 800 815" stroke="#C9A96E" stroke-width="0.3" opacity="0.1"/>
+  <path d="M100 840 Q450 832 700 845" stroke="white" stroke-width="0.3" opacity="0.08"/>
+
+  <!-- Moon reflection on water -->
+  <ellipse cx="400" cy="900" rx="60" ry="120" fill="#C9A96E" opacity="0.06"/>
+  <path d="M340 810 L400 920 L460 810" fill="#C9A96E" opacity="0.04"/>
+
+  <!-- Hull -->
+  <path d="M240 760 Q400 790 560 760 L540 775 Q400 804 260 775 Z" fill="#8B6A35" opacity="0.8"/>
+  <path d="M260 775 Q400 804 540 775 L530 782 Q400 810 270 782 Z" fill="#6B4E1E" opacity="0.6"/>
+
+  <!-- Mast -->
+  <line x1="400" y1="200" x2="400" y2="765" stroke="#C9A96E" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- Main sail -->
+  <path d="M400 215 L610 680 L400 750 Z" fill="url(#sail1)" stroke="#C9A96E" stroke-width="1.5"/>
+
+  <!-- Fore sail -->
+  <path d="M400 240 L230 660 L400 730 Z" fill="#C9A96E" fill-opacity="0.2" stroke="#C9A96E" stroke-width="1" opacity="0.7"/>
+
+  <!-- Boom -->
+  <line x1="230" y1="755" x2="570" y2="755" stroke="#C9A96E" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Rigging lines -->
+  <line x1="400" y1="215" x2="560" y2="760" stroke="#C9A96E" stroke-width="0.6" opacity="0.3"/>
+  <line x1="400" y1="215" x2="240" y2="760" stroke="#C9A96E" stroke-width="0.6" opacity="0.2"/>
+</svg>

@@ -241,7 +241,7 @@ export default function LandingPage() {
 
         {/* Parallax hero image */}
         <motion.img
-          src="/sail-vertical.jpg"
+          src="/sail-vertical.svg"
           alt=""
           aria-hidden="true"
           style={{

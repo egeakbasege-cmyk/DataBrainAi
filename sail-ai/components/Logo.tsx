@@ -1,14 +1,15 @@
-/** Sail AI crest — Ultra Premium Gold on Black */
+/** Sail AI crest — Gold SVG logo */
 export function Logo({ size = 48 }: { size?: number }) {
   return (
-    <img 
-      src="/logo-gold.png" 
-      alt="Sail AI" 
-      width={size} 
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/logo-gold.svg"
+      alt="Sail AI"
+      width={size}
       height={size}
-      style={{ 
+      style={{
         objectFit: 'contain',
-        filter: 'drop-shadow(0 0 6px rgba(201,169,110,0.4))'
+        filter: 'drop-shadow(0 0 8px rgba(201,169,110,0.45))',
       }}
     />
   )
