@@ -91,8 +91,10 @@ const VERT = /* glsl */`
     vCharIndex = aRandoms.z;
 
     // Phase 1: cascade (rain)
+    // mod range 12 → particles cycle through the camera's ~6-unit visible height
+    // every 1.5–4 s, creating a dense continuous rain from the first frame.
     vec3 cascadePos  = aSourcePosition;
-    cascadePos.y    -= mod(uTime * aRandoms.x * 4.0, 40.0);
+    cascadePos.y    -= mod(uTime * aRandoms.x * 3.0, 12.0);
 
     // Phase 2: noise-guided crystallisation toward target
     float noiseMag  = sin(uProgress * 3.14159265);
@@ -140,9 +142,11 @@ const FRAG = /* glsl */`
     float col      = mod(charIdx, uAtlasGrid.x);
     float row      = floor(charIdx / uAtlasGrid.x);
 
+    // CanvasTexture has flipY=true → row 0 sits at texture v ∈ [0.75, 1.0].
+    // Correct formula: row r → v_base = (ROWS-1-r)/ROWS, then add vUv.y/ROWS
     vec2 charUv = vec2(
-      (vUv.x + col) / uAtlasGrid.x,
-      (1.0 - vUv.y + row) / uAtlasGrid.y
+      (col + vUv.x) / uAtlasGrid.x,
+      (uAtlasGrid.y - 1.0 - row + vUv.y) / uAtlasGrid.y
     );
 
     vec4 tex = texture2D(uTextureAtlas, charUv);
@@ -235,10 +239,12 @@ function SwanScene({ isActive, isComplete }: SceneProps) {
     const spine = new THREE.CatmullRomCurve3(spinePts)
 
     for (let i = 0; i < N; i++) {
-      // Rain start
-      src[i*3]   = (Math.random() - 0.5) * 25
-      src[i*3+1] = Math.random() * 15 + 10
-      src[i*3+2] = (Math.random() - 0.5) * 15
+      // Rain start — spread across visible X range, Y just above/within camera view
+      // Camera sees Y ≈ [-2.7, 3.7] at z=0. Start at [2, 7] so rain enters view
+      // within the first second, not after 3+ seconds of off-screen cascade.
+      src[i*3]   = (Math.random() - 0.5) * 12
+      src[i*3+1] = 2 + Math.random() * 5
+      src[i*3+2] = (Math.random() - 0.5) * 4
 
       // Swan target
       const f = Math.random()

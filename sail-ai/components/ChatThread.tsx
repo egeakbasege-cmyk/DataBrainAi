@@ -1,16 +1,10 @@
 'use client'
 
 /**
- * ChatThread — Premium Dark Chat Boxes with Gold Frames
+ * ChatThread — Clean White Chat Bubbles
  * ─────────────────────────────────────────────────────────────────────────────
- * UserBubble:     dark navy + gold border (20% dark allocation)
- * AssistantCard:  dark obsidian shell + gold frame + white inner content panel
- *
- * Design:
- *   • Outer shell = dark obsidian rgba(10,13,20,0.92) + gold border
- *   • Mode header = dark with mode-color accent
- *   • Inner panel = white rgba(255,255,255,0.97) for readable content
- *   • Follow-up chips = mint glass
+ * UserBubble:     white card, dark text, mode-color subtle left accent
+ * AssistantCard:  white card, thin top border in mode color, dark readable text
  */
 
 import { useRef, useState, useCallback, memo } from 'react'
@@ -64,28 +58,21 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
       style={{ display: 'flex', justifyContent: 'flex-end', paddingLeft: 48 }}
     >
       <div style={{ maxWidth: '84%' }}>
-        {/* Dark bubble with gold frame */}
         <div style={{
-          background:   'linear-gradient(145deg, #0C1929 0%, #112237 55%, #0A1628 100%)',
+          background:   '#ffffff',
           borderRadius: '16px 16px 4px 16px',
           padding:      '12px 16px',
-          position:     'relative',
-          overflow:     'hidden',
-          boxShadow:    '0 4px 24px rgba(12,25,41,0.35)',
-          border:       '1px solid rgba(201,169,110,0.42)',
+          boxShadow:    '0 1px 2px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06)',
+          border:       '1px solid rgba(0,0,0,0.07)',
+          borderLeft:   `3px solid ${color}`,
         }}>
-          {/* Gold-to-teal hairline */}
-          <div style={{
-            position: 'absolute', top: 0, left: '10%', right: '10%', height: 1,
-            background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.45), rgba(20,184,166,0.25), transparent)',
-          }} />
           <p style={{
             fontFamily:    'Inter, sans-serif',
             fontSize:       14,
             fontWeight:     400,
             lineHeight:     1.65,
             letterSpacing: '-0.01em',
-            color:         '#EEF2F5',
+            color:         '#111827',
             margin:         0,
             whiteSpace:    'pre-wrap',
             wordBreak:     'break-word',
@@ -93,12 +80,11 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
             {text}
           </p>
         </div>
-        {/* Meta row */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginTop: 4 }}>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.7 }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.8 }}>
             {modeLabel}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(26,43,60,0.35)', letterSpacing: '0.02em' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(17,24,39,0.35)', letterSpacing: '0.02em' }}>
             {ts}
           </span>
         </div>
@@ -145,33 +131,22 @@ const AssistantCard = memo(function AssistantCard({
         </span>
         <span style={{
           fontFamily: 'Inter, sans-serif', fontSize: 10,
-          color: message.streaming ? 'rgba(20,184,166,0.70)' : 'rgba(26,43,60,0.38)',
+          color: message.streaming ? meta.color : 'rgba(17,24,39,0.38)',
           fontStyle: message.streaming ? 'italic' : 'normal', letterSpacing: '0.02em',
         }}>
-          {message.streaming ? '· Processing intelligence…' : `· ${ts}`}
+          {message.streaming ? '· Processing…' : `· ${ts}`}
         </span>
       </div>
 
-      {/* ── Dark shell with gold border ── */}
       <div style={{
-        background:          'rgba(10,13,20,0.92)',
-        backdropFilter:      'blur(24px)',
-        WebkitBackdropFilter:'blur(24px)',
-        border:              '1px solid rgba(201,169,110,0.38)',
-        borderTop:           `2px solid ${meta.color}`,
-        borderRadius:        '4px 16px 16px 16px',
-        overflow:            'hidden',
-        boxShadow:           `0 4px 28px ${meta.color}14, 0 2px 8px rgba(0,0,0,0.35)`,
-        position:            'relative',
+        background:   '#ffffff',
+        border:       '1px solid rgba(0,0,0,0.07)',
+        borderTop:    `2px solid ${meta.color}`,
+        borderRadius: '4px 16px 16px 16px',
+        overflow:     'hidden',
+        boxShadow:    `0 1px 2px rgba(0,0,0,0.05), 0 4px 20px rgba(0,0,0,0.06)`,
       }}>
-        {/* ── Dark glass inner content panel ── */}
-        <div style={{
-          background:   'rgba(12,15,24,0.90)',
-          margin:       '1px',
-          borderRadius: '3px 15px 15px 15px',
-          overflow:     'hidden',
-          color:        '#DDE3EC',
-        }}>
+        <div style={{ color: '#111827' }}>
           {renderPayload(message)}
 
           {/* Streaming cursor */}
@@ -191,7 +166,7 @@ const AssistantCard = memo(function AssistantCard({
           transition={{ delay: 0.45, duration: 0.25 }}
           style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10, paddingLeft: 4, alignItems: 'center' }}
         >
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(232,237,243,0.28)' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(17,24,39,0.32)' }}>
             Continue →
           </span>
           {chips.slice(0, 2).map((chip, i) => (
