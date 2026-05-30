@@ -438,15 +438,16 @@ export function ChatStage(props: ChatStageProps) {
           <ChatThread messages={messages} onFollowUp={onFollowUp} />
         )}
 
-        {/* ── Abyss loader — non-upwind modes while waiting for first token ── */}
+        {/* ── Abyss loader — shown for the FULL streaming/loading duration ── */}
+        {/* Response cards below are hidden until phase reaches 'complete'.  */}
         <AnimatePresence>
           {(
-            (mode === 'sail'      && sailPhase      === 'streaming' && !sailText) ||
-            (mode === 'trim'      && trimPhase      === 'loading'               ) ||
-            (mode === 'catamaran' && catamaranPhase === 'loading'               ) ||
-            (mode === 'synergy'   && synergyPhase   === 'streaming' && !synergyText) ||
-            (mode === 'operator'  && operatorPhase  === 'streaming' && !operatorText) ||
-            (mode === 'scenario'  && scenarioPhase  === 'streaming' && !scenarioText)
+            (mode === 'sail'      && sailPhase      === 'streaming') ||
+            (mode === 'trim'      && trimPhase      === 'loading'  ) ||
+            (mode === 'catamaran' && catamaranPhase === 'loading'  ) ||
+            (mode === 'synergy'   && synergyPhase   === 'streaming') ||
+            (mode === 'operator'  && operatorPhase  === 'streaming') ||
+            (mode === 'scenario'  && scenarioPhase  === 'streaming')
           ) && (
             <motion.div
               key="abyss-general"
@@ -464,18 +465,18 @@ export function ChatStage(props: ChatStageProps) {
           )}
         </AnimatePresence>
 
-        {/* ── SAIL ── */}
+        {/* ── SAIL — only revealed after streaming completes ── */}
         <AnimatePresence>
-          {mode === 'sail' && (sailPhase === 'streaming' || sailPhase === 'complete') && (
-            <StreamCard key="sail" mode="sail" streaming={sailPhase === 'streaming'}>
-              <SailAdapter text={sailText} intent={sailIntent} streaming={sailPhase === 'streaming'} />
+          {mode === 'sail' && sailPhase === 'complete' && (
+            <StreamCard key="sail" mode="sail" streaming={false}>
+              <SailAdapter text={sailText} intent={sailIntent} streaming={false} />
             </StreamCard>
           )}
         </AnimatePresence>
 
-        {/* ── TRIM ── */}
+        {/* ── TRIM — only revealed after loading completes ── */}
         <AnimatePresence>
-          {mode === 'trim' && (trimPhase === 'loading' || trimPhase === 'complete') && (
+          {mode === 'trim' && trimPhase === 'complete' && (
             <motion.div key="trim" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}>
               <div style={{
                 background:   'rgba(10,13,20,0.92)', backdropFilter: 'blur(24px)',
@@ -485,29 +486,29 @@ export function ChatStage(props: ChatStageProps) {
                 boxShadow:    '0 4px 28px rgba(180,83,9,0.14), 0 2px 8px rgba(0,0,0,0.35)',
               }}>
                 <div style={{ background: 'rgba(12,15,24,0.90)', margin: '1px', borderRadius: '0 0 11px 11px', padding: 24, color: '#DDE3EC' }}>
-                  <TrimTimelineCard response={trimResponse} isLoading={trimPhase === 'loading'} />
+                  <TrimTimelineCard response={trimResponse} isLoading={false} />
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── CATAMARAN ── */}
+        {/* ── CATAMARAN — only revealed after loading completes ── */}
         <AnimatePresence>
-          {mode === 'catamaran' && (catamaranPhase === 'loading' || catamaranPhase === 'complete') && (
+          {mode === 'catamaran' && catamaranPhase === 'complete' && (
             <motion.div key="catamaran" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}>
-              <CatamaranResponseCard response={catamaranResponse} isStreaming={catamaranPhase === 'loading'} />
+              <CatamaranResponseCard response={catamaranResponse} isStreaming={false} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── SYNERGY ── */}
+        {/* ── SYNERGY — only revealed after streaming completes ── */}
         <AnimatePresence>
-          {mode === 'synergy' && (synergyPhase === 'streaming' || synergyPhase === 'complete') && (
+          {mode === 'synergy' && synergyPhase === 'complete' && (
             <motion.div key="synergy" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}>
               <SynergyResponseCard
                 text={synergyText}
-                streaming={synergyPhase === 'streaming'}
+                streaming={false}
                 modes={synergyMeta?.modes ?? (synergyModes as string[])}
                 companyName={synergyMeta?.companyName ?? brandName ?? undefined}
               />
@@ -515,20 +516,20 @@ export function ChatStage(props: ChatStageProps) {
           )}
         </AnimatePresence>
 
-        {/* ── OPERATOR ── */}
+        {/* ── OPERATOR — only revealed after streaming completes ── */}
         <AnimatePresence>
-          {mode === 'operator' && (operatorPhase === 'streaming' || operatorPhase === 'complete') && (
-            <StreamCard key="operator" mode="operator" streaming={operatorPhase === 'streaming'}>
-              <SailAdapter text={operatorText} intent="analytic" streaming={operatorPhase === 'streaming'} />
+          {mode === 'operator' && operatorPhase === 'complete' && (
+            <StreamCard key="operator" mode="operator" streaming={false}>
+              <SailAdapter text={operatorText} intent="analytic" streaming={false} />
             </StreamCard>
           )}
         </AnimatePresence>
 
-        {/* ── SCENARIO ── */}
+        {/* ── SCENARIO — only revealed after streaming completes ── */}
         <AnimatePresence>
-          {mode === 'scenario' && (scenarioPhase === 'streaming' || scenarioPhase === 'complete') && (
-            <StreamCard key="scenario" mode="scenario" streaming={scenarioPhase === 'streaming'}>
-              <SailAdapter text={scenarioText} intent="scenario" streaming={scenarioPhase === 'streaming'} />
+          {mode === 'scenario' && scenarioPhase === 'complete' && (
+            <StreamCard key="scenario" mode="scenario" streaming={false}>
+              <SailAdapter text={scenarioText} intent="scenario" streaming={false} />
             </StreamCard>
           )}
         </AnimatePresence>
