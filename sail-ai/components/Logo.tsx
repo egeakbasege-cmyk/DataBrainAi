@@ -3,7 +3,7 @@ export function Logo({ size = 48 }: { size?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/logo-gold.svg"
+      src="/logo-gold.png"
       alt="Sail AI"
       width={size}
       height={size}
