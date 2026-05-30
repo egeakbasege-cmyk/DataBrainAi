@@ -410,7 +410,7 @@ export default function ChatPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
         body: JSON.stringify(buildModeBody(text, 'sail')), signal: sailAbortRef.current.signal,
       })
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'SAIL request failed.') }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(((d as Record<string,unknown>).error ?? (d as Record<string,unknown>).message) as string ?? 'SAIL request failed.') }
       const reader = res.body!.getReader(); const decoder = new TextDecoder()
       let buf = '', metaDone = false
       while (true) {
@@ -434,7 +434,7 @@ export default function ChatPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
         body: JSON.stringify(buildModeBody(text, 'trim')),
       })
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'TRIM request failed.') }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(((d as Record<string,unknown>).error ?? (d as Record<string,unknown>).message) as string ?? 'TRIM request failed.') }
       const data = await res.json() as TrimResponse
       setTrimResponse(data); setTrimPhase('complete'); saveAnalysis(text, data.summary?.slice(0, 120) ?? data.trimTitle ?? 'TRIM Plan')
     } catch (err: unknown) { setTrimError(err instanceof Error ? err.message : 'TRIM request failed.'); setTrimPhase('idle') }
@@ -447,7 +447,7 @@ export default function ChatPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
         body: JSON.stringify(buildModeBody(text, 'catamaran')),
       })
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'CATAMARAN request failed.') }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(((d as Record<string,unknown>).error ?? (d as Record<string,unknown>).message) as string ?? 'CATAMARAN request failed.') }
       const data = await res.json() as CatamaranResponse
       setCatamaranResponse(data); setCatamaranPhase('complete'); saveAnalysis(text, data.catamaranTitle ?? 'CATAMARAN Plan')
     } catch (err: unknown) { setCatamaranError(err instanceof Error ? err.message : 'CATAMARAN request failed.'); setCatamaranPhase('idle') }
@@ -464,7 +464,7 @@ export default function ChatPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
         body: JSON.stringify(body), signal: synergyAbortRef.current.signal,
       })
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'SYNERGY request failed.') }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(((d as Record<string,unknown>).error ?? (d as Record<string,unknown>).message) as string ?? 'SYNERGY request failed.') }
       const reader = res.body!.getReader(); const decoder = new TextDecoder()
       let buf = '', metaDone = false
       while (true) {
@@ -489,7 +489,7 @@ export default function ChatPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
         body: JSON.stringify(buildModeBody(text, 'operator')), signal: operatorAbortRef.current.signal,
       })
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'OPERATOR request failed.') }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(((d as Record<string,unknown>).error ?? (d as Record<string,unknown>).message) as string ?? 'OPERATOR request failed.') }
       const reader = res.body!.getReader(); const decoder = new TextDecoder(); let buf = ''
       while (true) {
         const { done, value } = await reader.read(); if (done) break
@@ -511,7 +511,7 @@ export default function ChatPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
         body: JSON.stringify(buildModeBody(text, 'scenario')), signal: scenarioAbortRef.current.signal,
       })
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'SCENARIO request failed.') }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(((d as Record<string,unknown>).error ?? (d as Record<string,unknown>).message) as string ?? 'SCENARIO request failed.') }
       const reader = res.body!.getReader(); const decoder = new TextDecoder(); let buf = '', metaDone = false
       while (true) {
         const { done, value } = await reader.read(); if (done) break
@@ -534,7 +534,7 @@ export default function ChatPage() {
         headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
         body: JSON.stringify(buildModeBody(text, 'auto')),
       })
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as Record<string,unknown>).error as string ?? 'Routing request failed.') }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(((d as Record<string,unknown>).error ?? (d as Record<string,unknown>).message) as string ?? 'Routing request failed.') }
       const data = await res.json() as { __moodGuide?: MoodGuideData }
       if (data.__moodGuide) { setMoodGuide(data.__moodGuide); setAutoPhase('guiding') }
       else { setAutoPhase('idle'); await submit(text, { context: getContext() || undefined, attachment: attachment ?? undefined, analysisMode: 'upwind', apiKey: apiKey || undefined, primaryConstraint }) }

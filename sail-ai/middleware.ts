@@ -22,7 +22,7 @@ const ALLOWED_ORIGIN = (
 //   • Tier 2 (fallback):  per-instance in-memory Map — zero config, single-region.
 
 const RATE_CONFIG: Record<string, { limit: number; window: number }> = {
-  ai:   { limit: 10, window: 60_000 },  // AI inference: 10 req/min
+  ai:   { limit: 30, window: 60_000 },  // AI inference: 30 req/min
   api:  { limit: 30, window: 60_000 },  // General API: 30 req/min
   auth: { limit: 8,  window: 60_000 },  // Auth / register: 8 req/min
 }
