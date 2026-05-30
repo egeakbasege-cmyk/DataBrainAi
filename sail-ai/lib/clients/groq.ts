@@ -33,20 +33,11 @@ export interface GroqMessage {
   content: string
 }
 
-export interface JSONSchemaFormat {
-  type: 'json_schema'
-  json_schema: {
-    name:   string
-    strict: true
-    schema: Record<string, unknown>
-  }
-}
-
 export interface JSONObjectFormat {
   type: 'json_object'
 }
 
-export type ResponseFormat = JSONSchemaFormat | JSONObjectFormat
+export type ResponseFormat = JSONObjectFormat
 
 export interface GroqRequest {
   model:            GroqModel | string
@@ -227,258 +218,25 @@ export async function extractGroqContent(res: Response): Promise<string> {
 // Enforced at Groq generation time — eliminates all downstream repair steps.
 // Each schema mirrors the exact shape expected by the frontend renderers.
 
+// json_schema strict mode is not supported by llama-3.3-70b-versatile or
+// llama-3.1-8b-instant on Groq. All modes use json_object (valid JSON guaranteed;
+// structure is enforced via the system prompt instead).
 export const JSON_SCHEMAS = {
 
   // ── UPWIND — ExecutiveResponse ──────────────────────────────────────────────
-  executive: {
-    type: 'json_schema',
-    json_schema: {
-      name:   'executive_response',
-      strict: true as const,
-      schema: {
-        type: 'object',
-        required: ['insight', 'confidenceIndex', 'impactProjection', 'matrixOptions', 'executionHorizons'],
-        additionalProperties: false,
-        properties: {
-          insight:          { type: 'string' },
-          impactProjection: { type: ['string', 'null'] },
-          confidenceIndex: {
-            type: 'object',
-            required: ['score', 'rationale', 'dataSource'],
-            additionalProperties: false,
-            properties: {
-              score:      { type: 'number', minimum: 0, maximum: 1 },
-              rationale:  { type: 'string' },
-              dataSource: {
-                type: 'string',
-                enum: ['live-research', 'training-estimate', 'user-provided', 'mixed'],
-              },
-            },
-          },
-          matrixOptions: {
-            type: 'array',
-            items: {
-              type: 'object',
-              required: [
-                'id', 'title', 'description',
-                'sectorMedianSuccessRate', 'implementationTimeDays', 'densityScore',
-              ],
-              additionalProperties: false,
-              properties: {
-                id:                      { type: 'string' },
-                title:                   { type: 'string' },
-                description:             { type: 'string' },
-                sectorMedianSuccessRate: { type: ['number', 'null'] },
-                implementationTimeDays:  { type: 'number' },
-                densityScore:            { type: 'number' },
-              },
-            },
-          },
-          executionHorizons: {
-            type: 'object',
-            required: ['thirtyDays', 'sixtyDays', 'ninetyDays'],
-            additionalProperties: false,
-            properties: {
-              thirtyDays: { type: 'array', items: { type: 'string' } },
-              sixtyDays:  { type: 'array', items: { type: 'string' } },
-              ninetyDays: { type: 'array', items: { type: 'string' } },
-            },
-          },
-        },
-      },
-    },
-  } satisfies JSONSchemaFormat,
+  executive: { type: 'json_object' } as const satisfies JSONObjectFormat,
 
   // ── DOWNWIND — DownwindResponse ─────────────────────────────────────────────
-  downwind: {
-    type: 'json_schema',
-    json_schema: {
-      name:   'downwind_response',
-      strict: true as const,
-      schema: {
-        type: 'object',
-        required: ['headline', 'signal', 'freeText', 'followUpQuestion'],
-        additionalProperties: false,
-        properties: {
-          headline:         { type: 'string' },
-          signal:           { type: 'string' },
-          freeText:         { type: 'string' },
-          followUpQuestion: { type: 'string' },
-        },
-      },
-    },
-  } satisfies JSONSchemaFormat,
+  downwind: { type: 'json_object' } as const satisfies JSONObjectFormat,
 
   // ── TRIM — TrimResponse ─────────────────────────────────────────────────────
-  trim: {
-    type: 'json_schema',
-    json_schema: {
-      name:   'trim_response',
-      strict: true as const,
-      schema: {
-        type: 'object',
-        required: [
-          'trimTitle', 'summary', 'confidenceIndex',
-          'diagnostic', 'phases', 'successIndicator',
-        ],
-        additionalProperties: false,
-        properties: {
-          trimTitle: { type: 'string' },
-          summary:   { type: 'string' },
-          confidenceIndex: {
-            type: 'object',
-            required: ['score', 'missingVariables'],
-            additionalProperties: false,
-            properties: {
-              score:            { type: 'number', minimum: 0, maximum: 1 },
-              missingVariables: { type: 'array', items: { type: 'string' } },
-            },
-          },
-          diagnostic: {
-            type: 'object',
-            required: ['primaryMetric', 'calculatedTrend', 'rootCause', 'costOfDelay'],
-            additionalProperties: false,
-            properties: {
-              primaryMetric:   { type: 'string' },
-              calculatedTrend: { type: 'string' },
-              rootCause:       { type: 'string' },
-              costOfDelay:     { type: ['string', 'null'] },
-            },
-          },
-          phases: {
-            type: 'array',
-            items: {
-              type: 'object',
-              required: [
-                'phase', 'timeframe', 'metric',
-                'deltaTarget', 'actions', 'dependency',
-              ],
-              additionalProperties: false,
-              properties: {
-                phase:       { type: 'string' },
-                timeframe:   { type: 'string' },
-                metric:      { type: 'string' },
-                deltaTarget: { type: ['string', 'null'] },
-                actions:     { type: 'array', items: { type: 'string' } },
-                dependency:  { type: 'string' },
-              },
-            },
-          },
-          successIndicator: {
-            type: 'object',
-            required: ['target', 'projection'],
-            additionalProperties: false,
-            properties: {
-              target:     { type: 'string' },
-              projection: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-  } satisfies JSONSchemaFormat,
+  trim: { type: 'json_object' } as const satisfies JSONObjectFormat,
 
   // ── CATAMARAN — CatamaranResponse ───────────────────────────────────────────
-  catamaran: {
-    type: 'json_schema',
-    json_schema: {
-      name:   'catamaran_response',
-      strict: true as const,
-      schema: {
-        type: 'object',
-        required: [
-          'catamaranTitle', 'executiveSummary',
-          'marketGrowth', 'customerExperience',
-          'unifiedStrategy', 'thirtyDayTarget',
-          'greatestRisk', 'confidenceIndex',
-        ],
-        additionalProperties: false,
-        properties: {
-          catamaranTitle:   { type: 'string' },
-          executiveSummary: { type: 'string' },
-          marketGrowth: {
-            type: 'object',
-            required: ['trackTitle', 'actions', 'thirtyDayTarget'],
-            additionalProperties: false,
-            properties: {
-              trackTitle:      { type: 'string' },
-              thirtyDayTarget: { type: 'string' },
-              actions: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  required: ['action', 'timeframe', 'expectedImpact', 'cxConnection'],
-                  additionalProperties: false,
-                  properties: {
-                    action:         { type: 'string' },
-                    timeframe:      { type: 'string' },
-                    expectedImpact: { type: 'string' },
-                    cxConnection:   { type: 'string' },
-                  },
-                },
-              },
-            },
-          },
-          customerExperience: {
-            type: 'object',
-            required: ['trackTitle', 'actions', 'thirtyDayTarget'],
-            additionalProperties: false,
-            properties: {
-              trackTitle:      { type: 'string' },
-              thirtyDayTarget: { type: 'string' },
-              actions: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  required: ['action', 'timeframe', 'expectedImpact', 'growthConnection'],
-                  additionalProperties: false,
-                  properties: {
-                    action:           { type: 'string' },
-                    timeframe:        { type: 'string' },
-                    expectedImpact:   { type: 'string' },
-                    growthConnection: { type: 'string' },
-                  },
-                },
-              },
-            },
-          },
-          unifiedStrategy: { type: 'string' },
-          thirtyDayTarget: { type: 'string' },
-          greatestRisk:    { type: 'string' },
-          confidenceIndex: { type: 'number', minimum: 0, maximum: 100 },
-        },
-      },
-    },
-  } satisfies JSONSchemaFormat,
+  catamaran: { type: 'json_object' } as const satisfies JSONObjectFormat,
 
   // ── PersonalisedAI Specialist Draft ─────────────────────────────────────────
-  specialist_draft: {
-    type: 'json_schema',
-    json_schema: {
-      name:   'specialist_draft',
-      strict: true as const,
-      schema: {
-        type: 'object',
-        required: [
-          'lens', 'coreInsight', 'criticalFigure',
-          'primaryRecommendation', 'confidence', 'dataSource',
-        ],
-        additionalProperties: false,
-        properties: {
-          lens:                  { type: 'string' },
-          coreInsight:           { type: 'string' },
-          criticalFigure:        { type: 'string' },
-          primaryRecommendation: { type: 'string' },
-          confidence:            { type: 'number', minimum: 0, maximum: 1 },
-          dataSource: {
-            type: 'string',
-            enum: ['live-research', 'training-estimate', 'user-provided', 'mixed'],
-          },
-        },
-      },
-    },
-  } satisfies JSONSchemaFormat,
-
+  specialist_draft: { type: 'json_object' } as const satisfies JSONObjectFormat,
 } as const
 
 // ── Predictive Speculative Fetch ──────────────────────────────────────────────
