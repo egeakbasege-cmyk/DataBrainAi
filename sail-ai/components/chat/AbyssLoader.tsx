@@ -1,25 +1,45 @@
 'use client'
 
 /**
- * AbyssLoader — code-glyph swan particle system
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  A B Y S S   L O A D E R   —   Design Direction v2
+ * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Root causes of previous invisibility:
- *   1. GLSL compact noise used `.5`, `1.`, `289.` etc — invalid in GLSL ES
- *      (digits required on both sides of decimal). Shader compiled to nothing.
- *   2. Rain src.y = 10..32 but camera sees y ≈ [-1.7, 3.7]. Particles
- *      were off-screen for the first 1-3 seconds.
+ *  "The intelligence does not arrive. It assembles itself from the dark."
  *
- * Fixes applied:
- *   • Expanded simplex noise with correct float literals throughout
- *   • src.y = -1..9 so rain is visible immediately at t=0
- *   • mod range 12.0 (from 40.0) for tighter rain cycling
- *   • Phase-offset rain via aRnd.y so columns are staggered at t=0
+ *  The canvas is a void — #07080C, a near-black that breathes. Out of nothing,
+ *  a digital rain descends: each glyph a cold cyan streak, the exhaust trail
+ *  of computation. This is not decoration. This is the system thinking.
+ *
+ *  At the inflection point — when thinking becomes form — the rain fractures.
+ *  Each particle breaks from its column, spirals through turbulence, and lands.
+ *  The landing is inevitable: a swan. Not a symbol. A structure. The same
+ *  algorithmic precision that drives the inference engine is what draws the
+ *  wings and neck from chaos.
+ *
+ *  Particle language:
+ *    · Rain      → electric cyan  (#00FFCC)  — raw signal, unresolved
+ *    · Body      → lunar silver   (#C8D4E8)  — the formed intelligence
+ *    · Wings     → warm gold      (#C9A96E)  — the brand's own frequency
+ *    · Neck/Head → near-white     (#F0F4FF)  — clarity at the apex
+ *
+ *  Blending: additive. Light accumulates. Dense areas glow. The swan is not
+ *  painted — it is luminous. It earns its brightness from mass.
+ *
+ *  Post-processing: a single Bloom pass. Threshold low enough that even a
+ *  lone glyph carries a halo. The effect should feel like phosphor, not neon.
+ *
+ *  Status bar: monospace terminal text on a near-transparent dark pill —
+ *  the interface layer between the machine and the human watching it.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
-import { useRef, useMemo, useEffect, useState } from 'react'
-import { Canvas, useFrame, useThree }           from '@react-three/fiber'
-import * as THREE                               from 'three'
-import gsap                                     from 'gsap'
+import { useRef, useMemo, useEffect, useState }       from 'react'
+import { Canvas, useFrame, useThree }                 from '@react-three/fiber'
+import { EffectComposer, Bloom }                      from '@react-three/postprocessing'
+import * as THREE                                     from 'three'
+import gsap                                           from 'gsap'
 
 // ─── Adaptive particle count ───────────────────────────────────────────────────
 
@@ -30,7 +50,7 @@ const N = (() => {
   return c <= 4 ? 5_500 : c <= 8 ? 8_500 : 11_000
 })()
 
-// ─── Atlas — 5×5 code glyphs ──────────────────────────────────────────────────
+// ─── Atlas — 5×5 code glyphs (white on transparent) ──────────────────────────
 
 const COLS = 5
 const ROWS = 5
@@ -68,8 +88,7 @@ function makeAtlas(): THREE.CanvasTexture {
 }
 
 // ─── GLSL vertex shader ────────────────────────────────────────────────────────
-// IMPORTANT: every float literal has digits on both sides of the decimal point.
-// `.5` / `1.` / `289.` are rejected by many GLSL ES drivers → silent black.
+// Every float literal has digits on both sides of the decimal (GLSL ES spec).
 
 const VERT = /* glsl */`
   uniform float uProgress;
@@ -77,17 +96,18 @@ const VERT = /* glsl */`
   uniform float uWingAmp;
   uniform vec3  uMouse;
 
-  attribute vec3  aSrc;   // rain start world position
-  attribute vec3  aTgt;   // swan target world position
-  attribute vec3  aRnd;   // x:fallSpeed  y:phaseOffset  z:glyphIdx
-  attribute float aWing;  // 1.0 = wing particle
+  attribute vec3  aSrc;    // rain start world position
+  attribute vec3  aTgt;    // swan target world position
+  attribute vec3  aRnd;    // x:fallSpeed  y:phaseOffset  z:glyphIdx
+  attribute float aWing;   // 1.0 = wing particle
 
   varying vec2  vUv;
   varying float vEdge;
   varying float vGlyph;
+  varying float vWing;
+  varying float vProgress;
 
-  // ── 3D Simplex Noise (Ian McEwan / Ashima Arts) ────────────────────────────
-  // All literals strictly formatted: 0.5 not .5, 1.0 not 1. etc.
+  // ── 3D Simplex Noise (Ian McEwan / Ashima Arts) ─────────────────────────────
   vec3 mod289_3(vec3 x)  { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 mod289_4(vec4 x)  { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 permute4(vec4 x)  { return mod289_4(((x * 34.0) + 1.0) * x); }
@@ -146,15 +166,16 @@ const VERT = /* glsl */`
   }
 
   void main() {
-    vUv   = uv;
-    vGlyph = aRnd.z;
+    vUv      = uv;
+    vGlyph   = aRnd.z;
+    vWing    = aWing;
+    vProgress = uProgress;
 
-    // ── Phase 1: falling code rain ─────────────────────────────────────────
-    // aRnd.y phase-offsets each column so rain is visible immediately at t=0.
+    // ── Phase 1: falling code rain ──────────────────────────────────────────
     vec3 rain = aSrc;
     rain.y -= mod(uTime * aRnd.x * 2.2 + aRnd.y * 2.0, 12.0);
 
-    // ── Phase 2: turbulence during morphing (peak at progress = 0.5) ───────
+    // ── Phase 2: turbulence during morphing (peak at progress = 0.5) ────────
     float turbMag = sin(uProgress * 3.14159265);
     vec3 turb = vec3(
       snoise(aTgt * 0.4 + vec3(uTime * 0.18, 0.0, 0.0)),
@@ -164,7 +185,7 @@ const VERT = /* glsl */`
 
     vec3 center = mix(rain, aTgt, uProgress) + turb;
 
-    // ── Phase 3: wing flap ─────────────────────────────────────────────────
+    // ── Phase 3: wing flap ──────────────────────────────────────────────────
     if (uProgress > 0.1 && aWing > 0.5) {
       float dx   = abs(aTgt.x);
       float wave = sin(dx * 1.5 - uTime * 2.0) * uWingAmp;
@@ -172,7 +193,7 @@ const VERT = /* glsl */`
       center.z  += wave * dx * uProgress * 0.08;
     }
 
-    // ── Phase 4: mouse repulsion ───────────────────────────────────────────
+    // ── Phase 4: mouse repulsion ────────────────────────────────────────────
     if (uProgress > 0.5) {
       vec3  delta = center - uMouse;
       float d     = length(delta);
@@ -182,8 +203,7 @@ const VERT = /* glsl */`
       }
     }
 
-    // ── Billboard: transform centre → view space, add local quad vertex ────
-    // Adding position.xy in view space keeps every quad facing the camera.
+    // ── Billboard: view-space offset so quads always face camera ────────────
     vec4 mvC    = modelViewMatrix * vec4(center, 1.0);
     gl_Position = projectionMatrix * (mvC + vec4(position.xy, 0.0, 0.0));
 
@@ -192,6 +212,10 @@ const VERT = /* glsl */`
 `
 
 // ─── GLSL fragment shader ──────────────────────────────────────────────────────
+// Color palette (additive blending on dark background):
+//   rain  → cyan  #00FFCC  (0.0, 1.0, 0.8)
+//   body  → silver #C8D4E8 (0.784, 0.831, 0.910)
+//   wing  → gold  #C9A96E  (0.788, 0.663, 0.431)
 
 const FRAG = /* glsl */`
   uniform sampler2D uAtlas;
@@ -200,6 +224,8 @@ const FRAG = /* glsl */`
   varying vec2  vUv;
   varying float vEdge;
   varying float vGlyph;
+  varying float vWing;
+  varying float vProgress;
 
   void main() {
     float total = uGrid.x * uGrid.y;
@@ -207,9 +233,7 @@ const FRAG = /* glsl */`
     float col   = mod(idx, uGrid.x);
     float row   = floor(idx / uGrid.x);
 
-    // CanvasTexture flipY = true (default):
-    //   canvas row 0 (top pixel) = UV v = 1.0
-    //   glyph at canvas row R spans UV v: [(rows-1-R)/rows , (rows-R)/rows]
+    // CanvasTexture flipY = true: canvas row 0 (top) = UV v = 1.0
     vec2 atlasUv = vec2(
       (vUv.x + col) / uGrid.x,
       (uGrid.y - 1.0 - row + vUv.y) / uGrid.y
@@ -218,26 +242,27 @@ const FRAG = /* glsl */`
     vec4 tex = texture2D(uAtlas, atlasUv);
     if (tex.a < 0.15) discard;
 
-    vec3 core  = vec3(0.05, 0.05, 0.08);
-    vec3 edge  = vec3(0.10, 0.24, 0.54);
-    float fe   = pow(vEdge, 1.6);
-    vec3 color = mix(core, edge, fe * 0.48);
+    // Palette colours
+    vec3 cCyan   = vec3(0.0,   1.0,   0.8);    // rain: electric cyan
+    vec3 cSilver = vec3(0.784, 0.831, 0.910);  // body: lunar silver
+    vec3 cGold   = vec3(0.788, 0.663, 0.431);  // wing: warm gold
 
-    gl_FragColor = vec4(color, tex.a * (0.88 + fe * 0.12));
+    // Blend from cyan (rain) toward swan colours as progress advances
+    vec3 swanColor = mix(cSilver, cGold, vWing);
+    vec3 color     = mix(cCyan, swanColor, smoothstep(0.0, 0.65, vProgress));
+
+    // Soft edge darkening so particles have volume without hard outlines
+    float fe = pow(vEdge, 1.8);
+    color = color * (1.0 - fe * 0.32);
+
+    // Additive alpha — edges fade to zero for clean accumulation glow
+    float alpha = tex.a * (1.0 - fe * 0.55);
+
+    gl_FragColor = vec4(color, alpha);
   }
 `
 
 // ─── Swan silhouette — canvas painter → pixel sampler ────────────────────────
-//
-// Strategy (same as the Carhartt t-shirt):
-//   1. Paint a real swan shape onto a 2D canvas
-//   2. Sample every dark pixel → world-space 3D target position
-//   3. Red pixels  = wing particles (animated separately)
-//      Black pixels = body / neck / head (stationary once formed)
-//
-// World-space mapping (camera at z=7, fov=42, looking at y≈0.8):
-//   canvas x: 0→CW  →  world x: -4.5 → +4.5
-//   canvas y: 0→CH  →  world y: +2.8 → -1.8  (inverted + shifted up)
 
 interface GeoData {
   src: Float32Array
@@ -247,10 +272,9 @@ interface GeoData {
 }
 
 function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
-  // ── Step 1: wings (red) ── drawn first so body covers the inner overlap
+  // Wings (red) first — body covers the inner overlap
   ctx.fillStyle = '#cc0000'
 
-  // Left wing — large flat ellipse angled slightly upward
   ctx.save()
   ctx.translate(CW * 0.22, CH * 0.52)
   ctx.rotate(0.22)
@@ -259,7 +283,6 @@ function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
   ctx.fill()
   ctx.restore()
 
-  // Right wing — mirror
   ctx.save()
   ctx.translate(CW * 0.78, CH * 0.52)
   ctx.rotate(-0.22)
@@ -268,10 +291,9 @@ function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
   ctx.fill()
   ctx.restore()
 
-  // ── Step 2: body (black) ── covers wing overlap in the centre
+  // Body (black) covers wing overlap
   ctx.fillStyle = '#000000'
 
-  // Main body — wide horizontal ellipse
   ctx.save()
   ctx.translate(CW * 0.50, CH * 0.58)
   ctx.beginPath()
@@ -279,7 +301,7 @@ function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
   ctx.fill()
   ctx.restore()
 
-  // Tail — small rounded wedge at the left rear
+  // Tail
   ctx.save()
   ctx.translate(CW * 0.245, CH * 0.545)
   ctx.rotate(0.45)
@@ -288,26 +310,22 @@ function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
   ctx.fill()
   ctx.restore()
 
-  // ── Step 3: neck (black) ── thick S-curve bezier stroke
+  // Neck — S-curve bezier stroke
   ctx.beginPath()
-  ctx.moveTo(CW * 0.505, CH * 0.375)                    // neck base (top of body)
-  ctx.bezierCurveTo(
-    CW * 0.525, CH * 0.26,                              // control 1
-    CW * 0.60,  CH * 0.22,                              // control 2
-    CW * 0.625, CH * 0.145,                             // neck top
-  )
+  ctx.moveTo(CW * 0.505, CH * 0.375)
+  ctx.bezierCurveTo(CW * 0.525, CH * 0.26, CW * 0.60, CH * 0.22, CW * 0.625, CH * 0.145)
   ctx.lineWidth   = CW * 0.046
   ctx.strokeStyle = '#000000'
   ctx.lineCap     = 'round'
   ctx.stroke()
 
-  // ── Step 4: head (black) ── rounded ellipse at neck tip
+  // Head
   ctx.fillStyle = '#000000'
   ctx.beginPath()
   ctx.ellipse(CW * 0.638, CH * 0.118, CW * 0.054, CH * 0.046, -0.3, 0, Math.PI * 2)
   ctx.fill()
 
-  // ── Step 5: beak ── small triangle extending forward
+  // Beak
   ctx.beginPath()
   ctx.moveTo(CW * 0.685, CH * 0.105)
   ctx.lineTo(CW * 0.722, CH * 0.115)
@@ -315,7 +333,7 @@ function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
   ctx.closePath()
   ctx.fill()
 
-  // ── Step 6: eye ── tiny white dot so the head reads clearly
+  // Eye — white dot so the head reads clearly
   ctx.fillStyle = '#ffffff'
   ctx.beginPath()
   ctx.arc(CW * 0.655, CH * 0.108, CW * 0.010, 0, Math.PI * 2)
@@ -323,7 +341,6 @@ function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
 }
 
 function buildGeoData(): GeoData {
-  // ── Paint the swan ────────────────────────────────────────────────────────
   const CW = 600, CH = 450
   const cv  = document.createElement('canvas')
   cv.width  = CW
@@ -333,7 +350,6 @@ function buildGeoData(): GeoData {
   ctx.fillRect(0, 0, CW, CH)
   drawSwan(ctx, CW, CH)
 
-  // ── Sample coloured pixels → world positions ──────────────────────────────
   const pixels = ctx.getImageData(0, 0, CW, CH).data
   const pool: { wx: number; wy: number; isWing: boolean }[] = []
 
@@ -341,37 +357,31 @@ function buildGeoData(): GeoData {
     for (let px = 0; px < CW; px++) {
       const i = (py * CW + px) * 4
       const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2]
-      if (r > 200 && g > 200 && b > 200) continue  // white → skip
+      if (r > 200 && g > 200 && b > 200) continue
 
-      // World-space coordinates
       const wx = (px / CW - 0.5) *  9.0
-      const wy = -(py / CH - 0.5) * 5.0 + 0.35     // +0.35 shifts swan up slightly
+      const wy = -(py / CH - 0.5) * 5.0 + 0.35
 
-      // Red pixel = wing, dark pixel = body/neck/head
       const isWing = r > 140 && g < 80 && b < 80
       pool.push({ wx, wy, isWing })
     }
   }
 
-  // Shuffle pool so random subsampling gives uniform coverage
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp
   }
 
-  // ── Fill typed arrays ─────────────────────────────────────────────────────
   const src = new Float32Array(N * 3)
   const tgt = new Float32Array(N * 3)
   const rnd = new Float32Array(N * 3)
   const wng = new Float32Array(N)
 
   for (let i = 0; i < N; i++) {
-    // Rain start: y = -1..9 → immediately visible (camera sees y ≈ [-1.7, 3.7])
     src[i*3]     = (Math.random() - 0.5) * 26
     src[i*3 + 1] = Math.random() * 10.0 - 1.0
     src[i*3 + 2] = (Math.random() - 0.5) * 14
 
-    // Target: cycle through the pool (wraps if pool < N)
     const pt     = pool[i % pool.length]
     tgt[i*3]     = pt.wx + (Math.random() - 0.5) * 0.06
     tgt[i*3 + 1] = pt.wy + (Math.random() - 0.5) * 0.06
@@ -398,13 +408,12 @@ interface Uniforms {
   uGrid:         { value: THREE.Vector2 }
 }
 
-// ─── SwanScene (runs inside R3F Canvas) ───────────────────────────────────────
+// ─── SwanScene ────────────────────────────────────────────────────────────────
 
 function SwanScene({ isActive, isComplete }: { isActive: boolean; isComplete: boolean }) {
   const groupRef = useRef<THREE.Group>(null!)
   const { pointer, viewport } = useThree()
 
-  // Atlas created client-side (no SSR)
   const [atlas, setAtlas] = useState<THREE.Texture | null>(null)
   useEffect(() => {
     const t = makeAtlas()
@@ -412,10 +421,8 @@ function SwanScene({ isActive, isComplete }: { isActive: boolean; isComplete: bo
     return () => t.dispose()
   }, [])
 
-  // Particle data — computed once, stable reference
   const geoData = useMemo<GeoData>(() => buildGeoData(), [])
 
-  // Uniforms — single object, mutated in-place; never re-created
   const u = useRef<Uniforms>({
     uProgress: { value: 0.0 },
     uTime:     { value: 0.0 },
@@ -425,10 +432,8 @@ function SwanScene({ isActive, isComplete }: { isActive: boolean; isComplete: bo
     uGrid:     { value: new THREE.Vector2(COLS, ROWS) },
   })
 
-  // Wire atlas into uniforms when ready
   useEffect(() => { u.current.uAtlas.value = atlas }, [atlas])
 
-  // Build InstancedMesh imperatively — avoids R3F JSX args[] type issues
   useEffect(() => {
     if (!atlas || !groupRef.current) return
 
@@ -444,7 +449,7 @@ function SwanScene({ isActive, isComplete }: { isActive: boolean; isComplete: bo
       uniforms:       u.current,
       transparent:    true,
       depthWrite:     false,
-      blending:       THREE.NormalBlending,
+      blending:       THREE.AdditiveBlending,
       side:           THREE.DoubleSide,
     })
 
@@ -464,7 +469,6 @@ function SwanScene({ isActive, isComplete }: { isActive: boolean; isComplete: bo
     }
   }, [atlas, geoData])
 
-  // GSAP drives progress + wing amplitude (cleanup kills tweens on re-run)
   useEffect(() => {
     const prog = isComplete ? 1.0 : isActive ? 0.86 : 0.0
     const amp  = isComplete ? 0.38 : isActive ? 0.26 : 0.0
@@ -473,7 +477,6 @@ function SwanScene({ isActive, isComplete }: { isActive: boolean; isComplete: bo
     return () => { t1.kill(); t2.kill() }
   }, [isActive, isComplete])
 
-  // Zero-allocation per-frame uniform update
   const mouseTarget = useRef(new THREE.Vector3())
   useFrame(({ clock }) => {
     u.current.uTime.value = clock.getElapsedTime()
@@ -519,8 +522,9 @@ interface AbyssProps {
 }
 
 export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
-  const dot    = isComplete ? '#059669' : isActive ? '#0055ff' : 'rgba(0,0,0,0.22)'
-  const glow   = (isActive || isComplete) ? `0 0 8px ${dot}` : 'none'
+  // Status dot: cyan while thinking, gold when formed, dim when idle
+  const dot    = isComplete ? '#C9A96E' : isActive ? '#00FFCC' : 'rgba(255,255,255,0.18)'
+  const glow   = isComplete ? '0 0 10px #C9A96E88' : isActive ? '0 0 10px #00FFCC66' : 'none'
   const status = isActive   ? `${modeLabel} · compiling…`
                : isComplete ? `${modeLabel} · unit_formed`
                :              `${modeLabel} · standby`
@@ -532,21 +536,29 @@ export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
       height:        300,
       borderRadius:  14,
       overflow:     'hidden',
-      background:   '#fafaf8',
-      border:       '1px solid rgba(0,0,0,0.07)',
-      boxShadow:    '0 2px 16px rgba(0,0,0,0.06)',
+      background:   '#07080C',
+      border:       '1px solid rgba(255,255,255,0.06)',
+      boxShadow:    '0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
     }}>
       <Canvas
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
         gl={{ antialias: true, alpha: false }}
         dpr={[1, 1.5]}
       >
-        <color attach="background" args={['#fafaf8']} />
+        <color attach="background" args={['#07080C']} />
         <CameraRig />
         <SwanScene isActive={isActive} isComplete={isComplete} />
+        <EffectComposer>
+          <Bloom
+            intensity={1.4}
+            luminanceThreshold={0.06}
+            luminanceSmoothing={0.9}
+            mipmapBlur
+          />
+        </EffectComposer>
       </Canvas>
 
-      {/* Status bar */}
+      {/* Status bar — terminal aesthetic on dark void */}
       <div style={{
         position:      'absolute',
         top:            10,
@@ -568,13 +580,13 @@ export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
           transition:  'background 0.4s, box-shadow 0.4s',
         }} />
         <span style={{
-          background:           'rgba(255,255,255,0.72)',
-          backdropFilter:       'blur(16px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-          border:               '1px solid rgba(0,0,0,0.07)',
+          background:           'rgba(7,8,12,0.72)',
+          backdropFilter:       'blur(16px) saturate(120%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(120%)',
+          border:               '1px solid rgba(255,255,255,0.08)',
           borderRadius:          7,
           padding:              '3px 11px',
-          color:                'rgba(0,0,0,0.55)',
+          color:                'rgba(255,255,255,0.42)',
           fontSize:              11,
           fontFamily:           '"SFMono-Regular","JetBrains Mono","Courier New",monospace',
           letterSpacing:        '0.12em',
@@ -584,12 +596,13 @@ export function AbyssLoader({ modeLabel, isActive, isComplete }: AbyssProps) {
         </span>
       </div>
 
+      {/* Subtle vignette — deepens corners without muddying the glow */}
       <div style={{
         position:      'absolute',
         inset:          0,
         pointerEvents: 'none',
         borderRadius:   14,
-        boxShadow:     'inset 0 0 56px rgba(250,250,248,0.5)',
+        background:    'radial-gradient(ellipse at 50% 60%, transparent 40%, rgba(7,8,12,0.55) 100%)',
         zIndex:         1,
       }} />
     </div>
