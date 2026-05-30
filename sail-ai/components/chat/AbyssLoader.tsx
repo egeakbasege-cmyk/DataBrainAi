@@ -178,9 +178,23 @@ function createFontAtlas(): THREE.CanvasTexture {
   return tex
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Adaptive particle count ─────────────────────────────────────────────────
+// Caps mobile / low-core devices to prevent thermal throttling.
+// Runs once at module init — navigator is safe here because the component
+// is dynamically imported with ssr:false in ChatStage.tsx.
 
-const N = 9_500
+function detectParticleCount(): number {
+  if (typeof navigator === 'undefined') return 6_000
+  const ua    = navigator.userAgent
+  const cores = navigator.hardwareConcurrency ?? 4
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua)
+  if (isMobile)       return cores <= 4 ? 2_500 : 3_800
+  if (cores <= 4)     return 4_000
+  if (cores <= 7)     return 6_500
+  return 9_500   // 8+ cores — desktop / M-series
+}
+
+const N = detectParticleCount()
 
 // ─── SwanScene ────────────────────────────────────────────────────────────────
 
@@ -279,13 +293,17 @@ function SwanScene({ isActive, isComplete }: SceneProps) {
     meshRef.current.instanceMatrix.needsUpdate = true
   }, [])
 
-  // Drive progress and wing amplitude with GSAP whenever props change
+  // Drive progress and wing amplitude with GSAP whenever props change.
+  // Tweens are killed on cleanup to prevent memory leaks if the component
+  // unmounts mid-animation (e.g. AI response arrives before tween completes).
   useEffect(() => {
     const target = isComplete ? 1.0 : isActive ? 0.82 : 0.02
     const amp    = isComplete ? 0.35 : isActive ? 0.28 : 0.0
 
-    gsap.to(uniformsRef.current.uProgress,      { value: target, duration: 3.5, ease: 'power3.inOut' })
-    gsap.to(uniformsRef.current.uWingAmplitude, { value: amp,    duration: 2.5, ease: 'elastic.out(1, 0.5)' })
+    const t1 = gsap.to(uniformsRef.current.uProgress,      { value: target, duration: 3.5, ease: 'power3.inOut' })
+    const t2 = gsap.to(uniformsRef.current.uWingAmplitude, { value: amp,    duration: 2.5, ease: 'elastic.out(1, 0.5)' })
+
+    return () => { t1.kill(); t2.kill() }
   }, [isActive, isComplete])
 
   // Clock → shader
