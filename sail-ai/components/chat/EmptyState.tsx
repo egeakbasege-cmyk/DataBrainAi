@@ -1,11 +1,9 @@
 'use client'
 
 /**
- * EmptyState — Dark Executive Master Guide
+ * EmptyState — Luminous Mint Glass Master Guide
  * ─────────────────────────────────────────────────────────────────────────────
- * Shown when the thread is empty. Guides the user to their first analysis
- * via three interactive mode cards + quick-pick chips.
- * Dark, exclusive, executive aesthetic.
+ * Palette: mint/tiffany glass · white · gold accents · charcoal typography
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -17,10 +15,10 @@ import type { TranslationKey }              from '@/lib/i18n/translations'
 // ── Palette ───────────────────────────────────────────────────────────────────
 
 const T = {
-  textPrimary: '#E8EDF3',
-  textMuted:   'rgba(232,237,243,0.4)',
-  glass:       'rgba(255,255,255,0.04)',
-  border:      'rgba(255,255,255,0.08)',
+  textPrimary: '#1A2B3C',
+  textMuted:   'rgba(26,43,60,0.42)',
+  glass:       'rgba(255,255,255,0.68)',
+  glassBorder: 'rgba(129,199,185,0.28)',
   gold:        '#C9A96E',
 } as const
 
@@ -29,7 +27,7 @@ const T = {
 const MODES = [
   {
     id:      'upwind' as AnalysisMode,
-    color:   '#3B82F6',
+    color:   '#2563EB',
     icon:    '◎',
     label:   'UPWIND',
     tagline: 'Executive strategy, delivered BLUF.',
@@ -37,7 +35,7 @@ const MODES = [
   },
   {
     id:      'sail' as AnalysisMode,
-    color:   '#8B5CF6',
+    color:   '#7C3AED',
     icon:    '◈',
     label:   'SAIL',
     tagline: 'Adaptive intelligence. Live streaming.',
@@ -45,7 +43,7 @@ const MODES = [
   },
   {
     id:      'trim' as AnalysisMode,
-    color:   '#F59E0B',
+    color:   '#B45309',
     icon:    '▤',
     label:   'TRIM',
     tagline: 'Milestone roadmap. 30 · 60 · 90 day.',
@@ -95,7 +93,6 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
       gap:             32,
       minHeight:       340,
     }}>
-
       {/* ── Hero ── */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -149,12 +146,10 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
               onBlur={() => setFocused(-1)}
               onClick={() => { onModeSelect(m.id); onQuickPick(m.sample) }}
               style={{
-                background:    isFocused
-                  ? `${m.color}10`
-                  : 'rgba(255,255,255,0.03)',
+                background:    isFocused ? `${m.color}08` : T.glass,
                 backdropFilter:'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border:        `1px solid ${isFocused ? `${m.color}40` : T.border}`,
+                WebkitBackdropFilter:'blur(20px)',
+                border:        `1px solid ${isFocused ? `${m.color}40` : T.glassBorder}`,
                 borderTop:     `2px solid ${isFocused ? m.color : 'transparent'}`,
                 borderRadius:   12,
                 padding:       '18px 16px',
@@ -162,12 +157,11 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
                 textAlign:     'left',
                 boxShadow:      isFocused
                   ? `0 4px 32px ${m.color}14`
-                  : '0 2px 12px rgba(0,0,0,0.3)',
+                  : '0 2px 12px rgba(129,199,185,0.18)',
                 transition:    'all 0.2s ease',
                 outline:       'none',
               }}
             >
-              {/* Icon + label */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
                 <span style={{ fontSize: 16, color: m.color, lineHeight: 1 }}>{m.icon}</span>
                 <span style={{
@@ -181,25 +175,21 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
                   {m.label}
                 </span>
               </div>
-
-              {/* Tagline */}
               <p style={{
                 fontFamily:  'Inter, sans-serif',
                 fontSize:     12,
                 fontWeight:   500,
-                color:        isFocused ? T.textPrimary : 'rgba(232,237,243,0.65)',
+                color:        isFocused ? T.textPrimary : 'rgba(26,43,60,0.65)',
                 margin:      '0 0 8px',
                 lineHeight:   1.45,
                 transition:  'color 0.2s',
               }}>
                 {m.tagline}
               </p>
-
-              {/* Sample */}
               <p style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize:    10,
-                color:      'rgba(232,237,243,0.28)',
+                color:      'rgba(26,43,60,0.35)',
                 margin:      0,
                 lineHeight:  1.5,
                 display:    '-webkit-box',
@@ -209,19 +199,13 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
               }}>
                 "{m.sample.slice(0, 58)}…"
               </p>
-
-              {/* CTA arrow */}
               <motion.div
                 animate={{ x: [0, 3, 0] }}
                 transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
                 style={{
-                  marginTop:   10,
-                  fontSize:     10,
-                  color:       m.color,
-                  opacity:     0.55,
-                  fontFamily: 'Inter, sans-serif',
-                  fontWeight:  600,
-                  letterSpacing: '0.06em',
+                  marginTop:   10, fontSize: 10, color: m.color,
+                  opacity:     0.65, fontFamily: 'Inter, sans-serif',
+                  fontWeight:  600, letterSpacing: '0.06em',
                 }}
               >
                 Try this →
@@ -233,44 +217,30 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
 
       {/* ── Quick picks ── */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.4 }}
         style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 540 }}
       >
         <span style={{
-          fontFamily:    'Inter, sans-serif',
-          fontSize:       9,
-          fontWeight:     600,
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color:         T.textMuted,
-          width:         '100%',
-          textAlign:     'center',
-          marginBottom:   4,
+          fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 600,
+          letterSpacing: '0.16em', textTransform: 'uppercase', color: T.textMuted,
+          width: '100%', textAlign: 'center', marginBottom: 4,
         }}>
           Quick start
         </span>
         {QUICK_PICKS.map(({ labelKey, questionKey }, i) => (
           <motion.button
             key={labelKey}
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.38 + i * 0.06 }}
-            whileHover={{ borderColor: 'rgba(255,255,255,0.18)', color: T.textPrimary }}
+            whileHover={{ borderColor: 'rgba(201,169,110,0.50)', color: T.textPrimary }}
             onClick={() => onQuickPick(t(questionKey))}
             style={{
-              padding:      '6px 14px',
-              border:       '1px solid rgba(255,255,255,0.1)',
-              borderRadius:  9999,
-              background:   'rgba(255,255,255,0.04)',
-              fontFamily:   'Inter, sans-serif',
-              fontSize:      11,
-              color:        'rgba(232,237,243,0.5)',
-              cursor:       'pointer',
-              whiteSpace:   'nowrap',
-              transition:   'all 0.15s',
-              outline:      'none',
+              padding: '6px 14px', border: `1px solid ${T.glassBorder}`, borderRadius: 9999,
+              background: T.glass, backdropFilter: 'blur(12px)',
+              fontFamily: 'Inter, sans-serif', fontSize: 11,
+              color: 'rgba(26,43,60,0.55)', cursor: 'pointer',
+              whiteSpace: 'nowrap', transition: 'all 0.15s', outline: 'none',
             }}
           >
             {t(labelKey)}
@@ -280,16 +250,11 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
 
       {/* ── Keyboard hint ── */}
       <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.55 }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
         style={{
-          fontFamily:    'Inter, sans-serif',
-          fontSize:       9,
-          color:         'rgba(232,237,243,0.22)',
-          textAlign:     'center',
-          margin:         0,
-          letterSpacing: '0.06em',
+          fontFamily: 'Inter, sans-serif', fontSize: 9,
+          color: 'rgba(26,43,60,0.28)', textAlign: 'center',
+          margin: 0, letterSpacing: '0.06em',
         }}
       >
         ← → navigate · Enter select · ⌘↩ send

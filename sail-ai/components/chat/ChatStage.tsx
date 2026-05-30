@@ -38,14 +38,14 @@ import { useLanguage }                               from '@/lib/i18n/LanguageCo
 // ── Mode color map ────────────────────────────────────────────────────────────
 
 const MODE_COLOR: Record<AnalysisMode, string> = {
-  upwind:    '#0F6CBD',
-  downwind:  '#00695C',
+  upwind:    '#2563EB',
+  downwind:  '#059669',
   sail:      '#7C3AED',
   trim:      '#B45309',
-  catamaran: '#D4AF37',
-  operator:  '#CC2200',
+  catamaran: '#D97706',
+  operator:  '#DC2626',
   synergy:   '#C9A96E',
-  scenario:  '#00C9B1',
+  scenario:  '#0891B2',
 }
 
 // ── Streaming result card wrapper ─────────────────────────────────────────────
@@ -76,24 +76,24 @@ function StreamCard({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        background:   'rgba(255,255,255,0.04)',
+        background:   'rgba(10,13,20,0.92)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
-        border:       `1px solid rgba(255,255,255,0.08)`,
+        border:       `1px solid rgba(201,169,110,0.38)`,
         borderTop:    `2px solid ${color}`,
         borderRadius:  12,
         overflow:     'hidden',
-        boxShadow:    `0 4px 24px ${color}18, 0 1px 4px rgba(0,0,0,0.3)`,
+        boxShadow:    `0 4px 28px ${color}14, 0 2px 8px rgba(0,0,0,0.35)`,
       }}
     >
-      {/* Card header */}
+      {/* Card header — stays on dark shell */}
       <div style={{
         display:      'flex',
         alignItems:   'center',
         gap:           8,
         padding:      '10px 16px',
         borderBottom: `1px solid ${color}20`,
-        background:   `${color}08`,
+        background:   `${color}10`,
       }}>
         {streaming && (
           <motion.span
@@ -120,8 +120,13 @@ function StreamCard({
           {labels[mode] ?? mode.toUpperCase()}
         </span>
       </div>
-      {/* Card body */}
-      <div style={{ padding: '20px 16px' }}>
+      {/* Card body — white inner panel for readable content */}
+      <div style={{
+        background:   'rgba(255,255,255,0.97)',
+        margin:       '1px',
+        borderRadius: '0 0 11px 11px',
+        padding:      '20px 16px',
+      }}>
         {children}
       </div>
     </motion.div>
@@ -290,7 +295,7 @@ export function ChatStage(props: ChatStageProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
             >
-              <PredictiveAlertList alerts={activeAlerts as never} variant="dark" />
+              <PredictiveAlertList alerts={activeAlerts as never} variant="light" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -304,20 +309,22 @@ export function ChatStage(props: ChatStageProps) {
               exit={{ opacity: 0 }}
               style={{
                 padding:      '16px 20px',
-                background:   'rgba(201,169,110,0.08)',
-                border:       '1px solid rgba(201,169,110,0.25)',
+                background:   'rgba(248,253,251,0.90)',
+                backdropFilter:'blur(20px)',
+                border:       '1px solid rgba(201,169,110,0.35)',
                 borderRadius:  12,
                 display:      'flex',
                 alignItems:   'flex-start',
                 justifyContent:'space-between',
                 gap:           12,
+                boxShadow:    '0 2px 12px rgba(201,169,110,0.10)',
               }}
             >
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#E8EDF3', margin: '0 0 4px' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#1A2B3C', margin: '0 0 4px' }}>
                   {t('paywall.inlineTitle')}
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(232,237,243,0.55)', margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(26,43,60,0.55)', margin: 0, lineHeight: 1.5 }}>
                   {t('paywall.inlineCta')}
                 </p>
               </div>
@@ -325,9 +332,9 @@ export function ChatStage(props: ChatStageProps) {
                 onClick={() => { onDismissPaywall(); onUpgradePro() }}
                 style={{
                   padding:       '8px 16px',
-                  background:    'rgba(201,169,110,0.15)',
+                  background:    'rgba(10,13,20,0.90)',
                   color:         '#C9A96E',
-                  border:        '1px solid rgba(201,169,110,0.35)',
+                  border:        '1px solid rgba(201,169,110,0.40)',
                   borderRadius:   8,
                   fontFamily:    'Inter, sans-serif',
                   fontSize:       11,
@@ -356,17 +363,20 @@ export function ChatStage(props: ChatStageProps) {
                 display:      'flex',
                 alignItems:   'flex-start',
                 gap:           12,
-                background:   'rgba(239,68,68,0.08)',
-                border:       '1px solid rgba(239,68,68,0.2)',
+                background:   'rgba(255,255,255,0.88)',
+                backdropFilter:'blur(20px)',
+                border:       '1px solid rgba(220,38,38,0.25)',
+                borderLeft:   '3px solid #DC2626',
                 borderRadius:  12,
+                boxShadow:    '0 2px 8px rgba(220,38,38,0.06)',
               }}
             >
-              <span style={{ color: '#FCA5A5', flexShrink: 0 }}>⚠</span>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.6, color: '#FCA5A5', margin: 0 }}>
+              <span style={{ color: '#DC2626', flexShrink: 0 }}>⚠</span>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.6, color: '#991B1B', margin: 0 }}>
                 {activeError === 'RATE_LIMIT'
                   ? 'Request limit reached. Please wait a moment before trying again.'
                   : activeError?.toLowerCase().includes('sign in') || activeError?.toLowerCase().includes('unauthorized')
-                  ? <span>Session expired. <a href="/login?callbackUrl=%2Fchat" style={{ color: '#FCA5A5', textDecoration: 'underline' }}>Sign in again →</a></span>
+                  ? <span>Session expired. <a href="/login?callbackUrl=%2Fchat" style={{ color: '#991B1B', textDecoration: 'underline' }}>Sign in again →</a></span>
                   : activeError
                 }
               </p>
@@ -402,13 +412,13 @@ export function ChatStage(props: ChatStageProps) {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
+              style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(20px)', border: '1px solid rgba(220,38,38,0.22)', borderLeft: '3px solid #DC2626', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
             >
-              <span style={{ color: '#FCA5A5' }}>⚠</span>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#FCA5A5', flex: 1 }}>{autoError}</span>
+              <span style={{ color: '#DC2626' }}>⚠</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#991B1B', flex: 1 }}>{autoError}</span>
               <button
                 onClick={onDismissAutoError}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#FCA5A5', background: 'none', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#991B1B', background: 'none', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
               >
                 Dismiss
               </button>
@@ -435,13 +445,15 @@ export function ChatStage(props: ChatStageProps) {
           {mode === 'trim' && (trimPhase === 'loading' || trimPhase === 'complete') && (
             <motion.div key="trim" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}>
               <div style={{
-                background:   'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)',
+                background:   'rgba(10,13,20,0.92)', backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
-                border:       '1px solid rgba(255,255,255,0.08)', borderTop: '2px solid #B45309',
-                borderRadius:  12, overflow: 'hidden', padding: 24,
-                boxShadow:    '0 4px 24px rgba(180,83,9,0.15)',
+                border:       '1px solid rgba(201,169,110,0.38)', borderTop: '2px solid #B45309',
+                borderRadius:  12, overflow: 'hidden',
+                boxShadow:    '0 4px 28px rgba(180,83,9,0.14), 0 2px 8px rgba(0,0,0,0.35)',
               }}>
-                <TrimTimelineCard response={trimResponse} isLoading={trimPhase === 'loading'} />
+                <div style={{ background: 'rgba(255,255,255,0.97)', margin: '1px', borderRadius: '0 0 11px 11px', padding: 24 }}>
+                  <TrimTimelineCard response={trimResponse} isLoading={trimPhase === 'loading'} />
+                </div>
               </div>
             </motion.div>
           )}
@@ -498,13 +510,13 @@ export function ChatStage(props: ChatStageProps) {
               exit={{ opacity: 0, scale: 0.97 }}
               transition={{ duration: 0.4 }}
               style={{
-                background:          'rgba(255,255,255,0.04)',
+                background:          'rgba(248,253,251,0.90)',
                 backdropFilter:      'blur(20px)',
                 WebkitBackdropFilter:'blur(20px)',
-                border:              '1px solid rgba(20,184,166,0.2)',
+                border:              '1px solid rgba(201,169,110,0.30)',
                 borderRadius:         16,
                 overflow:            'hidden',
-                boxShadow:           '0 8px 40px rgba(20,184,166,0.12)',
+                boxShadow:           '0 8px 40px rgba(20,184,166,0.10), 0 2px 8px rgba(0,0,0,0.06)',
               }}
             >
               <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.5), rgba(201,169,110,0.4), transparent)' }} />
@@ -533,14 +545,14 @@ export function ChatStage(props: ChatStageProps) {
           {mode === 'downwind' && coachState !== 'IDLE' && coachState !== 'ERROR' && (
             <motion.div key="downwind" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}>
               <div style={{
-                background:   'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)',
+                background:   'rgba(10,13,20,0.92)', backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
-                border:       '1px solid rgba(255,255,255,0.08)', borderTop: '2px solid #00695C',
+                border:       '1px solid rgba(201,169,110,0.38)', borderTop: '2px solid #059669',
                 borderRadius:  12, overflow: 'hidden',
-                boxShadow:    '0 4px 24px rgba(0,105,92,0.15)',
+                boxShadow:    '0 4px 28px rgba(5,150,105,0.14), 0 2px 8px rgba(0,0,0,0.35)',
               }}>
                 {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderBottom: '1px solid rgba(0,105,92,0.15)', background: 'rgba(0,105,92,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderBottom: '1px solid rgba(5,150,105,0.20)', background: 'rgba(5,150,105,0.10)' }}>
                   {(coachState === 'THINKING' || coachState === 'STREAMING') && (
                     <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }}
                       style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#00695C', flexShrink: 0 }} />
@@ -615,16 +627,16 @@ export function ChatStage(props: ChatStageProps) {
                   alignItems:    'center',
                   gap:            8,
                   padding:       '8px 20px',
-                  background:    'rgba(255,255,255,0.06)',
+                  background:    'rgba(255,255,255,0.68)',
                   backdropFilter:'blur(20px)',
-                  border:        '1px solid rgba(255,255,255,0.1)',
+                  border:        '1px solid rgba(129,199,185,0.28)',
                   borderRadius:   8,
                   cursor:        'pointer',
                   fontFamily:    'Inter, sans-serif',
                   fontSize:       12,
                   fontWeight:     600,
                   letterSpacing: '0.06em',
-                  color:         '#E8EDF3',
+                  color:         '#1A2B3C',
                   transition:    'all 0.15s',
                 }}
               >
@@ -679,12 +691,12 @@ export function ChatStage(props: ChatStageProps) {
               borderRadius:   '50%',
               background:     'rgba(10,13,20,0.92)',
               backdropFilter: 'blur(20px)',
-              border:         '1px solid rgba(20,184,166,0.3)',
+              border:         '1px solid rgba(201,169,110,0.40)',
               cursor:         'pointer',
               display:        'flex',
               alignItems:     'center',
               justifyContent: 'center',
-              boxShadow:      '0 4px 16px rgba(0,0,0,0.5)',
+              boxShadow:      '0 4px 16px rgba(0,0,0,0.35)',
             }}
             aria-label="Jump to bottom"
           >

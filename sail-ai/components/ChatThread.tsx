@@ -1,17 +1,16 @@
 'use client'
 
 /**
- * components/ChatThread.tsx — Swiss Precision Rebuild
+ * ChatThread — Premium Dark Chat Boxes with Gold Frames
  * ─────────────────────────────────────────────────────────────────────────────
- * Continuous multi-turn conversation thread.
+ * UserBubble:     dark navy + gold border (20% dark allocation)
+ * AssistantCard:  dark obsidian shell + gold frame + white inner content panel
  *
- * Design pillars:
- *   • 8pt grid throughout — all spacing in multiples of 4/8px
- *   • 4-level typography: LABEL / BODY / SUBHEAD / DISPLAY
- *   • UserBubble: right-aligned, deep navy (#0C1929), 16px radius
- *   • AssistantCard: left-aligned, glass surface, mode-color 2px top border
- *   • StreamingCursor: teal blinking I-beam
- *   • FollowUpRail: chips staggered in 0.5s after completion
+ * Design:
+ *   • Outer shell = dark obsidian rgba(10,13,20,0.92) + gold border
+ *   • Mode header = dark with mode-color accent
+ *   • Inner panel = white rgba(255,255,255,0.97) for readable content
+ *   • Follow-up chips = mint glass
  */
 
 import { useRef, useState, useCallback, memo } from 'react'
@@ -28,14 +27,14 @@ import { StreamingCursor }                     from '@/components/chat/Streaming
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
 const MODE_META: Record<AnalysisMode, { label: string; color: string }> = {
-  upwind:    { label: 'Upwind',    color: '#0F6CBD' },
-  downwind:  { label: 'Downwind',  color: '#00695C' },
+  upwind:    { label: 'Upwind',    color: '#2563EB' },
+  downwind:  { label: 'Downwind',  color: '#059669' },
   sail:      { label: 'SAIL',      color: '#7C3AED' },
   trim:      { label: 'TRIM',      color: '#B45309' },
-  catamaran: { label: 'Catamaran', color: '#D4AF37' },
-  operator:  { label: 'Operator',  color: '#CC2200' },
+  catamaran: { label: 'Catamaran', color: '#D97706' },
+  operator:  { label: 'Operator',  color: '#DC2626' },
   synergy:   { label: 'Synergy',   color: '#C9A96E' },
-  scenario:  { label: 'Scenario',  color: '#00C9B1' },
+  scenario:  { label: 'Scenario',  color: '#0891B2' },
 }
 
 const FOLLOW_UPS: Record<AnalysisMode, string[]> = {
@@ -65,24 +64,20 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
       style={{ display: 'flex', justifyContent: 'flex-end', paddingLeft: 48 }}
     >
       <div style={{ maxWidth: '84%' }}>
-        {/* Bubble */}
+        {/* Dark bubble with gold frame */}
         <div style={{
-          background:          'linear-gradient(145deg, #0C1929 0%, #112237 55%, #0A1628 100%)',
-          borderRadius:        '16px 16px 4px 16px',
-          padding:             '12px 16px',
-          position:            'relative',
-          overflow:            'hidden',
-          boxShadow:           '0 4px 20px rgba(12,25,41,0.22), 0 1px 4px rgba(0,0,0,0.1)',
-          border:              '1px solid rgba(255,255,255,0.06)',
+          background:   'linear-gradient(145deg, #0C1929 0%, #112237 55%, #0A1628 100%)',
+          borderRadius: '16px 16px 4px 16px',
+          padding:      '12px 16px',
+          position:     'relative',
+          overflow:     'hidden',
+          boxShadow:    '0 4px 24px rgba(12,25,41,0.35)',
+          border:       '1px solid rgba(201,169,110,0.42)',
         }}>
-          {/* Teal-to-gold hairline */}
+          {/* Gold-to-teal hairline */}
           <div style={{
-            position:   'absolute',
-            top:         0,
-            left:       '10%',
-            right:      '10%',
-            height:      1,
-            background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.4), rgba(201,169,110,0.25), transparent)',
+            position: 'absolute', top: 0, left: '10%', right: '10%', height: 1,
+            background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.45), rgba(20,184,166,0.25), transparent)',
           }} />
           <p style={{
             fontFamily:    'Inter, sans-serif',
@@ -99,25 +94,11 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
           </p>
         </div>
         {/* Meta row */}
-        <div style={{
-          display:        'flex',
-          justifyContent: 'flex-end',
-          alignItems:     'center',
-          gap:             6,
-          marginTop:       4,
-        }}>
-          <span style={{
-            fontFamily:    'Inter, sans-serif',
-            fontSize:       9,
-            fontWeight:     700,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color,
-            opacity:        0.7,
-          }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginTop: 4 }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.7 }}>
             {modeLabel}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(12,25,41,0.3)', letterSpacing: '0.02em' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(26,43,60,0.35)', letterSpacing: '0.02em' }}>
             {ts}
           </span>
         </div>
@@ -147,91 +128,69 @@ const AssistantCard = memo(function AssistantCard({
       style={{ paddingRight: 16 }}
     >
       {/* Mode header row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, paddingLeft: 4 }}>
-        {/* Status dot */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, paddingLeft: 4 }}>
         <motion.span
           animate={message.streaming
             ? { opacity: [1, 0.15, 1], scale: [1, 0.65, 1] }
-            : { opacity: 0.55, scale: 1 }}
+            : { opacity: 0.7, scale: 1 }}
           transition={{ duration: 1.1, repeat: message.streaming ? Infinity : 0 }}
           style={{
-            display:      'inline-block',
-            width:         7,
-            height:        7,
-            borderRadius: '50%',
-            background:   meta.color,
-            flexShrink:   0,
-            boxShadow:    message.streaming ? `0 0 8px ${meta.color}88` : 'none',
+            display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
+            background: meta.color, flexShrink: 0,
+            boxShadow: message.streaming ? `0 0 8px ${meta.color}88` : 'none',
           }}
         />
-        {/* Mode label */}
-        <span style={{
-          fontFamily:    'Inter, sans-serif',
-          fontSize:       10,
-          fontWeight:     700,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color:         meta.color,
-        }}>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: meta.color }}>
           {meta.label}
         </span>
-        {/* Status text */}
         <span style={{
-          fontFamily:  'Inter, sans-serif',
-          fontSize:     10,
-          color:       message.streaming ? 'rgba(20,184,166,0.65)' : 'rgba(232,237,243,0.35)',
-          fontStyle:   message.streaming ? 'italic' : 'normal',
-          letterSpacing:'0.02em',
+          fontFamily: 'Inter, sans-serif', fontSize: 10,
+          color: message.streaming ? 'rgba(20,184,166,0.70)' : 'rgba(26,43,60,0.38)',
+          fontStyle: message.streaming ? 'italic' : 'normal', letterSpacing: '0.02em',
         }}>
           {message.streaming ? '· Processing intelligence…' : `· ${ts}`}
         </span>
       </div>
 
-      {/* Glass card */}
+      {/* ── Dark shell with gold border ── */}
       <div style={{
-        background:          'rgba(255,255,255,0.04)',
+        background:          'rgba(10,13,20,0.92)',
         backdropFilter:      'blur(24px)',
         WebkitBackdropFilter:'blur(24px)',
-        border:              '1px solid rgba(255,255,255,0.09)',
+        border:              '1px solid rgba(201,169,110,0.38)',
         borderTop:           `2px solid ${meta.color}`,
         borderRadius:        '4px 16px 16px 16px',
         overflow:            'hidden',
-        boxShadow:           `0 4px 24px ${meta.color}18, 0 1px 4px rgba(0,0,0,0.3)`,
+        boxShadow:           `0 4px 28px ${meta.color}14, 0 2px 8px rgba(0,0,0,0.35)`,
         position:            'relative',
       }}>
-        {renderPayload(message)}
+        {/* ── White inner content panel ── */}
+        <div style={{
+          background:   'rgba(255,255,255,0.97)',
+          margin:       '1px',
+          borderRadius: '3px 15px 15px 15px',
+          overflow:     'hidden',
+        }}>
+          {renderPayload(message)}
 
-        {/* Streaming cursor at end of text content */}
-        {message.streaming && message.payload.type === 'text' && message.payload.text && (
-          <div style={{ paddingBottom: 16, paddingLeft: 20 }}>
-            <StreamingCursor streaming />
-          </div>
-        )}
+          {/* Streaming cursor */}
+          {message.streaming && message.payload.type === 'text' && message.payload.text && (
+            <div style={{ paddingBottom: 16, paddingLeft: 20 }}>
+              <StreamingCursor streaming />
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Follow-up chips */}
+      {/* Follow-up chips — mint glass */}
       {!message.streaming && message.payload.type !== 'error' && chips.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45, duration: 0.25 }}
-          style={{
-            display:     'flex',
-            flexWrap:    'wrap',
-            gap:          6,
-            marginTop:    12,
-            paddingLeft:  4,
-            alignItems:  'center',
-          }}
+          style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10, paddingLeft: 4, alignItems: 'center' }}
         >
-          <span style={{
-            fontFamily:    'Inter, sans-serif',
-            fontSize:       9,
-            fontWeight:     600,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color:         'rgba(232,237,243,0.3)',
-          }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.32)' }}>
             Continue →
           </span>
           {chips.slice(0, 2).map((chip, i) => (
@@ -243,7 +202,7 @@ const AssistantCard = memo(function AssistantCard({
               onClick={() => onFollowUp(chip)}
               style={{
                 padding:         '5px 12px',
-                background:      'rgba(255,255,255,0.05)',
+                background:      'rgba(255,255,255,0.68)',
                 backdropFilter:  'blur(12px)',
                 border:          `1px solid ${meta.color}40`,
                 borderRadius:    9999,
@@ -254,7 +213,7 @@ const AssistantCard = memo(function AssistantCard({
                 cursor:          'pointer',
                 lineHeight:      1.4,
                 letterSpacing:   '0.01em',
-                boxShadow:       '0 1px 4px rgba(0,0,0,0.2)',
+                boxShadow:       '0 1px 4px rgba(0,0,0,0.06)',
                 transition:      'all 0.15s',
               }}
             >
@@ -276,8 +235,8 @@ function renderPayload(message: ChatMessage) {
     case 'error':
       return (
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-          <span style={{ color: '#991B1B', flexShrink: 0 }}>⚠</span>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#991B1B', margin: 0, lineHeight: 1.55 }}>
+          <span style={{ color: '#DC2626', flexShrink: 0 }}>⚠</span>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#DC2626', margin: 0, lineHeight: 1.55 }}>
             {payload.message}
           </p>
         </div>
@@ -324,17 +283,16 @@ function renderPayload(message: ChatMessage) {
           />
         )
       }
-      // downwind, operator, scenario, generic text
       return (
         <div style={{ padding: '20px 20px 16px' }}>
           {streaming && !payload.text && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <motion.div animate={{ opacity: [0.25, 0.9, 0.25] }} transition={{ duration: 1.4, repeat: Infinity }}
-                style={{ width: 32, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.1)' }} />
+                style={{ width: 32, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.08)' }} />
               <motion.div animate={{ opacity: [0.25, 0.9, 0.25] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.18 }}
-                style={{ width: 24, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.07)' }} />
+                style={{ width: 24, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.05)' }} />
               <motion.div animate={{ opacity: [0.25, 0.9, 0.25] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.36 }}
-                style={{ width: 16, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.05)' }} />
+                style={{ width: 16, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.04)' }} />
             </div>
           )}
           {payload.text && (
@@ -360,11 +318,7 @@ export function ChatThread({ messages, onFollowUp, className }: ChatThreadProps)
   return (
     <div
       className={className}
-      style={{
-        display:       'flex',
-        flexDirection: 'column',
-        gap:            20,
-      }}
+      style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
     >
       {messages.map(msg => (
         msg.role === 'user'
