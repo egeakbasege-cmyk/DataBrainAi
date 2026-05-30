@@ -227,7 +227,17 @@ const FRAG = /* glsl */`
   }
 `
 
-// ─── Geometry data ─────────────────────────────────────────────────────────────
+// ─── Swan silhouette — canvas painter → pixel sampler ────────────────────────
+//
+// Strategy (same as the Carhartt t-shirt):
+//   1. Paint a real swan shape onto a 2D canvas
+//   2. Sample every dark pixel → world-space 3D target position
+//   3. Red pixels  = wing particles (animated separately)
+//      Black pixels = body / neck / head (stationary once formed)
+//
+// World-space mapping (camera at z=7, fov=42, looking at y≈0.8):
+//   canvas x: 0→CW  →  world x: -4.5 → +4.5
+//   canvas y: 0→CH  →  world y: +2.8 → -1.8  (inverted + shifted up)
 
 interface GeoData {
   src: Float32Array
@@ -236,48 +246,141 @@ interface GeoData {
   wng: Float32Array
 }
 
+function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
+  // ── Step 1: wings (red) ── drawn first so body covers the inner overlap
+  ctx.fillStyle = '#cc0000'
+
+  // Left wing — large flat ellipse angled slightly upward
+  ctx.save()
+  ctx.translate(CW * 0.22, CH * 0.52)
+  ctx.rotate(0.22)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.275, CH * 0.135, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // Right wing — mirror
+  ctx.save()
+  ctx.translate(CW * 0.78, CH * 0.52)
+  ctx.rotate(-0.22)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.275, CH * 0.135, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // ── Step 2: body (black) ── covers wing overlap in the centre
+  ctx.fillStyle = '#000000'
+
+  // Main body — wide horizontal ellipse
+  ctx.save()
+  ctx.translate(CW * 0.50, CH * 0.58)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.265, CH * 0.20, -0.06, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // Tail — small rounded wedge at the left rear
+  ctx.save()
+  ctx.translate(CW * 0.245, CH * 0.545)
+  ctx.rotate(0.45)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.085, CH * 0.065, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // ── Step 3: neck (black) ── thick S-curve bezier stroke
+  ctx.beginPath()
+  ctx.moveTo(CW * 0.505, CH * 0.375)                    // neck base (top of body)
+  ctx.bezierCurveTo(
+    CW * 0.525, CH * 0.26,                              // control 1
+    CW * 0.60,  CH * 0.22,                              // control 2
+    CW * 0.625, CH * 0.145,                             // neck top
+  )
+  ctx.lineWidth   = CW * 0.046
+  ctx.strokeStyle = '#000000'
+  ctx.lineCap     = 'round'
+  ctx.stroke()
+
+  // ── Step 4: head (black) ── rounded ellipse at neck tip
+  ctx.fillStyle = '#000000'
+  ctx.beginPath()
+  ctx.ellipse(CW * 0.638, CH * 0.118, CW * 0.054, CH * 0.046, -0.3, 0, Math.PI * 2)
+  ctx.fill()
+
+  // ── Step 5: beak ── small triangle extending forward
+  ctx.beginPath()
+  ctx.moveTo(CW * 0.685, CH * 0.105)
+  ctx.lineTo(CW * 0.722, CH * 0.115)
+  ctx.lineTo(CW * 0.685, CH * 0.130)
+  ctx.closePath()
+  ctx.fill()
+
+  // ── Step 6: eye ── tiny white dot so the head reads clearly
+  ctx.fillStyle = '#ffffff'
+  ctx.beginPath()
+  ctx.arc(CW * 0.655, CH * 0.108, CW * 0.010, 0, Math.PI * 2)
+  ctx.fill()
+}
+
 function buildGeoData(): GeoData {
+  // ── Paint the swan ────────────────────────────────────────────────────────
+  const CW = 600, CH = 450
+  const cv  = document.createElement('canvas')
+  cv.width  = CW
+  cv.height = CH
+  const ctx = cv.getContext('2d')!
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, CW, CH)
+  drawSwan(ctx, CW, CH)
+
+  // ── Sample coloured pixels → world positions ──────────────────────────────
+  const pixels = ctx.getImageData(0, 0, CW, CH).data
+  const pool: { wx: number; wy: number; isWing: boolean }[] = []
+
+  for (let py = 0; py < CH; py++) {
+    for (let px = 0; px < CW; px++) {
+      const i = (py * CW + px) * 4
+      const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2]
+      if (r > 200 && g > 200 && b > 200) continue  // white → skip
+
+      // World-space coordinates
+      const wx = (px / CW - 0.5) *  9.0
+      const wy = -(py / CH - 0.5) * 5.0 + 0.35     // +0.35 shifts swan up slightly
+
+      // Red pixel = wing, dark pixel = body/neck/head
+      const isWing = r > 140 && g < 80 && b < 80
+      pool.push({ wx, wy, isWing })
+    }
+  }
+
+  // Shuffle pool so random subsampling gives uniform coverage
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp
+  }
+
+  // ── Fill typed arrays ─────────────────────────────────────────────────────
   const src = new Float32Array(N * 3)
   const tgt = new Float32Array(N * 3)
   const rnd = new Float32Array(N * 3)
   const wng = new Float32Array(N)
 
-  const spine = new THREE.CatmullRomCurve3(
-    Array.from({ length: 35 }, (_, i) => {
-      const t = i / 34
-      return new THREE.Vector3(
-        Math.sin(t * Math.PI * 1.5) * 0.38,
-        t * 4.6 - 2.3,
-        Math.cos(t * Math.PI) * 0.28,
-      )
-    })
-  )
-
   for (let i = 0; i < N; i++) {
-    // Rain start: y = -1..9 so particles are visible immediately at t=0.
-    // Camera sees y ≈ [-1.7, 3.7]; about 50% of particles start in view.
+    // Rain start: y = -1..9 → immediately visible (camera sees y ≈ [-1.7, 3.7])
     src[i*3]     = (Math.random() - 0.5) * 26
     src[i*3 + 1] = Math.random() * 10.0 - 1.0
     src[i*3 + 2] = (Math.random() - 0.5) * 14
 
-    if (Math.random() < 0.28) {
-      const pt     = spine.getPointAt(Math.random())
-      tgt[i*3]     = pt.x + (Math.random() - 0.5) * 0.22
-      tgt[i*3 + 1] = pt.y + (Math.random() - 0.5) * 0.22
-      tgt[i*3 + 2] = pt.z + (Math.random() - 0.5) * 0.22
-      wng[i] = 0.0
-    } else {
-      const side  = Math.random() > 0.5 ? 1.0 : -1.0
-      const sweep = Math.pow(Math.random(), 0.70) * 3.8
-      tgt[i*3]     = side * (0.30 + sweep)
-      tgt[i*3 + 1] = -0.55 + Math.random() * 1.4 + sweep * 0.42
-      tgt[i*3 + 2] = (Math.random() - 0.5) * 0.90 - sweep * 0.30
-      wng[i] = 1.0
-    }
+    // Target: cycle through the pool (wraps if pool < N)
+    const pt     = pool[i % pool.length]
+    tgt[i*3]     = pt.wx + (Math.random() - 0.5) * 0.06
+    tgt[i*3 + 1] = pt.wy + (Math.random() - 0.5) * 0.06
+    tgt[i*3 + 2] = (Math.random() - 0.5) * 0.28
+    wng[i]       = pt.isWing ? 1.0 : 0.0
 
-    rnd[i*3]     = 0.65 + Math.random() * 1.9    // fall speed
-    rnd[i*3 + 1] = Math.random() * Math.PI * 2   // phase offset → immediate stagger
-    rnd[i*3 + 2] = Math.floor(Math.random() * 25) // glyph index 0-24
+    rnd[i*3]     = 0.65 + Math.random() * 1.9
+    rnd[i*3 + 1] = Math.random() * Math.PI * 2
+    rnd[i*3 + 2] = Math.floor(Math.random() * 25)
   }
 
   return { src, tgt, rnd, wng }
