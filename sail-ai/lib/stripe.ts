@@ -14,7 +14,7 @@ export function getStripe(): Stripe {
 }
 
 export const PRICE_ID   = process.env.STRIPE_PRICE_ID ?? ''
-export const FREE_LIMIT = 5
+export const FREE_LIMIT = 25
 export const STORAGE_KEY = 'sail_usage'
 
 export interface UsageRecord {

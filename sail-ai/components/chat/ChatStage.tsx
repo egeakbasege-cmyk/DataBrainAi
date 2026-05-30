@@ -43,14 +43,14 @@ import { useLanguage }                               from '@/lib/i18n/LanguageCo
 // ── Mode color map ────────────────────────────────────────────────────────────
 
 const MODE_COLOR: Record<AnalysisMode, string> = {
-  upwind:    '#2563EB',
-  downwind:  '#059669',
-  sail:      '#7C3AED',
-  trim:      '#B45309',
-  catamaran: '#D97706',
-  operator:  '#DC2626',
+  upwind:    '#4F8EF7',
+  downwind:  '#34D399',
+  sail:      '#A78BFA',
+  trim:      '#FBA928',
+  catamaran: '#FBBF24',
+  operator:  '#F87171',
   synergy:   '#C9A96E',
-  scenario:  '#0891B2',
+  scenario:  '#38BDF8',
 }
 
 // ── Streaming result card wrapper ─────────────────────────────────────────────
@@ -125,12 +125,13 @@ function StreamCard({
           {labels[mode] ?? mode.toUpperCase()}
         </span>
       </div>
-      {/* Card body — white inner panel for readable content */}
+      {/* Card body — dark glass panel for readable content */}
       <div style={{
-        background:   'rgba(255,255,255,0.97)',
+        background:   'rgba(12,15,24,0.90)',
         margin:       '1px',
         borderRadius: '0 0 11px 11px',
         padding:      '20px 16px',
+        color:        '#DDE3EC',
       }}>
         {children}
       </div>
@@ -313,23 +314,24 @@ export function ChatStage(props: ChatStageProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               style={{
-                padding:      '16px 20px',
-                background:   'rgba(248,253,251,0.90)',
-                backdropFilter:'blur(20px)',
-                border:       '1px solid rgba(201,169,110,0.35)',
-                borderRadius:  12,
-                display:      'flex',
-                alignItems:   'flex-start',
+                padding:       '16px 20px',
+                background:    'rgba(10,13,20,0.94)',
+                backdropFilter:'blur(24px)',
+                border:        '1px solid rgba(201,169,110,0.32)',
+                borderLeft:    '3px solid #C9A96E',
+                borderRadius:   12,
+                display:       'flex',
+                alignItems:    'flex-start',
                 justifyContent:'space-between',
-                gap:           12,
-                boxShadow:    '0 2px 12px rgba(201,169,110,0.10)',
+                gap:            12,
+                boxShadow:     '0 4px 24px rgba(201,169,110,0.10)',
               }}
             >
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#1A2B3C', margin: '0 0 4px' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#C9A96E', margin: '0 0 4px' }}>
                   {t('paywall.inlineTitle')}
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(26,43,60,0.55)', margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(232,237,243,0.55)', margin: 0, lineHeight: 1.5 }}>
                   {t('paywall.inlineCta')}
                 </p>
               </div>
@@ -364,24 +366,24 @@ export function ChatStage(props: ChatStageProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               style={{
-                padding:      '14px 16px',
-                display:      'flex',
-                alignItems:   'flex-start',
-                gap:           12,
-                background:   'rgba(255,255,255,0.88)',
-                backdropFilter:'blur(20px)',
-                border:       '1px solid rgba(220,38,38,0.25)',
-                borderLeft:   '3px solid #DC2626',
-                borderRadius:  12,
-                boxShadow:    '0 2px 8px rgba(220,38,38,0.06)',
+                padding:       '14px 16px',
+                display:       'flex',
+                alignItems:    'flex-start',
+                gap:            12,
+                background:    'rgba(10,13,20,0.92)',
+                backdropFilter:'blur(24px)',
+                border:        '1px solid rgba(248,113,113,0.22)',
+                borderLeft:    '3px solid #F87171',
+                borderRadius:   12,
+                boxShadow:     '0 2px 8px rgba(248,113,113,0.08)',
               }}
             >
-              <span style={{ color: '#DC2626', flexShrink: 0 }}>⚠</span>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.6, color: '#991B1B', margin: 0 }}>
+              <span style={{ color: '#F87171', flexShrink: 0 }}>⚠</span>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.6, color: 'rgba(248,113,113,0.90)', margin: 0 }}>
                 {activeError === 'RATE_LIMIT'
                   ? 'Request limit reached. Please wait a moment before trying again.'
                   : activeError?.toLowerCase().includes('sign in') || activeError?.toLowerCase().includes('unauthorized')
-                  ? <span>Session expired. <a href="/login?callbackUrl=%2Fchat" style={{ color: '#991B1B', textDecoration: 'underline' }}>Sign in again →</a></span>
+                  ? <span>Session expired. <a href="/login?callbackUrl=%2Fchat" style={{ color: '#F87171', textDecoration: 'underline' }}>Sign in again →</a></span>
                   : activeError
                 }
               </p>

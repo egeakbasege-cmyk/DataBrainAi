@@ -164,12 +164,13 @@ const AssistantCard = memo(function AssistantCard({
         boxShadow:           `0 4px 28px ${meta.color}14, 0 2px 8px rgba(0,0,0,0.35)`,
         position:            'relative',
       }}>
-        {/* ── White inner content panel ── */}
+        {/* ── Dark glass inner content panel ── */}
         <div style={{
-          background:   'rgba(255,255,255,0.97)',
+          background:   'rgba(12,15,24,0.90)',
           margin:       '1px',
           borderRadius: '3px 15px 15px 15px',
           overflow:     'hidden',
+          color:        '#DDE3EC',
         }}>
           {renderPayload(message)}
 
@@ -190,7 +191,7 @@ const AssistantCard = memo(function AssistantCard({
           transition={{ delay: 0.45, duration: 0.25 }}
           style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10, paddingLeft: 4, alignItems: 'center' }}
         >
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.32)' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(232,237,243,0.28)' }}>
             Continue →
           </span>
           {chips.slice(0, 2).map((chip, i) => (
@@ -201,20 +202,20 @@ const AssistantCard = memo(function AssistantCard({
               transition={{ delay: 0.5 + i * 0.06, duration: 0.2 }}
               onClick={() => onFollowUp(chip)}
               style={{
-                padding:         '5px 12px',
-                background:      'rgba(255,255,255,0.68)',
-                backdropFilter:  'blur(12px)',
-                border:          `1px solid ${meta.color}40`,
+                padding:        '5px 12px',
+                background:     'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(12px)',
+                border:         `1px solid ${meta.color}40`,
                 borderRadius:    9999,
-                fontFamily:      'Inter, sans-serif',
+                fontFamily:     'Inter, sans-serif',
                 fontSize:        11,
                 fontWeight:      500,
                 color:           meta.color,
-                cursor:          'pointer',
+                cursor:         'pointer',
                 lineHeight:      1.4,
-                letterSpacing:   '0.01em',
-                boxShadow:       '0 1px 4px rgba(0,0,0,0.06)',
-                transition:      'all 0.15s',
+                letterSpacing:  '0.01em',
+                boxShadow:      `0 0 10px ${meta.color}14`,
+                transition:     'all 0.18s',
               }}
             >
               {chip}
@@ -235,8 +236,8 @@ function renderPayload(message: ChatMessage) {
     case 'error':
       return (
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-          <span style={{ color: '#DC2626', flexShrink: 0 }}>⚠</span>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#DC2626', margin: 0, lineHeight: 1.55 }}>
+          <span style={{ color: '#F87171', flexShrink: 0 }}>⚠</span>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(248,113,113,0.88)', margin: 0, lineHeight: 1.55 }}>
             {payload.message}
           </p>
         </div>
@@ -247,7 +248,7 @@ function renderPayload(message: ChatMessage) {
         <ExecutiveResponseCard
           response={payload.data as never}
           isStreaming={streaming}
-          variant="light"
+          variant="dark"
         />
       )
 

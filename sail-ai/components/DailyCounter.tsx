@@ -28,16 +28,16 @@ export function DailyCounter({ used, isPro }: Props) {
   }
 
   const remaining = FREE_LIMIT - used
-  const urgent    = remaining <= 1
+  const urgent    = remaining <= 2
 
   return (
     <span
       className="label-caps"
       style={{
         padding:    '3px 10px',
-        border:     `1px solid ${urgent ? 'rgba(153,27,27,0.25)' : 'rgba(0,0,0,0.14)'}`,
-        color:      urgent ? '#991B1B' : '#71717A',
-        background: urgent ? 'rgba(153,27,27,0.04)' : 'transparent',
+        border:     `1px solid ${urgent ? 'rgba(248,113,113,0.30)' : 'rgba(255,255,255,0.10)'}`,
+        color:      urgent ? '#F87171' : 'rgba(232,237,243,0.45)',
+        background: urgent ? 'rgba(248,113,113,0.08)' : 'transparent',
       }}
     >
       {remaining}/{FREE_LIMIT} {t('counter.freeToday')}
