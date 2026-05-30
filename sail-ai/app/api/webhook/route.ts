@@ -12,23 +12,41 @@ export async function POST(req: NextRequest) {
   const payload   = await req.text()
   const signature = req.headers.get('x-signature') ?? ''
 
-  if (!verifyWebhookSignature(payload, signature)) {
-    console.error('[Webhook] Invalid signature')
+  // verifyWebhookSignature may throw if signature length mismatches
+  let valid = false
+  try {
+    valid = verifyWebhookSignature(payload, signature)
+  } catch {
+    return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 })
+  }
+  if (!valid) {
+    console.warn('[Webhook] Rejected: invalid signature')
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 })
   }
 
-  const event = JSON.parse(payload)
-  const name  = event?.meta?.event_name as string
-  const data  = event?.data?.attributes
+  // Parse after verification — malformed JSON returns 400, not 500
+  let event: Record<string, unknown>
+  try {
+    event = JSON.parse(payload)
+  } catch {
+    return NextResponse.json({ error: 'Malformed payload.' }, { status: 400 })
+  }
 
-  // Resolve user email: custom checkout data → billing email
-  const email: string =
-    event?.meta?.custom_data?.user_email ??
-    data?.user_email ??
-    data?.billing_address?.email ??
+  const name = (event?.meta as Record<string, unknown>)?.event_name as string | undefined
+  const data = (event?.data as Record<string, unknown>)?.attributes as Record<string, unknown> | undefined
+
+  // ── Email resolution ──────────────────────────────────────────────────────
+  // SECURITY: Do NOT trust custom_data.user_email — it's unverified and can be
+  // forged to grant Pro status to any email. Only use Lemon Squeezy-controlled
+  // fields (data.user_email, data.billing_address.email).
+  const billingAddr = data?.billing_address as Record<string, unknown> | undefined
+  const email: string = (
+    (data?.user_email as string | undefined) ??
+    (billingAddr?.email as string | undefined) ??
     ''
+  ).toLowerCase().trim()
 
-  console.log(`[Webhook] ${name} — email: ${email || 'unknown'}`)
+  console.log(`[Webhook] ${name ?? 'unknown'} received`)
 
   switch (name) {
     case 'order_created':

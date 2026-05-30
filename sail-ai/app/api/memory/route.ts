@@ -67,6 +67,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Missing required fields.' }, { status: 400 })
   }
 
+  // Input length limits — prevent Pinecone quota exhaustion and OOM in embedding
+  const VALID_MODES = new Set(['upwind','downwind','sail','trim','catamaran','operator','synergy','scenario'])
+  const sessionId   = String(body.sessionId).slice(0, 64)
+  const query       = String(body.query).slice(0, 500)
+  const summary     = String(body.summary).slice(0, 2000)
+  const mode        = VALID_MODES.has(String(body.mode)) ? String(body.mode) : 'upwind'
+
+  // Overwrite body fields with sanitised values for the saveAnalysis call below
+  body = { sessionId, query, summary, mode }
+
   try {
     const user = await prisma.user.findUnique({
       where:  { email: session.user.email },

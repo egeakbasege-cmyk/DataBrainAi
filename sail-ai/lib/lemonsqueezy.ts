@@ -85,15 +85,28 @@ export async function createCheckoutUrl(opts: {
 }
 
 /**
- * Verify Lemon Squeezy webhook signature.
- * Returns true if valid.
+ * Verify Lemon Squeezy webhook signature (constant-time comparison).
+ *
+ * Safety: `crypto.timingSafeEqual` throws if the two buffers have different
+ * byte lengths. We guard against that by comparing lengths first (a length
+ * mismatch is itself evidence of an invalid signature and is not a timing
+ * oracle because HMAC output length is fixed and public).
  */
 export function verifyWebhookSignature(payload: string, signature: string): boolean {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET
-  if (!secret) return false
+  if (!secret || !signature) return false
+
   const expected = crypto
     .createHmac('sha256', secret)
     .update(payload)
     .digest('hex')
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
+
+  const expectedBuf = Buffer.from(expected, 'hex')
+  // Signature must be a valid hex string of the same length before we compare
+  if (!/^[0-9a-f]+$/i.test(signature) || signature.length !== expected.length) {
+    return false
+  }
+  const signatureBuf = Buffer.from(signature, 'hex')
+
+  return crypto.timingSafeEqual(expectedBuf, signatureBuf)
 }

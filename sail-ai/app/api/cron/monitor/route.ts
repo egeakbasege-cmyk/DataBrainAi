@@ -27,6 +27,16 @@ import { prisma }                    from '@/lib/prisma'
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const STALE_THRESHOLD_DAYS = 7
+
+/** Escape HTML special chars so user-controlled strings are safe in email HTML */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
 const FROM_ADDRESS         = 'Sail AI <alerts@sail-ai.com>'
 const REPLY_TO             = 'support@sail-ai.com'
 
@@ -74,8 +84,8 @@ async function sendEmail({
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://sail-ai.com'
 
 function staleProfileEmail(name: string, sector: string, daysSince: number): string {
-  const greeting = name ? `Hi ${name.split(' ')[0]},` : 'Hi,'
-  const sectorLine = sector ? `for your <strong>${sector}</strong> business` : 'for your business'
+  const greeting   = name   ? `Hi ${esc(name.split(' ')[0])},` : 'Hi,'
+  const sectorLine = sector ? `for your <strong>${esc(sector)}</strong> business` : 'for your business'
 
   return `
 <!DOCTYPE html>
@@ -128,7 +138,7 @@ function staleProfileEmail(name: string, sector: string, daysSince: number): str
 }
 
 function emptyProfileEmail(name: string): string {
-  const greeting = name ? `Hi ${name.split(' ')[0]},` : 'Hi,'
+  const greeting = name ? `Hi ${esc(name.split(' ')[0])},` : 'Hi,'
 
   return `
 <!DOCTYPE html>
@@ -188,14 +198,17 @@ function emptyProfileEmail(name: string): string {
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  // ── 1. Auth: verify CRON_SECRET ──────────────────────────────────────────────
+  // ── 1. Auth: ALWAYS verify CRON_SECRET — fail-closed ────────────────────────
+  //    If the secret is not configured we return 503 (not 200) so the endpoint
+  //    is never accessible without a properly provisioned environment.
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization') ?? ''
-    const token      = authHeader.replace(/^Bearer\s+/i, '').trim()
-    if (token !== cronSecret) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'Endpoint not configured.' }, { status: 503 })
+  }
+  const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization') ?? ''
+  const token      = authHeader.replace(/^Bearer\s+/i, '').trim()
+  if (!token || token !== cronSecret) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   const stats = {
@@ -260,11 +273,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    console.log('[Monitor] Cron complete:', stats)
+    console.log('[Monitor] Cron complete', JSON.stringify({ totalPro: stats.totalPro, emailsSent: stats.emailsSent, errors: stats.errors }))
     return NextResponse.json({ ok: true, ...stats })
 
   } catch (err: unknown) {
-    console.error('[Monitor] Fatal error:', err)
-    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
+    // Never expose internal error details (Prisma messages, connection strings)
+    console.error('[Monitor] Fatal error:', err instanceof Error ? err.message : 'unknown')
+    return NextResponse.json({ ok: false, error: 'Internal error.' }, { status: 500 })
   }
 }

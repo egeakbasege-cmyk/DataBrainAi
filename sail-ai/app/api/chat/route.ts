@@ -491,7 +491,9 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 4. Per-user rate limit ─────────────────────────────────────────────────
-  const userId   = body.userId ?? 'anonymous'
+  // SECURITY: Derive userId from the verified server-side session, never from
+  // the request body (body.userId is untrusted and trivially spoofable).
+  const userId   = session.user.email!
   const rlResult = await checkRateLimit(userId)
   if (!rlResult.allowed) {
     return Response.json(
