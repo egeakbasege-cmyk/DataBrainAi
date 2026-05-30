@@ -710,7 +710,7 @@ export default function ChatPage() {
         inset:            0,
         display:         'flex',
         flexDirection:   'column',
-        background:      'linear-gradient(160deg, #080B12 0%, #0A0D18 40%, #080B14 75%, #06090F 100%)',
+        background:      'linear-gradient(160deg, #EFF9F6 0%, #E9F7F3 30%, #F4FAF9 65%, #F8FAF9 100%)',
         overflow:        'hidden',
       }}>
         {/* Nav bar */}
@@ -975,24 +975,24 @@ export default function ChatPage() {
             style={{
               position: 'fixed', top: 0, right: 0, bottom: 0,
               width: 'min(380px, 92vw)',
-              background: 'rgba(8,11,18,0.97)',
-              backdropFilter: 'blur(48px)',
-              borderLeft: '1px solid rgba(201,169,110,0.16)',
-              boxShadow: '-8px 0 48px rgba(0,0,0,0.50)',
+              background: 'rgba(248,253,251,0.97)',
+              backdropFilter: 'blur(40px)',
+              borderLeft: '1px solid rgba(129,199,185,0.30)',
+              boxShadow: '-8px 0 40px rgba(0,0,0,0.10)',
               zIndex: 61,
               display: 'flex', flexDirection: 'column', overflow: 'hidden',
             }}
           >
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(201,169,110,0.14)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(129,199,185,0.18)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 300, color: '#E8EDF3', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.38)', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 300, color: '#1A2B3C', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(26,43,60,0.42)', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
               </div>
-              <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'rgba(232,237,243,0.35)', lineHeight: 1, padding: 4 }}>×</button>
+              <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'rgba(26,43,60,0.35)', lineHeight: 1, padding: 4 }}>×</button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
               {profile.sessions.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(232,237,243,0.30)', textAlign: 'center', marginTop: 32 }}>{t('chat.noAnalysesYet')}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(26,43,60,0.35)', textAlign: 'center', marginTop: 32 }}>{t('chat.noAnalysesYet')}</p>
               ) : (
                 [...profile.sessions].reverse().map((s, i) => {
                   const key = s.id ?? String(i); const expanded = expandedSession === key
@@ -1000,26 +1000,26 @@ export default function ChatPage() {
                     <div key={key} onClick={() => setExpandedSession(expanded ? null : key)}
                       style={{
                         padding: '14px 16px', marginBottom: 8, cursor: 'pointer',
-                        background: expanded ? 'rgba(201,169,110,0.08)' : 'rgba(255,255,255,0.04)',
-                        border: `1px solid ${expanded ? 'rgba(201,169,110,0.32)' : 'rgba(255,255,255,0.08)'}`,
+                        background: expanded ? 'rgba(201,169,110,0.08)' : 'rgba(255,255,255,0.55)',
+                        border: `1px solid ${expanded ? 'rgba(201,169,110,0.28)' : 'rgba(129,199,185,0.22)'}`,
                         borderRadius: 10, transition: 'all 0.18s',
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#E8EDF3', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>{s.prompt}</p>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#1A2B3C', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>{s.prompt}</p>
                         <span style={{ color: '#C9A96E', fontSize: 10, flexShrink: 0 }}>{expanded ? '▲' : '▼'}</span>
                       </div>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.45)', margin: '0 0 6px', lineHeight: 1.5 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(26,43,60,0.52)', margin: '0 0 6px', lineHeight: 1.5 }}>
                         {expanded ? s.summary : `${s.summary?.slice(0, 100) ?? ''}${(s.summary?.length ?? 0) > 100 ? '…' : ''}`}
                       </p>
                       {s.createdAt && (
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.25)', margin: 0 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(26,43,60,0.30)', margin: 0 }}>
                           {new Date(s.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       )}
                       {expanded && (
                         <button onClick={e => { e.stopPropagation(); setInput(s.prompt ?? ''); setShowHistory(false) }}
-                          style={{ marginTop: 12, padding: '6px 14px', background: 'rgba(10,13,20,0.88)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.40)', borderRadius: 6, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                          style={{ marginTop: 12, padding: '6px 14px', background: 'rgba(201,169,110,0.10)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.35)', borderRadius: 6, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                           {t('chat.rerunAnalysis')}
                         </button>
                       )}

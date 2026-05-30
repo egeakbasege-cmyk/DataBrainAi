@@ -43,14 +43,14 @@ import { useLanguage }                               from '@/lib/i18n/LanguageCo
 // ── Mode color map ────────────────────────────────────────────────────────────
 
 const MODE_COLOR: Record<AnalysisMode, string> = {
-  upwind:    '#4F8EF7',
-  downwind:  '#34D399',
-  sail:      '#A78BFA',
-  trim:      '#FBA928',
-  catamaran: '#FBBF24',
-  operator:  '#F87171',
+  upwind:    '#2563EB',
+  downwind:  '#059669',
+  sail:      '#7C3AED',
+  trim:      '#B45309',
+  catamaran: '#D97706',
+  operator:  '#DC2626',
   synergy:   '#C9A96E',
-  scenario:  '#38BDF8',
+  scenario:  '#0891B2',
 }
 
 // ── Streaming result card wrapper ─────────────────────────────────────────────
@@ -315,23 +315,23 @@ export function ChatStage(props: ChatStageProps) {
               exit={{ opacity: 0 }}
               style={{
                 padding:       '16px 20px',
-                background:    'rgba(10,13,20,0.94)',
+                background:    'rgba(255,255,255,0.88)',
                 backdropFilter:'blur(24px)',
-                border:        '1px solid rgba(201,169,110,0.32)',
+                border:        '1px solid rgba(201,169,110,0.30)',
                 borderLeft:    '3px solid #C9A96E',
                 borderRadius:   12,
                 display:       'flex',
                 alignItems:    'flex-start',
                 justifyContent:'space-between',
                 gap:            12,
-                boxShadow:     '0 4px 24px rgba(201,169,110,0.10)',
+                boxShadow:     '0 4px 20px rgba(201,169,110,0.08)',
               }}
             >
               <div>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#C9A96E', margin: '0 0 4px' }}>
                   {t('paywall.inlineTitle')}
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(232,237,243,0.55)', margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(26,43,60,0.55)', margin: 0, lineHeight: 1.5 }}>
                   {t('paywall.inlineCta')}
                 </p>
               </div>
@@ -339,9 +339,9 @@ export function ChatStage(props: ChatStageProps) {
                 onClick={() => { onDismissPaywall(); onUpgradePro() }}
                 style={{
                   padding:       '8px 16px',
-                  background:    'rgba(10,13,20,0.90)',
+                  background:    'rgba(201,169,110,0.10)',
                   color:         '#C9A96E',
-                  border:        '1px solid rgba(201,169,110,0.40)',
+                  border:        '1px solid rgba(201,169,110,0.35)',
                   borderRadius:   8,
                   fontFamily:    'Inter, sans-serif',
                   fontSize:       11,
@@ -370,16 +370,16 @@ export function ChatStage(props: ChatStageProps) {
                 display:       'flex',
                 alignItems:    'flex-start',
                 gap:            12,
-                background:    'rgba(10,13,20,0.92)',
+                background:    'rgba(255,255,255,0.88)',
                 backdropFilter:'blur(24px)',
-                border:        '1px solid rgba(248,113,113,0.22)',
-                borderLeft:    '3px solid #F87171',
+                border:        '1px solid rgba(220,38,38,0.18)',
+                borderLeft:    '3px solid #DC2626',
                 borderRadius:   12,
-                boxShadow:     '0 2px 8px rgba(248,113,113,0.08)',
+                boxShadow:     '0 2px 8px rgba(220,38,38,0.06)',
               }}
             >
-              <span style={{ color: '#F87171', flexShrink: 0 }}>⚠</span>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.6, color: 'rgba(248,113,113,0.90)', margin: 0 }}>
+              <span style={{ color: '#DC2626', flexShrink: 0 }}>⚠</span>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.6, color: 'rgba(220,38,38,0.85)', margin: 0 }}>
                 {activeError === 'RATE_LIMIT'
                   ? 'Request limit reached. Please wait a moment before trying again.'
                   : activeError?.toLowerCase().includes('sign in') || activeError?.toLowerCase().includes('unauthorized')
@@ -419,13 +419,13 @@ export function ChatStage(props: ChatStageProps) {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              style={{ padding: '12px 16px', background: 'rgba(10,13,20,0.92)', backdropFilter: 'blur(20px)', border: '1px solid rgba(248,113,113,0.22)', borderLeft: '3px solid #F87171', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
+              style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(20px)', border: '1px solid rgba(220,38,38,0.18)', borderLeft: '3px solid #DC2626', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
             >
-              <span style={{ color: '#F87171' }}>⚠</span>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(248,113,113,0.88)', flex: 1 }}>{autoError}</span>
+              <span style={{ color: '#DC2626' }}>⚠</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(220,38,38,0.85)', flex: 1 }}>{autoError}</span>
               <button
                 onClick={onDismissAutoError}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#F87171', background: 'none', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#DC2626', background: 'none', border: '1px solid rgba(220,38,38,0.22)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
               >
                 Dismiss
               </button>
@@ -654,16 +654,16 @@ export function ChatStage(props: ChatStageProps) {
                   alignItems:    'center',
                   gap:            8,
                   padding:       '8px 20px',
-                  background:    'rgba(255,255,255,0.06)',
+                  background:    'rgba(255,255,255,0.70)',
                   backdropFilter:'blur(20px)',
-                  border:        '1px solid rgba(255,255,255,0.12)',
+                  border:        '1px solid rgba(129,199,185,0.30)',
                   borderRadius:   8,
                   cursor:        'pointer',
                   fontFamily:    'Inter, sans-serif',
                   fontSize:       12,
                   fontWeight:     600,
                   letterSpacing: '0.06em',
-                  color:         'rgba(232,237,243,0.75)',
+                  color:         'rgba(26,43,60,0.65)',
                   transition:    'all 0.15s',
                 }}
               >
@@ -716,14 +716,14 @@ export function ChatStage(props: ChatStageProps) {
               width:           40,
               height:          40,
               borderRadius:   '50%',
-              background:     'rgba(10,13,20,0.92)',
+              background:     'rgba(248,253,251,0.93)',
               backdropFilter: 'blur(20px)',
-              border:         '1px solid rgba(201,169,110,0.40)',
+              border:         '1px solid rgba(129,199,185,0.38)',
               cursor:         'pointer',
               display:        'flex',
               alignItems:     'center',
               justifyContent: 'center',
-              boxShadow:      '0 4px 16px rgba(0,0,0,0.35)',
+              boxShadow:      '0 4px 16px rgba(0,0,0,0.10)',
             }}
             aria-label="Jump to bottom"
           >

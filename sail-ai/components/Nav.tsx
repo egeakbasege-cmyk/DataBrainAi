@@ -19,8 +19,6 @@ export function Nav() {
 
   // Scroll-aware transparency: only on the landing page
   const isLanding = pathname === '/'
-  // Dark nav on the chat page
-  const isChat = pathname === '/chat'
   useEffect(() => {
     if (!isLanding) return
     const onScroll = () => setScrolled(window.scrollY > 72)
@@ -50,15 +48,13 @@ export function Nav() {
     }
   }
 
-  // On landing: transparent until scrolled. On chat: dark obsidian. Elsewhere: frosted light.
-  const navBg = isChat
-    ? 'rgba(8,11,18,0.96)'
-    : isLanding && !scrolled
+  // On landing: transparent until scrolled. Everywhere else: frosted light.
+  const navBg = isLanding && !scrolled
     ? 'transparent'
     : 'rgba(250,250,248,0.96)'
   const navBlur = (isLanding && !scrolled) ? 'none' : 'blur(20px)'
-  // Text colours: white on dark (chat/hero), charcoal otherwise
-  const isDark = isChat || (isLanding && !scrolled)
+  // Text colours: white on hero (landing before scroll), charcoal otherwise
+  const isDark = isLanding && !scrolled
   const navLinkColor = isDark ? 'rgba(232,237,243,0.52)' : '#71717A'
   const navResearchColor = '#C9A96E'
   const navBrandColor = isDark ? '#E8EDF3' : '#0C0C0E'
@@ -206,19 +202,19 @@ export function Nav() {
                     top:            'calc(100% + 0.5rem)',
                     right:           0,
                     zIndex:          41,
-                    background:      isChat ? 'rgba(10,13,20,0.97)' : '#FFFFFF',
-                    backdropFilter:  isChat ? 'blur(24px)' : 'none',
-                    border:         `1px solid ${isChat ? 'rgba(201,169,110,0.22)' : 'rgba(12,12,14,0.10)'}`,
-                    boxShadow:       isChat ? '0 12px 40px rgba(0,0,0,0.50)' : '0 8px 24px rgba(0,0,0,0.09)',
+                    background:     '#FFFFFF',
+                    backdropFilter: 'none',
+                    border:         '1px solid rgba(12,12,14,0.10)',
+                    boxShadow:      '0 8px 24px rgba(0,0,0,0.09)',
                     minWidth:       '190px',
                     padding:        '0.375rem 0',
                     borderRadius:    8,
                   }}>
                     <div style={{
                       padding:      '0.625rem 1rem',
-                      borderBottom: `1px solid ${isChat ? 'rgba(201,169,110,0.12)' : 'rgba(12,12,14,0.07)'}`,
+                      borderBottom: '1px solid rgba(12,12,14,0.07)',
                     }}>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 500, color: isChat ? '#E8EDF3' : '#0C0C0E', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 500, color: '#0C0C0E', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {session.user.name ?? session.user.email}
                       </p>
                       {session.user.isPro && (
@@ -228,13 +224,13 @@ export function Nav() {
                       )}
                     </div>
 
-                    <MenuItem href="/chat"        onClick={() => setMenuOpen(false)} label={t('nav.chartCourse')} dark={isChat} />
-                    <MenuItem href="/research"   onClick={() => setMenuOpen(false)} label={t('nav.research')}    dark={isChat} />
-                    <MenuItem href="/data-lab"   onClick={() => setMenuOpen(false)} label={t('nav.dataLab')}      dark={isChat} />
-                    <MenuItem href="/vault"       onClick={() => setMenuOpen(false)} label={t('nav.dataVault')}    dark={isChat} />
-                    <MenuItem href="/frameworks" onClick={() => setMenuOpen(false)} label={t('nav.frameworks')}   dark={isChat} />
-                    <MenuItem href="/dashboard"  onClick={() => setMenuOpen(false)} label={t('nav.dashboard')}   dark={isChat} />
-                    <MenuItem href="/pricing"    onClick={() => setMenuOpen(false)} label={t('nav.pricing')}     dark={isChat} />
+                    <MenuItem href="/chat"        onClick={() => setMenuOpen(false)} label={t('nav.chartCourse')} />
+                    <MenuItem href="/research"   onClick={() => setMenuOpen(false)} label={t('nav.research')}    />
+                    <MenuItem href="/data-lab"   onClick={() => setMenuOpen(false)} label={t('nav.dataLab')}     />
+                    <MenuItem href="/vault"       onClick={() => setMenuOpen(false)} label={t('nav.dataVault')}   />
+                    <MenuItem href="/frameworks" onClick={() => setMenuOpen(false)} label={t('nav.frameworks')}  />
+                    <MenuItem href="/dashboard"  onClick={() => setMenuOpen(false)} label={t('nav.dashboard')}  />
+                    <MenuItem href="/pricing"    onClick={() => setMenuOpen(false)} label={t('nav.pricing')}    />
 
                     {session.user.isPro && (
                       <button
@@ -269,7 +265,7 @@ export function Nav() {
                       </p>
                     )}
 
-                    <div style={{ height: 1, background: isChat ? 'rgba(255,255,255,0.07)' : 'rgba(12,12,14,0.07)', margin: '0.25rem 0' }} />
+                    <div style={{ height: 1, background: 'rgba(12,12,14,0.07)', margin: '0.25rem 0' }} />
 
                     <button
                       onClick={() => { setMenuOpen(false); signOut({ callbackUrl: '/' }) }}
@@ -279,7 +275,7 @@ export function Nav() {
                         padding:       '0.5rem 1rem',
                         fontFamily:    'Inter, sans-serif',
                         fontSize:      '0.8rem',
-                        color:         isChat ? 'rgba(248,113,113,0.75)' : '#71717A',
+                        color:         '#71717A',
                         background:    'none',
                         border:        'none',
                         cursor:        'pointer',
@@ -298,13 +294,13 @@ export function Nav() {
           )}
         </nav>
       </div>
-      {/* Gradient bottom border replacing solid border */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: isChat ? 'linear-gradient(90deg, transparent 0%, rgba(201,169,110,0.22) 30%, rgba(20,184,166,0.18) 70%, transparent 100%)' : 'linear-gradient(90deg, transparent 0%, rgba(20,184,166,0.25) 30%, rgba(201,169,110,0.3) 70%, transparent 100%)' }} />
+      {/* Gradient bottom border */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(20,184,166,0.25) 30%, rgba(201,169,110,0.3) 70%, transparent 100%)' }} />
     </header>
   )
 }
 
-function MenuItem({ href, label, onClick, dark }: { href: string; label: string; onClick: () => void; dark?: boolean }) {
+function MenuItem({ href, label, onClick }: { href: string; label: string; onClick: () => void }) {
   return (
     <Link
       href={href}
@@ -314,7 +310,7 @@ function MenuItem({ href, label, onClick, dark }: { href: string; label: string;
         padding:        '0.5rem 1rem',
         fontFamily:     'Inter, sans-serif',
         fontSize:       '0.8rem',
-        color:           dark ? 'rgba(232,237,243,0.70)' : '#0C0C0E',
+        color:          '#0C0C0E',
         textDecoration: 'none',
       }}
     >

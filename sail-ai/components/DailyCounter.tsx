@@ -35,9 +35,9 @@ export function DailyCounter({ used, isPro }: Props) {
       className="label-caps"
       style={{
         padding:    '3px 10px',
-        border:     `1px solid ${urgent ? 'rgba(248,113,113,0.30)' : 'rgba(255,255,255,0.10)'}`,
-        color:      urgent ? '#F87171' : 'rgba(232,237,243,0.45)',
-        background: urgent ? 'rgba(248,113,113,0.08)' : 'transparent',
+        border:     `1px solid ${urgent ? 'rgba(220,38,38,0.22)' : 'rgba(129,199,185,0.22)'}`,
+        color:      urgent ? '#DC2626' : 'rgba(26,43,60,0.45)',
+        background: urgent ? 'rgba(220,38,38,0.05)' : 'transparent',
       }}
     >
       {remaining}/{FREE_LIMIT} {t('counter.freeToday')}

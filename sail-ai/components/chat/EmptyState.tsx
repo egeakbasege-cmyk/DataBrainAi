@@ -1,9 +1,9 @@
 'use client'
 
 /**
- * EmptyState — Dark Obsidian Master Guide
+ * EmptyState — Light Glass Premium Welcome
  * ─────────────────────────────────────────────────────────────────────────────
- * Palette: obsidian glass · gold accents · mint highlights · vivid mode colors
+ * Palette: tiffany glass · white · gold accents · dark text
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -15,16 +15,16 @@ import type { TranslationKey }              from '@/lib/i18n/translations'
 // ── Palette ───────────────────────────────────────────────────────────────────
 
 const T = {
-  textPrimary: '#E8EDF3',
-  textSub:     'rgba(232,237,243,0.65)',
-  textMuted:   'rgba(232,237,243,0.38)',
-  textFaint:   'rgba(232,237,243,0.22)',
-  glass:       'rgba(255,255,255,0.04)',
-  glassMd:     'rgba(255,255,255,0.07)',
-  glassBorder: 'rgba(255,255,255,0.09)',
+  textPrimary: '#1A2B3C',
+  textSub:     'rgba(26,43,60,0.70)',
+  textMuted:   'rgba(26,43,60,0.50)',
+  textFaint:   'rgba(26,43,60,0.32)',
+  glass:       'rgba(255,255,255,0.65)',
+  glassMd:     'rgba(255,255,255,0.82)',
+  glassBorder: 'rgba(129,199,185,0.28)',
   gold:        '#C9A96E',
-  goldDim:     'rgba(201,169,110,0.14)',
-  goldBorder:  'rgba(201,169,110,0.30)',
+  goldDim:     'rgba(201,169,110,0.10)',
+  goldBorder:  'rgba(201,169,110,0.28)',
   teal:        '#14B8A6',
 } as const
 
@@ -33,8 +33,8 @@ const T = {
 const MODES = [
   {
     id:      'upwind' as AnalysisMode,
-    color:   '#4F8EF7',
-    glow:    'rgba(79,142,247,0.20)',
+    color:   '#2563EB',
+    glow:    'rgba(37,99,235,0.12)',
     icon:    '◎',
     label:   'UPWIND',
     tagline: 'Executive strategy, delivered BLUF.',
@@ -42,8 +42,8 @@ const MODES = [
   },
   {
     id:      'sail' as AnalysisMode,
-    color:   '#A78BFA',
-    glow:    'rgba(167,139,250,0.20)',
+    color:   '#7C3AED',
+    glow:    'rgba(124,58,237,0.12)',
     icon:    '◈',
     label:   'SAIL',
     tagline: 'Adaptive intelligence. Live streaming.',
@@ -51,8 +51,8 @@ const MODES = [
   },
   {
     id:      'trim' as AnalysisMode,
-    color:   '#FBA928',
-    glow:    'rgba(251,169,40,0.20)',
+    color:   '#B45309',
+    glow:    'rgba(180,83,9,0.12)',
     icon:    '▤',
     label:   'TRIM',
     tagline: 'Milestone roadmap. 30 · 60 · 90 day.',
@@ -125,7 +125,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
         />
         <p style={{
           fontFamily:    'Cormorant Garamond, Georgia, serif',
-          fontSize:       28,
+          fontSize:       30,
           fontWeight:     300,
           letterSpacing: '-0.04em',
           color:          T.textPrimary,
@@ -136,8 +136,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
           <span style={{
             color:      T.gold,
             fontStyle:  'italic',
-            fontWeight:  400,
-            textShadow: `0 0 24px ${T.gold}50`,
+            fontWeight:  500,
           }}>
             Course
           </span>
@@ -145,8 +144,8 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
         <p style={{
           fontFamily:    'Inter, sans-serif',
           fontSize:       10,
-          fontWeight:     600,
-          letterSpacing: '0.18em',
+          fontWeight:     500,
+          letterSpacing: '0.16em',
           textTransform: 'uppercase',
           color:          T.textMuted,
           margin:         0,
@@ -178,46 +177,45 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
               onClick={() => { onModeSelect(m.id); onQuickPick(m.sample) }}
               style={{
                 background:    isFocused
-                  ? `linear-gradient(160deg, ${m.color}14 0%, ${m.color}06 100%)`
+                  ? `linear-gradient(160deg, ${m.color}0E 0%, rgba(255,255,255,0.78) 100%)`
                   : T.glass,
                 backdropFilter:'blur(20px)',
                 WebkitBackdropFilter:'blur(20px)',
-                border:        `1px solid ${isFocused ? `${m.color}45` : T.glassBorder}`,
-                borderTop:     `2px solid ${isFocused ? m.color : `${m.color}40`}`,
+                border:        `1px solid ${isFocused ? `${m.color}30` : T.glassBorder}`,
+                borderTop:     `2px solid ${isFocused ? m.color : `${m.color}55`}`,
                 borderRadius:   14,
                 padding:       '20px 18px',
                 cursor:        'pointer',
                 textAlign:     'left',
                 boxShadow:      isFocused
-                  ? `0 8px 40px ${m.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`
-                  : 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                  ? `0 8px 40px ${m.glow}, 0 1px 0 rgba(255,255,255,0.90)`
+                  : '0 2px 12px rgba(0,0,0,0.04), 0 1px 0 rgba(255,255,255,0.80)',
                 transition:    'all 0.25s cubic-bezier(0.22,1,0.36,1)',
                 outline:       'none',
                 position:      'relative',
                 overflow:      'hidden',
               }}
             >
-              {/* Corner glow */}
+              {/* Subtle corner glow */}
               {isFocused && (
                 <div style={{
-                  position:   'absolute',
-                  top:        -20,
-                  right:      -20,
-                  width:       60,
-                  height:      60,
-                  borderRadius:'50%',
-                  background:  m.glow,
-                  filter:     'blur(20px)',
+                  position:    'absolute',
+                  top:         -20,
+                  right:       -20,
+                  width:        60,
+                  height:       60,
+                  borderRadius: '50%',
+                  background:   m.glow,
+                  filter:      'blur(20px)',
                   pointerEvents:'none',
                 }} />
               )}
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <span style={{
-                  fontSize:   17,
+                  fontSize:   16,
                   color:      m.color,
                   lineHeight:  1,
-                  textShadow: `0 0 14px ${m.color}70`,
                 }}>
                   {m.icon}
                 </span>
@@ -264,14 +262,14 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
                 animate={{ x: [0, 4, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
                 style={{
-                  marginTop:   12,
-                  fontSize:     10,
-                  color:        m.color,
-                  opacity:      isFocused ? 1 : 0.55,
-                  fontFamily:  'Inter, sans-serif',
-                  fontWeight:   700,
-                  letterSpacing:'0.08em',
-                  transition:  'opacity 0.2s',
+                  marginTop:    12,
+                  fontSize:      10,
+                  color:         m.color,
+                  opacity:       isFocused ? 1 : 0.55,
+                  fontFamily:   'Inter, sans-serif',
+                  fontWeight:    700,
+                  letterSpacing: '0.08em',
+                  transition:   'opacity 0.2s',
                 }}
               >
                 Try this →
@@ -315,7 +313,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
             transition={{ delay: 0.40 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
             whileHover={{
               borderColor: T.goldBorder,
-              background:  T.goldDim,
+              background:  'rgba(201,169,110,0.08)',
               color:       T.gold,
             }}
             onClick={() => onQuickPick(t(questionKey))}
