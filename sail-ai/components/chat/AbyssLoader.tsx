@@ -264,10 +264,10 @@ const FRAG = /* glsl */`
     vec3 cDarkSilver  = vec3(0.6,  0.65, 0.72);
     vec3 cRichGold    = vec3(0.85, 0.7,  0.45);
     vec3 cBrightWhite = vec3(0.95, 0.98, 1.0);
-    vec3 cBlackBeak   = vec3(0.0,  0.0,  0.0);
     vec3 cEyeWhite    = vec3(1.0,  1.0,  1.0);
 
     // Swan base color
+    // aWing == 1.0 covers both wing AND beak (both painted red on canvas → gold)
     vec3 swanColor;
     if (vEye == 1.0) {
       swanColor = cEyeWhite;
@@ -277,18 +277,11 @@ const FRAG = /* glsl */`
       swanColor = cDarkSilver;
     }
 
-    // White influence from lower neck up to head (excluding eye)
-    float headNeckT = smoothstep(1.0, 2.15, vTgt.y);
+    // Neck → head gradient: silver at base, near-white at apex
+    // New world-space Y: neck base ≈ 0.0, head ≈ 2.8
+    float headNeckT = smoothstep(0.8, 2.4, vTgt.y);
     headNeckT *= (1.0 - vEye);
     swanColor = mix(swanColor, cBrightWhite, headNeckT);
-
-    // Beak coordinate bounds (world space): X: 1.6–2.0, Y: 2.15–2.35
-    float beakBoundX = smoothstep(1.6, 2.0, vTgt.x);
-    float beakBoundY = smoothstep(2.15, 2.35, vTgt.y);
-    float beakT = beakBoundX * beakBoundY;
-    if (beakT > 0.5) {
-      swanColor = cBlackBeak;
-    }
 
     vec3 color = mix(cCyan, swanColor, smoothstep(0.0, 0.65, vProgress));
 
@@ -312,127 +305,91 @@ interface GeoData {
 }
 
 function drawSwan(ctx: CanvasRenderingContext2D, CW: number, CH: number) {
-  // Wings (red) first — multiple ellipses for feather effect
+  // ── Profile-view swan, facing right ────────────────────────────────────────
+  // Layout (relative to 600×450 canvas):
+  //   Wing   → upper-left, large arching bezier shape   (red  → gold)
+  //   Body   → lower-center-right, large oval           (black → silver)
+  //   Tail   → bottom-left, pointed                    (black → silver)
+  //   Neck   → S-curve from body top-right to head      (black → silver→white)
+  //   Head   → upper-right oval                         (black → white)
+  //   Beak   → triangle pointing right                  (red  → gold)
+  //   Eye    → tiny white circle                        (white → white)
+
+  // === WING (red → gold particles in shader) ===
   ctx.fillStyle = '#cc0000'
-
-  // Left Alt Kanat (tüylü)
-  ctx.save()
-  ctx.translate(CW * 0.22, CH * 0.52)
-  ctx.rotate(0.30)
   ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.26, CH * 0.14, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  // Left Üst Kanat (sivri)
-  ctx.save()
-  ctx.translate(CW * 0.20, CH * 0.50)
-  ctx.rotate(0.50)
-  ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.20, CH * 0.08, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  // Left Üst Kanat sivri ucu
-  ctx.save()
-  ctx.translate(CW * 0.16, CH * 0.52)
-  ctx.rotate(0.70)
-  ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.14, CH * 0.06, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  // Left Kanat tüy detayı
-  ctx.save()
-  ctx.translate(CW * 0.28, CH * 0.56)
-  ctx.rotate(0.15)
-  ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.22, CH * 0.12, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  // Right Alt Kanat (tüylü)
-  ctx.save()
-  ctx.translate(CW * 0.78, CH * 0.52)
-  ctx.rotate(-0.30)
-  ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.26, CH * 0.14, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  // Right Üst Kanat (sivri)
-  ctx.save()
-  ctx.translate(CW * 0.80, CH * 0.50)
-  ctx.rotate(-0.50)
-  ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.20, CH * 0.08, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  // Right Üst Kanat sivri ucu
-  ctx.save()
-  ctx.translate(CW * 0.84, CH * 0.52)
-  ctx.rotate(-0.70)
-  ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.14, CH * 0.06, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  // Right Kanat tüy detayı
-  ctx.save()
-  ctx.translate(CW * 0.72, CH * 0.56)
-  ctx.rotate(-0.15)
-  ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.22, CH * 0.12, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  // Body (black) covers wing overlap — more organic shape
-  ctx.fillStyle = '#000000'
-
-  ctx.save()
-  ctx.translate(CW * 0.50, CH * 0.58)
-  ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.32, CH * 0.20, -0.06, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  // Tail ellipse
-  ctx.save()
-  ctx.translate(CW * 0.28, CH * 0.54)
-  ctx.rotate(0.45)
-  ctx.beginPath()
-  ctx.ellipse(0, 0, CW * 0.16, CH * 0.10, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  // Neck — S-curve bezier stroke
-  ctx.beginPath()
-  ctx.moveTo(CW * 0.500, CH * 0.380)
-  ctx.bezierCurveTo(CW * 0.510, CH * 0.280, CW * 0.580, CH * 0.220, CW * 0.625, CH * 0.145)
-  ctx.lineWidth   = CW * 0.046
-  ctx.strokeStyle = '#000000'
-  ctx.lineCap      = 'round'
-  ctx.stroke()
-
-  // Head
-  ctx.fillStyle = '#000000'
-  ctx.beginPath()
-  ctx.ellipse(CW * 0.638, CH * 0.118, CW * 0.054, CH * 0.046, -0.3, 0, Math.PI * 2)
-  ctx.fill()
-
-  // Beak
-  ctx.beginPath()
-  ctx.moveTo(CW * 0.685, CH * 0.105)
-  ctx.lineTo(CW * 0.722, CH * 0.115)
-  ctx.lineTo(CW * 0.685, CH * 0.130)
+  // Wing root at top-left of body
+  ctx.moveTo(CW * 0.40, CH * 0.60)
+  // Leading edge sweeps up and left to wing tip
+  ctx.bezierCurveTo(
+    CW * 0.22, CH * 0.50,
+    CW * 0.06, CH * 0.22,
+    CW * 0.18, CH * 0.05,
+  )
+  // Tip curves across to trailing edge
+  ctx.bezierCurveTo(
+    CW * 0.28, CH * 0.00,
+    CW * 0.50, CH * 0.14,
+    CW * 0.54, CH * 0.36,
+  )
+  // Trailing edge closes back to root
+  ctx.bezierCurveTo(
+    CW * 0.53, CH * 0.48,
+    CW * 0.47, CH * 0.56,
+    CW * 0.40, CH * 0.60,
+  )
   ctx.closePath()
   ctx.fill()
 
-  // Eye — pure white so pixel sampler detects it as isEye
+  // === BODY (black → silver) ===
+  ctx.fillStyle = '#000000'
+  ctx.save()
+  ctx.translate(CW * 0.56, CH * 0.74)
+  ctx.beginPath()
+  ctx.ellipse(0, 0, CW * 0.25, CH * 0.15, -0.18, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // === TAIL (black, pointed left-downward) ===
+  ctx.beginPath()
+  ctx.moveTo(CW * 0.35, CH * 0.82)
+  ctx.lineTo(CW * 0.14, CH * 0.90)
+  ctx.lineTo(CW * 0.22, CH * 0.74)
+  ctx.closePath()
+  ctx.fill()
+
+  // === NECK — thick S-curve bezier stroke ===
+  ctx.beginPath()
+  ctx.moveTo(CW * 0.64, CH * 0.60)        // neck base (top-right of body)
+  ctx.bezierCurveTo(
+    CW * 0.70, CH * 0.44,                 // pulls right and up
+    CW * 0.74, CH * 0.28,
+    CW * 0.77, CH * 0.18,                 // neck top
+  )
+  ctx.lineWidth   = CW * 0.052
+  ctx.strokeStyle = '#000000'
+  ctx.lineCap     = 'round'
+  ctx.stroke()
+
+  // === HEAD (black oval, slightly tilted) ===
+  ctx.fillStyle = '#000000'
+  ctx.beginPath()
+  ctx.ellipse(CW * 0.785, CH * 0.130, CW * 0.054, CH * 0.042, 0.22, 0, Math.PI * 2)
+  ctx.fill()
+
+  // === BEAK (red → gold, pointing right) ===
+  ctx.fillStyle = '#cc0000'
+  ctx.beginPath()
+  ctx.moveTo(CW * 0.830, CH * 0.114)
+  ctx.lineTo(CW * 0.882, CH * 0.128)
+  ctx.lineTo(CW * 0.830, CH * 0.143)
+  ctx.closePath()
+  ctx.fill()
+
+  // === EYE (pure white for isEye detection) ===
   ctx.fillStyle = '#ffffff'
   ctx.beginPath()
-  ctx.arc(CW * 0.655, CH * 0.108, CW * 0.010, 0, Math.PI * 2)
+  ctx.arc(CW * 0.806, CH * 0.116, CW * 0.010, 0, Math.PI * 2)
   ctx.fill()
 }
 
@@ -454,14 +411,20 @@ function buildGeoData(): GeoData {
     for (let px = 0; px < CW; px++) {
       const i = (py * CW + px) * 4
       const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2]
-      // Skip background (light grey)
-      if (r === 240 && g === 240 && b === 240) continue
+      // Skip background (#f0f0f0) and its anti-aliased neighbours,
+      // but keep pure white eye pixels (r>250,g>250,b>250)
+      const nearGrey = r > 224 && g > 224 && b > 224
+      const isWhite  = r > 250 && g > 250 && b > 250
+      if (nearGrey && !isWhite) continue
 
-      const wx = (px / CW - 0.5) * 9.0
-      const wy = -(py / CH - 0.5) * 5.0 + 0.35
+      // World-space: wider scale so swan fills the camera view
+      const wx = (px / CW - 0.5) * 10.0
+      const wy = -(py / CH - 0.5) * 6.0 + 0.6
 
-      const isWing = r > 140 && g < 80 && b < 80
-      const isEye  = r === 255 && g === 255 && b === 255
+      // Red pixels  → wing + beak (both become gold)
+      // White pixels → eye
+      const isWing = r > 140 && g < 80  && b < 80
+      const isEye  = r > 250 && g > 250 && b > 250
       pool.push({ wx, wy, isWing, isEye })
     }
   }
