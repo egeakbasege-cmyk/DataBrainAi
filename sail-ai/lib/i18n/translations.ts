@@ -748,15 +748,6 @@ const translations = {
     'datalab.priceSearchLoading':   'Searching the web for the best price…',
     'datalab.priceSearchSubtext':   'Price comparison, alternatives, reviews…',
 
-    // ── SailAITimeTravel ──────────────────────────────────
-    'timetravel.loading':           'LOADING TIME TUNNEL…',
-    'timetravel.fileUpload':        'Upload File',
-    'timetravel.placeholder':       'Give a command in the time tunnel…',
-    'timetravel.voiceCommand':      'Voice Command',
-    'timetravel.send':              'Send',
-    'timetravel.dataSources':       'Data Sources',
-    'timetravel.simulatedGrowth':   'Simulated Growth',
-
     // ── Nav & Footer extras ───────────────────────────────
     'nav.dataLab':               'Data Lab',
     'landing.footerProduct':     'Product',
@@ -1541,15 +1532,6 @@ const translations = {
     'datalab.priceSearchLoading':   'İnternette en iyi fiyat aranıyor…',
     'datalab.priceSearchSubtext':   'Fiyat karşılaştırma, alternatifler, değerlendirmeler…',
 
-    // ── SailAITimeTravel ──────────────────────────────────
-    'timetravel.loading':           'ZAMAN TÜNELİ YÜKLENİYOR…',
-    'timetravel.fileUpload':        'Dosya Yükle',
-    'timetravel.placeholder':       'Zaman tünelinde bir komut ver…',
-    'timetravel.voiceCommand':      'Sesli Komut',
-    'timetravel.send':              'Gönder',
-    'timetravel.dataSources':       'Veri Kaynakları',
-    'timetravel.simulatedGrowth':   'Simüle Büyüme',
-
     // ── Nav & Footer extras ───────────────────────────────
     'nav.dataLab':               'Veri Laboratuvarı',
     'landing.footerProduct':     'Ürün',
@@ -2322,14 +2304,6 @@ const translations = {
     'datalab.quickExamples': 'Ejemplos Rápidos',
     'datalab.priceSearchLoading': 'Buscando el mejor precio en internet…',
     'datalab.priceSearchSubtext': 'Comparación de precios, alternativas, reseñas…',
-    'timetravel.loading': 'CARGANDO TÚNEL DEL TIEMPO…',
-    'timetravel.fileUpload': 'Subir Archivo',
-    'timetravel.placeholder': 'Da un comando en el túnel del tiempo…',
-    'timetravel.voiceCommand': 'Comando de Voz',
-    'timetravel.send': 'Enviar',
-    'timetravel.dataSources': 'Fuentes de Datos',
-    'timetravel.simulatedGrowth': 'Crecimiento Simulado',
-
     // ── Nav & Footer extras ───────────────────────────────
     'nav.dataLab':               'Data Lab',
     'landing.footerProduct':     'Producto',
@@ -3102,14 +3076,6 @@ const translations = {
     'datalab.quickExamples': 'Schnelle Beispiele',
     'datalab.priceSearchLoading': 'Bester Preis im Internet wird gesucht…',
     'datalab.priceSearchSubtext': 'Preisvergleich, Alternativen, Bewertungen…',
-    'timetravel.loading': 'ZEITTUNNEL WIRD GELADEN…',
-    'timetravel.fileUpload': 'Datei hochladen',
-    'timetravel.placeholder': 'Gib einen Befehl im Zeittunnel ein…',
-    'timetravel.voiceCommand': 'Sprachbefehl',
-    'timetravel.send': 'Senden',
-    'timetravel.dataSources': 'Datenquellen',
-    'timetravel.simulatedGrowth': 'Simuliertes Wachstum',
-
     // ── Nav & Footer extras ───────────────────────────────
     'nav.dataLab':               'Data Lab',
     'landing.footerProduct':     'Produkt',
@@ -3882,14 +3848,6 @@ const translations = {
     'datalab.quickExamples': 'Exemples Rapides',
     'datalab.priceSearchLoading': 'Recherche du meilleur prix sur internet…',
     'datalab.priceSearchSubtext': 'Comparaison de prix, alternatives, avis…',
-    'timetravel.loading': 'CHARGEMENT DU TUNNEL TEMPOREL…',
-    'timetravel.fileUpload': 'Télécharger un Fichier',
-    'timetravel.placeholder': 'Entrez une commande dans le tunnel temporel…',
-    'timetravel.voiceCommand': 'Commande Vocale',
-    'timetravel.send': 'Envoyer',
-    'timetravel.dataSources': 'Sources de Données',
-    'timetravel.simulatedGrowth': 'Croissance Simulée',
-
     // ── Nav & Footer extras ───────────────────────────────
     'nav.dataLab':               'Data Lab',
     'landing.footerProduct':     'Produit',
@@ -4699,14 +4657,6 @@ const translations = {
     'datalab.quickExamples': '快速示例',
     'datalab.priceSearchLoading': '正在搜索互联网上的最佳价格…',
     'datalab.priceSearchSubtext': '价格比较、替代品、评论…',
-    'timetravel.loading': '时光隧道加载中…',
-    'timetravel.fileUpload': '上传文件',
-    'timetravel.placeholder': '在时光隧道中输入命令…',
-    'timetravel.voiceCommand': '语音命令',
-    'timetravel.send': '发送',
-    'timetravel.dataSources': '数据来源',
-    'timetravel.simulatedGrowth': '模拟增长',
-
     // ── Nav & Footer extras ───────────────────────────────
     'nav.dataLab':               '数据实验室',
     'landing.footerProduct':     '产品',

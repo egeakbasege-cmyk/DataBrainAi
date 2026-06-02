@@ -99,3 +99,135 @@ INSERT INTO benchmarks (sector, metric, value, source, year, summary) VALUES
   ('General',              'Email marketing ROI',               '£42 per £1','Data and Marketing Assoc.',2024, 'Email marketing delivers an average return of £42 for every £1 spent. Segmented campaigns outperform batch sends by 14% open rate and 10% click rate.'),
   ('General',              'Price elasticity — premium tier',   '+20-30%',  'McKinsey Pricing Study',    2024, 'Adding a premium tier priced 20-30% above current top tier captures 10-15% of existing customers willing to pay more, with no impact on base tier retention.')
 ON CONFLICT DO NOTHING;
+
+-- ── Updated-at trigger ────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+-- ── profiles ──────────────────────────────────────────────────────────────────
+-- One row per authenticated user. BYOK key is stored as a bcrypt hash only —
+-- the raw key never touches the database.
+
+CREATE TABLE IF NOT EXISTS profiles (
+  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        text        NOT NULL UNIQUE,   -- auth.uid()::text
+  mrr_bracket    text        NOT NULL DEFAULT '0-10k'
+                             CHECK (mrr_bracket IN ('0-10k', '10-50k', '500k+')),
+  sector         text        NOT NULL DEFAULT '',
+  preferences    jsonb       NOT NULL DEFAULT '{}',
+  byok_key_hash  text,                           -- bcrypt hash, never the raw key
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at     timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TRIGGER profiles_updated_at
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "profiles: owner read"
+  ON profiles FOR SELECT
+  USING (auth.uid()::text = user_id);
+
+CREATE POLICY "profiles: owner insert"
+  ON profiles FOR INSERT
+  WITH CHECK (auth.uid()::text = user_id);
+
+CREATE POLICY "profiles: owner update"
+  ON profiles FOR UPDATE
+  USING      (auth.uid()::text = user_id)
+  WITH CHECK (auth.uid()::text = user_id);
+
+-- ── memory_documents ──────────────────────────────────────────────────────────
+-- RAG memory store for KAIROS and PersonalisedAI.
+-- Embeddings: text-embedding-ada-002 (1536-dim) via Supabase Edge Function proxy.
+
+CREATE TABLE IF NOT EXISTS memory_documents (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     text        NOT NULL,
+  content     text        NOT NULL,
+  embedding   vector(1536),
+  source_type text        NOT NULL DEFAULT 'user_input',
+                          -- 'user_input' | 'kairos_deep_explore' | 'analysis'
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS memory_documents_user_id_idx
+  ON memory_documents (user_id);
+
+-- IVFFlat index — fast cosine similarity for <1M rows per user pool
+CREATE INDEX IF NOT EXISTS memory_documents_embedding_idx
+  ON memory_documents USING ivfflat (embedding vector_cosine_ops)
+  WITH (lists = 100);
+
+ALTER TABLE memory_documents ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "memory: owner read"
+  ON memory_documents FOR SELECT
+  USING (auth.uid()::text = user_id);
+
+CREATE POLICY "memory: owner insert"
+  ON memory_documents FOR INSERT
+  WITH CHECK (auth.uid()::text = user_id);
+
+-- Service role bypasses RLS; used by server-side memory writes.
+-- No DELETE policy for users — memory is append-only from the client.
+
+-- ── RPC: match_memory ─────────────────────────────────────────────────────────
+-- Cosine similarity search over a single user's memory documents.
+-- SECURITY DEFINER so it can read the table on behalf of an authenticated caller
+-- without needing a client-visible policy.
+--
+-- Usage:
+--   SELECT * FROM match_memory(
+--     'gsc-user@example.com',
+--     array[0.01, 0.02, ...]::vector(1536),
+--     0.75,
+--     5
+--   );
+
+CREATE OR REPLACE FUNCTION match_memory(
+  p_user_id      text,
+  query_embedding vector(1536),
+  match_threshold float   DEFAULT 0.75,
+  match_count     int     DEFAULT 5
+)
+RETURNS TABLE (
+  id          uuid,
+  content     text,
+  source_type text,
+  similarity  float,
+  created_at  timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Enforce that the calling session owns the requested user_id
+  IF auth.uid()::text != p_user_id THEN
+    RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  RETURN QUERY
+    SELECT
+      m.id,
+      m.content,
+      m.source_type,
+      (1 - (m.embedding <=> query_embedding))::float AS similarity,
+      m.created_at
+    FROM memory_documents m
+    WHERE
+      m.user_id   = p_user_id
+      AND m.embedding IS NOT NULL
+      AND (1 - (m.embedding <=> query_embedding)) >= match_threshold
+    ORDER BY m.embedding <=> query_embedding
+    LIMIT match_count;
+END;
+$$;
