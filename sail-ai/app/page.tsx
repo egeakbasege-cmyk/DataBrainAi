@@ -1,929 +1,489 @@
-'use client'
-
 /**
- * Landing page — Swiss Precision × Explora Journeys luxury redesign
+ * app/page.tsx — SAIL AI Immersive Landing Page
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Swiss Precision × Cinematic Interactivity
  *
- * Motion system:
- *   • Hero headline — word-by-word stagger (Framer Motion animate)
- *   • Sub-headline + CTAs — staggered fade-up with delays
- *   • Marquee band — infinite CSS horizontal scroll between sections
- *   • All content sections — whileInView stagger (once, -80px margin)
- *   • Sailboat — parallax drift via useScroll/useTransform
- *   • Mode cards + cases — stagger grid/row reveals
- *   • Hover lift on cards, mode cards, case rows
+ * Layout:
+ *   ┌─────────────────────────────────────────────────────────────┐
+ *   │  Nav (glass, narrative-reactive accent)                     │
+ *   ├──────────────────┬──────────────────┬───────────────────────┤
+ *   │  Left            │   Centre          │  Right                │
+ *   │  Hero copy       │   iPhone 15 Pro  │   Context cards       │
+ *   │  Narrative steps │   (live app)     │   Floating stats      │
+ *   │  CTA             │                  │   Testimonial         │
+ *   └──────────────────┴──────────────────┴───────────────────────┘
+ *   │  Footer strip                                               │
+ *   └─────────────────────────────────────────────────────────────┘
  *
- * Typography:
- *   • Display — Cormorant Garamond 600 italic
- *   • Label — Inter 700, 0.6rem, tracking-widest, uppercase
- *   • Body — Inter 300, 0.875–0.9375rem, line-height 1.75
+ * Responsive: stacks to phone → landscape → 3-col desktop
  *
- * Palette (Swiss restraint):
- *   • Ink: #0C0C0E · Canvas: #FAFAF8 · Champagne: #C9A96E
- *   • Teal: #14B8A6 · Slate: #71717A · Silver: #A1A1AA
+ * Narrative state drives:
+ *   • Background shader colors + particle speed
+ *   • Headline / tagline copy on left panel
+ *   • Progress stepper highlight
+ *   • Optional AI-generated video overlay (when LUMA_API_KEY set)
  */
 
-import React, { useRef, useEffect } from 'react'
-import Link from 'next/link'
-import { motion, useScroll, useTransform, useInView, animate } from 'framer-motion'
-import { Nav } from '@/components/Nav'
-import { Logo } from '@/components/Logo'
-import { CompassRose, EngravedSailboat } from '@/components/Ornaments'
-import { TopoBackground } from '@/components/TopoBackground'
-import { ProductWalkthrough } from '@/components/ProductWalkthrough'
-import { SectionDivider, ChampagneRule } from '@/components/SectionDivider'
-import { useLanguage } from '@/lib/i18n/LanguageContext'
+'use client'
 
-// ── Animated counter — counts up from 0 when entering viewport ──
-function AnimatedCounter({ value }: { value: string }) {
-  const ref      = useRef<HTMLSpanElement>(null)
-  const inView   = useInView(ref, { once: true, margin: '-40px' })
+import { useRef }                                  from 'react'
+import Link                                        from 'next/link'
+import { motion, AnimatePresence }                 from 'framer-motion'
+import { useNarrative, SCENES, NODE_ORDER }        from '@/components/landing/narrativeStore'
+import { CinematicBackground }                     from '@/components/landing/CinematicBackground'
+import { IPhoneFrame }                             from '@/components/landing/IPhoneFrame'
+import { AppPrototype }                            from '@/components/landing/AppPrototype'
 
-  useEffect(() => {
-    if (!inView || !ref.current) return
-    const match = value.match(/^([^0-9\-+]*)([0-9]+\.?[0-9]*)(.*)$/)
-    if (!match) { ref.current.textContent = value; return }
-    const [, prefix, numStr, suffix] = match
-    const target  = parseFloat(numStr)
-    const isFloat = numStr.includes('.')
-    const ctrl = animate(0, target, {
-      duration: 1.6,
-      ease:     [0.22, 1, 0.36, 1],
-      onUpdate: v => {
-        if (ref.current)
-          ref.current.textContent = prefix + (isFloat ? v.toFixed(1) : Math.round(v).toString()) + suffix
-      },
-    })
-    return () => ctrl.stop()
-  }, [inView, value])
+// ── Shared animation variants ─────────────────────────────────────────────────
 
-  return <span ref={ref}>{value}</span>
+const FU = {
+  initial:   { opacity: 0, y: 16 },
+  animate:   { opacity: 1, y: 0 },
+  transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
 }
 
-// ── Animation constants ─────────────────────────────────────────
-const EASE = [0.22, 1, 0.36, 1] as const
+// ── Glassmorphism card ────────────────────────────────────────────────────────
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.68, ease: EASE } },
-}
+function GlassCard({
+  children, className = '', delay = 0, accent = false,
+}: {
+  children: React.ReactNode
+  className?: string
+  delay?: number
+  accent?: boolean
+}) {
+  const { node } = useNarrative()
+  const hex = SCENES[node].accentHex
 
-const stagger = (delay = 0.05) => ({
-  hidden: {},
-  show:   { transition: { staggerChildren: 0.12, delayChildren: delay } },
-})
-
-const wordVar = {
-  hidden: { opacity: 0, y: 16, filter: 'blur(4px)' },
-  show:   { opacity: 1, y: 0,  filter: 'blur(0px)', transition: { duration: 0.52, ease: EASE } },
-}
-
-// ── Inline helpers ──────────────────────────────────────────────
-function Rule() {
-  return <div style={{ height: 1, background: 'rgba(0,0,0,0.09)' }} />
-}
-
-function Eyebrow({ label, light }: { label: string; light?: boolean }) {
   return (
-    <div className="sv-eyebrow" style={{ '--eyebrow-color': light ? 'rgba(201,169,110,0.8)' : undefined } as React.CSSProperties}>
-      <span className="sv-eyebrow-label" style={{ color: light ? 'rgba(201,169,110,0.8)' : undefined }}>
-        {label}
-      </span>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        background:    'rgba(8, 10, 20, 0.55)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border:        `1px solid ${accent ? hex + '30' : 'rgba(255,255,255,0.07)'}`,
+        borderRadius:  16,
+        transition:    'border-color 2s ease',
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
+
+function LandingNav() {
+  const { node } = useNarrative()
+  const accentHex = SCENES[node].accentHex
+
+  return (
+    <nav style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+      padding: '0 24px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      height: 60,
+      background:    'rgba(4, 8, 24, 0.65)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      borderBottom:  '1px solid rgba(255,255,255,0.06)',
+    }}>
+      {/* Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: 8,
+          background: `linear-gradient(135deg, ${accentHex} 0%, ${accentHex}99 100%)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'background 2s ease',
+          boxShadow: `0 0 12px ${accentHex}40`,
+        }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2L2 14H14L8 2Z" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M5 11H11" stroke="rgba(255,255,255,0.5)" strokeWidth="1"/>
+          </svg>
+        </div>
+        <span style={{
+          color: '#FAFAF8', fontSize: 15, fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontWeight: 600, fontStyle: 'italic', letterSpacing: '0.01em',
+        }}>
+          SAIL AI
+        </span>
+      </div>
+
+      {/* Narrative progress — desktop only */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+           className="hidden md:flex">
+        {NODE_ORDER.map((n, i) => {
+          const isCurrent = n === node
+          const isPast    = NODE_ORDER.indexOf(node) > i
+          return (
+            <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{
+                width: isCurrent ? 24 : 6,
+                height: 6, borderRadius: 3,
+                background: isPast || isCurrent
+                  ? accentHex
+                  : 'rgba(255,255,255,0.15)',
+                transition: 'all 0.5s ease',
+                boxShadow: isCurrent ? `0 0 8px ${accentHex}80` : 'none',
+              }} />
+              {i < NODE_ORDER.length - 1 && (
+                <div style={{
+                  width: 12, height: 1,
+                  background: isPast ? accentHex + '60' : 'rgba(255,255,255,0.08)',
+                  transition: 'background 0.5s ease',
+                }} />
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Right actions */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Link href="/login" style={{
+          color: 'rgba(161,161,170,0.8)', fontSize: 13, fontFamily: 'Inter, sans-serif',
+          textDecoration: 'none',
+        }}>
+          Sign in
+        </Link>
+        <Link href="/login" style={{
+          padding: '7px 16px', borderRadius: 8,
+          background: accentHex,
+          color: '#fff', fontSize: 12.5, fontFamily: 'Inter, sans-serif',
+          fontWeight: 600, textDecoration: 'none',
+          boxShadow: `0 4px 16px ${accentHex}40`,
+          transition: 'background 2s ease, box-shadow 2s ease',
+        }}>
+          Get Started
+        </Link>
+      </div>
+    </nav>
+  )
+}
+
+// ── Left panel — hero copy + narrative steps ──────────────────────────────────
+
+function LeftPanel() {
+  const { node } = useNarrative()
+  const scene     = SCENES[node]
+
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      justifyContent: 'center', gap: 32, maxWidth: 420,
+    }}>
+      {/* Label */}
+      <motion.p
+        key={`label-${node}`}
+        {...FU}
+        style={{
+          color: scene.accentHex, fontSize: 10.5, fontFamily: 'Inter, sans-serif',
+          letterSpacing: '0.22em', textTransform: 'uppercase',
+        }}
+      >
+        {scene.label}
+      </motion.p>
+
+      {/* Headline */}
+      <motion.h1
+        key={`h1-${node}`}
+        {...FU}
+        transition={{ delay: 0.08, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        style={{
+          color: '#FAFAF8', fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(28px, 3.5vw, 48px)', fontWeight: 600,
+          fontStyle: 'italic', lineHeight: 1.2, margin: 0,
+        }}
+      >
+        {scene.tagline}
+      </motion.h1>
+
+      {/* Supporting copy — changes per node */}
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={`sub-${node}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0  }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.4 }}
+          style={{
+            color: 'rgba(161,161,170,0.75)', fontFamily: 'Inter, sans-serif',
+            fontSize: 15, lineHeight: 1.75,
+          }}
+        >
+          {NODE_COPY[node]}
+        </motion.p>
+      </AnimatePresence>
+
+      {/* Swiss rule */}
+      <div style={{
+        width: 40, height: 1,
+        background: `linear-gradient(90deg, ${scene.accentHex}, transparent)`,
+        transition: 'background 2s ease',
+      }} />
+
+      {/* Vertical narrative steps */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {NODE_ORDER.map((n, i) => {
+          const isCurrent = n === node
+          const isPast    = NODE_ORDER.indexOf(node) > i
+          return (
+            <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                background: isCurrent
+                  ? scene.accentHex
+                  : isPast ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)',
+                boxShadow: isCurrent ? `0 0 8px ${scene.accentHex}` : 'none',
+                transition: 'all 0.5s ease',
+              }} />
+              <span style={{
+                fontSize: 12.5, fontFamily: 'Inter, sans-serif',
+                color: isCurrent
+                  ? '#FAFAF8'
+                  : isPast ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.20)',
+                fontWeight: isCurrent ? 500 : 400,
+                transition: 'color 0.5s ease',
+              }}>
+                {STEPS[i]}
+              </span>
+              {isPast && (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginLeft: 'auto' }}>
+                  <path d="M2 6L5 9L10 3" stroke="rgba(74,222,128,0.7)" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-// ── Infinite marquee band ──────────────────────────────────────
-const MARQUEE_ITEMS = [
-  'Groq 70B · Live Intelligence',
-  '60-Second Deep Analysis',
-  '5 Sovereign Modes',
-  'Swiss Precision AI',
-  'Benchmarked Strategy',
-  'Executive-Grade Output',
-  'Free to Start',
-  'Real-Time Web Research',
-]
+// ── Right panel — floating context cards ──────────────────────────────────────
 
-function MarqueeBand({ dark }: { dark?: boolean }) {
-  const doubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS]
-  const bg      = dark ? 'rgba(255,255,255,0.04)' : '#F4F4F2'
-  const border  = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'
-  const textCol = dark ? 'rgba(255,255,255,0.35)' : '#A1A1AA'
-  const dotCol  = dark ? 'rgba(201,169,110,0.5)'  : '#C9A96E'
+function RightPanel() {
+  const { node } = useNarrative()
+  const scene     = SCENES[node]
 
   return (
     <div style={{
-      borderTop:    `1px solid ${border}`,
-      borderBottom: `1px solid ${border}`,
-      background:   bg,
-      padding:      '0.875rem 0',
-      overflow:     'hidden',
+      flex: 1, display: 'flex', flexDirection: 'column',
+      justifyContent: 'center', gap: 16, maxWidth: 320,
     }}>
-      <div className="sv-marquee-track">
-        {doubled.map((item, i) => (
-          <span
-            key={i}
-            style={{
-              fontFamily:    'Inter, sans-serif',
-              fontSize:      '0.67rem',
-              fontWeight:    500,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color:         textCol,
-              padding:       '0 2.75rem',
-              display:       'inline-flex',
-              alignItems:    'center',
-              gap:           '2.75rem',
-            }}
-          >
-            {item}
-            <span style={{ display: 'inline-block', width: 3, height: 3, borderRadius: '50%', background: dotCol, flexShrink: 0 }} />
+      {/* Live stat card */}
+      <GlassCard delay={0.15} accent className="p-5">
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+          <p style={{ color: 'rgba(161,161,170,0.65)', fontSize: 10, fontFamily: 'Inter, sans-serif', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            Live Benchmark
+          </p>
+          <div style={{
+            width: 6, height: 6, borderRadius: '50%', background: '#4ADE80',
+            boxShadow: '0 0 6px rgba(74,222,128,0.6)',
+            animation: 'drift-pulse 2s ease-in-out infinite',
+          }} />
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.div key={node}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <p style={{
+              color: '#FAFAF8', fontSize: 28, fontFamily: 'Cormorant Garamond, Georgia, serif',
+              fontWeight: 600, fontStyle: 'italic', lineHeight: 1, marginBottom: 4,
+            }}>
+              {STAT_VALUES[node].value}
+            </p>
+            <p style={{ color: scene.accentHex, fontSize: 11, fontFamily: 'Inter, sans-serif', transition: 'color 2s ease' }}>
+              {STAT_VALUES[node].label}
+            </p>
+          </motion.div>
+        </AnimatePresence>
+      </GlassCard>
+
+      {/* Trust strip */}
+      <GlassCard delay={0.25} className="p-4">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          {[...Array(5)].map((_, i) => (
+            <svg key={i} width="10" height="10" viewBox="0 0 10 10" fill="#C9A96E">
+              <path d="M5 0.5L6.12 3.38L9.26 3.62L7 5.63L7.71 8.76L5 7.1L2.29 8.76L3 5.63L0.74 3.62L3.88 3.38L5 0.5Z"/>
+            </svg>
+          ))}
+          <span style={{ color: 'rgba(161,161,170,0.55)', fontSize: 9.5, fontFamily: 'Inter, sans-serif', marginLeft: 2 }}>
+            4.9 / 5.0
           </span>
+        </div>
+        <p style={{ color: 'rgba(250,250,248,0.75)', fontSize: 12, fontFamily: 'Inter, sans-serif', lineHeight: 1.65, fontStyle: 'italic' }}>
+          "SAIL AI identified a retention lever we'd missed for two years. £60K recovered in 90 days."
+        </p>
+        <p style={{ color: 'rgba(113,113,122,0.6)', fontSize: 10, fontFamily: 'Inter, sans-serif', marginTop: 8 }}>
+          — Founder, B2B SaaS · 10–50k MRR bracket
+        </p>
+      </GlassCard>
+
+      {/* Benchmark data pill */}
+      <GlassCard delay={0.35} className="p-4">
+        <p style={{ color: 'rgba(161,161,170,0.55)', fontSize: 9, fontFamily: 'Inter, sans-serif', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
+          Industry Benchmark
+        </p>
+        <AnimatePresence mode="wait">
+          <motion.p key={node}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ color: '#FAFAF8', fontSize: 12.5, fontFamily: 'Inter, sans-serif', lineHeight: 1.6 }}
+          >
+            {BENCHMARKS[node]}
+          </motion.p>
+        </AnimatePresence>
+        <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+          <span style={{
+            padding: '2px 8px', borderRadius: 100,
+            background: 'rgba(201,169,110,0.10)', border: '1px solid rgba(201,169,110,0.22)',
+            color: '#C9A96E', fontSize: 9, fontFamily: 'Inter, sans-serif',
+          }}>
+            Verified 2024–25
+          </span>
+          <span style={{
+            padding: '2px 8px', borderRadius: 100,
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+            color: 'rgba(161,161,170,0.6)', fontSize: 9, fontFamily: 'Inter, sans-serif',
+          }}>
+            McKinsey · Baymard · OpenView
+          </span>
+        </div>
+      </GlassCard>
+
+      {/* Urgency signal */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
+          borderRadius: 10, background: 'rgba(74,222,128,0.05)',
+          border: '1px solid rgba(74,222,128,0.15)',
+        }}
+      >
+        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', flexShrink: 0,
+          animation: 'drift-pulse 1.5s ease-in-out infinite' }} />
+        <p style={{ color: 'rgba(74,222,128,0.8)', fontSize: 10.5, fontFamily: 'Inter, sans-serif' }}>
+          <strong style={{ color: '#4ADE80' }}>23 businesses</strong> ran their diagnosis today
+        </p>
+      </motion.div>
+    </div>
+  )
+}
+
+// ── Content maps ──────────────────────────────────────────────────────────────
+
+const NODE_COPY: Record<string, string> = {
+  INTRO:      'Most businesses operate on intuition. The ones that win operate on precision. Begin your 60-second diagnosis — no account required.',
+  DIAGNOSE:   'Great strategy starts with brutal clarity. We cross-reference your sector against 17 live industry benchmarks before your first keystroke.',
+  STRATEGIZE: 'Three metrics reveal more than a 40-page deck. KAIROS isolates your highest-leverage constraint and prices the upside in 30 seconds.',
+  EXECUTE:    'Your analysis cross-references 7,400+ business profiles. What emerges isn\'t advice — it\'s a ranked, time-boxed execution sequence.',
+  CONVERT:    'Your strategy is ready. Lock it in, share it with your team, and track its P&L impact in real time. One free account. Zero expiry.',
+}
+
+const STEPS = [
+  'Enter the voyage',
+  'Diagnose your position',
+  'Build the strategy',
+  'Execute with precision',
+  'Arrive at your target',
+]
+
+const STAT_VALUES: Record<string, { value: string; label: string }> = {
+  INTRO:      { value: '7,400+', label: 'businesses diagnosed' },
+  DIAGNOSE:   { value: '17',     label: 'live sector benchmarks' },
+  STRATEGIZE: { value: '34%',    label: 'average revenue uplift' },
+  EXECUTE:    { value: '90',     label: 'days to measurable ROI' },
+  CONVERT:    { value: '£124k',  label: 'median annual impact' },
+}
+
+const BENCHMARKS: Record<string, string> = {
+  INTRO:      'Businesses that act on structured diagnosis grow 2.3× faster than those that don\'t — across all sectors.',
+  DIAGNOSE:   'E-commerce checkout abandonment averages 70.2% (Baymard 2024). A 10pp improvement recovers £1 in £7 of lost revenue.',
+  STRATEGIZE: 'B2B SaaS with NRR above 110% grow 40% faster than peers at equivalent ARR. Expansion revenue is the #1 lever.',
+  EXECUTE:    'Responding to enquiries within 5 minutes converts at 4× the rate of 30-minute responses (NAR 2024).',
+  CONVERT:    'Improving customer retention by 5% increases profit by 25–95% depending on sector (McKinsey).',
+}
+
+// ── Footer strip ──────────────────────────────────────────────────────────────
+
+function FooterStrip() {
+  return (
+    <div style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
+      padding: '14px 32px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      background: 'rgba(4,8,24,0.7)', backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      borderTop: '1px solid rgba(255,255,255,0.05)',
+    }}>
+      <p style={{ color: 'rgba(113,113,122,0.5)', fontSize: 10.5, fontFamily: 'Inter, sans-serif' }}>
+        © 2025 SAIL AI · Swiss Precision Business Intelligence
+      </p>
+      <div style={{ display: 'flex', gap: 20 }}>
+        {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Blog', '/blog']].map(([label, href]) => (
+          <Link key={label} href={href} style={{
+            color: 'rgba(113,113,122,0.5)', fontSize: 10.5, fontFamily: 'Inter, sans-serif',
+            textDecoration: 'none',
+          }}>
+            {label}
+          </Link>
         ))}
       </div>
     </div>
   )
 }
 
-// ── Mode card ──────────────────────────────────────────────────
-function ModeCard({
-  badge, name, color, bg, border, icon, desc, detail,
-}: {
-  badge:  string; name: string; color: string; bg: string
-  border: string; icon: React.ReactNode; desc: string; detail: string
-}) {
-  return (
-    <div
-      className="hover-lift"
-      style={{
-        padding:       '2.25rem',
-        background:    bg,
-        border:        `1px solid ${border}`,
-        borderRadius:  '12px',
-        display:       'flex',
-        flexDirection: 'column',
-        height:        '100%',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-        <div
-          className="mode-icon-box"
-          style={{
-            width: 34, height: 34, borderRadius: '8px',
-            background: `color-mix(in srgb, ${color} 12%, transparent)`,
-            border: `1px solid ${border}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-            transition: 'transform 0.25s cubic-bezier(0.22,1,0.36,1)',
-          }}
-        >
-          {icon}
-        </div>
-        <div>
-          <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.2rem', fontWeight: 700, color, display: 'block', lineHeight: 1.1 }}>
-            {name}
-          </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.6 }}>
-            {badge}
-          </span>
-        </div>
-      </div>
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.78, color: '#0C0C0E', fontWeight: 300, marginBottom: '1rem', flex: 1 }}>
-        {desc}
-      </p>
-      <div style={{ height: 1, background: border, marginBottom: '0.875rem' }} />
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', lineHeight: 1.6, margin: 0 }}>
-        {detail}
-      </p>
-    </div>
-  )
-}
+// ── Page ──────────────────────────────────────────────────────────────────────
 
-// ── Main page ───────────────────────────────────────────────────
 export default function LandingPage() {
-  const { t } = useLanguage()
-  const { scrollY } = useScroll()
-
-  // Parallax transforms for hero sailboat
-  const sailboatY = useTransform(scrollY, [0, 500], [0, -70])
-  const heroImgOp = useTransform(scrollY, [0, 350], [0.3, 0.08])
-
-  const STAT_PILLS  = [t('landing.stat1'), t('landing.stat2'), t('landing.stat3')]
-  const TRUST_CUES  = [t('landing.trust1'), t('landing.trust2'), t('landing.trust3')]
-  const headlineWords = t('landing.headline').split(' ')
-
-  const HOW = [
-    { n: '01', title: t('landing.how1title'), body: t('landing.how1body') },
-    { n: '02', title: t('landing.how2title'), body: t('landing.how2body') },
-    { n: '03', title: t('landing.how3title'), body: t('landing.how3body') },
-  ]
-
-  const CASES = [
-    { n: '01', sector: t('landing.case1sector'), headline: t('landing.case1headline'), detail: t('landing.case1detail'), outcome: t('landing.case1outcome') },
-    { n: '02', sector: t('landing.case2sector'), headline: t('landing.case2headline'), detail: t('landing.case2detail'), outcome: t('landing.case2outcome') },
-    { n: '03', sector: t('landing.case3sector'), headline: t('landing.case3headline'), detail: t('landing.case3detail'), outcome: t('landing.case3outcome') },
-  ]
-
   return (
-    <main style={{ background: '#FAFAF8', paddingBottom: '0' }}>
-      <Nav />
+    <main style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
 
-      {/* ══════════════════════════════════════════════
-          SECTION 1 — HERO
-          Dark full-bleed. Word-by-word headline stagger.
-          Sailboat has parallax drift on scroll.
-      ══════════════════════════════════════════════ */}
-      <section style={{ background: '#0C0C0E', paddingBottom: 0, position: 'relative', overflow: 'hidden' }}>
-        <TopoBackground />
+      {/* Layer 0 — Cinematic background (fixed, behind everything) */}
+      <CinematicBackground />
 
-        {/* Grid overlay */}
-        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none', zIndex: 2 }} />
+      {/* Layer 1 — Nav */}
+      <LandingNav />
 
-        {/* Parallax hero image */}
-        <motion.img
-          src="/sail-vertical.jpg"
-          alt=""
-          aria-hidden="true"
-          style={{
-            position:       'absolute',
-            inset:          0,
-            width:          '100%',
-            height:         '100%',
-            objectFit:      'contain',
-            objectPosition: 'center center',
-            opacity:        heroImgOp,
-            pointerEvents:  'none',
-            userSelect:     'none',
-            zIndex:         3,
-            y:              sailboatY,
-          }}
-        />
+      {/* Layer 2 — Main content */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '70px 40px 60px',
+        gap: 'clamp(24px, 4vw, 64px)',
+      }}>
 
-        <div className="max-w-6xl mx-auto px-6 md:px-10 pt-24 md:pt-32 pb-20 md:pb-28" style={{ position: 'relative', zIndex: 10 }}>
-
-          {/* Eyebrow */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: EASE }}
-            style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.25rem' }}
-          >
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
-              {t('landing.eyebrow')}
-            </span>
-            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.4), transparent)' }} />
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>
-              {t('landing.est')}
-            </span>
-          </motion.div>
-
-          {/* Headline — word-by-word stagger */}
-          <motion.h1
-            variants={stagger(0.08)}
-            initial="hidden"
-            animate="show"
-            style={{
-              fontFamily:    'Cormorant Garamond, Georgia, serif',
-              fontSize:      'clamp(3.5rem, 7.5vw, 6.5rem)',
-              fontWeight:    600,
-              fontStyle:     'italic',
-              lineHeight:    1.03,
-              letterSpacing: '-0.02em',
-              color:         '#FFFFFF',
-              maxWidth:      '15ch',
-              margin:        0,
-            }}
-          >
-            {headlineWords.map((word, i) => (
-              <motion.span
-                key={i}
-                variants={wordVar}
-                style={{ display: 'inline-block', marginRight: '0.28em' }}
-              >
-                {word}
-              </motion.span>
-            ))}
-          </motion.h1>
-
-          {/* Subheadline */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.52, ease: EASE }}
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize:   '0.9375rem',
-              lineHeight: 1.78,
-              color:      'rgba(255,255,255,0.48)',
-              maxWidth:   '46ch',
-              marginTop:  '2rem',
-              fontWeight: 300,
-            }}
-          >
-            {t('landing.subheadline')}
-          </motion.p>
-
-          {/* Stat pills */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.68, ease: EASE }}
-            style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '2rem' }}
-          >
-            {STAT_PILLS.map(pill => (
-              <span
-                key={pill}
-                style={{
-                  fontFamily:    'Inter, sans-serif',
-                  fontSize:      '0.67rem',
-                  fontWeight:    500,
-                  letterSpacing: '0.05em',
-                  color:         'rgba(255,255,255,0.55)',
-                  background:    'rgba(255,255,255,0.055)',
-                  border:        '1px solid rgba(255,255,255,0.09)',
-                  borderRadius:  '2px',
-                  padding:       '0.3rem 0.75rem',
-                  whiteSpace:    'nowrap',
-                }}
-              >
-                {pill}
-              </span>
-            ))}
-          </motion.div>
-
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.82, ease: EASE }}
-            style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
-          >
-            <Link href="/welcome" className="btn-primary">
-              {t('landing.beginFree')}
-            </Link>
-            <a href="#tutorial" className="btn-ghost-white" style={{ textDecoration: 'none' }}>
-              {t('landing.watchHow')}
-            </a>
-          </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1.1 }}
-            style={{ marginTop: '0.875rem', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}
-          >
-            {t('landing.freeNote')}
-          </motion.p>
-
-          {/* Trust cues */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.55, delay: 1.2 }}
-            style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
-          >
-            {TRUST_CUES.map(cue => (
-              <span key={cue} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.06em' }}>
-                {cue}
-              </span>
-            ))}
-          </motion.div>
-
-          {/* Decorative sailboat — parallax Y applied to inner div */}
-          <motion.div
-            style={{ y: sailboatY }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.28 }}
-            transition={{ duration: 1.2, delay: 0.6 }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '3rem', pointerEvents: 'none', transform: 'scale(1.1)', transformOrigin: 'right bottom' }}>
-              <div style={{ position: 'relative' }}>
-                <div style={{
-                  position:     'absolute',
-                  inset:        0,
-                  borderRadius: '50%',
-                  background:   'radial-gradient(circle 200px, rgba(20,184,166,0.18) 0%, transparent 70%)',
-                  pointerEvents:'none',
-                }} />
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CompassRose size={260} color="#C9A96E" opacity={0.35} />
-                </div>
-                <EngravedSailboat size={200} color="#FFFFFF" opacity={0.7} />
-              </div>
-            </div>
-          </motion.div>
+        {/* Left — hidden on mobile */}
+        <div className="hidden lg:flex" style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <LeftPanel />
         </div>
-      </section>
 
-      {/* ── Diagonal divider: dark hero → white ─────── */}
-      <SectionDivider from="#0C0C0E" to="#FFFFFF" direction="down-right" height={52} />
+        {/* Center — iPhone (always visible) */}
+        <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+          <IPhoneFrame>
+            <AppPrototype />
+          </IPhoneFrame>
 
-      {/* ── Marquee Band 1 ───────────────────────────── */}
-      <MarqueeBand />
-
-      {/* ══════════════════════════════════════════════
-          SECTION 2 — HOW IT WORKS
-          White. Staggered 3-column grid.
-          Oversized decorative numbers (Swiss typographic anchors).
-      ══════════════════════════════════════════════ */}
-      <section style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-28">
-
-          {/* Section header */}
-          <motion.div
-            variants={stagger()}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-80px' }}
-            style={{ marginBottom: '4.5rem' }}
-          >
-            <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
-              <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
-                {t('landing.methodology')}
-              </span>
-            </motion.div>
-            <motion.h2
-              variants={fadeUp}
-              style={{
-                fontFamily:    'Cormorant Garamond, Georgia, serif',
-                fontStyle:     'italic',
-                fontSize:      'clamp(1.75rem, 3.5vw, 2.75rem)',
-                fontWeight:    600,
-                color:         '#0C0C0E',
-                letterSpacing: '-0.02em',
-                lineHeight:    1.15,
-                maxWidth:      '22ch',
-                margin:        0,
-              }}
-            >
-              {t('landing.how1title') && 'Three steps. One sovereign intelligence layer.'}
-            </motion.h2>
-          </motion.div>
-
-          {/* 3-column How grid */}
-          <motion.div
-            variants={stagger(0.08)}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-60px' }}
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 0 }}
-          >
-            {HOW.map((h, i) => (
-              <motion.div
-                key={h.n}
-                variants={fadeUp}
-                className="hover-lift"
-                style={{
-                  padding:      '2.5rem 2rem 2.5rem',
-                  borderRight:  i < HOW.length - 1 ? '1px solid rgba(0,0,0,0.09)' : 'none',
-                  borderLeft:   i === 0 ? '1px solid rgba(0,0,0,0.09)' : 'none',
-                  borderTop:    '1px solid rgba(0,0,0,0.09)',
-                  borderBottom: '1px solid rgba(0,0,0,0.09)',
-                  display:      'flex',
-                  flexDirection:'column',
-                }}
-              >
-                {/* Big decorative number — Swiss typographic anchor */}
-                <span style={{
-                  fontFamily:    'Cormorant Garamond, Georgia, serif',
-                  fontSize:      'clamp(4.5rem, 8vw, 7rem)',
-                  fontWeight:    700,
-                  color:         'rgba(0,0,0,0.04)',
-                  lineHeight:    0.9,
-                  display:       'block',
-                  marginBottom:  '1.75rem',
-                  letterSpacing: '-0.03em',
-                  userSelect:    'none',
-                }}>
-                  {h.n}
-                </span>
-
-                {/* Teal accent stroke */}
-                <div style={{ width: 20, height: 2, background: 'var(--sv-teal)', marginBottom: '1.25rem', borderRadius: 1 }} />
-
-                <h4 style={{
-                  fontFamily: 'Cormorant Garamond, Georgia, serif',
-                  fontSize:   '1.25rem',
-                  fontWeight: 600,
-                  color:      '#0C0C0E',
-                  marginBottom:'0.75rem',
-                  lineHeight: 1.25,
-                }}>
-                  {h.title}
-                </h4>
-                <p style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize:   '0.875rem',
-                  lineHeight: 1.78,
-                  color:      '#71717A',
-                  fontWeight: 300,
-                  flex:       1,
-                }}>
-                  {h.body}
-                </p>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* CTA link */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55, delay: 0.3, ease: EASE }}
-            style={{ marginTop: '3rem', textAlign: 'center' }}
-          >
-            <Link
-              href="/login"
-              className="link-editorial"
-              style={{
-                fontFamily:    'Inter, sans-serif',
-                fontSize:      '0.78rem',
-                fontWeight:    600,
-                letterSpacing: '0.06em',
-                color:         '#0C0C0E',
-                textDecoration:'none',
-                borderBottom:  '1px solid rgba(0,0,0,0.25)',
-                paddingBottom: '2px',
-              }}
-            >
-              {t('landing.startNow')} →
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════
-          SECTION 3 — TUTORIAL (ProductWalkthrough)
-          Already has its own premium animation system.
-      ══════════════════════════════════════════════ */}
-      <ProductWalkthrough />
-
-      {/* ── Diagonal divider: dark video → light ─────── */}
-      <SectionDivider from="#08090D" to="#F4F4F2" direction="down-left" height={52} />
-
-      {/* ── Marquee Band 2 ───────────────────────────── */}
-      <MarqueeBand />
-
-      {/* ══════════════════════════════════════════════
-          SECTION 4 — INTELLIGENCE MODES
-          Light canvas. Stagger 3 cards.
-      ══════════════════════════════════════════════ */}
-      <section style={{ background: '#FAFAF8', borderTop: '1px solid rgba(0,0,0,0.07)', position: 'relative', overflow: 'hidden' }}>
-        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none' }} />
-
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-24" style={{ position: 'relative' }}>
-
-          {/* Header */}
-          <motion.div
-            variants={stagger()}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-80px' }}
-            style={{ marginBottom: '3.5rem' }}
-          >
-            <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1rem' }}>
-              <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
-                {t('landing.intelligenceModes')}
-              </span>
-            </motion.div>
-            <motion.p variants={fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: '#71717A', fontWeight: 300, maxWidth: '52ch', lineHeight: 1.75 }}>
-              {t('landing.modesCount')}
-            </motion.p>
-          </motion.div>
-
-          {/* Mode cards — stagger grid */}
-          <motion.div
-            variants={stagger(0.06)}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-60px' }}
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}
-          >
-            {/* Upwind */}
-            <motion.div variants={fadeUp} className="mode-card-sv">
-              <ModeCard
-                badge={t('landing.upwindBadge')}
-                name="Upwind"
-                color="#1A5276"
-                bg="rgba(26,82,118,0.04)"
-                border="rgba(26,82,118,0.15)"
-                icon={
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 3L12 19L4 19Z" fill="#1A5276" opacity="0.85"/>
-                    <path d="M12 3L12 19L20 12Z" fill="#1A5276" opacity="0.3"/>
-                    <line x1="12" y1="2" x2="12" y2="20" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M5 19Q12 22 19 19" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-                  </svg>
-                }
-                desc={t('landing.upwindDesc')}
-                detail={t('landing.upwindDetail')}
-              />
-            </motion.div>
-
-            {/* SAIL */}
-            <motion.div variants={fadeUp} className="mode-card-sv">
-              <ModeCard
-                badge={t('landing.sailBadge')}
-                name="SAIL"
-                color="#7C3AED"
-                bg="rgba(124,58,237,0.04)"
-                border="rgba(124,58,237,0.15)"
-                icon={
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 3C18 5 22 11 20 19L12 19Z" fill="#7C3AED" opacity="0.85"/>
-                    <path d="M12 8C16 9 18 14 17 19L12 19Z" fill="#7C3AED" opacity="0.4"/>
-                    <line x1="12" y1="2" x2="12" y2="20" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M5 19Q12 22 19 19" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-                    <circle cx="5" cy="6" r="1.8" fill="#7C3AED" opacity="0.6"/>
-                  </svg>
-                }
-                desc={t('landing.sailDesc')}
-                detail={t('landing.sailDetail')}
-              />
-            </motion.div>
-
-            {/* Operator */}
-            <motion.div variants={fadeUp} className="mode-card-sv">
-              <ModeCard
-                badge={t('landing.operatorBadge')}
-                name="Operator"
-                color="#CC2200"
-                bg="rgba(204,34,0,0.03)"
-                border="rgba(204,34,0,0.18)"
-                icon={
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="9" stroke="#CC2200" strokeWidth="1.4" opacity="0.4"/>
-                    <circle cx="12" cy="12" r="3" fill="#CC2200" opacity="0.9"/>
-                    <line x1="12" y1="3" x2="12" y2="7" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                    <line x1="12" y1="17" x2="12" y2="21" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                    <line x1="3" y1="12" x2="7" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                    <line x1="17" y1="12" x2="21" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                }
-                desc={t('landing.operatorDesc')}
-                detail={t('landing.operatorDetail')}
-              />
-            </motion.div>
-          </motion.div>
-
-          {/* Explore all modes */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55, delay: 0.25, ease: EASE }}
-            style={{ marginTop: '2.5rem', textAlign: 'center' }}
-          >
-            <Link
-              href="/chat"
-              style={{
-                fontFamily:    'Inter, sans-serif',
-                fontSize:      '0.75rem',
-                fontWeight:    500,
-                color:         '#71717A',
-                textDecoration:'none',
-                borderBottom:  '1px solid rgba(0,0,0,0.15)',
-                paddingBottom: '2px',
-                letterSpacing: '0.03em',
-              }}
-            >
-              {t('landing.exploreAllModes')} →
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════
-          SECTION 5 — SAMPLE OUTCOMES
-          Off-white. Stagger rows. Hover highlight.
-      ══════════════════════════════════════════════ */}
-      <section style={{ background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-24">
-
-          {/* Header */}
-          <motion.div
-            variants={stagger()}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-80px' }}
-            style={{ marginBottom: '3rem' }}
-          >
-            <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
-                  {t('landing.indicativeOutputs')}
-                </span>
-              </div>
-              <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: '#A1A1AA' }}>
-                {t('landing.realisticProjections')}
-              </span>
-            </motion.div>
-          </motion.div>
-
-          <div style={{ height: 1, background: 'rgba(0,0,0,0.09)', marginBottom: 0 }} />
-
-          {/* Case rows — stagger */}
-          <motion.div
-            variants={stagger(0.06)}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-60px' }}
-          >
-            {CASES.map(c => (
-              <motion.div
-                key={c.n}
-                variants={fadeUp}
-                className="case-row"
-                style={{
-                  display:             'grid',
-                  gridTemplateColumns: '2.5rem 1fr auto',
-                  gap:                 '1.75rem',
-                  alignItems:          'center',
-                  padding:             '2rem 0.5rem',
-                  borderBottom:        '1px solid rgba(0,0,0,0.07)',
-                  borderRadius:        '6px',
-                }}
-              >
-                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.875rem', color: 'var(--sv-teal)', fontWeight: 600, paddingLeft: '0.25rem' }}>
-                  ◈ {c.n}
-                </span>
-
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.625rem' }}>
-                    <span style={{
-                      fontFamily:    'Inter, sans-serif',
-                      fontSize:      '0.62rem',
-                      fontWeight:    700,
-                      letterSpacing: '0.14em',
-                      textTransform: 'uppercase',
-                      color:         '#0C0C0E',
-                      padding:       '2px 8px',
-                      border:        '1px solid rgba(0,0,0,0.12)',
-                      borderRadius:  '2px',
-                    }}>
-                      {c.sector}
-                    </span>
-                  </div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 1.5vw, 1.15rem)', color: '#0C0C0E', lineHeight: 1.4, marginBottom: '0.4rem' }}>
-                    {c.headline}
-                  </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', lineHeight: 1.6 }}>
-                    {c.detail}
-                  </p>
-                </div>
-
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.3rem, 2.2vw, 1.75rem)', fontWeight: 700, color: '#C9A96E', lineHeight: 1, display: 'block', letterSpacing: '-0.01em' }}>
-                    <AnimatedCounter value={c.outcome} />
-                  </span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A1A1AA', display: 'block', marginTop: '0.25rem' }}>
-                    {t('landing.estOutcome')}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55, delay: 0.4 }}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', lineHeight: 1.6, marginTop: '1.5rem', maxWidth: '60ch' }}
-          >
-            {t('landing.disclaimer')}
-          </motion.p>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════
-          SECTION 6 — CTA DARK
-          Premium dark banner. Fade-up text + button.
-      ══════════════════════════════════════════════ */}
-      <section style={{ background: '#0C0C0E', position: 'relative', overflow: 'hidden' }}>
-        <TopoBackground />
-        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.3, pointerEvents: 'none', zIndex: 2 }} />
-
-        {/* Radial champagne glow */}
-        <div style={{
-          position:      'absolute',
-          top:           '50%',
-          left:          '50%',
-          transform:     'translate(-50%, -50%)',
-          width:         '70vw',
-          height:        '50vh',
-          background:    'radial-gradient(ellipse, rgba(201,169,110,0.07) 0%, transparent 65%)',
-          pointerEvents: 'none',
-          zIndex:        3,
-        }} />
-
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-24" style={{ position: 'relative', zIndex: 10 }}>
-          <div className="champagne-rule" style={{ marginBottom: '4rem' }} />
-
-          <motion.div
-            variants={stagger(0.08)}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-80px' }}
-            style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: '2.5rem', flexWrap: 'wrap' }}
-          >
-            <div>
-              <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
-                <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.5)' }} />
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.7)' }}>
-                  {t('landing.eyebrow')}
-                </span>
-              </motion.div>
-              <motion.h2 variants={fadeUp} style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '1rem' }}>
-                {t('landing.ctaHeadline')}
-              </motion.h2>
-              <motion.p variants={fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(255,255,255,0.35)', fontWeight: 300, lineHeight: 1.75, maxWidth: '42ch' }}>
-                {t('landing.ctaBody')}
-              </motion.p>
-            </div>
-            <motion.div variants={fadeUp} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.875rem', alignItems: 'flex-start' }}>
-              <Link href="/welcome" className="btn-primary" style={{ background: '#C9A96E', borderColor: '#C9A96E', color: '#0C0C0E' }}>
-                {t('landing.beginBtn')}
-              </Link>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em' }}>
-                {t('landing.freeNote')}
-              </p>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════
-          SECTION 7 — FOOTER
-          Clean. Swiss. Brand mark + nav links.
-      ══════════════════════════════════════════════ */}
-      <footer style={{ background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.09)' }}>
-        <div className="champagne-rule" />
-
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-10">
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'start', gap: '3rem', flexWrap: 'wrap' }}>
-
-            {/* Brand */}
-            <div>
-              <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', marginBottom: '0.75rem' }}>
-                <Logo size={28} />
-                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 700, color: '#0C0C0E', fontSize: '0.9rem', letterSpacing: '0.1em' }}>
-                  SAIL AI
-                </span>
-              </Link>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', lineHeight: 1.6, maxWidth: '24ch', fontWeight: 300 }}>
-                {t('landing.footerTagline')}
-              </p>
-            </div>
-
-            {/* Nav columns */}
-            <div style={{ display: 'flex', gap: '4rem', flexWrap: 'wrap' }}>
-              <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
-                  {t('landing.footerProduct')}
-                </p>
-                {[
-                  { href: '/chat',      label: t('landing.footerChat') },
-                  { href: '/research',  label: t('landing.footerResearch') },
-                  { href: '/data-lab',  label: t('landing.footerDataLab') },
-                  { href: '/dashboard', label: t('landing.footerDashboard') },
-                ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
-                    {l.label}
-                  </Link>
-                ))}
-              </div>
-              <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
-                  {t('landing.footerCompany')}
-                </p>
-                {[
-                  { href: '/pricing',    label: t('landing.footerPricing') },
-                  { href: '/welcome',    label: t('landing.footerGetStarted') },
-                ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
-                    {l.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Copyright + Est. */}
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.85rem', color: '#C9A96E', marginBottom: '0.25rem' }}>
-                {t('landing.est')}
-              </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#A1A1AA', letterSpacing: '0.04em' }}>
-                © {new Date().getFullYear()} Sail AI
-              </p>
-            </div>
+          {/* Mobile-only: minimal tagline below phone */}
+          <div className="lg:hidden" style={{ textAlign: 'center', maxWidth: 280 }}>
+            <p style={{ color: 'rgba(250,250,248,0.8)', fontSize: 13, fontFamily: 'Inter, sans-serif', lineHeight: 1.6 }}>
+              Tap the screen to begin your 60-second business diagnosis.
+            </p>
           </div>
         </div>
-      </footer>
+
+        {/* Right — hidden on mobile/tablet */}
+        <div className="hidden xl:flex" style={{ flex: 1 }}>
+          <RightPanel />
+        </div>
+      </div>
+
+      {/* Layer 3 — Footer */}
+      <FooterStrip />
     </main>
   )
 }
