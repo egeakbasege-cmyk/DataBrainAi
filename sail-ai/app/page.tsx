@@ -19,6 +19,9 @@
 'use client'
 
 import Link                                    from 'next/link'
+import { useEffect }                           from 'react'
+import { useSession }                          from 'next-auth/react'
+import { useRouter }                           from 'next/navigation'
 import { motion, AnimatePresence }             from 'framer-motion'
 import { PortofinoScene }                      from '@/components/landing/PortofinoScene'
 import { IPhoneFrame }                         from '@/components/landing/IPhoneFrame'
@@ -481,6 +484,19 @@ const BENCHMARKS: Record<string, string> = {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PortofinoLandingPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  // Logged-in users skip the marketing landing and go straight to the app
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/dashboard')
+    }
+  }, [status, router])
+
+  // Show nothing while resolving session (prevents flash)
+  if (status === 'loading' || status === 'authenticated') return null
+
   return (
     <main style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
 
