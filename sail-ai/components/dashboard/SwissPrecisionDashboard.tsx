@@ -23,7 +23,7 @@
 'use client'
 
 import {
-  useState, useEffect, useRef, useCallback,
+  useState, useEffect, useRef, useCallback, useMemo,
 }                                 from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
@@ -107,47 +107,62 @@ const AI_MODES: ModeConfig[] = [
   },
 ]
 
-const DEMO_RESPONSES: Record<AIMode, string> = {
-  explore: `**Market Intelligence Report — SaaS B2B Segment**
+// ─────────────────────────────────────────────────────────────────────────────
+// KAIROS types (mirror of deep-explore route response)
+// ─────────────────────────────────────────────────────────────────────────────
 
-Three high-conviction signals surfaced this week:
+interface KairosAction {
+  label:    string
+  impact:   'HIGH' | 'MED' | 'LOW'
+  effort:   'HIGH' | 'MED' | 'LOW'
+  timeline: string
+}
 
-**① Consolidation pressure** in mid-market CRM (3 acquisitions in 90 days) is creating churn anxiety among 10K-seat deployments. Expansion play: white-glove migration paths.
+interface KairosBenchmark {
+  metric: string
+  value:  string
+  source: string
+}
 
-**② ICP shift** — decision authority moving from IT directors → Revenue Ops. Content and sales motion need to reflect this persona realignment before Q4.
+interface KairosInsight {
+  summary:    string
+  signals:    string[]
+  actions:    KairosAction[]
+  benchmarks: KairosBenchmark[]
+  risks:      string[]
+  confidence: number
+}
 
-**③ Pricing compression** at the $499–$999/seat band. Players under-indexing on ROI calculators are seeing 18% longer sales cycles.
+interface KairosMeta {
+  sector:       string
+  queriesRun:   number
+  sourcesFound: number
+  model:        string
+}
 
-*Sources: Gartner Peer Insights, G2 Momentum Report, Crunchbase M&A signals*`,
-  diagnose: `**Revenue Engine Diagnostic — Critical Path**
-
-CAC is trending well (−8% MoM) but three friction points are eroding payback period:
-
-**Onboarding drop-off:** 34% of trial users never complete week-2 activation milestones. Primary cause: feature discovery gap, not value misalignment.
-
-**Expansion velocity:** NRR sits at 112% — solid, but cohort analysis shows land-and-expand is failing for sub-$2K ACV accounts. Recommend tiered CS coverage model.
-
-**Win/loss signal:** Lost 6 of last 10 enterprise deals to a single competitor offering embedded analytics. Feature gap confirmation — not pricing.
-
-*Confidence: 87% | Based on 14-day cohort window*`,
-  strategize: `**90-Day Precision Growth Plan**
-
-**Month 1 — Foundation**
-- Rebuild onboarding milestone map (target: 85% week-2 activation)
-- Launch embedded analytics MVP (table-stakes parity with key competitor)
-- Re-segment ICP: remove sub-$1K ACV from outbound motion
-
-**Month 2 — Acceleration**
-- Revenue Ops persona campaign (LinkedIn + Outreach sequences)
-- CS coverage model: human-touch for $2K–$10K ACV, AI-assist below
-- CAC optimisation: pause 2 underperforming channels, reinvest in ICP-matched events
-
-**Month 3 — Scale**
-- Case study program: 3 customer spotlights for expansion motion
-- Enterprise analytics positioning: analyst briefings, G2 review campaign
-- Board metric package: NRR target 118% by end of quarter
-
-*Expected MRR impact: +$8.4K (17% lift) | Payback period: −12 days*`,
+// Build Tavily search queries from mode + sector + optional user input
+function buildQueries(mode: AIMode, sector: string, userInput: string): string[] {
+  const topic = userInput.trim() || sector
+  switch (mode) {
+    case 'explore':
+      return [
+        `${topic} competitive landscape market trends 2025`,
+        `${sector} growth opportunities emerging players consolidation`,
+        `${sector} market signals investor activity 2024 2025`,
+      ]
+    case 'diagnose':
+      return [
+        `${topic} benchmarks failure patterns common causes`,
+        `${sector} CAC LTV churn activation conversion benchmarks`,
+        `${sector} product-market fit retention signals`,
+      ]
+    case 'strategize':
+      return [
+        `${topic} growth strategy playbook execution`,
+        `${sector} revenue expansion NRR optimization tactics`,
+        `${sector} 90-day sprint go-to-market best practices`,
+      ]
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -172,28 +187,6 @@ const slideRight = {
   hidden: { opacity: 0, x: 20 },
   show:   { opacity: 1, x: 0, transition: { duration: 0.36, ease: [0.22, 1, 0.36, 1] } },
   exit:   { opacity: 0, x: -16, transition: { duration: 0.22 } },
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Hook — streaming text effect
-// ─────────────────────────────────────────────────────────────────────────────
-
-function useStreamText(text: string, active: boolean, speed = 16) {
-  const [displayed, setDisplayed] = useState('')
-
-  useEffect(() => {
-    if (!active) { setDisplayed(''); return }
-    let i = 0
-    setDisplayed('')
-    const id = setInterval(() => {
-      i++
-      setDisplayed(text.slice(0, i))
-      if (i >= text.length) clearInterval(id)
-    }, speed)
-    return () => clearInterval(id)
-  }, [text, active, speed])
-
-  return displayed
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -719,69 +712,306 @@ function AnalyticsTab() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Markdown renderer — bold only (for AI response)
+// KAIROS Insight display components
 // ─────────────────────────────────────────────────────────────────────────────
 
-function MDInline({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/)
+const IMPACT_COLOR: Record<string, string> = {
+  HIGH: '#f87171',
+  MED:  '#c49a3c',
+  LOW:  '#81d8d0',
+}
+
+function ImpactBadge({ label, value }: { label: string; value: string }) {
   return (
-    <>
-      {parts.map((p, i) =>
-        p.startsWith('**') && p.endsWith('**') ? (
-          <strong key={i} style={{ color: '#81d8d0', fontWeight: 600 }}>
-            {p.slice(2, -2)}
-          </strong>
-        ) : (
-          <span key={i}>{p}</span>
-        )
-      )}
-    </>
+    <span
+      className="text-[9px] px-1.5 py-0.5 rounded font-medium tracking-wide"
+      style={{
+        color:      IMPACT_COLOR[value] ?? '#81d8d0',
+        background: `${IMPACT_COLOR[value] ?? '#81d8d0'}14`,
+        fontFamily: "'Archivo', sans-serif",
+      }}
+    >
+      {label} {value}
+    </span>
   )
 }
 
-function StreamedResponse({ text }: { text: string }) {
-  const paragraphs = text.trim().split('\n\n').filter(Boolean)
+function InsightPanel({ insight, meta, onReset }: {
+  insight: KairosInsight
+  meta:    KairosMeta
+  onReset: () => void
+}) {
+  const pct = Math.round(insight.confidence * 100)
+
   return (
-    <div className="flex flex-col gap-3">
-      {paragraphs.map((para, i) => (
-        <p
-          key={i}
-          className="text-[13px] leading-6"
-          style={{ color: '#f9fafb' }}
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35 }}
+      className="rounded-xl p-4 flex flex-col gap-4"
+      style={{
+        background:    'rgba(10, 17, 40, 0.80)',
+        border:        '1px solid rgba(129, 216, 208, 0.22)',
+        backdropFilter:'blur(18px)',
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <Sparkles size={12} style={{ color: '#81d8d0' }} />
+        <span
+          className="text-[10px] tracking-[0.18em] uppercase"
+          style={{ color: '#81d8d0', fontFamily: "'Archivo', sans-serif" }}
         >
-          <MDInline text={para} />
-        </p>
-      ))}
-    </div>
+          KAIROS Analysis
+        </span>
+        <CheckCircle2 size={11} style={{ color: '#81d8d0', marginLeft: 'auto' }} />
+      </div>
+
+      {/* Summary */}
+      <p className="text-[13px] leading-6" style={{ color: '#f9fafb' }}>
+        {insight.summary}
+      </p>
+
+      {/* Signals */}
+      {insight.signals.length > 0 && (
+        <div>
+          <div
+            className="text-[9px] tracking-[0.18em] uppercase mb-2 opacity-40"
+            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+          >
+            Market Signals
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {insight.signals.map((s, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <span className="mt-0.5 shrink-0 text-[11px]" style={{ color: '#81d8d0' }}>→</span>
+                <p className="text-[12px] leading-5 opacity-80" style={{ color: '#f9fafb' }}>{s}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Priority actions */}
+      {insight.actions.length > 0 && (
+        <div>
+          <div
+            className="text-[9px] tracking-[0.18em] uppercase mb-2 opacity-40"
+            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+          >
+            Priority Actions
+          </div>
+          <div className="flex flex-col gap-2">
+            {insight.actions.map((a, i) => (
+              <div
+                key={i}
+                className="rounded-lg px-3 py-2.5"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border:     '1px solid rgba(255,255,255,0.07)',
+                }}
+              >
+                <p className="text-[12px] mb-1.5" style={{ color: '#f9fafb' }}>{a.label}</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  <ImpactBadge label="Impact" value={a.impact} />
+                  <ImpactBadge label="Effort" value={a.effort} />
+                  <span
+                    className="text-[9px] px-1.5 py-0.5 rounded tracking-wide"
+                    style={{
+                      color:      'rgba(249,250,251,0.45)',
+                      background: 'rgba(255,255,255,0.05)',
+                      fontFamily: "'Archivo', sans-serif",
+                    }}
+                  >
+                    {a.timeline}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Benchmarks */}
+      {insight.benchmarks.length > 0 && (
+        <div>
+          <div
+            className="text-[9px] tracking-[0.18em] uppercase mb-2 opacity-40"
+            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+          >
+            Benchmarks
+          </div>
+          <div className="flex flex-col gap-1">
+            {insight.benchmarks.map((b, i) => (
+              <div key={i} className="flex justify-between items-baseline gap-2">
+                <span className="text-[11px] opacity-60 truncate" style={{ color: '#f9fafb' }}>
+                  {b.metric}
+                </span>
+                <span className="text-[12px] font-medium shrink-0" style={{ color: '#c49a3c' }}>
+                  {b.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Risks */}
+      {insight.risks.length > 0 && (
+        <div>
+          <div
+            className="text-[9px] tracking-[0.18em] uppercase mb-2 opacity-40"
+            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+          >
+            Counter-Signals
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {insight.risks.map((r, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <span className="mt-0.5 shrink-0 text-[10px]" style={{ color: '#f87171' }}>⚠</span>
+                <p className="text-[12px] leading-5 opacity-75" style={{ color: '#f9fafb' }}>{r}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Confidence bar */}
+      <div>
+        <div className="flex justify-between mb-1">
+          <span
+            className="text-[9px] tracking-[0.14em] uppercase opacity-35"
+            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+          >
+            Confidence
+          </span>
+          <span className="text-[10px]" style={{ color: '#81d8d0' }}>{pct}%</span>
+        </div>
+        <div className="h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: 'linear-gradient(90deg, #81d8d0, #c49a3c)' }}
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          />
+        </div>
+        <div
+          className="text-[10px] opacity-25 mt-1"
+          style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+        >
+          {meta.sourcesFound} sources · {meta.model}
+        </div>
+      </div>
+
+      {/* Action row */}
+      <div
+        className="flex gap-2 pt-3"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+      >
+        {['Save', 'Export'].map(action => (
+          <button
+            key={action}
+            className="flex-1 py-2 rounded-lg text-[11px] font-medium min-h-[36px]"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border:     '1px solid rgba(255,255,255,0.08)',
+              color:      'rgba(249,250,251,0.55)',
+              fontFamily: "'Archivo', sans-serif",
+            }}
+          >
+            {action}
+          </button>
+        ))}
+        <button
+          onClick={onReset}
+          className="flex-1 py-2 rounded-lg text-[11px] font-medium min-h-[36px]"
+          style={{
+            background: 'rgba(196,154,60,0.08)',
+            border:     '1px solid rgba(196,154,60,0.28)',
+            color:      '#c49a3c',
+            fontFamily: "'Archivo', sans-serif",
+          }}
+        >
+          New Query
+        </button>
+      </div>
+    </motion.div>
   )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Strategy tab — Central Operations Module
+// Strategy tab — Central Operations Module (wired to KAIROS deep-explore)
 // ─────────────────────────────────────────────────────────────────────────────
+
+const SECTOR_NAMES = ['SaaS B2B', 'PLG SaaS', 'E-Commerce', 'Marketplace', 'FinTech']
 
 function StrategyTab() {
-  const [mode,     setMode]     = useState<AIMode>('explore')
-  const [query,    setQuery]    = useState('')
-  const [streaming, setStreaming] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const [mode,    setMode]    = useState<AIMode>('explore')
+  const [sector,  setSector]  = useState('SaaS B2B')
+  const [query,   setQuery]   = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState<string | null>(null)
+  const [insight, setInsight] = useState<KairosInsight | null>(null)
+  const [meta,    setMeta]    = useState<KairosMeta | null>(null)
 
-  const activeModeConfig = AI_MODES.find(m => m.id === mode)!
-  const demoText         = DEMO_RESPONSES[mode]
-  const streamedText     = useStreamText(demoText, streaming)
+  const activeModeConfig = useMemo(() => AI_MODES.find(m => m.id === mode)!, [mode])
 
-  const handleSubmit = useCallback(() => {
-    if (submitted) {
-      setSubmitted(false)
-      setStreaming(false)
-      setQuery('')
-      return
+  const reset = useCallback(() => {
+    setInsight(null)
+    setError(null)
+    setQuery('')
+  }, [])
+
+  const handleModeChange = useCallback((m: AIMode) => {
+    setMode(m)
+    setInsight(null)
+    setError(null)
+  }, [])
+
+  const handleSubmit = useCallback(async () => {
+    if (insight || loading) return
+    setLoading(true)
+    setError(null)
+
+    const apiKey =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('sail_groq_key') ?? undefined
+        : undefined
+
+    const queries = buildQueries(mode, sector, query)
+
+    try {
+      const res = await fetch('/api/edge-agents/deep-explore', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ sector, queries, apiKey }),
+      })
+
+      if (res.status === 401) {
+        setError('Sign in to unlock KAIROS analysis — intelligence runs on your account.')
+        return
+      }
+      if (res.status === 503) {
+        setError('Search service not configured on this deployment — contact your admin.')
+        return
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: 'Unknown error' })) as { error?: string }
+        setError(body.error ?? `Request failed (${res.status})`)
+        return
+      }
+
+      const data = await res.json() as { insight: KairosInsight; meta: KairosMeta }
+      setInsight(data.insight)
+      setMeta(data.meta)
+    } catch {
+      setError('Network error — check your connection and try again.')
+    } finally {
+      setLoading(false)
     }
-    setStreaming(false)
-    setSubmitted(true)
-    setTimeout(() => setStreaming(true), 320)
-  }, [submitted])
+  }, [insight, loading, mode, sector, query])
 
   return (
     <motion.div
@@ -810,28 +1040,22 @@ function StrategyTab() {
           return (
             <button
               key={m.id}
-              onClick={() => { setMode(m.id); setSubmitted(false); setStreaming(false) }}
+              onClick={() => handleModeChange(m.id)}
               className="flex-1 rounded-xl py-3 px-2 text-center transition-all duration-200 min-h-[44px]"
               style={{
                 background: active ? 'rgba(10, 17, 40, 0.90)' : 'rgba(10, 17, 40, 0.45)',
-                border: active
+                border:     active
                   ? `1px solid ${m.accent}`
                   : '1px solid rgba(255, 255, 255, 0.08)',
-                boxShadow: active ? `0 0 18px ${m.accent}22` : 'none',
+                boxShadow:  active ? `0 0 18px ${m.accent}22` : 'none',
               }}
             >
-              <div
-                className="text-base mb-0.5"
-                style={{ color: active ? m.accent : 'rgba(249,250,251,0.4)' }}
-              >
+              <div className="text-base mb-0.5" style={{ color: active ? m.accent : 'rgba(249,250,251,0.4)' }}>
                 {m.icon}
               </div>
               <div
                 className="text-[10px] tracking-wide font-medium"
-                style={{
-                  color: active ? m.accent : 'rgba(249,250,251,0.4)',
-                  fontFamily: "'Archivo', sans-serif",
-                }}
+                style={{ color: active ? m.accent : 'rgba(249,250,251,0.4)', fontFamily: "'Archivo', sans-serif" }}
               >
                 {m.label}
               </div>
@@ -852,52 +1076,80 @@ function StrategyTab() {
         {activeModeConfig.tagline}
       </motion.div>
 
+      {/* Sector chips */}
+      <motion.div variants={fadeUp} className="flex gap-1.5 flex-wrap">
+        {SECTOR_NAMES.map(s => (
+          <button
+            key={s}
+            onClick={() => setSector(s)}
+            className="px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all duration-150 min-h-[28px]"
+            style={{
+              background: s === sector ? 'rgba(129,216,208,0.14)' : 'rgba(255,255,255,0.04)',
+              border:     `1px solid ${s === sector ? '#81d8d0' : 'rgba(255,255,255,0.08)'}`,
+              color:      s === sector ? '#81d8d0' : 'rgba(249,250,251,0.45)',
+              fontFamily: "'Archivo', sans-serif",
+            }}
+          >
+            {s}
+          </button>
+        ))}
+      </motion.div>
+
       {/* Query input */}
       <motion.div variants={fadeUp}>
         <div
           className="rounded-xl overflow-hidden"
           style={{
-            background: 'rgba(10, 17, 40, 0.72)',
-            border: `1px solid ${submitted ? 'rgba(196,154,60,0.40)' : 'rgba(196,154,60,0.18)'}`,
-            backdropFilter: 'blur(18px)',
-            transition: 'border-color 0.25s',
+            background:    'rgba(10, 17, 40, 0.72)',
+            border:        `1px solid ${loading ? 'rgba(129,216,208,0.35)' : 'rgba(196,154,60,0.18)'}`,
+            backdropFilter:'blur(18px)',
+            transition:    'border-color 0.25s',
           }}
         >
           <textarea
-            ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
+            disabled={loading}
             placeholder={
               mode === 'explore'
-                ? 'e.g. "Analyse competitive dynamics in mid-market CRM"'
+                ? `e.g. "Analyse competitive dynamics in ${sector}"`
                 : mode === 'diagnose'
-                ? 'e.g. "Why is our week-2 activation rate declining?"'
-                : 'e.g. "Build a 90-day plan to achieve 118% NRR"'
+                ? `e.g. "Why is our ${sector} activation rate declining?"`
+                : `e.g. "Build a 90-day plan to grow ${sector} NRR to 118%"`
             }
             rows={3}
-            className="w-full px-4 pt-4 pb-2 bg-transparent text-[13px] leading-5 resize-none outline-none placeholder-opacity-30"
+            className="w-full px-4 pt-4 pb-2 bg-transparent text-[13px] leading-5 resize-none outline-none"
             style={{
-              color: '#f9fafb',
+              color:      loading ? 'rgba(249,250,251,0.45)' : '#f9fafb',
               fontFamily: "'Archivo', sans-serif",
               caretColor: '#81d8d0',
             }}
           />
           <div className="flex items-center justify-between px-3 pb-3">
-            <span className="text-[10px] opacity-25" style={{ color: '#f9fafb' }}>
-              Powered by Groq · 70B
+            <span className="text-[10px] opacity-25" style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}>
+              Powered by Groq · 70B · {sector}
             </span>
             <button
               onClick={handleSubmit}
+              disabled={loading}
               className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium transition-all duration-200 min-h-[36px]"
               style={{
-                background: submitted ? 'rgba(196,154,60,0.12)' : 'rgba(196,154,60,0.20)',
-                border: '1px solid rgba(196,154,60,0.40)',
-                color: '#c49a3c',
+                background: loading ? 'rgba(129,216,208,0.10)' : 'rgba(196,154,60,0.20)',
+                border:     `1px solid ${loading ? 'rgba(129,216,208,0.40)' : 'rgba(196,154,60,0.40)'}`,
+                color:      loading ? '#81d8d0' : '#c49a3c',
                 fontFamily: "'Archivo', sans-serif",
+                opacity:    loading ? 0.7 : 1,
               }}
             >
-              {submitted ? (
-                <><AlertCircle size={11} />Reset</>
+              {loading ? (
+                <>
+                  <motion.span
+                    className="inline-block w-2.5 h-2.5 rounded-full border border-current border-t-transparent"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                  />
+                  Thinking…
+                </>
               ) : (
                 <><Send size={11} />Analyse</>
               )}
@@ -906,72 +1158,29 @@ function StrategyTab() {
         </div>
       </motion.div>
 
-      {/* Response panel */}
+      {/* Error state */}
       <AnimatePresence>
-        {submitted && (
+        {error && (
           <motion.div
-            key={`response-${mode}`}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
-            className="rounded-xl p-4"
+            className="rounded-xl p-4 flex gap-3"
             style={{
-              background: 'rgba(10, 17, 40, 0.72)',
-              border: '1px solid rgba(129, 216, 208, 0.18)',
-              backdropFilter: 'blur(18px)',
+              background: 'rgba(248,113,113,0.07)',
+              border:     '1px solid rgba(248,113,113,0.22)',
             }}
           >
-            {/* Response header */}
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles size={12} style={{ color: '#81d8d0' }} />
-              <span
-                className="text-[10px] tracking-[0.18em] uppercase"
-                style={{ color: '#81d8d0', fontFamily: "'Archivo', sans-serif" }}
-              >
-                KAIROS Analysis
-              </span>
-              {streaming && streamedText.length < demoText.length && (
-                <motion.span
-                  className="inline-block w-1 h-3 ml-1 rounded-sm"
-                  style={{ background: '#81d8d0' }}
-                  animate={{ opacity: [1, 0, 1] }}
-                  transition={{ duration: 0.7, repeat: Infinity }}
-                />
-              )}
-              {streamedText.length >= demoText.length && (
-                <CheckCircle2 size={11} style={{ color: '#81d8d0', marginLeft: 'auto' }} />
-              )}
-            </div>
-
-            <StreamedResponse text={streamedText || '…'} />
-
-            {/* Action row — appears after stream completes */}
-            {streamedText.length >= demoText.length && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="flex gap-2 mt-4 pt-3"
-                style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
-              >
-                {['Save', 'Export', 'Deep Dive'].map(action => (
-                  <button
-                    key={action}
-                    className="flex-1 py-2 rounded-lg text-[11px] font-medium min-h-[36px]"
-                    style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      color: 'rgba(249,250,251,0.55)',
-                      fontFamily: "'Archivo', sans-serif",
-                    }}
-                  >
-                    {action}
-                  </button>
-                ))}
-              </motion.div>
-            )}
+            <AlertCircle size={14} className="shrink-0" style={{ color: '#f87171' }} />
+            <p className="text-[12px] leading-5" style={{ color: '#f9fafb' }}>{error}</p>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Insight panel — real KAIROS structured response */}
+      <AnimatePresence>
+        {insight && meta && (
+          <InsightPanel insight={insight} meta={meta} onReset={reset} />
         )}
       </AnimatePresence>
     </motion.div>
