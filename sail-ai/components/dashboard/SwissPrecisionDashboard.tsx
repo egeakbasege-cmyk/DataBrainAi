@@ -30,7 +30,7 @@ import {
   LayoutGrid, BarChart2, Compass, Settings2,
   TrendingUp, TrendingDown, Zap, Send, Lock,
   ChevronRight, Eye, EyeOff, AlertCircle, CheckCircle2,
-  Sparkles, Anchor,
+  Sparkles, Anchor, type LucideIcon,
 }                                 from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1129,7 +1129,7 @@ function SettingsTab() {
 interface NavItem {
   id:    Tab
   label: string
-  Icon:  React.ComponentType<{ size?: number; color?: string }>
+  Icon:  LucideIcon
 }
 
 const NAV_ITEMS: NavItem[] = [
