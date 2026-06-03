@@ -23,20 +23,20 @@ import type { TranslationKey }                     from '@/lib/i18n/translations
 // ── Palette ───────────────────────────────────────────────────────────────────
 
 const T = {
-  outerBg:     'rgba(248,253,251,0.93)',
-  outerBorder: 'rgba(129,199,185,0.30)',
-  cardBg:      'rgba(255,255,255,0.82)',
-  cardBorder:  'rgba(129,199,185,0.35)',
-  cardFocus:   'rgba(20,184,166,0.45)',
-  cardShadow:  '0 0 0 1px rgba(129,199,185,0.10), 0 6px 28px rgba(0,0,0,0.06)',
-  cardActive:  '0 0 0 3px rgba(20,184,166,0.10), 0 6px 36px rgba(0,0,0,0.08)',
-  textInput:   '#1A2B3C',
-  textMuted:   'rgba(26,43,60,0.42)',
-  textFaint:   'rgba(26,43,60,0.26)',
+  outerBg:     'rgba(10,17,40,0.90)',
+  outerBorder: 'rgba(201,169,110,0.22)',
+  cardBg:      'rgba(255,255,255,0.05)',
+  cardBorder:  'rgba(201,169,110,0.28)',
+  cardFocus:   'rgba(129,216,208,0.45)',
+  cardShadow:  '0 0 0 1px rgba(201,169,110,0.10), 0 6px 28px rgba(0,0,0,0.30)',
+  cardActive:  '0 0 0 3px rgba(129,216,208,0.12), 0 6px 36px rgba(0,0,0,0.35)',
+  textInput:   '#E8EDF3',
+  textMuted:   'rgba(232,237,243,0.42)',
+  textFaint:   'rgba(232,237,243,0.26)',
   gold:        '#C9A96E',
-  teal:        '#14B8A6',
-  tealDim:     'rgba(20,184,166,0.08)',
-  divider:     'rgba(129,199,185,0.14)',
+  teal:        '#81d8d0',
+  tealDim:     'rgba(129,216,208,0.08)',
+  divider:     'rgba(201,169,110,0.14)',
 } as const
 
 // ── Mode data ─────────────────────────────────────────────────────────────────
@@ -136,8 +136,8 @@ function ModeDropdown({
           padding:       '6px 14px 6px 12px',
           borderRadius:   9999,
           background:     autoMode
-            ? 'rgba(201,169,110,0.10)'
-            : `linear-gradient(135deg, ${activeMeta.color}0D 0%, rgba(255,255,255,0.65) 100%)`,
+            ? 'rgba(201,169,110,0.12)'
+            : `linear-gradient(135deg, ${activeMeta.color}18 0%, rgba(10,17,40,0.60) 100%)`,
           border:        `1px solid ${autoMode ? 'rgba(201,169,110,0.32)' : `${activeMeta.color}35`}`,
           boxShadow:     `0 2px 10px rgba(0,0,0,0.05)`,
           cursor:         isActive ? 'not-allowed' : 'pointer',
@@ -205,12 +205,12 @@ function ModeDropdown({
               bottom:         'calc(100% + 10px)',
               left:            0,
               zIndex:          50,
-              background:     'rgba(248,253,251,0.97)',
+              background:     'rgba(10,17,40,0.96)',
               backdropFilter: 'blur(40px)',
               WebkitBackdropFilter: 'blur(40px)',
-              border:         '1px solid rgba(129,199,185,0.30)',
+              border:         '1px solid rgba(201,169,110,0.28)',
               borderRadius:    16,
-              boxShadow:      '0 8px 40px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.90)',
+              boxShadow:      '0 8px 48px rgba(0,0,0,0.50), 0 0 0 1px rgba(201,169,110,0.06)',
               padding:        '8px',
               width:           320,
             }}
@@ -218,7 +218,7 @@ function ModeDropdown({
             {/* Gold hairline top */}
             <div style={{
               position: 'absolute', top: 0, left: '10%', right: '10%', height: 1,
-              background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.35), rgba(20,184,166,0.25), transparent)',
+              background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.45), rgba(129,216,208,0.30), transparent)',
               borderRadius: '0 0 1px 1px',
             }} />
 
@@ -233,7 +233,7 @@ function ModeDropdown({
                 fontWeight:     700,
                 letterSpacing: '0.20em',
                 textTransform: 'uppercase',
-                color:         'rgba(26,43,60,0.35)',
+                color:         'rgba(232,237,243,0.38)',
               }}>
                 Intelligence Mode
               </span>
@@ -280,7 +280,7 @@ function ModeDropdown({
                         fontWeight:     isActive ? 700 : 600,
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        color:          isActive ? m.color : '#1A2B3C',
+                        color:          isActive ? m.color : '#E8EDF3',
                       }}>
                         {m.label}
                       </span>
@@ -303,7 +303,7 @@ function ModeDropdown({
                     <span style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize:    10,
-                      color:      'rgba(26,43,60,0.45)',
+                      color:      'rgba(232,237,243,0.45)',
                       lineHeight:  1.35,
                       display:    'block',
                     }}>
@@ -315,7 +315,7 @@ function ModeDropdown({
             })}
 
             {/* Divider */}
-            <div style={{ height: 1, background: 'rgba(129,199,185,0.15)', margin: '4px 8px' }} />
+            <div style={{ height: 1, background: 'rgba(201,169,110,0.15)', margin: '4px 8px' }} />
 
             {/* AUTO option */}
             <motion.button
@@ -347,7 +347,7 @@ function ModeDropdown({
                     fontWeight:     autoMode ? 700 : 600,
                     letterSpacing: '0.08em',
                     textTransform: 'uppercase',
-                    color:          autoMode ? T.gold : '#1A2B3C',
+                    color:          autoMode ? T.gold : '#E8EDF3',
                   }}>
                     Auto
                   </span>
@@ -360,7 +360,7 @@ function ModeDropdown({
                     }}>Active</span>
                   )}
                 </div>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(26,43,60,0.45)', lineHeight: 1.35, display: 'block' }}>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.45)', lineHeight: 1.35, display: 'block' }}>
                   AI selects the best mode for your query
                 </span>
               </div>
@@ -404,7 +404,7 @@ export function ChatComposer({
         left:          '8%',
         right:         '8%',
         height:         1,
-        background:    `linear-gradient(90deg, transparent, rgba(20,184,166,0.28), rgba(201,169,110,0.22), transparent)`,
+        background:    `linear-gradient(90deg, transparent, rgba(129,216,208,0.25), rgba(201,169,110,0.28), transparent)`,
         pointerEvents: 'none',
       }} />
 
@@ -421,8 +421,8 @@ export function ChatComposer({
               gap:         8,
               padding:    '8px 14px',
               margin:     '12px 0 -4px',
-              background: 'rgba(20,184,166,0.06)',
-              border:     '1px solid rgba(20,184,166,0.18)',
+              background: 'rgba(129,216,208,0.06)',
+              border:     '1px solid rgba(129,216,208,0.20)',
               borderRadius: 9,
               overflow:   'hidden',
             }}
@@ -433,7 +433,7 @@ export function ChatComposer({
               style={{
                 width: 5, height: 5, borderRadius: '50%',
                 background: T.teal, display: 'inline-block', flexShrink: 0,
-                boxShadow: '0 0 8px rgba(20,184,166,0.45)',
+                boxShadow: '0 0 8px rgba(129,216,208,0.45)',
               }}
             />
             <span style={{
@@ -498,7 +498,7 @@ export function ChatComposer({
             left:          '10%',
             right:         '10%',
             height:         1,
-            background:    `linear-gradient(90deg, transparent, rgba(20,184,166,0.50), transparent)`,
+            background:    `linear-gradient(90deg, transparent, rgba(129,216,208,0.50), transparent)`,
             pointerEvents: 'none',
             zIndex:         1,
           }} />
@@ -574,10 +574,10 @@ export function ChatComposer({
                 width:          32,
                 height:         32,
                 borderRadius:   8,
-                background:     attachment ? 'rgba(201,169,110,0.10)' : 'rgba(129,199,185,0.10)',
+                background:     attachment ? 'rgba(201,169,110,0.12)' : 'rgba(255,255,255,0.05)',
                 border:         attachment
-                  ? '1px solid rgba(201,169,110,0.30)'
-                  : '1px solid rgba(129,199,185,0.22)',
+                  ? '1px solid rgba(201,169,110,0.35)'
+                  : '1px solid rgba(201,169,110,0.16)',
                 cursor:         isActive ? 'not-allowed' : 'pointer',
                 opacity:        isActive ? 0.35 : 1,
                 display:        'flex',

@@ -18,19 +18,19 @@ import { DailyCounter }            from '@/components/DailyCounter'
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const T = {
-  bg:          'rgba(248,253,251,0.93)',
-  border:      'rgba(129,199,185,0.30)',
-  glass:       'rgba(255,255,255,0.55)',
-  glassBorder: 'rgba(129,199,185,0.22)',
-  teal:        '#14B8A6',
-  tealDim:     'rgba(20,184,166,0.10)',
-  tealBorder:  'rgba(20,184,166,0.25)',
+  bg:          'rgba(10,17,40,0.88)',
+  border:      'rgba(201,169,110,0.22)',
+  glass:       'rgba(255,255,255,0.05)',
+  glassBorder: 'rgba(201,169,110,0.16)',
+  teal:        '#81d8d0',
+  tealDim:     'rgba(129,216,208,0.10)',
+  tealBorder:  'rgba(129,216,208,0.25)',
   gold:        '#C9A96E',
-  goldDim:     'rgba(201,169,110,0.08)',
-  goldBorder:  'rgba(201,169,110,0.28)',
-  textPrimary: '#1A2B3C',
-  textMuted:   'rgba(26,43,60,0.50)',
-  textFaint:   'rgba(26,43,60,0.30)',
+  goldDim:     'rgba(201,169,110,0.10)',
+  goldBorder:  'rgba(201,169,110,0.35)',
+  textPrimary: '#E8EDF3',
+  textMuted:   'rgba(232,237,243,0.52)',
+  textFaint:   'rgba(232,237,243,0.30)',
 } as const
 
 const MODE_META: Record<AnalysisMode, { label: string; color: string; icon: string }> = {
@@ -98,7 +98,7 @@ export function GuideRail({
         left:       '6%',
         right:      '6%',
         height:      1,
-        background: `linear-gradient(90deg, transparent, rgba(20,184,166,0.35), rgba(201,169,110,0.30), transparent)`,
+        background: `linear-gradient(90deg, transparent, rgba(129,216,208,0.30), rgba(201,169,110,0.35), transparent)`,
         pointerEvents: 'none',
       }} />
 
@@ -359,9 +359,9 @@ function ControlPill({ active, activeColor, onClick, title, children }: {
         padding:     '5px 10px',
         borderRadius: 9999,
         background:   active
-          ? `linear-gradient(135deg, ${activeColor}12 0%, ${activeColor}06 100%)`
-          : 'rgba(255,255,255,0.55)',
-        border:      `1px solid ${active ? `${activeColor}30` : 'rgba(129,199,185,0.22)'}`,
+          ? `linear-gradient(135deg, ${activeColor}18 0%, ${activeColor}08 100%)`
+          : 'rgba(255,255,255,0.04)',
+        border:      `1px solid ${active ? `${activeColor}40` : 'rgba(201,169,110,0.16)'}`,
         boxShadow:    active ? `0 0 10px ${activeColor}12` : 'none',
         cursor:       'pointer',
         transition:   'all 0.2s cubic-bezier(0.22,1,0.36,1)',
@@ -382,15 +382,15 @@ function IconButton({ onClick, title, children }: {
   return (
     <motion.button
       onClick={onClick}
-      whileHover={{ scale: 1.08, background: 'rgba(255,255,255,0.82)' }}
+      whileHover={{ scale: 1.08, background: 'rgba(255,255,255,0.08)' }}
       whileTap={{ scale: 0.93 }}
       title={title}
       style={{
         width:          32,
         height:         32,
         borderRadius:   8,
-        background:     'rgba(255,255,255,0.55)',
-        border:         '1px solid rgba(129,199,185,0.22)',
+        background:     'rgba(255,255,255,0.04)',
+        border:         '1px solid rgba(201,169,110,0.18)',
         cursor:         'pointer',
         display:        'flex',
         alignItems:     'center',

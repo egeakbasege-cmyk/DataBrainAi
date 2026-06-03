@@ -315,8 +315,9 @@ export function ChatStage(props: ChatStageProps) {
               exit={{ opacity: 0 }}
               style={{
                 padding:       '16px 20px',
-                background:    'rgba(255,255,255,0.88)',
+                background:    'rgba(10,17,40,0.90)',
                 backdropFilter:'blur(24px)',
+                WebkitBackdropFilter:'blur(24px)',
                 border:        '1px solid rgba(201,169,110,0.30)',
                 borderLeft:    '3px solid #C9A96E',
                 borderRadius:   12,
@@ -324,14 +325,14 @@ export function ChatStage(props: ChatStageProps) {
                 alignItems:    'flex-start',
                 justifyContent:'space-between',
                 gap:            12,
-                boxShadow:     '0 4px 20px rgba(201,169,110,0.08)',
+                boxShadow:     '0 4px 20px rgba(0,0,0,0.35)',
               }}
             >
               <div>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#C9A96E', margin: '0 0 4px' }}>
                   {t('paywall.inlineTitle')}
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(26,43,60,0.55)', margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(232,237,243,0.55)', margin: 0, lineHeight: 1.5 }}>
                   {t('paywall.inlineCta')}
                 </p>
               </div>
@@ -370,12 +371,13 @@ export function ChatStage(props: ChatStageProps) {
                 display:       'flex',
                 alignItems:    'flex-start',
                 gap:            12,
-                background:    'rgba(255,255,255,0.88)',
+                background:    'rgba(10,17,40,0.90)',
                 backdropFilter:'blur(24px)',
-                border:        '1px solid rgba(220,38,38,0.18)',
+                WebkitBackdropFilter:'blur(24px)',
+                border:        '1px solid rgba(220,38,38,0.25)',
                 borderLeft:    '3px solid #DC2626',
                 borderRadius:   12,
-                boxShadow:     '0 2px 8px rgba(220,38,38,0.06)',
+                boxShadow:     '0 2px 16px rgba(0,0,0,0.35)',
               }}
             >
               <span style={{ color: '#DC2626', flexShrink: 0 }}>⚠</span>
@@ -419,7 +421,7 @@ export function ChatStage(props: ChatStageProps) {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(20px)', border: '1px solid rgba(220,38,38,0.18)', borderLeft: '3px solid #DC2626', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
+              style={{ padding: '12px 16px', background: 'rgba(10,17,40,0.90)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(220,38,38,0.25)', borderLeft: '3px solid #DC2626', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
             >
               <span style={{ color: '#DC2626' }}>⚠</span>
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(220,38,38,0.85)', flex: 1 }}>{autoError}</span>
@@ -655,16 +657,16 @@ export function ChatStage(props: ChatStageProps) {
                   alignItems:    'center',
                   gap:            8,
                   padding:       '8px 20px',
-                  background:    'rgba(255,255,255,0.70)',
+                  background:    'rgba(255,255,255,0.06)',
                   backdropFilter:'blur(20px)',
-                  border:        '1px solid rgba(129,199,185,0.30)',
+                  border:        '1px solid rgba(201,169,110,0.22)',
                   borderRadius:   8,
                   cursor:        'pointer',
                   fontFamily:    'Inter, sans-serif',
                   fontSize:       12,
                   fontWeight:     600,
                   letterSpacing: '0.06em',
-                  color:         'rgba(26,43,60,0.65)',
+                  color:         'rgba(232,237,243,0.65)',
                   transition:    'all 0.15s',
                 }}
               >
@@ -717,19 +719,20 @@ export function ChatStage(props: ChatStageProps) {
               width:           40,
               height:          40,
               borderRadius:   '50%',
-              background:     'rgba(248,253,251,0.93)',
+              background:     'rgba(10,17,40,0.90)',
               backdropFilter: 'blur(20px)',
-              border:         '1px solid rgba(129,199,185,0.38)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border:         '1px solid rgba(201,169,110,0.28)',
               cursor:         'pointer',
               display:        'flex',
               alignItems:     'center',
               justifyContent: 'center',
-              boxShadow:      '0 4px 16px rgba(0,0,0,0.10)',
+              boxShadow:      '0 4px 20px rgba(0,0,0,0.40)',
             }}
             aria-label="Jump to bottom"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="#14B8A6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              stroke="#81d8d0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </motion.button>

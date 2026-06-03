@@ -11,8 +11,8 @@ type Mode = 'signin' | 'register'
 function LoginForm() {
   const router      = useRouter()
   const params      = useSearchParams()
-  // After sign-in: go to callbackUrl if explicitly set, otherwise /dashboard
-  const callbackUrl = params.get('callbackUrl') ?? '/dashboard'
+  // After sign-in: go to callbackUrl if explicitly set, otherwise /chat
+  const callbackUrl = params.get('callbackUrl') ?? '/chat'
   const errorCode   = params.get('error')
   const { t } = useLanguage()
 

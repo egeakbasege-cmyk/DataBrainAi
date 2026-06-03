@@ -15,17 +15,17 @@ import type { TranslationKey }              from '@/lib/i18n/translations'
 // ── Palette ───────────────────────────────────────────────────────────────────
 
 const T = {
-  textPrimary: '#1A2B3C',
-  textSub:     'rgba(26,43,60,0.70)',
-  textMuted:   'rgba(26,43,60,0.50)',
-  textFaint:   'rgba(26,43,60,0.32)',
-  glass:       'rgba(255,255,255,0.65)',
-  glassMd:     'rgba(255,255,255,0.82)',
-  glassBorder: 'rgba(129,199,185,0.28)',
+  textPrimary: '#E8EDF3',
+  textSub:     'rgba(232,237,243,0.80)',
+  textMuted:   'rgba(232,237,243,0.52)',
+  textFaint:   'rgba(232,237,243,0.30)',
+  glass:       'rgba(255,255,255,0.05)',
+  glassMd:     'rgba(255,255,255,0.08)',
+  glassBorder: 'rgba(201,169,110,0.20)',
   gold:        '#C9A96E',
   goldDim:     'rgba(201,169,110,0.10)',
-  goldBorder:  'rgba(201,169,110,0.28)',
-  teal:        '#14B8A6',
+  goldBorder:  'rgba(201,169,110,0.35)',
+  teal:        '#81d8d0',
 } as const
 
 // ── Mode showcase ─────────────────────────────────────────────────────────────
@@ -177,19 +177,19 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
               onClick={() => { onModeSelect(m.id); onQuickPick(m.sample) }}
               style={{
                 background:    isFocused
-                  ? `linear-gradient(160deg, ${m.color}0E 0%, rgba(255,255,255,0.78) 100%)`
+                  ? `linear-gradient(160deg, ${m.color}18 0%, rgba(10,17,40,0.82) 100%)`
                   : T.glass,
                 backdropFilter:'blur(20px)',
                 WebkitBackdropFilter:'blur(20px)',
-                border:        `1px solid ${isFocused ? `${m.color}30` : T.glassBorder}`,
+                border:        `1px solid ${isFocused ? `${m.color}45` : T.glassBorder}`,
                 borderTop:     `2px solid ${isFocused ? m.color : `${m.color}55`}`,
                 borderRadius:   14,
                 padding:       '20px 18px',
                 cursor:        'pointer',
                 textAlign:     'left',
                 boxShadow:      isFocused
-                  ? `0 8px 40px ${m.glow}, 0 1px 0 rgba(255,255,255,0.90)`
-                  : '0 2px 12px rgba(0,0,0,0.04), 0 1px 0 rgba(255,255,255,0.80)',
+                  ? `0 8px 40px ${m.glow}, 0 0 0 1px rgba(201,169,110,0.08)`
+                  : '0 2px 16px rgba(0,0,0,0.25)',
                 transition:    'all 0.25s cubic-bezier(0.22,1,0.36,1)',
                 outline:       'none',
                 position:      'relative',
