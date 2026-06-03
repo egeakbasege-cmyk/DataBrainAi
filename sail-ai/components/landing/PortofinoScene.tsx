@@ -460,6 +460,9 @@ function SailboatWithPhone() {
       {/* ── Jib sail (small front sail) ───────────────────────────────────── */}
       <JibSail />
 
+      {/* ── Main sail — proper Bermuda rig triangle (cream canvas) ───────── */}
+      <MainSail />
+
       {/* ── iPhone as mainsail ───────────────────────────────────────────── */}
       <group position={[0, 4.8, 0.4]} rotation={[0.15, 0, 0.04]}>
         {/* Phone body — titanium/space black */}
@@ -586,6 +589,43 @@ function JibSail() {
         roughness={0.6}
         transparent
         opacity={0.88}
+      />
+    </mesh>
+  )
+}
+
+// ── Main sail (proper Bermuda rig triangle) ───────────────────────────────────
+//   Head:  mast top (0, 9.0, 0.8)
+//   Tack:  mast base / boom jaw (0, 1.05, 0.8)
+//   Clew:  boom end (0, 1.05, 3.5)   ← stern side, opposite to bow
+// Two triangles for front + back faces with slight billow offset
+
+function MainSail() {
+  const geo = useMemo(() => {
+    // Slight belly/billow: push mid-chord forward a touch
+    const v = new Float32Array([
+      // Face 1 (front)
+       0.00, 9.00,  0.80,   // head
+      -0.12, 4.80,  2.00,   // mid-luff with billow
+       0.00, 1.05,  0.80,   // tack
+       0.00, 1.05,  3.50,   // clew
+    ])
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(v, 3))
+    // Two triangles: head–mid–tack and head–clew–mid
+    g.setIndex([0, 2, 3,  0, 3, 1,  0, 1, 2])
+    g.computeVertexNormals()
+    return g
+  }, [])
+
+  return (
+    <mesh geometry={geo}>
+      <meshStandardMaterial
+        color="#F2EDE0"
+        side={THREE.DoubleSide}
+        roughness={0.65}
+        transparent
+        opacity={0.92}
       />
     </mesh>
   )
