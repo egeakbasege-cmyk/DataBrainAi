@@ -157,16 +157,17 @@ function ModeCard({
       className="hover-lift"
       style={{
         padding:             '2.25rem',
-        background:          'rgba(10,17,40,0.72)',
-        backdropFilter:      'blur(18px)',
-        WebkitBackdropFilter:'blur(18px)',
-        border:              `1px solid ${border}`,
-        borderRadius:        '14px',
+        background:          'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 60%, rgba(20,184,166,0.04) 100%)',
+        backdropFilter:      'blur(32px)',
+        WebkitBackdropFilter:'blur(32px)',
+        border:              `1px solid rgba(255,255,255,0.13)`,
+        borderRadius:        '18px',
         display:             'flex',
         flexDirection:       'column',
         height:              '100%',
         position:            'relative',
         overflow:            'hidden',
+        boxShadow:           '0 8px 40px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.10)',
       }}
     >
       {/* Colour top hairline */}
@@ -180,7 +181,7 @@ function ModeCard({
           className="mode-icon-box"
           style={{
             width: 36, height: 36, borderRadius: '9px',
-            background: `rgba(255,255,255,0.06)`,
+            background: `rgba(255,255,255,0.08)`,
             border: `1px solid ${border}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
@@ -190,20 +191,20 @@ function ModeCard({
           {icon}
         </div>
         <div>
-          <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.25rem', fontWeight: 700, color, display: 'block', lineHeight: 1.1 }}>
+          <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.25rem', fontWeight: 700, color, display: 'block', lineHeight: 1.1, textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
             {name}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.7 }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.85 }}>
             {badge}
           </span>
         </div>
       </div>
 
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.78, color: 'rgba(232,237,243,0.82)', fontWeight: 300, marginBottom: '1rem', flex: 1 }}>
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.78, color: '#FFFFFF', fontWeight: 400, marginBottom: '1rem', flex: 1, textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
         {desc}
       </p>
-      <div style={{ height: 1, background: border, opacity: 0.5, marginBottom: '0.875rem' }} />
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(232,237,243,0.45)', lineHeight: 1.6, margin: 0 }}>
+      <div style={{ height: 1, background: border, opacity: 0.6, marginBottom: '0.875rem' }} />
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.70)', lineHeight: 1.6, margin: 0, textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
         {detail}
       </p>
     </div>
@@ -236,7 +237,7 @@ export default function LandingPage() {
   ]
 
   return (
-    <main style={{ background: '#FAFAF8', paddingBottom: '0' }}>
+    <main style={{ background: 'transparent', paddingBottom: '0' }}>
       <Nav />
 
       {/* ══════════════════════════════════════════════
@@ -244,7 +245,7 @@ export default function LandingPage() {
           Dark full-bleed. Word-by-word headline stagger.
           Sailboat has parallax drift on scroll.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#0C0C0E', paddingBottom: 0, position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'rgba(8,9,13,0.52)', paddingBottom: 0, position: 'relative', overflow: 'hidden' }}>
         <TopoBackground />
 
         {/* Grid overlay */}
@@ -325,10 +326,11 @@ export default function LandingPage() {
               fontFamily: 'Inter, sans-serif',
               fontSize:   '0.9375rem',
               lineHeight: 1.78,
-              color:      'rgba(255,255,255,0.48)',
+              color:      'rgba(255,255,255,0.90)',
               maxWidth:   '46ch',
               marginTop:  '2rem',
               fontWeight: 300,
+              textShadow: '0 1px 10px rgba(0,0,0,0.9)',
             }}
           >
             {t('landing.subheadline')}
@@ -435,7 +437,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Diagonal divider: dark hero → white ─────── */}
-      <SectionDivider from="#0C0C0E" to="#FFFFFF" direction="down-right" height={52} />
+      <SectionDivider from="rgba(8,9,13,0.52)" to="#FFFFFF" direction="down-right" height={52} />
 
       {/* ── Marquee Band 1 ───────────────────────────── */}
       <MarqueeBand />
@@ -586,9 +588,9 @@ export default function LandingPage() {
           SECTION 4 — INTELLIGENCE MODES
           Dark — glassmorphism cards over topo texture.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#0C0C0E', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'rgba(8,9,13,0.18)', position: 'relative', overflow: 'hidden' }}>
         <TopoBackground />
-        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.25, pointerEvents: 'none', zIndex: 1 }} />
+        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none', zIndex: 1 }} />
 
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-24" style={{ position: 'relative', zIndex: 2 }}>
 
@@ -606,7 +608,7 @@ export default function LandingPage() {
                 {t('landing.intelligenceModes')}
               </span>
             </motion.div>
-            <motion.p variants={fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: 'rgba(232,237,243,0.55)', fontWeight: 300, maxWidth: '52ch', lineHeight: 1.75 }}>
+            <motion.p variants={fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: '#FFFFFF', fontWeight: 400, maxWidth: '52ch', lineHeight: 1.75, textShadow: '0 1px 10px rgba(0,0,0,0.9)' }}>
               {t('landing.modesCount')}
             </motion.p>
           </motion.div>
@@ -714,7 +716,7 @@ export default function LandingPage() {
           SECTION 5 — SAMPLE OUTCOMES
           Dark — stagger rows with light text.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#0C0C0E', borderTop: '1px solid rgba(255,255,255,0.06)', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'rgba(8,9,13,0.18)', borderTop: '1px solid rgba(255,255,255,0.08)', position: 'relative', overflow: 'hidden' }}>
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-24" style={{ position: 'relative', zIndex: 1 }}>
 
           {/* Header */}
@@ -732,7 +734,7 @@ export default function LandingPage() {
                   {t('landing.indicativeOutputs')}
                 </span>
               </div>
-              <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: 'rgba(232,237,243,0.38)' }}>
+              <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: 'rgba(255,255,255,0.70)', textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
                 {t('landing.realisticProjections')}
               </span>
             </motion.div>
@@ -757,9 +759,13 @@ export default function LandingPage() {
                   gridTemplateColumns: '2.5rem 1fr auto',
                   gap:                 '1.75rem',
                   alignItems:          'center',
-                  padding:             '2rem 0.5rem',
-                  borderBottom:        '1px solid rgba(255,255,255,0.06)',
-                  borderRadius:        '6px',
+                  padding:             '1.75rem 1rem',
+                  borderBottom:        '1px solid rgba(255,255,255,0.10)',
+                  borderRadius:        '10px',
+                  background:          'rgba(255,255,255,0.04)',
+                  backdropFilter:      'blur(12px)',
+                  WebkitBackdropFilter:'blur(12px)',
+                  marginBottom:        '4px',
                 }}
               >
                 <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.875rem', color: '#14B8A6', fontWeight: 600, paddingLeft: '0.25rem' }}>
@@ -782,10 +788,10 @@ export default function LandingPage() {
                       {c.sector}
                     </span>
                   </div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 1.5vw, 1.15rem)', color: '#E8EDF3', lineHeight: 1.4, marginBottom: '0.4rem' }}>
+                  <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 1.5vw, 1.15rem)', color: '#FFFFFF', lineHeight: 1.4, marginBottom: '0.4rem', textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}>
                     {c.headline}
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'rgba(232,237,243,0.50)', lineHeight: 1.6 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
                     {c.detail}
                   </p>
                 </div>
@@ -818,9 +824,9 @@ export default function LandingPage() {
           SECTION 6 — CTA DARK
           Premium dark banner. Fade-up text + button.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#0C0C0E', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'rgba(8,9,13,0.18)', position: 'relative', overflow: 'hidden' }}>
         <TopoBackground />
-        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.3, pointerEvents: 'none', zIndex: 2 }} />
+        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none', zIndex: 2 }} />
 
         {/* Radial champagne glow */}
         <div style={{
@@ -855,7 +861,7 @@ export default function LandingPage() {
               <motion.h2 variants={fadeUp} style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '1rem' }}>
                 {t('landing.ctaHeadline')}
               </motion.h2>
-              <motion.p variants={fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(255,255,255,0.35)', fontWeight: 300, lineHeight: 1.75, maxWidth: '42ch' }}>
+              <motion.p variants={fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(255,255,255,0.88)', fontWeight: 300, lineHeight: 1.75, maxWidth: '42ch', textShadow: '0 1px 10px rgba(0,0,0,0.9)' }}>
                 {t('landing.ctaBody')}
               </motion.p>
             </div>
