@@ -24,12 +24,13 @@ import { Sky }                              from '@react-three/drei'
 import * as THREE                           from 'three'
 import { useNarrative, NODE_ORDER }         from './narrativeStore'
 
-// ── GLSL: Water ───────────────────────────────────────────────────────────────
+// ── GLSL: Water vertex — 4-component Gerstner with uWaveScale ────────────────
 
 const WATER_VERT = /* glsl */`
 precision highp float;
 
 uniform float uTime;
+uniform float uWaveScale;
 
 varying vec2  vUv;
 varying float vElevation;
@@ -39,29 +40,48 @@ varying vec3  vNormal;
 struct GWave { vec2 dir; float amp; float freq; float speed; float steep; };
 
 vec3 gerstner(GWave w, vec2 xz, float t, inout vec3 tangent, inout vec3 bitangent) {
-  float phi = w.freq * dot(w.dir, xz) + w.speed * t;
-  float c = cos(phi); float s = sin(phi);
-  tangent   += vec3(-w.dir.x*w.dir.x*(w.steep*s),  w.dir.x*w.amp*c, -w.dir.x*w.dir.y*(w.steep*s));
-  bitangent += vec3(-w.dir.x*w.dir.y*(w.steep*s),  w.dir.y*w.amp*c, -w.dir.y*w.dir.y*(w.steep*s));
-  return vec3(w.steep*w.amp*w.dir.x*c, w.amp*s, w.steep*w.amp*w.dir.y*c);
+  float phi    = w.freq * dot(w.dir, xz) + w.speed * t;
+  float sinPhi = sin(phi);
+  float cosPhi = cos(phi);
+  float QAk    = w.steep * w.amp * w.freq;
+
+  tangent   += vec3(
+    -QAk * w.dir.x * w.dir.x * sinPhi,
+     w.amp * w.freq * w.dir.x * cosPhi,
+    -QAk * w.dir.x * w.dir.y * sinPhi
+  );
+  bitangent += vec3(
+    -QAk * w.dir.x * w.dir.y * sinPhi,
+     w.amp * w.freq * w.dir.y * cosPhi,
+    -QAk * w.dir.y * w.dir.y * sinPhi
+  );
+
+  return vec3(
+    w.steep * w.amp * w.dir.x * cosPhi,
+    w.amp  * sinPhi,
+    w.steep * w.amp * w.dir.y * cosPhi
+  );
 }
 
 void main() {
-  vUv = uv;
-  vec3 pos = position;
+  vUv      = uv;
+  vec2  xz = vec2(position.x, position.z) * uWaveScale;
 
-  GWave w0 = GWave(normalize(vec2(1.0, 0.6)),  0.16, 0.44, 1.10, 0.42);
-  GWave w1 = GWave(normalize(vec2(-0.4, 1.0)), 0.09, 0.78, 1.40, 0.35);
-  GWave w2 = GWave(normalize(vec2(0.7, -0.3)), 0.05, 1.20, 0.90, 0.28);
-  GWave w3 = GWave(normalize(vec2(0.2, 0.9)),  0.03, 1.80, 1.60, 0.20);
+  GWave w0 = GWave(normalize(vec2( 1.0,  0.6)), 0.19, 0.52, 1.14, 0.48);
+  GWave w1 = GWave(normalize(vec2(-0.3,  1.0)), 0.11, 0.79, 1.39, 0.38);
+  GWave w2 = GWave(normalize(vec2( 0.8, -0.5)), 0.07, 1.57, 1.97, 0.28);
+  GWave w3 = GWave(normalize(vec2(-0.5, -0.8)), 0.04, 2.51, 2.49, 0.22);
 
   vec3 tangent   = vec3(1.0, 0.0, 0.0);
   vec3 bitangent = vec3(0.0, 0.0, 1.0);
-  vec3 disp = gerstner(w0,pos.xz,uTime,tangent,bitangent)
-            + gerstner(w1,pos.xz,uTime,tangent,bitangent)
-            + gerstner(w2,pos.xz,uTime,tangent,bitangent)
-            + gerstner(w3,pos.xz,uTime,tangent,bitangent);
-  pos += disp;
+  vec3 disp      = vec3(0.0);
+
+  disp += gerstner(w0, xz, uTime, tangent, bitangent);
+  disp += gerstner(w1, xz, uTime, tangent, bitangent);
+  disp += gerstner(w2, xz, uTime, tangent, bitangent);
+  disp += gerstner(w3, xz, uTime, tangent, bitangent);
+
+  vec3 pos   = position + disp;
   vElevation = disp.y;
   vNormal    = normalize(cross(bitangent, tangent));
 
@@ -71,12 +91,14 @@ void main() {
 }
 `
 
+// ── GLSL: Water fragment — Fresnel + SSS + dual specular ─────────────────────
+
 const WATER_FRAG = /* glsl */`
 precision highp float;
 
 uniform vec3  uDeepColor;
 uniform vec3  uSurfaceColor;
-uniform vec3  uSunPos;
+uniform vec3  uSunDir;
 uniform float uProgress;
 
 varying vec2  vUv;
@@ -85,32 +107,123 @@ varying vec3  vWorldPos;
 varying vec3  vNormal;
 
 void main() {
-  vec3 norm = normalize(vNormal);
+  vec3 N = normalize(vNormal);
+  vec3 V = normalize(cameraPosition - vWorldPos);
 
-  // Richer deep Mediterranean blue
-  float t     = clamp((vElevation + 0.22) * 2.2, 0.0, 1.0);
-  vec3 water  = mix(uDeepColor, uSurfaceColor, t);
+  // Base water colour — deep navy → surface teal
+  float t     = clamp((vElevation + 0.32) * 2.2, 0.0, 1.0);
+  vec3  water = mix(uDeepColor, uSurfaceColor, t);
 
-  // Golden-hour tint with progress
-  water = mix(water, water * vec3(1.18, 0.96, 0.72), uProgress * 0.55);
+  // Golden-hour tint grows with boat progress
+  water = mix(water, water * vec3(1.20, 0.94, 0.68), uProgress * 0.65);
 
-  // Champagne-gold sun specular (sharper highlight)
-  vec3 viewDir = normalize(vec3(0.0, 1.0, 0.45));
-  vec3 halfVec = normalize(uSunPos + viewDir);
-  float spec   = pow(max(dot(norm, halfVec), 0.0), 120.0);
-  water       += vec3(0.769, 0.604, 0.235) * spec * mix(0.55, 1.30, uProgress);
+  // Fresnel sky reflection
+  float cosTheta = max(dot(N, V), 0.0);
+  float fresnel  = 0.04 + 0.96 * pow(1.0 - cosTheta, 4.5);
+  float skyBlend = clamp(N.y * 1.5, 0.0, 1.0);
+  vec3  skyTop   = mix(vec3(0.55, 0.74, 0.92), vec3(0.70, 0.50, 0.28), uProgress * 0.7);
+  vec3  skyHoriz = mix(vec3(0.75, 0.88, 0.98), vec3(0.85, 0.65, 0.35), uProgress * 0.7);
+  vec3  skyRefl  = mix(skyHoriz, skyTop, skyBlend);
+  water          = mix(water, skyRefl, fresnel * 0.62);
 
-  // White foam at crests
-  float foam = smoothstep(0.26, 0.42, vElevation);
-  water = mix(water, vec3(0.97, 0.99, 1.0), foam * 0.26);
+  // Champagne-gold sun specular (sharp primary lobe)
+  vec3  H      = normalize(uSunDir + V);
+  float spec   = pow(max(dot(N, H), 0.0), 180.0);
+  vec3  goldSpec = mix(vec3(0.97, 0.88, 0.50), vec3(0.98, 0.65, 0.28), uProgress);
+  water         += goldSpec * spec * mix(0.60, 1.40, uProgress);
 
-  // Horizon atmospheric fade
-  float horizon = smoothstep(0.20, 0.60, vUv.y);
-  water = mix(water * 0.62, water, horizon);
+  // Secondary broader specular lobe (adds depth/wetness)
+  float spec2 = pow(max(dot(N, H), 0.0), 28.0);
+  water       += goldSpec * spec2 * mix(0.08, 0.18, uProgress);
 
-  gl_FragColor = vec4(water, mix(0.88, 0.96, horizon));
+  // Crest foam
+  float foam = smoothstep(0.24, 0.40, vElevation);
+  water = mix(water, vec3(0.97, 0.99, 1.0), foam * 0.32);
+
+  // Subsurface scatter — subtle teal glow at grazing angles
+  float sss  = pow(max(1.0 - cosTheta, 0.0), 2.5) * 0.15;
+  water      += vec3(0.10, 0.30, 0.28) * sss;
+
+  // Horizon atmospheric depth fade
+  float horizon = smoothstep(0.20, 0.70, vUv.y);
+  water = mix(water * 0.55, water, horizon);
+
+  gl_FragColor = vec4(water, mix(0.90, 0.97, horizon));
 }
 `
+
+// ── GLSL: Wake foam (animated V-trail behind sailboat) ───────────────────────
+
+const WAKE_VERT = /* glsl */`
+varying vec2 vUv;
+void main() {
+  vUv         = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`
+
+const WAKE_FRAG = /* glsl */`
+precision highp float;
+uniform float uTime;
+varying vec2  vUv;
+
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float vnoise(vec2 p) {
+  vec2 i = floor(p); vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(hash(i), hash(i + vec2(1,0)), u.x),
+    mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), u.x), u.y);
+}
+
+void main() {
+  float cx    = abs(vUv.x - 0.5) * 2.0;
+  float vShape = 1.0 - smoothstep(0.0, 0.18, cx - vUv.y * 0.9);
+  float n1    = vnoise(vUv * vec2(6.0, 14.0) + vec2(0.0, -uTime * 1.8));
+  float n2    = vnoise(vUv * vec2(14.0, 28.0) + vec2(uTime * 0.6, -uTime * 2.4));
+  float foam  = (n1 * 0.55 + n2 * 0.45) * vShape;
+  float alpha = foam * (1.0 - vUv.y * 0.8) * 0.55;
+  gl_FragColor = vec4(1.0, 1.0, 1.0, clamp(alpha, 0.0, 1.0));
+}
+`
+
+// ── Canvas building texture (weathered plaster + windows) ────────────────────
+
+function makeWallTexture(baseHex: string, floors = 4, cols = 3): THREE.CanvasTexture {
+  const W = 256, H = 512
+  const cv = document.createElement('canvas')
+  cv.width = W; cv.height = H
+  const ctx = cv.getContext('2d')!
+
+  ctx.fillStyle = baseHex
+  ctx.fillRect(0, 0, W, H)
+
+  // Weathering gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, H)
+  grad.addColorStop(0.0, 'rgba(255,255,255,0.07)')
+  grad.addColorStop(0.6, 'rgba(0,0,0,0.0)')
+  grad.addColorStop(1.0, 'rgba(0,0,0,0.22)')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, W, H)
+
+  // Windows
+  const fw = W / cols, fh = H / floors
+  for (let r = 0; r < floors; r++) {
+    for (let c = 0; c < cols; c++) {
+      const wx = c * fw + fw * 0.25, wy = r * fh + fh * 0.2
+      const ww = fw * 0.5, wh = fh * 0.45
+      ctx.fillStyle = Math.random() > 0.3 ? 'rgba(120,170,210,0.7)' : 'rgba(60,50,30,0.8)'
+      ctx.fillRect(wx, wy, ww, wh)
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)'
+      ctx.lineWidth = 1.5
+      ctx.strokeRect(wx, wy, ww, wh)
+    }
+  }
+
+  return new THREE.CanvasTexture(cv)
+}
 
 // ── Water component ───────────────────────────────────────────────────────────
 
@@ -120,10 +233,11 @@ function WaterSurface() {
 
   const uniforms = useMemo(() => ({
     uTime:         { value: 0.0 },
+    uWaveScale:    { value: 0.38 },
     uProgress:     { value: 0.0 },
-    uDeepColor:    { value: new THREE.Color('#04162E') },
-    uSurfaceColor: { value: new THREE.Color('#1E8FBF') },
-    uSunPos:       { value: new THREE.Vector3(1.0, 0.5, -0.3) },
+    uDeepColor:    { value: new THREE.Color('#041220') },
+    uSurfaceColor: { value: new THREE.Color('#0D9B8A') },
+    uSunDir:       { value: new THREE.Vector3(0.55, 0.72, -0.42).normalize() },
   }), [])
 
   useEffect(() => {
@@ -131,20 +245,45 @@ function WaterSurface() {
   }, [node])
 
   useFrame(({ clock }) => {
-    uniforms.uTime.value = clock.getElapsedTime() * 0.52
+    uniforms.uTime.value      = clock.getElapsedTime()
     uniforms.uProgress.value += (progressRef.current - uniforms.uProgress.value) * 0.006
     const pp = uniforms.uProgress.value
-    uniforms.uSunPos.value.set(1.0 - pp * 0.45, 0.60 - pp * 0.30, -0.30 + pp * 0.10).normalize()
+    uniforms.uSunDir.value.set(
+      0.55 - pp * 0.40,
+      0.72 - pp * 0.35,
+      -0.42 + pp * 0.12,
+    ).normalize()
   })
 
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.85, 0]}>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.85, 0]} receiveShadow>
       <planeGeometry args={[90, 70, 180, 180]} />
       <shaderMaterial
         vertexShader={WATER_VERT}
         fragmentShader={WATER_FRAG}
         uniforms={uniforms}
         transparent
+        depthWrite={false}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  )
+}
+
+// ── Wake foam trail (sits behind sailboat) ────────────────────────────────────
+
+function WakeTrail() {
+  const uniforms = useMemo(() => ({ uTime: { value: 0.0 } }), [])
+  useFrame(({ clock }) => { uniforms.uTime.value = clock.getElapsedTime() })
+  return (
+    <mesh position={[0, -0.78, 6]} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[3.2, 8, 1, 1]} />
+      <shaderMaterial
+        vertexShader={WAKE_VERT}
+        fragmentShader={WAKE_FRAG}
+        uniforms={uniforms}
+        transparent
+        depthWrite={false}
         side={THREE.DoubleSide}
       />
     </mesh>
@@ -185,20 +324,33 @@ const BUILDINGS: BuildingCfg[] = [
 ]
 
 function HarborBuildings() {
+  // Generate canvas textures once (client-side only, inside dynamic import)
+  const textures = useMemo(() => {
+    if (typeof document === 'undefined') return new Map<string, THREE.CanvasTexture>()
+    const cache = new Map<string, THREE.CanvasTexture>()
+    BUILDINGS.forEach(b => {
+      if (!cache.has(b.color)) cache.set(b.color, makeWallTexture(b.color))
+    })
+    return cache
+  }, [])
+
   return (
     <group>
       {BUILDINGS.map((b, i) => (
         <mesh
           key={i}
           position={[b.x, (b.rowY ?? 0) + b.h / 2 - 1.0, b.z]}
-          castShadow={false}
+          castShadow
         >
           <boxGeometry args={[b.w, b.h, b.d]} />
-          <meshLambertMaterial color={b.color} />
+          <meshLambertMaterial
+            color={b.color}
+            map={textures.get(b.color) ?? null}
+          />
         </mesh>
       ))}
 
-      {/* Green shutters as thin dark planes on select buildings */}
+      {/* Green shutters */}
       {[[-1, 7, -22], [4, 5.5, -22], [-5, 4.5, -21]].map(([x, y, z], i) => (
         <mesh key={`shutter-${i}`} position={[x as number, y as number, z as number + 1.55]}>
           <planeGeometry args={[0.6, 1.4]} />
@@ -516,16 +668,8 @@ function SailboatWithPhone() {
         </mesh>
       </group>
 
-      {/* ── Wake (foam trail behind boat) ────────────────────────────────── */}
-      <mesh position={[0, -0.78, 6]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[2.8, 6, 1, 1]} />
-        <meshStandardMaterial
-          color="#FFFFFF"
-          transparent
-          opacity={0.18}
-          roughness={1}
-        />
-      </mesh>
+      {/* ── Animated wake foam trail ─────────────────────────────────────── */}
+      <WakeTrail />
     </group>
   )
 }
@@ -700,7 +844,7 @@ function SceneSky() {
 // ── Scene fog ─────────────────────────────────────────────────────────────────
 
 function SceneFog() {
-  return <fog attach="fog" args={['#C8D8EE', 28, 65]} />
+  return <fog attach="fog" args={['#B8CCE0', 22, 70]} />
 }
 
 // ── Inner scene (used inside Canvas) ─────────────────────────────────────────
@@ -730,10 +874,11 @@ export const PortofinoScene = dynamic(
       function PortofinoCanvas() {
         return (
           <Canvas
-            camera={{ position: [0, 5, 22], fov: 55, near: 0.1, far: 200 }}
+            camera={{ position: [0, 2.5, 18], fov: 58, near: 0.1, far: 200 }}
             style={{ position: 'fixed', inset: 0, zIndex: 0 }}
             gl={{ antialias: true, alpha: false }}
-            dpr={[1, 1.5]}
+            shadows
+            dpr={[1, 2]}
           >
             <PortofinoInner />
           </Canvas>
