@@ -14,6 +14,15 @@ if (isMobileBuild) {
 const baseConfig = {
   reactStrictMode: true,
 
+  // ── Server-only packages ────────────────────────────────────────────────────
+  // Keeps Node.js-only packages (bcryptjs depends on the built-in 'crypto'
+  // module) out of the browser bundle. Without this, Next.js tries to polyfill
+  // 'crypto' for the client and fails with "Module not found: Can't resolve
+  // 'crypto'".
+  experimental: {
+    serverComponentsExternalPackages: ['bcryptjs'],
+  },
+
   // ── Image Optimization ──────────────────────────────────────────────────────
   // Required for static export (Next.js image optimisation needs a server)
   images: { unoptimized: true },
