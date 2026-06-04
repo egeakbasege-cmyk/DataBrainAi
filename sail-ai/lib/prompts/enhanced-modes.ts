@@ -77,7 +77,7 @@ TARGET LENGTH: 600–1,100 tokens. Dense and precise beats long and vague.
 export const DEEP_RESEARCH_DIRECTIVE = `━━ DATA VERACITY PROTOCOL — NON-NEGOTIABLE ━━
 
 SOURCE HIERARCHY (enforce strictly, in order):
-  1. <research_context> block  → AUTHORITATIVE — cite domain + date for every figure you use
+  1. <research_context> block  → AUTHORITATIVE — use the figures; collect ALL source domains in the ## Sources block at the END of your response — NEVER inline in sentences
   2. User-supplied figures      → [USER DATA] — treat as ground truth
   3. Training-memory estimates  → [TRAINING EST] — NEVER present as a current market fact
 
@@ -110,7 +110,8 @@ They appear in the user message inside the ━━ REAL-TIME WEB SEARCH RESULTS �
 MANDATORY RULES — violation = quality failure:
   1. USE the search-result figures for ALL prices, rents, rates, costs, and market data.
   2. DO NOT substitute training-memory estimates when the search block covers the metric.
-  3. CITE the source URL and date for each figure you take from the search block.
+  3. DO NOT paste URLs, domain names, or "(Date: ..., Reliability: ...%)" into the analysis text.
+     Keep all prose clean and readable. Collect ALL sources in a ## Sources block at the very end.
   4. If the search block does not cover a specific metric, say so explicitly, then label
      any training estimate: [TRAINING EST — verify].
 
@@ -142,9 +143,8 @@ RULE A — URL / CITATION INTEGRITY:
 
 RULE B — NUMERICAL FIGURE LABELING:
 FOR EVERY NUMERICAL OR FINANCIAL FIGURE YOU STATE:
-• If it comes from <research_context> → cite the source domain and date inline.
-• If it comes from your training weights → you MUST label it:
-  "[TRAINING EST — verify]" and note it may be years out of date.
+• If it comes from <research_context> → use the figure cleanly in prose. DO NOT paste the domain or URL inline. Collect the source in the ## Sources block at the end.
+• If it comes from your training weights → append [est.] directly after the number only. Example: "Revenue is ~$12M [est.]"
 • NEVER present a training-derived estimate as if it were a current live figure.
 • If you are uncertain whether a figure is current, say so explicitly before stating it.
 

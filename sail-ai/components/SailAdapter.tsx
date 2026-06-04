@@ -445,23 +445,46 @@ interface ParsedSource {
   snippet: string
 }
 
-/** Strip inline source noise from a body string */
+/** Strip all inline source noise from a body string */
 function cleanBodyText(text: string): string {
   return text
-    // (domain.com, date) or (domain.com) — parenthetical inline citations
-    .replace(/\s*\([a-zA-Z0-9._-]+\.[a-zA-Z]{2,}[^)]{0,60}\)/g, '')
-    // bare [1] [2] [3] numbered reference markers
-    .replace(/\[\d+\]/g, '')
-    // [text](url) markdown links → keep the label, drop the URL
+    // ── URLs ──────────────────────────────────────────────────────────────────
+    // Full bare URLs: https://... or http://...
+    .replace(/https?:\/\/[^\s,)>\]"']+/g, '')
+    // Markdown links [text](url) → keep label only
     .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
-    // [TRAINING EST — verify] and similar labels → drop entirely
+
+    // ── Reliability / date annotations ────────────────────────────────────────
+    // (Date: unknown, Reliability: 70%) — research-context injection
+    .replace(/\s*\(Date:[^)]*\)/gi, '')
+    .replace(/\s*\(Reliability:[^)]*\)/gi, '')
+    // Standalone reliability score patterns "Reliability: 70%"
+    .replace(/Reliability:\s*\d+%\.?/gi, '')
+
+    // ── Attribution phrases that precede stripped URLs ─────────────────────────
+    // "as suggested by", "as recommended by", "as advised by", "as noted by" etc.
+    .replace(/,?\s+as (suggested|recommended|advised|noted|reported|stated|mentioned) by\s*/gi, ' ')
+    // "according to" / "sourced from" / "cited in" left hanging after URL strip
+    .replace(/,?\s+(according to|sourced from|cited in|from|via)\s*[,.]?(?=\s|$)/gi, '')
+
+    // ── Reference markers ─────────────────────────────────────────────────────
+    // Bare [1] [2] [3] numbered footnotes
+    .replace(/\[\d+\]/g, '')
+    // [TRAINING EST — verify] → normalize
     .replace(/\[TRAINING EST[^\]]*\]/gi, '[est.]')
-    // [DATA UNAVAILABLE: ...] → replace with a clean note
+    // [DATA UNAVAILABLE: ...] → clean dash
     .replace(/\[DATA UNAVAILABLE:[^\]]*\]/gi, '—')
-    // [STALE LOCAL CURRENCY...] → drop
+    // [STALE ...] → drop
     .replace(/\[STALE[^\]]*\]/gi, '')
-    // Collapse extra whitespace left by removals
-    .replace(/  +/g, ' ')
+    // (domain.com, date) parenthetical domain citations
+    .replace(/\s*\([a-zA-Z0-9._-]+\.[a-zA-Z]{2,}[^)]{0,80}\)/g, '')
+
+    // ── Whitespace cleanup ────────────────────────────────────────────────────
+    // Fix double spaces left by removals
+    .replace(/ {2,}/g, ' ')
+    // Fix lines that now end with just a comma or dash
+    .replace(/[,–—]\s*$/gm, '')
+    // Collapse 3+ blank lines to 2
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
