@@ -19,8 +19,26 @@ const baseConfig = {
   // module) out of the browser bundle. Without this, Next.js tries to polyfill
   // 'crypto' for the client and fails with "Module not found: Can't resolve
   // 'crypto'".
+  //
+  // Next.js 14.2 accepts both the legacy experimental key and the new top-level
+  // key — include both to satisfy whichever path the bundler resolves first.
+  serverExternalPackages: ['bcryptjs'],
   experimental: {
     serverComponentsExternalPackages: ['bcryptjs'],
+  },
+
+  // ── Webpack crypto fallback ─────────────────────────────────────────────────
+  // Belt-and-suspenders: even if a client chunk somehow imports a path that
+  // transitively reaches bcryptjs, tell webpack to substitute an empty module
+  // for the Node.js built-in 'crypto' instead of erroring.
+  webpack(config, { isServer }) {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        crypto: false,
+      }
+    }
+    return config
   },
 
   // ── Image Optimization ──────────────────────────────────────────────────────
