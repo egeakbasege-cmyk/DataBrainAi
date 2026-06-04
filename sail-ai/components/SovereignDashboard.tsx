@@ -511,7 +511,7 @@ export function SovereignDashboard({
         justifyContent: 'center',
         minHeight:      '100vh',
         width:          '100%',
-        background:     'linear-gradient(135deg, #c8f2ec 0%, #e8faf7 45%, #daedf8 100%)',
+        background:     'rgba(8,9,13,0.62)',
         overflow:       'hidden',
         cursor:         'pointer',   // clicking bg rotates
         userSelect:     'none',
@@ -524,7 +524,7 @@ export function SovereignDashboard({
       >
         <defs>
           <pattern id="sov-gr" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(45,212,191,0.10)" strokeWidth="0.5"/>
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(45,212,191,0.08)" strokeWidth="0.5"/>
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#sov-gr)" />
@@ -581,10 +581,11 @@ export function SovereignDashboard({
             fontStyle:     'italic',
             fontSize:      '0.72rem',
             fontWeight:    600,
-            color:         '#9A6B00',
+            color:         '#C9A96E',
             letterSpacing: '0.05em',
             marginBottom:  '0.3rem',
             opacity:       0.85,
+            textShadow:    '0 1px 8px rgba(0,0,0,0.9)',
           }}>
             {companyName}
           </span>
@@ -594,10 +595,11 @@ export function SovereignDashboard({
           fontFamily:    '"Cormorant Garamond", Georgia, serif',
           fontSize:      'clamp(1.7rem, 3vw, 2.4rem)',
           fontWeight:    600,
-          color:         '#0F2435',
+          color:         '#FFFFFF',
           margin:        0,
           lineHeight:    1.1,
           letterSpacing: '-0.01em',
+          textShadow:    '0 2px 16px rgba(0,0,0,0.9)',
         }}>
           Set Your Course
         </h1>
@@ -605,10 +607,10 @@ export function SovereignDashboard({
         <p style={{
           fontFamily: 'Inter, sans-serif',
           fontSize:   '0.66rem',
-          color:      '#4A6070',
+          color:      'rgba(255,255,255,0.55)',
           margin:     '0.4rem 0 0',
-          opacity:    0.75,
           letterSpacing: '0.01em',
+          textShadow: '0 1px 6px rgba(0,0,0,0.8)',
         }}>
           Tap background to rotate · tap card to select
         </p>
@@ -716,7 +718,7 @@ export function SovereignDashboard({
           fontStyle:     'italic',
           letterSpacing: '0.09em',
           textTransform: 'uppercase',
-          color:         'rgba(15,36,53,0.28)',
+          color:         'rgba(255,255,255,0.28)',
           margin:        0,
           pointerEvents: 'none',
         }}

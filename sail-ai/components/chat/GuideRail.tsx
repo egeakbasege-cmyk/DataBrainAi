@@ -18,7 +18,7 @@ import { DailyCounter }            from '@/components/DailyCounter'
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const T = {
-  bg:          'rgba(10,17,40,0.88)',
+  bg:          'rgba(8,9,13,0.72)',
   border:      'rgba(201,169,110,0.22)',
   glass:       'rgba(255,255,255,0.05)',
   glassBorder: 'rgba(201,169,110,0.16)',

@@ -24,12 +24,7 @@ import type { CatamaranResponse }                    from '@/types/chat'
 import type { SailIntent }                           from '@/lib/intent'
 import type { MoodGuideData }                        from '@/components/MoodGuideCard'
 import { ChatThread }                                from '@/components/ChatThread'
-import { SwanLoader }                                from '@/components/SwanLoader'
-import dynamic                                        from 'next/dynamic'
-const AbyssLoader = dynamic(
-  () => import('@/components/chat/AbyssLoader').then(m => m.AbyssLoader),
-  { ssr: false, loading: () => null }
-)
+import { PortofinoCodeLoader }                       from '@/components/chat/PortofinoCodeLoader'
 import { ExecutiveResponseCard }                     from '@/components/ExecutiveResponseCard'
 import { TrimTimelineCard }                          from '@/components/TrimTimelineCard'
 import { CatamaranResponseCard }                     from '@/components/CatamaranResponseCard'
@@ -81,14 +76,14 @@ function StreamCard({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        background:   'rgba(10,13,20,0.92)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        border:       `1px solid rgba(201,169,110,0.38)`,
+        background:   'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 60%, rgba(20,184,166,0.04) 100%)',
+        backdropFilter: 'blur(28px)',
+        WebkitBackdropFilter: 'blur(28px)',
+        border:       `1px solid rgba(201,169,110,0.28)`,
         borderTop:    `2px solid ${color}`,
         borderRadius:  12,
         overflow:     'hidden',
-        boxShadow:    `0 4px 28px ${color}14, 0 2px 8px rgba(0,0,0,0.35)`,
+        boxShadow:    `0 4px 28px ${color}18, 0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)`,
       }}
     >
       {/* Card header — stays on dark shell */}
@@ -125,13 +120,13 @@ function StreamCard({
           {labels[mode] ?? mode.toUpperCase()}
         </span>
       </div>
-      {/* Card body — dark glass panel for readable content */}
+      {/* Card body — glass panel for readable content */}
       <div style={{
-        background:   'rgba(12,15,24,0.90)',
+        background:   'rgba(8,9,13,0.55)',
         margin:       '1px',
         borderRadius: '0 0 11px 11px',
         padding:      '20px 16px',
-        color:        '#DDE3EC',
+        color:        '#FFFFFF',
       }}>
         {children}
       </div>
@@ -458,7 +453,7 @@ export function ChatStage(props: ChatStageProps) {
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.35 }}
             >
-              <AbyssLoader
+              <PortofinoCodeLoader
                 modeLabel={mode.charAt(0).toUpperCase() + mode.slice(1)}
                 isActive
                 isComplete={false}
@@ -481,13 +476,14 @@ export function ChatStage(props: ChatStageProps) {
           {mode === 'trim' && trimPhase === 'complete' && (
             <motion.div key="trim" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}>
               <div style={{
-                background:   'rgba(10,13,20,0.92)', backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-                border:       '1px solid rgba(201,169,110,0.38)', borderTop: '2px solid #B45309',
+                background:   'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 60%, rgba(20,184,166,0.04) 100%)',
+                backdropFilter: 'blur(28px)',
+                WebkitBackdropFilter: 'blur(28px)',
+                border:       '1px solid rgba(201,169,110,0.28)', borderTop: '2px solid #B45309',
                 borderRadius:  12, overflow: 'hidden',
-                boxShadow:    '0 4px 28px rgba(180,83,9,0.14), 0 2px 8px rgba(0,0,0,0.35)',
+                boxShadow:    '0 4px 28px rgba(180,83,9,0.14), 0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)',
               }}>
-                <div style={{ background: 'rgba(12,15,24,0.90)', margin: '1px', borderRadius: '0 0 11px 11px', padding: 24, color: '#DDE3EC' }}>
+                <div style={{ background: 'rgba(8,9,13,0.55)', margin: '1px', borderRadius: '0 0 11px 11px', padding: 24, color: '#FFFFFF' }}>
                   <TrimTimelineCard response={trimResponse} isLoading={false} />
                 </div>
               </div>
@@ -546,7 +542,7 @@ export function ChatStage(props: ChatStageProps) {
               exit={{ opacity: 0, scale: 0.97 }}
               transition={{ duration: 0.4 }}
             >
-              <AbyssLoader
+              <PortofinoCodeLoader
                 modeLabel="Upwind"
                 isActive
                 isComplete={false}

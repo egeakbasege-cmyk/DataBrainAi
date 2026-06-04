@@ -23,7 +23,7 @@ import type { TranslationKey }                     from '@/lib/i18n/translations
 // ── Palette ───────────────────────────────────────────────────────────────────
 
 const T = {
-  outerBg:     'rgba(10,17,40,0.90)',
+  outerBg:     'rgba(8,9,13,0.72)',
   outerBorder: 'rgba(201,169,110,0.22)',
   cardBg:      'rgba(255,255,255,0.05)',
   cardBorder:  'rgba(201,169,110,0.28)',
@@ -137,7 +137,7 @@ function ModeDropdown({
           borderRadius:   9999,
           background:     autoMode
             ? 'rgba(201,169,110,0.12)'
-            : `linear-gradient(135deg, ${activeMeta.color}18 0%, rgba(10,17,40,0.60) 100%)`,
+            : `linear-gradient(135deg, ${activeMeta.color}18 0%, rgba(8,9,13,0.45) 100%)`,
           border:        `1px solid ${autoMode ? 'rgba(201,169,110,0.32)' : `${activeMeta.color}35`}`,
           boxShadow:     `0 2px 10px rgba(0,0,0,0.05)`,
           cursor:         isActive ? 'not-allowed' : 'pointer',
@@ -205,12 +205,12 @@ function ModeDropdown({
               bottom:         'calc(100% + 10px)',
               left:            0,
               zIndex:          50,
-              background:     'rgba(10,17,40,0.96)',
+              background:     'linear-gradient(135deg, rgba(201,169,110,0.10) 0%, rgba(8,9,13,0.88) 60%, rgba(20,184,166,0.06) 100%)',
               backdropFilter: 'blur(40px)',
               WebkitBackdropFilter: 'blur(40px)',
               border:         '1px solid rgba(201,169,110,0.28)',
               borderRadius:    16,
-              boxShadow:      '0 8px 48px rgba(0,0,0,0.50), 0 0 0 1px rgba(201,169,110,0.06)',
+              boxShadow:      '0 8px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(201,169,110,0.06), inset 0 1px 0 rgba(255,255,255,0.07)',
               padding:        '8px',
               width:           320,
             }}

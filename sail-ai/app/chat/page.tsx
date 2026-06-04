@@ -51,6 +51,7 @@ import { useUserType }                  from '@/components/Dock'
 import { GuideRail }                    from '@/components/chat/GuideRail'
 import { ChatStage }                    from '@/components/chat/ChatStage'
 import { ChatComposer }                 from '@/components/chat/ChatComposer'
+import { PortofinoScene }               from '@/components/landing/PortofinoScene'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -704,14 +705,20 @@ export default function ChatPage() {
         <AgentStatusBar />
       </div>
 
+      {/* ── Portofino harbour background (fixed, behind everything) ── */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
+        <PortofinoScene />
+      </div>
+
       {/* ── Main layout: fixed, full-screen, column flex ── */}
       <div style={{
         position:        'fixed',
         inset:            0,
         display:         'flex',
         flexDirection:   'column',
-        background:      '#0a1128',
+        background:      'rgba(8,9,13,0.55)',
         overflow:        'hidden',
+        zIndex:           1,
       }}>
         {/* Nav bar */}
         <Nav />
@@ -846,12 +853,12 @@ export default function ChatPage() {
               zIndex:         60,
               width:          340,
               padding:        0,
-              background:    'rgba(10,13,20,0.95)',
+              background:    'linear-gradient(135deg, rgba(201,169,110,0.10) 0%, rgba(8,9,13,0.82) 60%, rgba(20,184,166,0.06) 100%)',
               backdropFilter:'blur(40px)',
               WebkitBackdropFilter: 'blur(40px)',
               border:        '1px solid rgba(201,169,110,0.30)',
               borderRadius:   16,
-              boxShadow:     '0 16px 48px rgba(0,0,0,0.50), 0 0 0 1px rgba(201,169,110,0.08)',
+              boxShadow:     '0 16px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(201,169,110,0.08), inset 0 1px 0 rgba(255,255,255,0.08)',
               overflow:      'hidden',
             }}
           >
@@ -946,7 +953,7 @@ export default function ChatPage() {
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 50,
           width: 40, height: 40, borderRadius: '50%',
-          background: 'rgba(10,17,40,0.90)', border: '1px solid rgba(201,169,110,0.22)', cursor: 'pointer',
+          background: 'rgba(8,9,13,0.70)', border: '1px solid rgba(201,169,110,0.22)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 4px 20px rgba(0,0,0,0.40)',
         }}
@@ -975,11 +982,11 @@ export default function ChatPage() {
             style={{
               position: 'fixed', top: 0, right: 0, bottom: 0,
               width: 'min(380px, 92vw)',
-              background: 'rgba(10,17,40,0.96)',
+              background: 'linear-gradient(180deg, rgba(201,169,110,0.08) 0%, rgba(8,9,13,0.88) 100%)',
               backdropFilter: 'blur(40px)',
               WebkitBackdropFilter: 'blur(40px)',
               borderLeft: '1px solid rgba(201,169,110,0.22)',
-              boxShadow: '-8px 0 48px rgba(0,0,0,0.45)',
+              boxShadow: '-8px 0 48px rgba(0,0,0,0.40), inset 1px 0 0 rgba(255,255,255,0.05)',
               zIndex: 61,
               display: 'flex', flexDirection: 'column', overflow: 'hidden',
             }}
