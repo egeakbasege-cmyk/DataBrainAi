@@ -159,8 +159,9 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
         fontWeight:     700,
         letterSpacing: '0.16em',
         textTransform: 'uppercase',
-        color:         '#C9A96E',
+        color:         '#E8C47A',
         margin:        '0 0 10px',
+        textShadow:    '0 1px 4px rgba(0,0,0,0.6)',
       }}>
         {title}
       </p>
@@ -222,12 +223,20 @@ export function PortofinoWalkthrough() {
       {/* ── Layer 1: ASCII rain ── */}
       <AsciiCanvas />
 
-      {/* ── Layer 2: dark vignette so text stays readable ── */}
+      {/* ── Layer 2a: radial edge vignette ── */}
       <div style={{
         position:   'absolute',
         inset:       0,
         zIndex:      6,
-        background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(8,9,13,0.10) 0%, rgba(8,9,13,0.80) 100%)',
+        background: 'radial-gradient(ellipse 80% 65% at 50% 50%, rgba(8,9,13,0.22) 0%, rgba(8,9,13,0.88) 100%)',
+        pointerEvents: 'none',
+      }} />
+      {/* ── Layer 2b: linear top+bottom darkening ── */}
+      <div style={{
+        position:   'absolute',
+        inset:       0,
+        zIndex:      7,
+        background: 'linear-gradient(180deg, rgba(8,9,13,0.55) 0%, rgba(8,9,13,0.0) 18%, rgba(8,9,13,0.0) 82%, rgba(8,9,13,0.55) 100%)',
         pointerEvents: 'none',
       }} />
 
@@ -235,7 +244,7 @@ export function PortofinoWalkthrough() {
       <div
         style={{
           position:       'relative',
-          zIndex:          10,
+          zIndex:          12,
           width:          '100%',
           maxWidth:        1200,
           margin:         '0 auto',
@@ -260,7 +269,7 @@ export function PortofinoWalkthrough() {
             style={{ display: 'flex', alignItems: 'center', gap: 10 }}
           >
             <div style={{ width: 28, height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.55))' }} />
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.75)' }}>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#C9A96E', textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
               Live Demo
             </span>
             <div style={{ width: 28, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.55), transparent)' }} />
@@ -305,22 +314,24 @@ export function PortofinoWalkthrough() {
               fontSize:      'clamp(1.8rem, 3.5vw, 3rem)',
               fontWeight:     600,
               fontStyle:     'italic',
-              color:         '#FAFAF8',
+              color:         '#FFFFFF',
               lineHeight:     1.14,
               margin:        '0 0 14px',
               letterSpacing: '-0.02em',
+              textShadow:    '0 2px 16px rgba(0,0,0,0.90)',
             }}>
               Three steps.{' '}
-              <span style={{ color: '#C9A96E' }}>One sovereign</span>
+              <span style={{ color: '#E8C47A', textShadow: '0 2px 16px rgba(0,0,0,0.90)' }}>One sovereign</span>
               {' '}intelligence layer.
             </h2>
             <p style={{
               fontFamily: 'Inter, sans-serif',
               fontSize:    14,
               lineHeight:  1.75,
-              color:      'rgba(250,250,248,0.68)',
+              color:      'rgba(250,250,248,0.80)',
               fontWeight:  300,
               margin:      0,
+              textShadow: '0 1px 8px rgba(0,0,0,0.8)',
             }}>
               Each analysis draws on verified industry benchmarks — calibrated to your specific numbers.
             </p>

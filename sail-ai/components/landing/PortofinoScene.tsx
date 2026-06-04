@@ -189,7 +189,7 @@ void main() {
 }
 `
 
-// ── Canvas building texture (weathered plaster + windows) ────────────────────
+// ── Canvas building texture — stucco, windows, mullions, shutters ─────────────
 
 function makeWallTexture(baseHex: string, floors = 4, cols = 3): THREE.CanvasTexture {
   const W = 256, H = 512
@@ -197,10 +197,11 @@ function makeWallTexture(baseHex: string, floors = 4, cols = 3): THREE.CanvasTex
   cv.width = W; cv.height = H
   const ctx = cv.getContext('2d')!
 
+  // Base plaster
   ctx.fillStyle = baseHex
   ctx.fillRect(0, 0, W, H)
 
-  // Weathering gradient
+  // Weathering: lighter top, darker base
   const grad = ctx.createLinearGradient(0, 0, 0, H)
   grad.addColorStop(0.0, 'rgba(255,255,255,0.07)')
   grad.addColorStop(0.6, 'rgba(0,0,0,0.0)')
@@ -208,17 +209,61 @@ function makeWallTexture(baseHex: string, floors = 4, cols = 3): THREE.CanvasTex
   ctx.fillStyle = grad
   ctx.fillRect(0, 0, W, H)
 
-  // Windows
-  const fw = W / cols, fh = H / floors
+  // Horizontal stucco scoring
+  ctx.strokeStyle = 'rgba(0,0,0,0.07)'
+  ctx.lineWidth = 1
+  for (let y = 18; y < H; y += 18) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke()
+  }
+
+  // Windows with frames, mullions, shutters
+  const cellW = W / cols,  cellH = H / floors
+  const winW  = cellW * 0.36, winH = cellH * 0.38
+  const shuW  = winW  * 0.38
+
   for (let r = 0; r < floors; r++) {
     for (let c = 0; c < cols; c++) {
-      const wx = c * fw + fw * 0.25, wy = r * fh + fh * 0.2
-      const ww = fw * 0.5, wh = fh * 0.45
-      ctx.fillStyle = Math.random() > 0.3 ? 'rgba(120,170,210,0.7)' : 'rgba(60,50,30,0.8)'
-      ctx.fillRect(wx, wy, ww, wh)
-      ctx.strokeStyle = 'rgba(255,255,255,0.25)'
-      ctx.lineWidth = 1.5
-      ctx.strokeRect(wx, wy, ww, wh)
+      const wx = c * cellW + (cellW - winW) / 2
+      const wy = r * cellH + cellH * 0.22
+
+      // Sill ledge
+      ctx.fillStyle = 'rgba(255,255,255,0.18)'
+      ctx.fillRect(wx - 3, wy + winH, winW + 6, 4)
+
+      // Dark wood frame
+      ctx.fillStyle = '#3C2810'
+      ctx.fillRect(wx - 2, wy - 2, winW + 4, winH + 4)
+
+      // Glass — sky-blue tint
+      ctx.fillStyle = '#6B9EC0'
+      ctx.fillRect(wx, wy, winW, winH)
+
+      // Inner glass shadow
+      const gShadow = ctx.createLinearGradient(wx, wy, wx + winW, wy + winH)
+      gShadow.addColorStop(0,   'rgba(0,0,0,0.30)')
+      gShadow.addColorStop(0.5, 'rgba(0,0,0,0.0)')
+      gShadow.addColorStop(1,   'rgba(0,0,0,0.15)')
+      ctx.fillStyle = gShadow
+      ctx.fillRect(wx, wy, winW, winH)
+
+      // Mullions
+      ctx.fillStyle = '#3C2810'
+      ctx.fillRect(wx + winW / 2 - 1, wy, 2, winH)
+      ctx.fillRect(wx, wy + winH / 2 - 1, winW, 2)
+
+      // Dark-green shutters (partially open)
+      ctx.fillStyle = '#1F4A2C'
+      ctx.fillRect(wx - shuW - 2, wy, shuW, winH)
+      ctx.fillRect(wx + winW + 2,  wy, shuW, winH)
+
+      // Shutter slats
+      ctx.strokeStyle = 'rgba(0,0,0,0.30)'
+      ctx.lineWidth = 1
+      for (let s = 1; s < 5; s++) {
+        const sy = wy + (s / 5) * winH
+        ctx.beginPath(); ctx.moveTo(wx - shuW - 2, sy); ctx.lineTo(wx - 2, sy); ctx.stroke()
+        ctx.beginPath(); ctx.moveTo(wx + winW + 2, sy); ctx.lineTo(wx + winW + 2 + shuW, sy); ctx.stroke()
+      }
     }
   }
 
@@ -296,42 +341,43 @@ interface BuildingCfg {
   x: number; z: number
   w: number; h: number; d: number
   color: string
+  floors?: number; cols?: number
   rowY?: number
 }
 
 const BUILDINGS: BuildingCfg[] = [
   // ── Front waterfront row ──────────────────────────────────────────────────
-  { x: -13, z: -20, w: 3.6, h: 9,  d: 3.0, color: '#C84B31' },
-  { x:  -9, z: -21, w: 4.2, h: 14, d: 3.0, color: '#F0D090' },
-  { x:  -5, z: -21, w: 3.2, h: 11, d: 3.0, color: '#E8845C' },
-  { x:  -1, z: -22, w: 4.6, h: 16, d: 3.0, color: '#E6B870' },
-  { x:   4, z: -22, w: 3.8, h: 12, d: 3.0, color: '#FAFAF8' },
-  { x:   8, z: -21, w: 4.0, h: 13, d: 3.0, color: '#C84B31' },
-  { x:  12, z: -20, w: 3.4, h: 10, d: 3.0, color: '#E8845C' },
-  { x:  16, z: -19, w: 4.0, h: 9,  d: 3.0, color: '#F0D090' },
-  { x:  20, z: -18, w: 3.6, h: 8,  d: 3.0, color: '#D4956A' },
+  { x: -13, z: -20, w: 3.6, h:  9, d: 3.0, color: '#C84B31', floors: 3, cols: 2 },
+  { x:  -9, z: -21, w: 4.2, h: 14, d: 3.0, color: '#F0D090', floors: 4, cols: 3 },
+  { x:  -5, z: -21, w: 3.2, h: 11, d: 3.0, color: '#E8845C', floors: 3, cols: 2 },
+  { x:  -1, z: -22, w: 4.6, h: 16, d: 3.0, color: '#E6B870', floors: 5, cols: 3 },
+  { x:   4, z: -22, w: 3.8, h: 12, d: 3.0, color: '#FAFAF8', floors: 4, cols: 3 },
+  { x:   8, z: -21, w: 4.0, h: 13, d: 3.0, color: '#C84B31', floors: 4, cols: 3 },
+  { x:  12, z: -20, w: 3.4, h: 10, d: 3.0, color: '#E8845C', floors: 3, cols: 2 },
+  { x:  16, z: -19, w: 4.0, h:  9, d: 3.0, color: '#F0D090', floors: 3, cols: 3 },
+  { x:  20, z: -18, w: 3.6, h:  8, d: 3.0, color: '#D4956A', floors: 3, cols: 2 },
   // ── Second row (elevated on hillside) ─────────────────────────────────────
-  { x: -11, z: -26, w: 3.0, h: 7,  d: 3.0, color: '#FAFAF8', rowY: 1.5 },
-  { x:  -7, z: -27, w: 3.5, h: 9,  d: 3.0, color: '#E6B870', rowY: 2.0 },
-  { x:  -3, z: -28, w: 3.0, h: 8,  d: 3.0, color: '#C84B31', rowY: 2.5 },
-  { x:   1, z: -28, w: 4.0, h: 10, d: 3.0, color: '#E8845C', rowY: 2.5 },
-  { x:   5, z: -28, w: 3.0, h: 8,  d: 3.0, color: '#F0D090', rowY: 2.5 },
-  { x:   9, z: -27, w: 3.5, h: 9,  d: 3.0, color: '#D4956A', rowY: 2.0 },
-  { x:  13, z: -26, w: 3.0, h: 7,  d: 3.0, color: '#FAFAF8', rowY: 1.5 },
+  { x: -11, z: -26, w: 3.0, h:  7, d: 3.0, color: '#FAFAF8', rowY: 1.5, floors: 2, cols: 2 },
+  { x:  -7, z: -27, w: 3.5, h:  9, d: 3.0, color: '#E6B870', rowY: 2.0, floors: 3, cols: 2 },
+  { x:  -3, z: -28, w: 3.0, h:  8, d: 3.0, color: '#C84B31', rowY: 2.5, floors: 3, cols: 2 },
+  { x:   1, z: -28, w: 4.0, h: 10, d: 3.0, color: '#E8845C', rowY: 2.5, floors: 3, cols: 3 },
+  { x:   5, z: -28, w: 3.0, h:  8, d: 3.0, color: '#F0D090', rowY: 2.5, floors: 3, cols: 2 },
+  { x:   9, z: -27, w: 3.5, h:  9, d: 3.0, color: '#D4956A', rowY: 2.0, floors: 3, cols: 2 },
+  { x:  13, z: -26, w: 3.0, h:  7, d: 3.0, color: '#FAFAF8', rowY: 1.5, floors: 2, cols: 2 },
   // ── Far-left wing (left headland) ─────────────────────────────────────────
-  { x: -17, z: -18, w: 3.5, h: 10, d: 3.0, color: '#E8845C' },
-  { x: -20, z: -16, w: 3.0, h: 8,  d: 3.0, color: '#F0D090' },
+  { x: -17, z: -18, w: 3.5, h: 10, d: 3.0, color: '#E8845C', floors: 3, cols: 2 },
+  { x: -20, z: -16, w: 3.0, h:  8, d: 3.0, color: '#F0D090', floors: 3, cols: 2 },
 ]
 
 function HarborBuildings() {
-  // Generate canvas textures once (client-side only, inside dynamic import)
+  // One texture per unique color+floors+cols combination
   const textures = useMemo(() => {
-    if (typeof document === 'undefined') return new Map<string, THREE.CanvasTexture>()
     const cache = new Map<string, THREE.CanvasTexture>()
-    BUILDINGS.forEach(b => {
-      if (!cache.has(b.color)) cache.set(b.color, makeWallTexture(b.color))
+    return BUILDINGS.map(b => {
+      const key = `${b.color}-${b.floors ?? 4}-${b.cols ?? 3}`
+      if (!cache.has(key)) cache.set(key, makeWallTexture(b.color, b.floors ?? 4, b.cols ?? 3))
+      return cache.get(key)!
     })
-    return cache
   }, [])
 
   return (
@@ -340,21 +386,26 @@ function HarborBuildings() {
         <mesh
           key={i}
           position={[b.x, (b.rowY ?? 0) + b.h / 2 - 1.0, b.z]}
-          castShadow
+          castShadow receiveShadow
         >
           <boxGeometry args={[b.w, b.h, b.d]} />
-          <meshLambertMaterial
-            color={b.color}
-            map={textures.get(b.color) ?? null}
+          <meshStandardMaterial
+            map={textures[i]}
+            roughness={0.82}
+            metalness={0.0}
           />
         </mesh>
       ))}
 
-      {/* Green shutters */}
-      {[[-1, 7, -22], [4, 5.5, -22], [-5, 4.5, -21]].map(([x, y, z], i) => (
-        <mesh key={`shutter-${i}`} position={[x as number, y as number, z as number + 1.55]}>
-          <planeGeometry args={[0.6, 1.4]} />
-          <meshLambertMaterial color="#2D5A3D" side={THREE.DoubleSide} />
+      {/* Terracotta rooftops on front row */}
+      {BUILDINGS.slice(0, 9).map((b, i) => (
+        <mesh
+          key={`roof-${i}`}
+          position={[b.x, (b.rowY ?? 0) + b.h - 1.0 + 0.55, b.z]}
+          castShadow
+        >
+          <boxGeometry args={[b.w + 0.1, 0.35, b.d + 0.1]} />
+          <meshStandardMaterial color="#8C3A1C" roughness={0.9} />
         </mesh>
       ))}
     </group>
@@ -366,40 +417,33 @@ function HarborBuildings() {
 function HillTerrain() {
   return (
     <group>
-      {/* Main hillside — large rounded mound behind buildings */}
       <mesh position={[0, 4, -35]}>
         <sphereGeometry args={[22, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshLambertMaterial color="#3A6B40" side={THREE.BackSide} />
+        <meshStandardMaterial color="#3A6B40" side={THREE.BackSide} roughness={0.9} />
       </mesh>
-
-      {/* Left headland hill */}
       <mesh position={[-22, 3, -22]}>
         <sphereGeometry args={[12, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshLambertMaterial color="#2D5A35" side={THREE.BackSide} />
+        <meshStandardMaterial color="#2D5A35" side={THREE.BackSide} roughness={0.9} />
       </mesh>
-
-      {/* Right headland hill */}
       <mesh position={[24, 3, -20]}>
         <sphereGeometry args={[14, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshLambertMaterial color="#365E3C" side={THREE.BackSide} />
+        <meshStandardMaterial color="#365E3C" side={THREE.BackSide} roughness={0.9} />
       </mesh>
 
-      {/* Pine trees — cone + trunk clusters */}
+      {/* Pine trees */}
       {([
         [-18, -28], [-16, -30], [-14, -31],
-        [18, -26],  [21, -28],  [23, -25],
-        [0,  -32],  [3,  -33],  [-4, -32],
+        [ 18, -26], [ 21, -28], [ 23, -25],
+        [  0, -32], [  3, -33], [ -4, -32],
       ] as [number, number][]).map(([x, z], i) => (
         <group key={i} position={[x, 3.5 + (i % 3) * 0.8, z]}>
-          {/* Trunk */}
-          <mesh position={[0, -1.5, 0]}>
+          <mesh position={[0, -1.5, 0]} castShadow>
             <cylinderGeometry args={[0.12, 0.18, 1.8, 6]} />
-            <meshLambertMaterial color="#5C3D1E" />
+            <meshStandardMaterial color="#5C3D1E" roughness={0.95} />
           </mesh>
-          {/* Canopy */}
-          <mesh>
+          <mesh castShadow>
             <coneGeometry args={[0.9, 2.4, 6]} />
-            <meshLambertMaterial color="#2A5C32" />
+            <meshStandardMaterial color="#2A5C32" roughness={0.85} />
           </mesh>
         </group>
       ))}
@@ -412,30 +456,25 @@ function HillTerrain() {
 function Church() {
   return (
     <group position={[10, 4, -31]}>
-      {/* Church body */}
-      <mesh position={[0, 1.5, 0]}>
+      <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
         <boxGeometry args={[3.5, 5, 3.5]} />
-        <meshLambertMaterial color="#FAFAF8" />
+        <meshStandardMaterial color="#FAFAF8" roughness={0.75} />
       </mesh>
-      {/* Facade gable */}
-      <mesh position={[0, 4.5, 1.8]} rotation={[0, 0, 0]}>
+      <mesh position={[0, 4.5, 1.8]} castShadow>
         <coneGeometry args={[2.5, 1.8, 4]} />
-        <meshLambertMaterial color="#E8E0D0" />
+        <meshStandardMaterial color="#E8E0D0" roughness={0.85} />
       </mesh>
-      {/* Bell tower campanile */}
-      <mesh position={[2.5, 5, 0]}>
+      <mesh position={[2.5, 5, 0]} castShadow>
         <boxGeometry args={[1.2, 10, 1.2]} />
-        <meshLambertMaterial color="#FAFAF8" />
+        <meshStandardMaterial color="#FAFAF8" roughness={0.75} />
       </mesh>
-      {/* Bell tower cap */}
-      <mesh position={[2.5, 10.5, 0]}>
+      <mesh position={[2.5, 10.5, 0]} castShadow>
         <coneGeometry args={[1.0, 1.8, 4]} />
-        <meshLambertMaterial color="#C84B31" />
+        <meshStandardMaterial color="#C84B31" roughness={0.8} />
       </mesh>
-      {/* Dome */}
       <mesh position={[0, 4.8, 0]}>
         <sphereGeometry args={[1.2, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshLambertMaterial color="#9E9E6E" />
+        <meshStandardMaterial color="#9E9E6E" roughness={0.6} metalness={0.1} />
       </mesh>
     </group>
   )
@@ -446,27 +485,24 @@ function Church() {
 function Castello() {
   return (
     <group position={[-19, 7, -26]}>
-      {/* Main keep */}
-      <mesh position={[0, 2, 0]}>
+      <mesh position={[0, 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[4, 6, 4]} />
-        <meshLambertMaterial color="#8B7355" />
+        <meshStandardMaterial color="#8B7355" roughness={0.9} />
       </mesh>
       {/* Battlements — small boxes on top */}
       {[-1.5, -0.5, 0.5, 1.5].map((x, i) => (
-        <mesh key={i} position={[x, 5.5, 1.8]}>
+        <mesh key={i} position={[x, 5.5, 1.8]} castShadow>
           <boxGeometry args={[0.6, 0.8, 0.4]} />
-          <meshLambertMaterial color="#8B7355" />
+          <meshStandardMaterial color="#8B7355" roughness={0.9} />
         </mesh>
       ))}
-      {/* Tower */}
-      <mesh position={[2.5, 4, 0]}>
+      <mesh position={[2.5, 4, 0]} castShadow>
         <cylinderGeometry args={[0.8, 1.0, 8, 8]} />
-        <meshLambertMaterial color="#78634A" />
+        <meshStandardMaterial color="#78634A" roughness={0.9} />
       </mesh>
-      {/* Tower conical roof */}
-      <mesh position={[2.5, 8.5, 0]}>
+      <mesh position={[2.5, 8.5, 0]} castShadow>
         <coneGeometry args={[0.9, 1.5, 8]} />
-        <meshLambertMaterial color="#5A4A30" />
+        <meshStandardMaterial color="#5A4A30" roughness={0.85} />
       </mesh>
     </group>
   )
