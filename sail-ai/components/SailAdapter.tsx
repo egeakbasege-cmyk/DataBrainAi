@@ -23,9 +23,9 @@ import {
 // ── Palette ───────────────────────────────────────────────────────────────────
 
 const GOLD   = '#C9A96E'
-const INK    = '#0C0C0E'
-const MUTED  = '#71717A'
-const LIGHT  = '#F4F4F5'
+const INK    = '#FFFFFF'
+const MUTED  = 'rgba(255,255,255,0.55)'
+const LIGHT  = 'rgba(255,255,255,0.08)'
 
 const INTENT_ACCENT: Record<SailIntent, string> = {
   scenario:  '#00C9B1',   // teal — simulation/predictive
@@ -157,10 +157,10 @@ function InlineText({ text, color = INK }: { text: string; color?: string }) {
             <code key={i} style={{
               fontFamily:   'Menlo, Monaco, Consolas, monospace',
               fontSize:     '0.8em',
-              background:   'rgba(0,0,0,0.06)',
+              background:   'rgba(255,255,255,0.10)',
               padding:      '0.1em 0.35em',
               borderRadius: '3px',
-              color:        '#1a1a2e',
+              color:        '#E8C87A',
             }}>
               {part.slice(1, -1)}
             </code>
@@ -352,12 +352,12 @@ function TableSegment({ seg, accent }: { seg: Extract<Segment, { type: 'table' }
         </thead>
         <tbody>
           {seg.rows.map((row, ri) => (
-            <tr key={ri} style={{ background: ri % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.025)' }}>
+            <tr key={ri} style={{ background: ri % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.04)' }}>
               {row.map((cell, ci) => (
                 <td key={ci} style={{
                   padding:      '0.5rem 0.875rem',
                   color:        INK,
-                  borderBottom: '1px solid rgba(0,0,0,0.06)',
+                  borderBottom: '1px solid rgba(255,255,255,0.07)',
                 }}>
                   <InlineText text={cell} />
                 </td>
@@ -397,7 +397,7 @@ function MrrChartSegment() {
             <XAxis dataKey="name" tick={{ fontFamily: 'Inter', fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontFamily: 'Inter', fontSize: 10, fill: MUTED }} axisLine={false} tickLine={false} />
             <Tooltip
-              contentStyle={{ fontFamily: 'Inter', fontSize: 12, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 4 }}
+              contentStyle={{ fontFamily: 'Inter', fontSize: 12, background: 'rgba(12,14,20,0.95)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, color: '#FFFFFF' }}
               formatter={(val: number, name: string) => [`${val}%`, name === 'growth' ? 'Growth' : 'Churn']}
             />
             <Bar dataKey="growth" name="growth" radius={[2, 2, 0, 0]}>

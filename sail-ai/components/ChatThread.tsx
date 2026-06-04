@@ -59,13 +59,13 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
     >
       <div style={{ maxWidth: '84%' }}>
         <div style={{
-          background:    'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(250,250,248,0.96) 100%)',
+          background:    `linear-gradient(135deg, ${color}18 0%, rgba(8,9,13,0.75) 100%)`,
           backdropFilter:'blur(20px)',
           WebkitBackdropFilter:'blur(20px)',
           borderRadius:  '16px 16px 4px 16px',
           padding:       '12px 16px',
-          boxShadow:     '0 1px 2px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.08)',
-          border:        '1px solid rgba(0,0,0,0.07)',
+          boxShadow:     `0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07)`,
+          border:        `1px solid ${color}30`,
           borderLeft:    `3px solid ${color}`,
         }}>
           <p style={{
@@ -74,7 +74,7 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
             fontWeight:     400,
             lineHeight:     1.65,
             letterSpacing: '-0.01em',
-            color:         '#111827',
+            color:         'rgba(255,255,255,0.92)',
             margin:         0,
             whiteSpace:    'pre-wrap',
             wordBreak:     'break-word',
@@ -86,7 +86,7 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
           <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.8 }}>
             {modeLabel}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(17,24,39,0.35)', letterSpacing: '0.02em' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.02em' }}>
             {ts}
           </span>
         </div>
@@ -133,7 +133,7 @@ const AssistantCard = memo(function AssistantCard({
         </span>
         <span style={{
           fontFamily: 'Inter, sans-serif', fontSize: 10,
-          color: message.streaming ? meta.color : 'rgba(17,24,39,0.38)',
+          color: message.streaming ? meta.color : 'rgba(255,255,255,0.35)',
           fontStyle: message.streaming ? 'italic' : 'normal', letterSpacing: '0.02em',
         }}>
           {message.streaming ? '· Processing…' : `· ${ts}`}
@@ -141,16 +141,16 @@ const AssistantCard = memo(function AssistantCard({
       </div>
 
       <div style={{
-        background:   'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(250,250,248,0.96) 100%)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border:       '1px solid rgba(0,0,0,0.08)',
+        background:   `linear-gradient(135deg, ${meta.color}10 0%, rgba(8,9,13,0.80) 60%, rgba(20,184,166,0.04) 100%)`,
+        backdropFilter: 'blur(28px)',
+        WebkitBackdropFilter: 'blur(28px)',
+        border:       `1px solid ${meta.color}28`,
         borderTop:    `2px solid ${meta.color}`,
         borderRadius: '4px 16px 16px 16px',
         overflow:     'hidden',
-        boxShadow:    `0 1px 2px rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.10)`,
+        boxShadow:    `0 4px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.07)`,
       }}>
-        <div style={{ color: '#111827' }}>
+        <div style={{ color: '#FFFFFF' }}>
           {renderPayload(message)}
 
           {/* Streaming cursor */}
@@ -170,7 +170,7 @@ const AssistantCard = memo(function AssistantCard({
           transition={{ delay: 0.45, duration: 0.25 }}
           style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10, paddingLeft: 4, alignItems: 'center' }}
         >
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(17,24,39,0.32)' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)' }}>
             Continue →
           </span>
           {chips.slice(0, 2).map((chip, i) => (
@@ -227,7 +227,7 @@ function renderPayload(message: ChatMessage) {
         <ExecutiveResponseCard
           response={payload.data as never}
           isStreaming={streaming}
-          variant="light"
+          variant="dark"
         />
       )
 
@@ -268,11 +268,11 @@ function renderPayload(message: ChatMessage) {
           {streaming && !payload.text && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <motion.div animate={{ opacity: [0.25, 0.9, 0.25] }} transition={{ duration: 1.4, repeat: Infinity }}
-                style={{ width: 32, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.08)' }} />
+                style={{ width: 32, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
               <motion.div animate={{ opacity: [0.25, 0.9, 0.25] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.18 }}
-                style={{ width: 24, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.05)' }} />
+                style={{ width: 24, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.10)' }} />
               <motion.div animate={{ opacity: [0.25, 0.9, 0.25] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.36 }}
-                style={{ width: 16, height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.04)' }} />
+                style={{ width: 16, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.07)' }} />
             </div>
           )}
           {payload.text && (
