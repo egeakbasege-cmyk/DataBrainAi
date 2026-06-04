@@ -13,7 +13,7 @@
  * Re-parses on every update — cheap since segments are plain string splits.
  */
 
-import { useMemo } from 'react'
+import { useMemo, useState, createContext, useContext } from 'react'
 import type { SailIntent } from '@/lib/intent'
 import { MRR_TIERS }       from '@/lib/intent'
 import {
@@ -26,6 +26,10 @@ const GOLD   = '#C9A96E'
 const INK    = '#FFFFFF'
 const MUTED  = 'rgba(255,255,255,0.55)'
 const LIGHT  = 'rgba(255,255,255,0.08)'
+
+// ── Sources context (passed from SailAdapter → InlineText for tooltips) ───────
+interface ParsedSourceCtx { index: number; domain: string; snippet: string }
+const SourcesCtx = createContext<ParsedSourceCtx[]>([])
 
 const INTENT_ACCENT: Record<SailIntent, string> = {
   scenario:  '#00C9B1',   // teal — simulation/predictive
@@ -134,6 +138,94 @@ function parseMarkdown(text: string): Segment[] {
   return segments
 }
 
+// ── Citation tooltip badge ────────────────────────────────────────────────────
+
+function CitationBadge({ num }: { num: number }) {
+  const sources = useContext(SourcesCtx)
+  const src     = sources.find(s => s.index === num)
+  const [open, setOpen] = useState(false)
+
+  return (
+    <span
+      style={{ position: 'relative', display: 'inline' }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onTouchStart={() => setOpen(v => !v)}
+    >
+      <sup style={{
+        fontFamily:    'Inter, sans-serif',
+        fontSize:      '0.6em',
+        fontWeight:    700,
+        color:         GOLD,
+        background:    'rgba(201,169,110,0.15)',
+        border:        '1px solid rgba(201,169,110,0.35)',
+        borderRadius:  '3px',
+        padding:       '0 3px',
+        marginLeft:    '1px',
+        verticalAlign: 'super',
+        lineHeight:    1,
+        cursor:        src ? 'help' : 'default',
+        userSelect:    'none',
+      }}>
+        {num}
+      </sup>
+
+      {open && src && (
+        <span style={{
+          position:    'absolute',
+          bottom:      'calc(100% + 6px)',
+          left:        '50%',
+          transform:   'translateX(-50%)',
+          zIndex:      999,
+          width:       'max-content',
+          maxWidth:    260,
+          background:  'linear-gradient(135deg, rgba(20,24,40,0.98) 0%, rgba(8,9,13,0.98) 100%)',
+          backdropFilter: 'blur(16px)',
+          border:      '1px solid rgba(201,169,110,0.30)',
+          borderRadius: 7,
+          padding:     '7px 10px',
+          boxShadow:   '0 8px 24px rgba(0,0,0,0.55)',
+          pointerEvents: 'none',
+        }}>
+          {/* Arrow */}
+          <span style={{
+            position:    'absolute',
+            top:         '100%',
+            left:        '50%',
+            transform:   'translateX(-50%)',
+            width:       0,
+            height:      0,
+            borderLeft:  '5px solid transparent',
+            borderRight: '5px solid transparent',
+            borderTop:   '5px solid rgba(201,169,110,0.30)',
+          }} />
+          <span style={{
+            display:    'block',
+            fontFamily: 'Inter, sans-serif',
+            fontSize:   '0.68rem',
+            fontWeight: 600,
+            color:      GOLD,
+            marginBottom: '2px',
+          }}>
+            {src.domain}
+          </span>
+          {src.snippet && src.snippet !== src.domain && (
+            <span style={{
+              display:    'block',
+              fontFamily: 'Inter, sans-serif',
+              fontSize:   '0.63rem',
+              color:      'rgba(255,255,255,0.65)',
+              lineHeight: 1.45,
+            }}>
+              {src.snippet}
+            </span>
+          )}
+        </span>
+      )}
+    </span>
+  )
+}
+
 // ── Inline markdown → spans (bold, italic, code) ──────────────────────────────
 
 function InlineText({ text, color = INK }: { text: string; color?: string }) {
@@ -163,26 +255,10 @@ function InlineText({ text, color = INK }: { text: string; color?: string }) {
             </code>
           )
         }
-        // Citation marker: [1] [2] [3] → gold superscript badge
+        // Citation marker: [1] [2] [3] → tooltip badge
         const citRef = part.match(/^\[(\d+)\]$/)
         if (citRef) {
-          return (
-            <sup key={i} style={{
-              fontFamily:    'Inter, sans-serif',
-              fontSize:      '0.58em',
-              fontWeight:    700,
-              color:         GOLD,
-              background:    'rgba(201,169,110,0.15)',
-              border:        '1px solid rgba(201,169,110,0.35)',
-              borderRadius:  '3px',
-              padding:       '0 3px',
-              marginLeft:    '1px',
-              verticalAlign: 'super',
-              lineHeight:    1,
-            }}>
-              {citRef[1]}
-            </sup>
-          )
+          return <CitationBadge key={i} num={parseInt(citRef[1])} />
         }
         // Markdown link: [label](url)
         const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
@@ -510,30 +586,40 @@ function cleanBodyText(text: string): string {
 }
 
 function extractSourcesBlock(raw: string): { body: string; sources: ParsedSource[] } {
-  // Match the ## Sources (or ## Kaynaklar / ## Quellen etc.) section at the end
-  const sourcesHeadRegex = /^##\s+(Sources?|References?|Kaynaklar?|Referanslar?|Quellen|Fuentes|Sources)\s*$/im
+  // Lenient match — catches all formats the AI produces:
+  // "## Sources"  "## Sources:"  "## Kaynaklar"  "**Sources**"  "Sources:"  etc.
+  const sourcesHeadRegex = /(?:^|\n)\s*(?:#{1,3}\s*\*{0,2}|\*{2})?(Sources?|References?|Kaynaklar?|Referanslar?|Quellen|Fuentes|Kaynakça)\*{0,2}:?\s*\n/im
   const match = sourcesHeadRegex.exec(raw)
 
-  if (!match || match.index === undefined) {
-    // No structured block — clean inline noise and return
+  if (!match) {
     return { body: cleanBodyText(raw), sources: [] }
   }
 
-  const body = cleanBodyText(raw.slice(0, match.index))
+  const body  = cleanBodyText(raw.slice(0, match.index))
   const block = raw.slice(match.index + match[0].length).trim()
 
-  // Parse numbered list: "1. domain.com (date) — description" or "- domain.com ..."
   const sources: ParsedSource[] = []
-  const lineRegex = /^(?:\d+\.|[-*•])\s+(.+)$/gm
+  // Match: "1. https://domain.com ... — description"  or  "1. domain.com — description"
+  const lineRegex = /^(?:\d+[.)]\s*|[-*•]\s*)(.+)$/gm
   let lineMatch: RegExpExecArray | null
 
   while ((lineMatch = lineRegex.exec(block)) !== null) {
     const line = lineMatch[1].trim()
-    // Extract domain — first token that looks like a domain or URL
-    const domainMatch = line.match(/^(https?:\/\/)?([a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/)
-    const domain  = domainMatch ? domainMatch[2] : line.split(/\s[—–-]\s/)[0].trim()
-    // Everything after " — " is the description
-    const snippet = line.replace(/^[^\s—–-]+[^\n]*?[—–-]\s*/, '').trim() || line
+    if (!line) continue
+
+    // Extract domain from URL or bare domain token
+    const urlMatch    = line.match(/https?:\/\/(?:www\.)?([a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/)
+    const domainMatch = !urlMatch && line.match(/^(?:www\.)?([a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/)
+    const domain = urlMatch
+      ? urlMatch[1]
+      : domainMatch
+        ? domainMatch[1]
+        : line.split(/\s*[—–\-]\s*/)[0].trim()
+
+    // Snippet: everything after the first " — " or " - " separator
+    const sepIdx = line.search(/\s+[—–\-]\s+/)
+    const snippet = sepIdx >= 0 ? line.slice(sepIdx).replace(/^\s*[—–\-]\s*/, '').trim() : ''
+
     sources.push({ index: sources.length + 1, domain, snippet })
   }
 
@@ -546,37 +632,40 @@ function SourcesFooter({ sources, accent }: { sources: ParsedSource[]; accent: s
   if (!sources.length) return null
   return (
     <div style={{
-      marginTop:    '1.5rem',
-      paddingTop:   '0.875rem',
-      borderTop:    `1px solid ${accent}20`,
+      marginTop:  '1.25rem',
+      paddingTop: '0.75rem',
+      borderTop:  `1px solid ${accent}20`,
     }}>
       <p style={{
         fontFamily:    'Inter, sans-serif',
-        fontSize:      '0.6rem',
+        fontSize:      '0.58rem',
         fontWeight:    700,
         letterSpacing: '0.1em',
         textTransform: 'uppercase',
         color:         accent,
-        marginBottom:  '0.5rem',
+        margin:        '0 0 0.5rem',
+        opacity:        0.8,
       }}>
         Sources
       </p>
-      <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+      <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
         {sources.map(src => (
           <li key={src.index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
             <span style={{
-              fontFamily:  'JetBrains Mono, monospace',
-              fontSize:    '0.6rem',
-              color:       accent,
-              flexShrink:  0,
-              minWidth:    '1rem',
+              fontFamily: 'Inter, sans-serif',
+              fontSize:   '0.6rem',
+              fontWeight: 700,
+              color:      accent,
+              flexShrink: 0,
+              minWidth:   '1.1rem',
+              opacity:    0.75,
             }}>
               {src.index}.
             </span>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'var(--ae-text-dim, #9898B0)', lineHeight: 1.5 }}>
-              <span style={{ fontWeight: 600, color: 'var(--ae-text, #F0F0F4)' }}>{src.domain}</span>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', lineHeight: 1.5, color: 'rgba(255,255,255,0.55)' }}>
+              <span style={{ fontWeight: 600, color: 'rgba(255,255,255,0.80)' }}>{src.domain}</span>
               {src.snippet && src.snippet !== src.domain && (
-                <> — {src.snippet}</>
+                <span> — {src.snippet}</span>
               )}
             </span>
           </li>
@@ -622,74 +711,76 @@ export function SailAdapter({ text, intent, streaming }: Props) {
   }
 
   return (
-    <div>
-      {/* Intent badge */}
-      <div style={{
-        display:       'flex',
-        alignItems:    'center',
-        gap:           '0.5rem',
-        marginBottom:  '1rem',
-        paddingBottom: '0.625rem',
-        borderBottom:  `1px solid ${accent}25`,
-      }}>
-        <span style={{ color: accent, fontSize: '0.45rem' }}>◆</span>
-        <span style={{
-          fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.62rem',
-          fontWeight:    700,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          color:         accent,
-        }}>
-          SAIL · {INTENT_LABELS[intent]}
-        </span>
-        {streaming && (
-          <span style={{
-            marginLeft:    'auto',
-            fontFamily:    'Inter, sans-serif',
-            fontSize:      '0.6rem',
-            color:         MUTED,
-            animation:     'sail-pulse 1.2s ease-in-out infinite',
-          }}>
-            streaming
-          </span>
-        )}
-      </div>
-
-      {/* Rendered segments */}
+    <SourcesCtx.Provider value={sources}>
       <div>
-        {segments.map((seg, i) => {
-          if (seg.type === 'blank')    return <div key={i} style={{ height: '0.5rem' }} />
-          if (seg.type === 'heading')  return <HeadingSegment   key={i} seg={seg}  accent={accent} />
-          if (seg.type === 'paragraph') return <ParagraphSegment key={i} seg={seg} intent={intent} />
-          if (seg.type === 'bullet')   return <BulletSegment    key={i} seg={seg}  accent={accent} />
-          if (seg.type === 'numbered') return <NumberedSegment  key={i} seg={seg}  accent={accent} />
-          if (seg.type === 'code')     return <CodeSegment      key={i} seg={seg} />
-          if (seg.type === 'table')    return <TableSegment     key={i} seg={seg}  accent={accent} />
-          if (seg.type === 'mrr-chart') return <MrrChartSegment key={i} />
-          return null
-        })}
+        {/* Intent badge */}
+        <div style={{
+          display:       'flex',
+          alignItems:    'center',
+          gap:           '0.5rem',
+          marginBottom:  '1rem',
+          paddingBottom: '0.625rem',
+          borderBottom:  `1px solid ${accent}25`,
+        }}>
+          <span style={{ color: accent, fontSize: '0.45rem' }}>◆</span>
+          <span style={{
+            fontFamily:    'Inter, sans-serif',
+            fontSize:      '0.62rem',
+            fontWeight:    700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color:         accent,
+          }}>
+            SAIL · {INTENT_LABELS[intent]}
+          </span>
+          {streaming && (
+            <span style={{
+              marginLeft:    'auto',
+              fontFamily:    'Inter, sans-serif',
+              fontSize:      '0.6rem',
+              color:         MUTED,
+              animation:     'sail-pulse 1.2s ease-in-out infinite',
+            }}>
+              streaming
+            </span>
+          )}
+        </div>
+
+        {/* Rendered segments */}
+        <div>
+          {segments.map((seg, i) => {
+            if (seg.type === 'blank')     return <div key={i} style={{ height: '0.5rem' }} />
+            if (seg.type === 'heading')   return <HeadingSegment   key={i} seg={seg}  accent={accent} />
+            if (seg.type === 'paragraph') return <ParagraphSegment key={i} seg={seg}  intent={intent} />
+            if (seg.type === 'bullet')    return <BulletSegment    key={i} seg={seg}  accent={accent} />
+            if (seg.type === 'numbered')  return <NumberedSegment  key={i} seg={seg}  accent={accent} />
+            if (seg.type === 'code')      return <CodeSegment      key={i} seg={seg} />
+            if (seg.type === 'table')     return <TableSegment     key={i} seg={seg}  accent={accent} />
+            if (seg.type === 'mrr-chart') return <MrrChartSegment  key={i} />
+            return null
+          })}
+        </div>
+
+        {/* Sources footer — compact list, only when streaming done and sources exist */}
+        {!streaming && <SourcesFooter sources={sources} accent={accent} />}
+
+        {/* Streaming cursor */}
+        {streaming && text && (
+          <span style={{
+            display:    'inline-block',
+            width:      '2px',
+            height:     '1em',
+            background: accent,
+            marginLeft: '2px',
+            verticalAlign: 'middle',
+            animation:  'sail-cursor 0.8s step-end infinite',
+          }} />
+        )}
+        <style>{`
+          @keyframes sail-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
+          @keyframes sail-pulse  { 0%,100%{opacity:0.3} 50%{opacity:1} }
+        `}</style>
       </div>
-
-      {/* Sources footer — only shown when streaming is done and sources are present */}
-      {!streaming && <SourcesFooter sources={sources} accent={accent} />}
-
-      {/* Streaming cursor */}
-      {streaming && text && (
-        <span style={{
-          display:    'inline-block',
-          width:      '2px',
-          height:     '1em',
-          background: accent,
-          marginLeft: '2px',
-          verticalAlign: 'middle',
-          animation:  'sail-cursor 0.8s step-end infinite',
-        }} />
-      )}
-      <style>{`
-        @keyframes sail-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes sail-pulse  { 0%,100%{opacity:0.3} 50%{opacity:1} }
-      `}</style>
-    </div>
+    </SourcesCtx.Provider>
   )
 }
