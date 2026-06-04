@@ -59,12 +59,14 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
     >
       <div style={{ maxWidth: '84%' }}>
         <div style={{
-          background:   '#ffffff',
-          borderRadius: '16px 16px 4px 16px',
-          padding:      '12px 16px',
-          boxShadow:    '0 1px 2px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06)',
-          border:       '1px solid rgba(0,0,0,0.07)',
-          borderLeft:   `3px solid ${color}`,
+          background:    'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(250,250,248,0.96) 100%)',
+          backdropFilter:'blur(20px)',
+          WebkitBackdropFilter:'blur(20px)',
+          borderRadius:  '16px 16px 4px 16px',
+          padding:       '12px 16px',
+          boxShadow:     '0 1px 2px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.08)',
+          border:        '1px solid rgba(0,0,0,0.07)',
+          borderLeft:    `3px solid ${color}`,
         }}>
           <p style={{
             fontFamily:    'Inter, sans-serif',
@@ -139,12 +141,14 @@ const AssistantCard = memo(function AssistantCard({
       </div>
 
       <div style={{
-        background:   '#ffffff',
-        border:       '1px solid rgba(0,0,0,0.07)',
+        background:   'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(250,250,248,0.96) 100%)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border:       '1px solid rgba(0,0,0,0.08)',
         borderTop:    `2px solid ${meta.color}`,
         borderRadius: '4px 16px 16px 16px',
         overflow:     'hidden',
-        boxShadow:    `0 1px 2px rgba(0,0,0,0.05), 0 4px 20px rgba(0,0,0,0.06)`,
+        boxShadow:    `0 1px 2px rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.10)`,
       }}>
         <div style={{ color: '#111827' }}>
           {renderPayload(message)}

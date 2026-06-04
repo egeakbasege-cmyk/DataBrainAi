@@ -239,7 +239,7 @@ export default function ChatPage() {
   const { userUrls }                                                                = useUserSources()
 
   const { messages: chatMessages, addUserMessage, startAssistantMessage,
-          updateStreaming, finalizeMessage, clearThread, compressedHistory }        = useChatMessages()
+          finalizeMessage, clearThread, compressedHistory }                         = useChatMessages()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const primaryConstraint: string | undefined = useProfileCtx
@@ -405,7 +405,6 @@ export default function ChatPage() {
     setSailError(null); setSailText(''); setSailPhase('streaming')
     sailAbortRef.current = new AbortController()
     addUserMessage(text, 'sail')
-    const assistantId = startAssistantMessage('sail')
     try {
       const res = await fetch('/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
@@ -418,13 +417,16 @@ export default function ChatPage() {
         const { done, value } = await reader.read(); if (done) break
         buf += decoder.decode(value, { stream: true })
         if (!metaDone) { const nl = buf.indexOf('\n'); if (nl !== -1) { try { const m = JSON.parse(buf.slice(0, nl)); if (m.__sailMeta?.intent) setSailIntent(m.__sailMeta.intent) } catch {} buf = buf.slice(nl + 1); metaDone = true } }
-        setSailText(buf); updateStreaming(assistantId, buf)
+        setSailText(buf)
       }
+      // Write to thread only once streaming is done — avoids duplicate with StreamCard
+      const assistantId = startAssistantMessage('sail')
       setSailPhase('complete'); finalizeMessage(assistantId, { type: 'text', text: buf }); saveAnalysis(text, buf.slice(0, 120))
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
       const msg = err instanceof Error ? err.message : 'SAIL request failed.'
-      setSailError(msg); setSailPhase('idle'); finalizeMessage(assistantId, { type: 'error', message: msg })
+      setSailError(msg); setSailPhase('idle')
+      const errId = startAssistantMessage('sail'); finalizeMessage(errId, { type: 'error', message: msg })
     }
   }
 
@@ -484,7 +486,7 @@ export default function ChatPage() {
   async function handleOperatorSubmit(text: string) {
     setOperatorError(null); setOperatorText(''); setOperatorPhase('streaming')
     operatorAbortRef.current = new AbortController()
-    addUserMessage(text, 'operator'); const assistantId = startAssistantMessage('operator')
+    addUserMessage(text, 'operator')
     try {
       const res = await fetch('/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Language': language, 'X-Aetheris-Session': sessionId || 'init' },
@@ -494,13 +496,16 @@ export default function ChatPage() {
       const reader = res.body!.getReader(); const decoder = new TextDecoder(); let buf = ''
       while (true) {
         const { done, value } = await reader.read(); if (done) break
-        buf += decoder.decode(value, { stream: true }); setOperatorText(buf); updateStreaming(assistantId, buf)
+        buf += decoder.decode(value, { stream: true }); setOperatorText(buf)
       }
+      // Write to thread only once streaming is done — avoids duplicate with StreamCard
+      const assistantId = startAssistantMessage('operator')
       setOperatorPhase('complete'); finalizeMessage(assistantId, { type: 'text', text: buf }); saveAnalysis(text, buf.slice(0, 120))
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
       const msg = err instanceof Error ? err.message : 'OPERATOR request failed.'
-      setOperatorError(msg); setOperatorPhase('idle'); finalizeMessage(assistantId, { type: 'error', message: msg })
+      setOperatorError(msg); setOperatorPhase('idle')
+      const errId = startAssistantMessage('operator'); finalizeMessage(errId, { type: 'error', message: msg })
     }
   }
 

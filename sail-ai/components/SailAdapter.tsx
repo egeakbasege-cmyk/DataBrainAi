@@ -137,8 +137,12 @@ function parseMarkdown(text: string): Segment[] {
 // ── Inline markdown → spans (bold, italic, code) ──────────────────────────────
 
 function InlineText({ text, color = INK }: { text: string; color?: string }) {
-  // Split on **bold**, *italic*, `code`
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g)
+  // Strip bare footnote references like [1] [2] [3] that appear mid-sentence
+  const cleaned = text.replace(/\[\d+\]/g, '')
+
+  // Split on **bold**, *italic*, `code`, [text](url)
+  const parts = cleaned.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g)
+
   return (
     <>
       {parts.map((part, i) => {
@@ -151,15 +155,35 @@ function InlineText({ text, color = INK }: { text: string; color?: string }) {
         if (part.startsWith('`') && part.endsWith('`')) {
           return (
             <code key={i} style={{
-              fontFamily:      'Menlo, Monaco, Consolas, monospace',
-              fontSize:        '0.8em',
-              background:      'rgba(0,0,0,0.06)',
-              padding:         '0.1em 0.35em',
-              borderRadius:    '3px',
-              color:           '#1a1a2e',
+              fontFamily:   'Menlo, Monaco, Consolas, monospace',
+              fontSize:     '0.8em',
+              background:   'rgba(0,0,0,0.06)',
+              padding:      '0.1em 0.35em',
+              borderRadius: '3px',
+              color:        '#1a1a2e',
             }}>
               {part.slice(1, -1)}
             </code>
+          )
+        }
+        // Markdown link: [label](url)
+        const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
+        if (linkMatch) {
+          return (
+            <a
+              key={i}
+              href={linkMatch[2]}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color,
+                textDecoration:      'underline',
+                textDecorationColor: `${color}55`,
+                textUnderlineOffset: '2px',
+              }}
+            >
+              {linkMatch[1]}
+            </a>
           )
         }
         return <span key={i} style={{ color }}>{part}</span>

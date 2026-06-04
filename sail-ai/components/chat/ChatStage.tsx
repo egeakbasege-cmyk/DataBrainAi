@@ -310,7 +310,7 @@ export function ChatStage(props: ChatStageProps) {
               exit={{ opacity: 0 }}
               style={{
                 padding:       '16px 20px',
-                background:    'rgba(10,17,40,0.90)',
+                background:    'linear-gradient(135deg, rgba(201,169,110,0.10) 0%, rgba(8,9,13,0.80) 100%)',
                 backdropFilter:'blur(24px)',
                 WebkitBackdropFilter:'blur(24px)',
                 border:        '1px solid rgba(201,169,110,0.30)',
@@ -366,7 +366,7 @@ export function ChatStage(props: ChatStageProps) {
                 display:       'flex',
                 alignItems:    'flex-start',
                 gap:            12,
-                background:    'rgba(10,17,40,0.90)',
+                background:    'linear-gradient(135deg, rgba(220,38,38,0.08) 0%, rgba(8,9,13,0.80) 100%)',
                 backdropFilter:'blur(24px)',
                 WebkitBackdropFilter:'blur(24px)',
                 border:        '1px solid rgba(220,38,38,0.25)',
@@ -416,7 +416,7 @@ export function ChatStage(props: ChatStageProps) {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              style={{ padding: '12px 16px', background: 'rgba(10,17,40,0.90)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(220,38,38,0.25)', borderLeft: '3px solid #DC2626', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
+              style={{ padding: '12px 16px', background: 'linear-gradient(135deg, rgba(220,38,38,0.08) 0%, rgba(8,9,13,0.80) 100%)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(220,38,38,0.25)', borderLeft: '3px solid #DC2626', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
             >
               <span style={{ color: '#DC2626' }}>⚠</span>
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(220,38,38,0.85)', flex: 1 }}>{autoError}</span>
@@ -462,14 +462,7 @@ export function ChatStage(props: ChatStageProps) {
           )}
         </AnimatePresence>
 
-        {/* ── SAIL — only revealed after streaming completes ── */}
-        <AnimatePresence>
-          {mode === 'sail' && sailPhase === 'complete' && (
-            <StreamCard key="sail" mode="sail" streaming={false}>
-              <SailAdapter text={sailText} intent={sailIntent} streaming={false} />
-            </StreamCard>
-          )}
-        </AnimatePresence>
+        {/* SAIL: result is written to ChatThread on completion — no StreamCard needed */}
 
         {/* ── TRIM — only revealed after loading completes ── */}
         <AnimatePresence>
@@ -514,14 +507,7 @@ export function ChatStage(props: ChatStageProps) {
           )}
         </AnimatePresence>
 
-        {/* ── OPERATOR — only revealed after streaming completes ── */}
-        <AnimatePresence>
-          {mode === 'operator' && operatorPhase === 'complete' && (
-            <StreamCard key="operator" mode="operator" streaming={false}>
-              <SailAdapter text={operatorText} intent="analytic" streaming={false} />
-            </StreamCard>
-          )}
-        </AnimatePresence>
+        {/* OPERATOR: result is written to ChatThread on completion — no StreamCard needed */}
 
         {/* ── SCENARIO — only revealed after streaming completes ── */}
         <AnimatePresence>
