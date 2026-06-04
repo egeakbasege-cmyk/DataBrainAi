@@ -117,16 +117,17 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        background:          'rgba(6,10,22,0.86)',
-        backdropFilter:      'blur(24px)',
-        WebkitBackdropFilter:'blur(24px)',
-        border:              '1px solid rgba(201,169,110,0.28)',
-        borderRadius:         16,
-        padding:             '28px 28px 26px',
+        background:          'linear-gradient(135deg, rgba(201,169,110,0.10) 0%, rgba(255,255,255,0.04) 60%, rgba(20,184,166,0.05) 100%)',
+        backdropFilter:      'blur(32px)',
+        WebkitBackdropFilter:'blur(32px)',
+        border:              '1px solid rgba(201,169,110,0.22)',
+        borderRadius:         18,
+        padding:             '30px 28px 28px',
         flex:                 1,
         minWidth:             0,
         position:            'relative',
         overflow:            'hidden',
+        boxShadow:           '0 8px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.10)',
       }}
     >
       {/* Gold top hairline */}
@@ -136,22 +137,23 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
         left:       '8%',
         right:      '8%',
         height:      1,
-        background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.55), transparent)',
+        background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.70), transparent)',
       }} />
 
       <div style={{
         fontFamily:    'Cormorant Garamond, Georgia, serif',
         fontSize:       56,
         fontWeight:     300,
-        color:         'rgba(201,169,110,0.32)',
+        color:         'rgba(201,169,110,0.55)',
         lineHeight:     1,
         marginBottom:   16,
         letterSpacing: '-0.03em',
+        textShadow:    '0 2px 12px rgba(0,0,0,0.7)',
       }}>
         {n}
       </div>
 
-      <div style={{ width: 24, height: 1, background: '#C9A96E', opacity: 0.55, marginBottom: 14 }} />
+      <div style={{ width: 24, height: 1, background: '#C9A96E', opacity: 0.75, marginBottom: 14 }} />
 
       <p style={{
         fontFamily:    'Inter, sans-serif',
@@ -159,9 +161,9 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
         fontWeight:     700,
         letterSpacing: '0.16em',
         textTransform: 'uppercase',
-        color:         '#E8C47A',
+        color:         '#F0D080',
         margin:        '0 0 10px',
-        textShadow:    '0 1px 4px rgba(0,0,0,0.6)',
+        textShadow:    '0 1px 8px rgba(0,0,0,0.9)',
       }}>
         {title}
       </p>
@@ -169,9 +171,10 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
         fontFamily: 'Inter, sans-serif',
         fontSize:    14,
         lineHeight:  1.72,
-        color:      'rgba(250,250,248,0.84)',
-        fontWeight:  300,
+        color:      '#FFFFFF',
+        fontWeight:  400,
         margin:      0,
+        textShadow: '0 1px 8px rgba(0,0,0,0.85)',
       }}>
         {body}
       </p>
@@ -223,12 +226,12 @@ export function PortofinoWalkthrough() {
       {/* ── Layer 1: ASCII rain ── */}
       <AsciiCanvas />
 
-      {/* ── Layer 2a: radial edge vignette ── */}
+      {/* ── Layer 2a: radial edge vignette — softened so harbour shows through ── */}
       <div style={{
         position:   'absolute',
         inset:       0,
         zIndex:      6,
-        background: 'radial-gradient(ellipse 80% 65% at 50% 50%, rgba(8,9,13,0.22) 0%, rgba(8,9,13,0.88) 100%)',
+        background: 'radial-gradient(ellipse 85% 70% at 50% 50%, rgba(8,9,13,0.08) 0%, rgba(8,9,13,0.55) 100%)',
         pointerEvents: 'none',
       }} />
       {/* ── Layer 2b: linear top+bottom darkening ── */}
@@ -236,7 +239,7 @@ export function PortofinoWalkthrough() {
         position:   'absolute',
         inset:       0,
         zIndex:      7,
-        background: 'linear-gradient(180deg, rgba(8,9,13,0.55) 0%, rgba(8,9,13,0.0) 18%, rgba(8,9,13,0.0) 82%, rgba(8,9,13,0.55) 100%)',
+        background: 'linear-gradient(180deg, rgba(8,9,13,0.45) 0%, rgba(8,9,13,0.0) 20%, rgba(8,9,13,0.0) 80%, rgba(8,9,13,0.45) 100%)',
         pointerEvents: 'none',
       }} />
 
@@ -292,7 +295,7 @@ export function PortofinoWalkthrough() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(250,250,248,0.58)', textAlign: 'center', maxWidth: 220 }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)', textAlign: 'center', maxWidth: 220, textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}
           >
             No account needed — tap the screen to begin
           </motion.p>
@@ -318,20 +321,20 @@ export function PortofinoWalkthrough() {
               lineHeight:     1.14,
               margin:        '0 0 14px',
               letterSpacing: '-0.02em',
-              textShadow:    '0 2px 16px rgba(0,0,0,0.90)',
+              textShadow:    '0 2px 20px rgba(0,0,0,0.95), 0 4px 40px rgba(0,0,0,0.7)',
             }}>
               Three steps.{' '}
-              <span style={{ color: '#E8C47A', textShadow: '0 2px 16px rgba(0,0,0,0.90)' }}>One sovereign</span>
+              <span style={{ color: '#F0D080', textShadow: '0 2px 20px rgba(0,0,0,0.95), 0 4px 40px rgba(0,0,0,0.7)' }}>One sovereign</span>
               {' '}intelligence layer.
             </h2>
             <p style={{
               fontFamily: 'Inter, sans-serif',
               fontSize:    14,
               lineHeight:  1.75,
-              color:      'rgba(250,250,248,0.80)',
-              fontWeight:  300,
+              color:      '#FFFFFF',
+              fontWeight:  400,
               margin:      0,
-              textShadow: '0 1px 8px rgba(0,0,0,0.8)',
+              textShadow: '0 1px 12px rgba(0,0,0,0.95)',
             }}>
               Each analysis draws on verified industry benchmarks — calibrated to your specific numbers.
             </p>
