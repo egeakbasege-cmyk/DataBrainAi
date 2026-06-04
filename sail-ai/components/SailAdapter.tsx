@@ -137,11 +137,8 @@ function parseMarkdown(text: string): Segment[] {
 // ── Inline markdown → spans (bold, italic, code) ──────────────────────────────
 
 function InlineText({ text, color = INK }: { text: string; color?: string }) {
-  // Strip bare footnote references like [1] [2] [3] that appear mid-sentence
-  const cleaned = text.replace(/\[\d+\]/g, '')
-
-  // Split on **bold**, *italic*, `code`, [text](url)
-  const parts = cleaned.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g)
+  // Split on **bold**, *italic*, `code`, [n] citation refs, [text](url)
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[\d+\]|\[[^\]]+\]\([^)]+\))/g)
 
   return (
     <>
@@ -164,6 +161,27 @@ function InlineText({ text, color = INK }: { text: string; color?: string }) {
             }}>
               {part.slice(1, -1)}
             </code>
+          )
+        }
+        // Citation marker: [1] [2] [3] → gold superscript badge
+        const citRef = part.match(/^\[(\d+)\]$/)
+        if (citRef) {
+          return (
+            <sup key={i} style={{
+              fontFamily:    'Inter, sans-serif',
+              fontSize:      '0.58em',
+              fontWeight:    700,
+              color:         GOLD,
+              background:    'rgba(201,169,110,0.15)',
+              border:        '1px solid rgba(201,169,110,0.35)',
+              borderRadius:  '3px',
+              padding:       '0 3px',
+              marginLeft:    '1px',
+              verticalAlign: 'super',
+              lineHeight:    1,
+            }}>
+              {citRef[1]}
+            </sup>
           )
         }
         // Markdown link: [label](url)
@@ -477,7 +495,8 @@ function cleanBodyText(text: string): string {
     .replace(/\s*\([a-zA-Z0-9._-]+\.[a-zA-Z]{2,}[^)]{0,80}\)/g, '')
 
     // ── Step 7: Reference markers ────────────────────────────────────────────────
-    .replace(/\[\d+\]/g, '')
+    // NOTE: [1] [2] [3] citation numbers are KEPT — they render as gold superscripts
+    // and match the numbered ## Sources block at the end of the response.
     .replace(/\[TRAINING EST[^\]]*\]/gi, '[est.]')
     .replace(/\[DATA UNAVAILABLE:[^\]]*\]/gi, '—')
     .replace(/\[STALE[^\]]*\]/gi, '')

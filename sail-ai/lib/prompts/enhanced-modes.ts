@@ -118,9 +118,11 @@ MANDATORY RULES — violation = quality failure:
        ✗ Any bare URL: https://www.example.com/any/path
        ✗ "(no date available)" or "(Date: unknown)" or "(Reliability: XX%)"
        ✗ Any domain name mid-sentence: "...as marshmma.com reports..."
-     Write the FACT, not the URL. Every source goes in ## Sources at the very end ONLY.
-  4. CORRECT format: "The average American spends ~$220/month on subscriptions."
-     NOT: "...spends ~$220/month, as reported by https://blog.tello.com/... (no date available)."
+       ✗ "Kaynak:", "Source:", "(kaynak)" anywhere except the ## Sources block
+  4. ✓ CORRECT inline citation: place a compact [1] [2] number directly after the fact.
+     CORRECT: "The average American spends ~$220/month on subscriptions. [1]"
+     WRONG:   "...spends ~$220/month, as reported by https://blog.tello.com/... (no date available)."
+     Then list all sources at the END in a numbered ## Sources block matching the [n] markers.
   5. If the search block does not cover a specific metric, say so explicitly, then label
      any training estimate: [TRAINING EST — verify].
 
@@ -232,14 +234,19 @@ Real-time external data has been retrieved and injected as <research_context> ta
    NEVER write "araştırma bağlamına göre" for a figure that came from training memory.
    ⛔ ABSOLUTELY FORBIDDEN: writing any URL (https://...) anywhere in the response body.
 
-4. CITATION FORMAT — end-of-response sources block ONLY:
-   Do NOT embed domain names, URLs, or inline citations within sentence bodies.
-   Keep the main analysis text clean and readable.
-   At the very end of your response, append ALL sources used in this exact block:
+4. CITATION FORMAT — numbered superscript markers + end-of-response sources block:
+   ✓ When you use a figure from a retrieved source, place a compact [1] [2] [3] marker
+     directly after that figure or sentence — NOTHING ELSE. No URL, no domain, no "kaynak:".
+   ✓ At the very end of your response, append the matching numbered list:
 
    ## Sources
    1. domain.com (date if known) — one sentence on what this source provided
    2. domain.com (date if known) — ...
+
+   ✗ NEVER write full URLs in the body: "...according to https://..."
+   ✗ NEVER write domain names in the body: "...as marshmma.com reports..."
+   ✗ NEVER write "Kaynak:", "Source:", "(kaynak)", "(source)" mid-text
+   ✓ ONLY allowed inline marker: [1] [2] [3] superscripts matching the ## Sources list
 
    This block must appear AFTER all analysis content, separated by a blank line.
    Claims from parametric memory still require [est.] directly after the figure in-text.
@@ -284,12 +291,13 @@ Real-time global research data is present in <research_context>. The following r
    NEVER average conflicting figures to create a synthetic consensus.
    Identify the sources by number (see ## Sources block) not by domain name inline.
 
-4. SOURCE TRACEABILITY — ALWAYS collected at end of response, NEVER inline:
+4. SOURCE TRACEABILITY — numbered markers inline, full list at end:
    NEVER write domain names, URLs, or "(source.com, date)" patterns inside sentence bodies.
-   Keep ALL analysis text completely clean and readable — no parenthetical citations mid-sentence.
-   Collect ALL source references in a ## Sources block at the very end of your response
-   (format defined in ANALYTIC_SYNTHESIS_DIRECTIVE point 4).
-   The ONLY in-text markers allowed are: [est.] after parametric figures, and [⚠ ...] alerts.
+   NEVER write "Kaynak:", "Source:", "according to https://...", "as reported by https://..."
+   The ONLY in-text source markers allowed are: compact [1] [2] [3] numbers placed directly
+   after the fact they support, [est.] after parametric figures, and [⚠ ...] alerts.
+   Collect ALL source details in a ## Sources numbered list at the very end of your response
+   (format defined in ANALYTIC_SYNTHESIS_DIRECTIVE point 4) so [1] in text matches item 1.
 
 5. DISCREPANCY RISK FLAG:
    If the health report signals discrepancyRisk = true (sources retrieved but
