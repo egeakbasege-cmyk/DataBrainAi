@@ -361,7 +361,15 @@ export default function LandingPage() {
             <Link href="/welcome" className="btn-primary">
               {t('landing.beginFree')}
             </Link>
-            <a href="#tutorial" className="btn-ghost-white" style={{ textDecoration: 'none' }}>
+            <a
+              href="#tutorial"
+              className="btn-ghost-white"
+              style={{ textDecoration: 'none' }}
+              onClick={e => {
+                e.preventDefault()
+                document.getElementById('tutorial')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+            >
               {t('landing.watchHow')}
             </a>
           </motion.div>

@@ -102,7 +102,7 @@ function AsciiCanvas() {
         pointerEvents: 'none',
         zIndex:      5,
         mixBlendMode:'screen',
-        opacity:     0.55,
+        opacity:     0.38,
       }}
     />
   )
@@ -117,10 +117,10 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        background:          'rgba(8,14,28,0.72)',
-        backdropFilter:      'blur(20px)',
-        WebkitBackdropFilter:'blur(20px)',
-        border:              '1px solid rgba(201,169,110,0.22)',
+        background:          'rgba(6,10,22,0.86)',
+        backdropFilter:      'blur(24px)',
+        WebkitBackdropFilter:'blur(24px)',
+        border:              '1px solid rgba(201,169,110,0.28)',
         borderRadius:         16,
         padding:             '28px 28px 26px',
         flex:                 1,
@@ -143,7 +143,7 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
         fontFamily:    'Cormorant Garamond, Georgia, serif',
         fontSize:       56,
         fontWeight:     300,
-        color:         'rgba(201,169,110,0.18)',
+        color:         'rgba(201,169,110,0.32)',
         lineHeight:     1,
         marginBottom:   16,
         letterSpacing: '-0.03em',
@@ -168,7 +168,7 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
         fontFamily: 'Inter, sans-serif',
         fontSize:    14,
         lineHeight:  1.72,
-        color:      'rgba(250,250,248,0.62)',
+        color:      'rgba(250,250,248,0.84)',
         fontWeight:  300,
         margin:      0,
       }}>
@@ -204,13 +204,14 @@ export function PortofinoWalkthrough() {
     <section
       id="tutorial"
       style={{
-        position:   'relative',
-        minHeight:  '100vh',
-        overflow:   'hidden',
-        background: '#08090D',
-        display:    'flex',
+        position:      'relative',
+        minHeight:     '100vh',
+        overflow:      'hidden',
+        background:    '#08090D',
+        display:       'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent:'center',
+        scrollMarginTop: 72,
       }}
     >
       {/* ── Layer 0: Portofino 3D scene ── */}
@@ -226,7 +227,7 @@ export function PortofinoWalkthrough() {
         position:   'absolute',
         inset:       0,
         zIndex:      6,
-        background: 'radial-gradient(ellipse 80% 70% at 50% 50%, rgba(8,9,13,0.08) 0%, rgba(8,9,13,0.72) 100%)',
+        background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(8,9,13,0.10) 0%, rgba(8,9,13,0.80) 100%)',
         pointerEvents: 'none',
       }} />
 
@@ -282,7 +283,7 @@ export function PortofinoWalkthrough() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(250,250,248,0.35)', textAlign: 'center', maxWidth: 220 }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(250,250,248,0.58)', textAlign: 'center', maxWidth: 220 }}
           >
             No account needed — tap the screen to begin
           </motion.p>
@@ -317,7 +318,7 @@ export function PortofinoWalkthrough() {
               fontFamily: 'Inter, sans-serif',
               fontSize:    14,
               lineHeight:  1.75,
-              color:      'rgba(250,250,248,0.40)',
+              color:      'rgba(250,250,248,0.68)',
               fontWeight:  300,
               margin:      0,
             }}>
