@@ -247,19 +247,27 @@ export function ExecutiveResponseCard({
     }
   }, [response, headline, query, copyState])
 
-  // Token shortcuts
-  const cardBg      = isDark ? '#0E0E18'  : '#FFFFFF'
-  const cardBorder  = isDark ? 'rgba(226,226,232,0.08)' : 'rgba(0,0,0,0.09)'
+  // Token shortcuts — both variants now use glass morphism
+  const cardBg      = isDark
+    ? 'linear-gradient(135deg, rgba(201,169,110,0.08) 0%, rgba(8,9,13,0.78) 60%, rgba(20,184,166,0.05) 100%)'
+    : 'linear-gradient(135deg, rgba(255,255,255,0.90) 0%, rgba(250,250,248,0.94) 100%)'
+  const cardBorder  = isDark ? 'rgba(201,169,110,0.22)' : 'rgba(0,0,0,0.09)'
   const insightColor = isDark ? '#F0F0F4' : '#C9A96E'
-  const sectionLabel = isDark ? '#606078' : '#A1A1AA'
-  const ruleColor   = isDark ? 'rgba(226,226,232,0.06)' : 'rgba(0,0,0,0.07)'
+  const sectionLabel = isDark ? 'rgba(255,255,255,0.45)' : '#A1A1AA'
+  const ruleColor   = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'
+  const bodyText    = isDark ? '#FFFFFF' : '#111827'
+  const mutedText   = isDark ? 'rgba(255,255,255,0.65)' : '#374151'
 
   return (
     <div style={{
-      background:  cardBg,
-      border:      `1px solid ${cardBorder}`,
-      boxShadow:   isDark ? 'inset 0 1px 0 rgba(226,226,232,0.06)' : 'inset 0 1px 0 rgba(201,169,110,0.10)',
-      overflow:    'hidden',
+      background:         cardBg,
+      backdropFilter:     'blur(28px)',
+      WebkitBackdropFilter: 'blur(28px)',
+      border:             `1px solid ${cardBorder}`,
+      boxShadow:          isDark
+        ? '0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)'
+        : '0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(201,169,110,0.10)',
+      overflow:           'hidden',
     }}>
       {/* Gold hairline */}
       <div style={{

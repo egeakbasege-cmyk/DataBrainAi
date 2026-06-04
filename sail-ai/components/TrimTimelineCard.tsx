@@ -40,10 +40,10 @@ interface Props {
 }
 
 const PHASE_COLORS = [
-  { dot: '#1A5276', bar: 'rgba(26,82,118,0.12)',  border: 'rgba(26,82,118,0.25)'  },
-  { dot: '#00695C', bar: 'rgba(0,105,92,0.10)',   border: 'rgba(0,105,92,0.22)'   },
-  { dot: '#92400E', bar: 'rgba(146,64,14,0.09)',  border: 'rgba(146,64,14,0.22)'  },
-  { dot: '#5B21B6', bar: 'rgba(91,33,182,0.08)',  border: 'rgba(91,33,182,0.20)'  },
+  { dot: '#3B82F6', bar: 'rgba(59,130,246,0.10)',  border: 'rgba(59,130,246,0.28)'  },
+  { dot: '#10B981', bar: 'rgba(16,185,129,0.09)',  border: 'rgba(16,185,129,0.26)'  },
+  { dot: '#F59E0B', bar: 'rgba(245,158,11,0.09)',  border: 'rgba(245,158,11,0.24)'  },
+  { dot: '#8B5CF6', bar: 'rgba(139,92,246,0.09)',  border: 'rgba(139,92,246,0.24)'  },
 ]
 
 export function TrimTimelineCard({ response, isLoading, query }: Props) {
@@ -105,16 +105,16 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
             transition={{ duration: 1, repeat: Infinity }}
             style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#C9A96E', flexShrink: 0 }}
           />
-          <span style={{ fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#71717A' }}>
+          <span style={{ fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)' }}>
             TRIM is charting your course…
           </span>
         </div>
         {[1, 2, 3].map(i => (
           <div key={i} style={{ display: 'flex', gap: '0.875rem', marginBottom: '1rem', opacity: 1 - i * 0.2 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(12,12,14,0.1)', marginTop: 4, flexShrink: 0 }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', marginTop: 4, flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ height: 12, background: 'rgba(12,12,14,0.07)', borderRadius: 2, marginBottom: 6, width: `${60 + i * 10}%` }} />
-              <div style={{ height: 8, background: 'rgba(12,12,14,0.05)', borderRadius: 2, width: '40%' }} />
+              <div style={{ height: 12, background: 'rgba(255,255,255,0.08)', borderRadius: 2, marginBottom: 6, width: `${60 + i * 10}%` }} />
+              <div style={{ height: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 2, width: '40%' }} />
             </div>
           </div>
         ))}
@@ -140,12 +140,12 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontStyle: 'italic', fontWeight: 600,
           fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
-          color: '#0C0C0E', lineHeight: 1.2, margin: 0,
+          color: '#FFFFFF', lineHeight: 1.2, margin: 0,
         }}>
           {response.trimTitle}
         </h3>
         {response.summary && (
-          <p style={{ fontSize: '0.8rem', color: '#71717A', marginTop: '0.4rem', lineHeight: 1.55 }}>
+          <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.65)', marginTop: '0.4rem', lineHeight: 1.55 }}>
             {response.summary}
           </p>
         )}
@@ -160,26 +160,26 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
           style={{
             marginBottom: '1.25rem',
             padding: '0.875rem 1rem',
-            background: 'rgba(12,12,14,0.03)',
-            border: '1px solid rgba(12,12,14,0.1)',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: 8,
           }}
         >
-          <p style={{ fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#71717A', margin: '0 0 0.625rem' }}>
+          <p style={{ fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.50)', margin: '0 0 0.625rem' }}>
             DIAGNOSTIC · Root Cause
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-              <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#A1A1AA', flexShrink: 0, minWidth: '6rem' }}>Primary</span>
-              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0C0C0E' }}>{response.diagnostic.primaryMetric}</span>
+              <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', flexShrink: 0, minWidth: '6rem' }}>Primary</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#FFFFFF' }}>{response.diagnostic.primaryMetric}</span>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-              <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#A1A1AA', flexShrink: 0, minWidth: '6rem' }}>Δ Trend</span>
+              <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', flexShrink: 0, minWidth: '6rem' }}>Δ Trend</span>
               <span style={{ fontSize: '0.75rem', color: '#C9A96E', fontWeight: 500 }}>{response.diagnostic.calculatedTrend}</span>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-              <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#A1A1AA', flexShrink: 0, minWidth: '6rem' }}>Root Cause</span>
-              <span style={{ fontSize: '0.75rem', color: '#71717A', fontStyle: 'italic' }}>{response.diagnostic.rootCause}</span>
+              <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', flexShrink: 0, minWidth: '6rem' }}>Root Cause</span>
+              <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', fontStyle: 'italic' }}>{response.diagnostic.rootCause}</span>
             </div>
           </div>
         </motion.div>
@@ -190,7 +190,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
         {/* Connecting line */}
         <div style={{
           position: 'absolute', left: 3, top: 8, bottom: 8,
-          width: 2, background: 'rgba(12,12,14,0.08)',
+          width: 2, background: 'rgba(255,255,255,0.12)',
         }} />
 
         {phases.map((ph, i) => {
@@ -217,12 +217,12 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
                 borderRadius: 6,
               }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.375rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0C0C0E' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#FFFFFF' }}>
                     {ph.phase}
                   </span>
                   <span style={{
                     fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase',
-                    color: '#71717A', background: 'rgba(12,12,14,0.06)',
+                    color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.08)',
                     padding: '2px 6px', borderRadius: 3, whiteSpace: 'nowrap',
                   }}>
                     {ph.timeframe}
@@ -235,7 +235,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
                   marginBottom: (ph.deltaTarget || ph.actions?.length) ? '0.4rem' : 0,
                 }}>
                   <span style={{ color: color.dot, fontSize: '0.7rem', marginTop: 1, flexShrink: 0 }}>◆</span>
-                  <p style={{ fontSize: '0.75rem', color: '#0C0C0E', margin: 0, lineHeight: 1.5, fontWeight: 500 }}>
+                  <p style={{ fontSize: '0.75rem', color: '#FFFFFF', margin: 0, lineHeight: 1.5, fontWeight: 500 }}>
                     {ph.metric}
                   </p>
                 </div>
@@ -249,7 +249,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
                     background: 'rgba(201,169,110,0.12)', border: '1px solid rgba(201,169,110,0.3)',
                   }}>
                     <span style={{ fontSize: '0.6rem', color: '#C9A96E' }}>↗</span>
-                    <span style={{ fontSize: '0.68rem', color: '#92400E', fontWeight: 500 }}>{ph.deltaTarget}</span>
+                    <span style={{ fontSize: '0.68rem', color: '#E8C87A', fontWeight: 500 }}>{ph.deltaTarget}</span>
                   </div>
                 )}
 
@@ -258,7 +258,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
                   <ul style={{ margin: 0, paddingLeft: '0.875rem', listStyle: 'none' }}>
                     {ph.actions.map((a, j) => (
                       <li key={j} style={{
-                        fontSize: '0.72rem', color: '#71717A',
+                        fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)',
                         lineHeight: 1.55, marginBottom: j < ph.actions.length - 1 ? '0.2rem' : 0,
                         paddingLeft: '0.25rem',
                       }}>
@@ -291,10 +291,10 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
           <p style={{ fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#1A5276', margin: '0 0 0.5rem' }}>
             SUCCESS INDICATOR
           </p>
-          <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.375rem', lineHeight: 1.45 }}>
+          <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#FFFFFF', margin: '0 0 0.375rem', lineHeight: 1.45 }}>
             {response.successIndicator.target}
           </p>
-          <p style={{ fontSize: '0.72rem', color: '#71717A', margin: 0, lineHeight: 1.55, fontStyle: 'italic' }}>
+          <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55, fontStyle: 'italic' }}>
             {response.successIndicator.projection}
           </p>
         </motion.div>
@@ -334,43 +334,46 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
           <div style={{
             position: 'fixed', top: 0, right: 0, bottom: 0,
             width: 'min(520px, 96vw)',
-            background: '#FAFAF8',
-            boxShadow: '-8px 0 32px rgba(0,0,0,0.14)',
+            background: 'linear-gradient(160deg, rgba(20,25,45,0.97) 0%, rgba(8,9,13,0.98) 100%)',
+            backdropFilter: 'blur(32px)',
+            WebkitBackdropFilter: 'blur(32px)',
+            borderLeft: '1px solid rgba(201,169,110,0.20)',
+            boxShadow: '-8px 0 48px rgba(0,0,0,0.50)',
             zIndex: 61,
             display: 'flex', flexDirection: 'column', overflow: 'hidden',
           }}>
-            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <p style={{ fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C9A96E', margin: '0 0 2px' }}>TRIM · Strategic Timeline</p>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 600, fontSize: '1.15rem', color: '#0C0C0E', margin: 0 }}>
+                <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 600, fontSize: '1.15rem', color: '#FFFFFF', margin: 0 }}>
                   {response.trimTitle}
                 </h2>
               </div>
-              <button onClick={() => setExpanded(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#71717A', fontSize: '1.25rem', lineHeight: 1, padding: 0 }}>×</button>
+              <button onClick={() => setExpanded(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: '1.25rem', lineHeight: 1, padding: 0 }}>×</button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
               {response.summary && (
-                <p style={{ fontSize: '0.82rem', color: '#71717A', marginBottom: '1.25rem', lineHeight: 1.6, borderLeft: '2px solid #C9A96E', paddingLeft: '0.75rem' }}>
+                <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.65)', marginBottom: '1.25rem', lineHeight: 1.6, borderLeft: '2px solid #C9A96E', paddingLeft: '0.75rem' }}>
                   {response.summary}
                 </p>
               )}
 
               {/* Diagnostic in modal */}
               {response.diagnostic && (
-                <div style={{ marginBottom: '1.25rem', padding: '0.875rem 1rem', background: 'rgba(12,12,14,0.03)', border: '1px solid rgba(12,12,14,0.1)', borderRadius: 8 }}>
-                  <p style={{ fontSize: '0.57rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#71717A', margin: '0 0 0.5rem' }}>DIAGNOSTIC · Root Cause</p>
+                <div style={{ marginBottom: '1.25rem', padding: '0.875rem 1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 8 }}>
+                  <p style={{ fontSize: '0.57rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.50)', margin: '0 0 0.5rem' }}>DIAGNOSTIC · Root Cause</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#A1A1AA', minWidth: '5.5rem' }}>Primary</span>
-                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0C0C0E' }}>{response.diagnostic.primaryMetric}</span>
+                      <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', minWidth: '5.5rem' }}>Primary</span>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#FFFFFF' }}>{response.diagnostic.primaryMetric}</span>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#A1A1AA', minWidth: '5.5rem' }}>Δ Trend</span>
+                      <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', minWidth: '5.5rem' }}>Δ Trend</span>
                       <span style={{ fontSize: '0.75rem', color: '#C9A96E', fontWeight: 500 }}>{response.diagnostic.calculatedTrend}</span>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#A1A1AA', minWidth: '5.5rem' }}>Root Cause</span>
-                      <span style={{ fontSize: '0.75rem', color: '#71717A', fontStyle: 'italic' }}>{response.diagnostic.rootCause}</span>
+                      <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', minWidth: '5.5rem' }}>Root Cause</span>
+                      <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', fontStyle: 'italic' }}>{response.diagnostic.rootCause}</span>
                     </div>
                   </div>
                 </div>
@@ -383,24 +386,24 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: color.dot, flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0C0C0E' }}>{ph.phase}</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#FFFFFF' }}>{ph.phase}</span>
                       </div>
-                      <span style={{ fontSize: '0.65rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#71717A', background: 'rgba(12,12,14,0.07)', padding: '3px 8px', borderRadius: 4 }}>{ph.timeframe}</span>
+                      <span style={{ fontSize: '0.65rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.08)', padding: '3px 8px', borderRadius: 4 }}>{ph.timeframe}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.375rem', marginBottom: ph.deltaTarget ? '0.4rem' : '0.625rem' }}>
                       <span style={{ color: color.dot, flexShrink: 0, marginTop: 1 }}>◆</span>
-                      <p style={{ fontSize: '0.78rem', color: '#0C0C0E', margin: 0, lineHeight: 1.55, fontWeight: 500 }}>{ph.metric}</p>
+                      <p style={{ fontSize: '0.78rem', color: '#FFFFFF', margin: 0, lineHeight: 1.55, fontWeight: 500 }}>{ph.metric}</p>
                     </div>
                     {ph.deltaTarget && (
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.625rem', padding: '2px 8px', borderRadius: 3, background: 'rgba(201,169,110,0.12)', border: '1px solid rgba(201,169,110,0.3)' }}>
                         <span style={{ fontSize: '0.6rem', color: '#C9A96E' }}>↗</span>
-                        <span style={{ fontSize: '0.7rem', color: '#92400E', fontWeight: 500 }}>{ph.deltaTarget}</span>
+                        <span style={{ fontSize: '0.7rem', color: '#E8C87A', fontWeight: 500 }}>{ph.deltaTarget}</span>
                       </div>
                     )}
                     {ph.actions?.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
                         {ph.actions.map((a, j) => (
-                          <li key={j} style={{ display: 'flex', gap: '0.375rem', fontSize: '0.75rem', color: '#71717A', lineHeight: 1.55, marginBottom: j < ph.actions.length - 1 ? '0.3rem' : 0 }}>
+                          <li key={j} style={{ display: 'flex', gap: '0.375rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.55, marginBottom: j < ph.actions.length - 1 ? '0.3rem' : 0 }}>
                             <span style={{ color: color.dot, flexShrink: 0 }}>→</span>{a}
                           </li>
                         ))}
@@ -414,8 +417,8 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
               {response.successIndicator && (
                 <div style={{ padding: '1rem 1.125rem', background: 'rgba(26,82,118,0.06)', border: '1px solid rgba(26,82,118,0.2)', borderRadius: 8 }}>
                   <p style={{ fontSize: '0.57rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#1A5276', margin: '0 0 0.5rem' }}>SUCCESS INDICATOR</p>
-                  <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.4rem', lineHeight: 1.45 }}>{response.successIndicator.target}</p>
-                  <p style={{ fontSize: '0.75rem', color: '#71717A', margin: 0, lineHeight: 1.55, fontStyle: 'italic' }}>{response.successIndicator.projection}</p>
+                  <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#FFFFFF', margin: '0 0 0.4rem', lineHeight: 1.45 }}>{response.successIndicator.target}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55, fontStyle: 'italic' }}>{response.successIndicator.projection}</p>
                 </div>
               )}
             </div>
@@ -425,7 +428,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
 
       {/* Export footer */}
       {!isLoading && response && (
-        <div style={{ padding: '10px 20px 16px', display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ padding: '10px 20px 16px', display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           {([
             { state: exportState, label: t('export.download'), doneLabel: t('export.downloaded'), icon: '↓', onClick: handleDownload },
             { state: copyState,   label: t('export.copy'),     doneLabel: t('export.copied'),     icon: '⎘', onClick: handleCopy },
@@ -438,9 +441,9 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
                 display: 'flex', alignItems: 'center', gap: 5,
                 padding: '5px 11px',
                 fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 500,
-                color:      state === 'done' ? '#14B8A6' : state === 'error' ? '#DC2626' : '#71717A',
-                background: 'rgba(0,0,0,0.03)',
-                border:     '1px solid rgba(0,0,0,0.09)',
+                color:      state === 'done' ? '#14B8A6' : state === 'error' ? '#DC2626' : 'rgba(255,255,255,0.50)',
+                background: 'rgba(255,255,255,0.04)',
+                border:     '1px solid rgba(255,255,255,0.10)',
                 cursor:     state === 'loading' ? 'wait' : 'pointer',
                 transition: 'color 0.2s',
                 whiteSpace: 'nowrap',

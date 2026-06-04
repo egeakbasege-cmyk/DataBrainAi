@@ -557,11 +557,12 @@ export function ChatStage(props: ChatStageProps) {
           {mode === 'downwind' && coachState !== 'IDLE' && coachState !== 'ERROR' && (
             <motion.div key="downwind" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}>
               <div style={{
-                background:   'rgba(10,13,20,0.92)', backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-                border:       '1px solid rgba(201,169,110,0.38)', borderTop: '2px solid #059669',
+                background:   'linear-gradient(135deg, rgba(5,150,105,0.10) 0%, rgba(8,9,13,0.80) 60%, rgba(20,184,166,0.05) 100%)',
+                backdropFilter: 'blur(28px)',
+                WebkitBackdropFilter: 'blur(28px)',
+                border:       '1px solid rgba(5,150,105,0.28)', borderTop: '2px solid #059669',
                 borderRadius:  12, overflow: 'hidden',
-                boxShadow:    '0 4px 28px rgba(5,150,105,0.14), 0 2px 8px rgba(0,0,0,0.35)',
+                boxShadow:    '0 8px 36px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)',
               }}>
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderBottom: '1px solid rgba(5,150,105,0.20)', background: 'rgba(5,150,105,0.10)' }}>
@@ -701,7 +702,7 @@ export function ChatStage(props: ChatStageProps) {
               width:           40,
               height:          40,
               borderRadius:   '50%',
-              background:     'rgba(10,17,40,0.90)',
+              background:     'rgba(8,9,13,0.72)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               border:         '1px solid rgba(201,169,110,0.28)',
@@ -709,7 +710,7 @@ export function ChatStage(props: ChatStageProps) {
               display:        'flex',
               alignItems:     'center',
               justifyContent: 'center',
-              boxShadow:      '0 4px 20px rgba(0,0,0,0.40)',
+              boxShadow:      '0 4px 20px rgba(0,0,0,0.35)',
             }}
             aria-label="Jump to bottom"
           >

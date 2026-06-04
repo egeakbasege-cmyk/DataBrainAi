@@ -135,7 +135,7 @@ function LayerSection({ seg, isLast }: { seg: LayerSegment; isLast: boolean }) {
         fontFamily: 'Inter, sans-serif',
         fontSize:   '0.88rem',
         lineHeight: 1.7,
-        color:      '#1A1A2E',
+        color:      '#FFFFFF',
       }}>
         <SailAdapter text={seg.body} intent="analytic" streaming={false} />
       </div>
@@ -168,11 +168,13 @@ export function SynergyResponseCard({ text, streaming, modes, companyName }: Pro
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
       style={{
-        background:   '#FFFFFF',
-        border:       '1px solid rgba(201,169,110,0.2)',
-        borderRadius: '14px',
-        overflow:     'hidden',
-        boxShadow:    '0 2px 20px rgba(201,169,110,0.08), 0 1px 4px rgba(0,0,0,0.04)',
+        background:          'linear-gradient(135deg, rgba(201,169,110,0.10) 0%, rgba(8,9,13,0.80) 60%, rgba(20,184,166,0.06) 100%)',
+        backdropFilter:      'blur(28px)',
+        WebkitBackdropFilter:'blur(28px)',
+        border:              '1px solid rgba(201,169,110,0.25)',
+        borderRadius:        '14px',
+        overflow:            'hidden',
+        boxShadow:           '0 8px 36px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)',
       }}
     >
       {/* ── Prism accent line ── */}
@@ -182,7 +184,7 @@ export function SynergyResponseCard({ text, streaming, modes, companyName }: Pro
       <div style={{
         padding:        '0.875rem 1.25rem',
         borderBottom:   '1px solid rgba(201,169,110,0.1)',
-        background:     'linear-gradient(135deg, #0C0C0E 0%, #12082A 100%)',
+        background:     'rgba(8,9,13,0.55)',
         display:        'flex',
         alignItems:     'center',
         justifyContent: 'space-between',
@@ -305,7 +307,7 @@ export function SynergyResponseCard({ text, streaming, modes, companyName }: Pro
             fontFamily: 'Inter, sans-serif',
             fontSize:   '0.88rem',
             lineHeight: 1.7,
-            color:      '#1A1A2E',
+            color:      '#FFFFFF',
           }}>
             <SailAdapter text={text} intent="analytic" streaming={streaming} />
           </div>
