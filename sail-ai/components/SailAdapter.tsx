@@ -448,43 +448,44 @@ interface ParsedSource {
 /** Strip all inline source noise from a body string */
 function cleanBodyText(text: string): string {
   return text
-    // ── URLs ──────────────────────────────────────────────────────────────────
-    // Full bare URLs: https://... or http://...
-    .replace(/https?:\/\/[^\s,)>\]"']+/g, '')
-    // Markdown links [text](url) → keep label only
+    // ── Step 1: Markdown links [text](url) → keep label only (before URL strip) ──
     .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
 
-    // ── Reliability / date annotations ────────────────────────────────────────
-    // (Date: unknown, Reliability: 70%) — research-context injection
+    // ── Step 2: Strip full "attribution phrase + URL + annotation" patterns ──────
+    // "...according to https://example.com/page (no date available)."
+    // "...as reported by https://... (no date available)."
+    // These are the exact patterns seen in production — strip the whole tail
+    .replace(/,?\s*(according to|as reported by|as stated by|as noted by|as suggested by|as recommended by|sourced from|cited in|per|via)\s+https?:\/\/[^\s,)>\]"']+(\s*\([^)]{0,120}\))?\.?/gi, '')
+
+    // ── Step 3: Remaining bare URLs (any that weren't caught above) ─────────────
+    .replace(/https?:\/\/[^\s,)>\]"']+/g, '')
+
+    // ── Step 4: "(no date available)" / "(Date: ...)" / "(Reliability: ...)" ────
+    .replace(/\s*\(no date available\)/gi, '')
+    .replace(/\s*\(date\s*(?:unknown|unavailable|not available|n\/a)[^)]*\)/gi, '')
     .replace(/\s*\(Date:[^)]*\)/gi, '')
     .replace(/\s*\(Reliability:[^)]*\)/gi, '')
-    // Standalone reliability score patterns "Reliability: 70%"
     .replace(/Reliability:\s*\d+%\.?/gi, '')
 
-    // ── Attribution phrases that precede stripped URLs ─────────────────────────
-    // "as suggested by", "as recommended by", "as advised by", "as noted by" etc.
-    .replace(/,?\s+as (suggested|recommended|advised|noted|reported|stated|mentioned) by\s*/gi, ' ')
-    // "according to" / "sourced from" / "cited in" left hanging after URL strip
-    .replace(/,?\s+(according to|sourced from|cited in|from|via)\s*[,.]?(?=\s|$)/gi, '')
+    // ── Step 5: Dangling attribution phrases left after URL removal ──────────────
+    // "...savings, according to ." or "...savings, according to\n"
+    .replace(/,?\s*(according to|as reported by|as stated by|as noted by|sourced from|cited in|per|via)\s*[.,]?\s*(?=[\n.)]|$)/gi, '')
+    // "as X by" without URL — "as suggested by" etc. left hanging
+    .replace(/,?\s+as (suggested|recommended|advised|noted|reported|stated|mentioned) by\s*[.,]?(?=\s|$)/gi, '')
 
-    // ── Reference markers ─────────────────────────────────────────────────────
-    // Bare [1] [2] [3] numbered footnotes
-    .replace(/\[\d+\]/g, '')
-    // [TRAINING EST — verify] → normalize
-    .replace(/\[TRAINING EST[^\]]*\]/gi, '[est.]')
-    // [DATA UNAVAILABLE: ...] → clean dash
-    .replace(/\[DATA UNAVAILABLE:[^\]]*\]/gi, '—')
-    // [STALE ...] → drop
-    .replace(/\[STALE[^\]]*\]/gi, '')
-    // (domain.com, date) parenthetical domain citations
+    // ── Step 6: Parenthetical domain citations "(domain.com, date)" ─────────────
     .replace(/\s*\([a-zA-Z0-9._-]+\.[a-zA-Z]{2,}[^)]{0,80}\)/g, '')
 
-    // ── Whitespace cleanup ────────────────────────────────────────────────────
-    // Fix double spaces left by removals
+    // ── Step 7: Reference markers ────────────────────────────────────────────────
+    .replace(/\[\d+\]/g, '')
+    .replace(/\[TRAINING EST[^\]]*\]/gi, '[est.]')
+    .replace(/\[DATA UNAVAILABLE:[^\]]*\]/gi, '—')
+    .replace(/\[STALE[^\]]*\]/gi, '')
+
+    // ── Step 8: Whitespace / punctuation cleanup ─────────────────────────────────
     .replace(/ {2,}/g, ' ')
-    // Fix lines that now end with just a comma or dash
     .replace(/[,–—]\s*$/gm, '')
-    // Collapse 3+ blank lines to 2
+    .replace(/\.\s*\./g, '.')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
