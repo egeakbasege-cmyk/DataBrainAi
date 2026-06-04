@@ -193,16 +193,19 @@ export function Dock() {
 
   return (
     <>
-      {/* ── User-type switcher — shown on /chat ────────────── */}
+      {/* ── User-type switcher — desktop only on /chat, always on other pages ── */}
       {onChat && (
-        <div style={{
-          position:  'fixed',
-          bottom:    '5.5rem',
-          left:      '50%',
-          transform: 'translateX(-50%)',
-          zIndex:    48,
-          animation: 'dockSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both',
-        }}>
+        <div
+          className="sail-dock-switcher"
+          style={{
+            position:  'fixed',
+            bottom:    '5.5rem',
+            left:      '50%',
+            transform: 'translateX(-50%)',
+            zIndex:    48,
+            animation: 'dockSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both',
+          }}
+        >
           <button
             onClick={toggle}
             title={userType === 'business'
@@ -214,12 +217,12 @@ export function Dock() {
               gap:            '0.5rem',
               padding:        '0.35rem 0.875rem',
               background:     userType === 'business'
-                ? 'linear-gradient(135deg, rgba(6,78,59,0.75) 0%, rgba(16,185,129,0.18) 100%)'
-                : 'rgba(255,255,255,0.85)',
-              backdropFilter:  'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
+                ? 'linear-gradient(135deg, rgba(6,78,59,0.85) 0%, rgba(16,185,129,0.22) 100%)'
+                : 'rgba(8,9,13,0.80)',
+              backdropFilter:  'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               border:         userType === 'business'
-                ? '1px solid rgba(16,185,129,0.4)'
+                ? '1px solid rgba(16,185,129,0.45)'
                 : '1px solid rgba(201,169,110,0.35)',
               borderRadius:   '999px',
               cursor:         'pointer',
@@ -227,21 +230,21 @@ export function Dock() {
               fontSize:       '0.68rem',
               fontWeight:     600,
               letterSpacing:  '0.06em',
-              color:          userType === 'business' ? '#34D399' : '#B8902A',
-              boxShadow:      '0 4px 16px rgba(0,0,0,0.1)',
+              color:          userType === 'business' ? '#34D399' : '#C9A96E',
+              boxShadow:      '0 4px 20px rgba(0,0,0,0.35)',
               transition:     'all 0.2s',
             }}
           >
-            <span>{userType === 'business' ? '💼' : '✨'}</span>
+            <span style={{ fontSize: '0.8rem' }}>{userType === 'business' ? '💼' : '✨'}</span>
             <span>{userType === 'business' ? 'Business Mode' : 'Personal Mode'}</span>
-            <span style={{ opacity: 0.5, fontSize: '0.6rem' }}>↕</span>
+            <span style={{ opacity: 0.45, fontSize: '0.6rem' }}>↕</span>
           </button>
         </div>
       )}
 
       {/* ── Main dock bar ──────────────────────────────────── */}
       <div
-        className="fixed bottom-6 left-1/2 z-50"
+        className={`fixed bottom-6 left-1/2 z-50${onChat ? ' sail-dock-on-chat' : ''}`}
         style={{
           transform: 'translateX(-50%)',
           animation: 'dockSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both',
@@ -285,6 +288,11 @@ export function Dock() {
           @keyframes dockFadeIn {
             from { opacity: 0; transform: translateY(4px); }
             to   { opacity: 1; transform: translateY(0);   }
+          }
+          /* Hide dock + switcher on mobile when in chat (composer is at bottom) */
+          @media (max-width: 768px) {
+            .sail-dock-on-chat    { display: none !important; }
+            .sail-dock-switcher   { display: none !important; }
           }
         `}</style>
       </div>

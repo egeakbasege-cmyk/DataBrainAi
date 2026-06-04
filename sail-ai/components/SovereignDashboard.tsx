@@ -655,41 +655,47 @@ export function SovereignDashboard({
         animate={{ opacity: 1, y: 0  }}
         transition={{ delay: 0.3 }}
         style={{
-          marginTop:     '2rem',
-          padding:       '0.72rem 2.5rem',
-          borderRadius:  '999px',
-          border:        '1.5px solid rgba(20,184,166,0.4)',
-          background:    '#0F2435',
-          color:         '#FFFFFF',
-          fontFamily:    'Inter, sans-serif',
-          fontSize:      '0.68rem',
-          fontWeight:    700,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          cursor:        'pointer',
-          boxShadow:     '0 6px 24px rgba(15,36,53,0.25)',
-          pointerEvents: 'auto',
-          display:       'flex',
-          alignItems:    'center',
-          gap:           '0.5rem',
+          marginTop:      '2rem',
+          padding:        '0.75rem 2.25rem',
+          borderRadius:   '999px',
+          border:         '1.5px solid rgba(20,184,166,0.60)',
+          background:     'linear-gradient(135deg, rgba(20,184,166,0.28) 0%, rgba(8,9,13,0.88) 100%)',
+          color:          '#FFFFFF',
+          fontFamily:     'Inter, sans-serif',
+          cursor:         'pointer',
+          boxShadow:      '0 0 20px rgba(20,184,166,0.25), 0 6px 24px rgba(0,0,0,0.40)',
+          pointerEvents:  'auto',
+          display:        'flex',
+          flexDirection:  'column',
+          alignItems:     'center',
+          gap:            '0.15rem',
         }}
       >
-        {/* Animated mode label inside CTA */}
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={def.id}
-            initial={{ opacity: 0, y: 4  }}
-            animate={{ opacity: 1, y: 0  }}
-            exit={{    opacity: 0, y: -4 }}
-            transition={{ duration: 0.18 }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}
-          >
-            CHART COURSE
-          </motion.span>
-        </AnimatePresence>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M5 12h14M14 6l6 6-6 6" stroke="#14B8A6" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={def.id}
+              initial={{ opacity: 0, y: 4  }}
+              animate={{ opacity: 1, y: 0  }}
+              exit={{    opacity: 0, y: -4 }}
+              transition={{ duration: 0.18 }}
+              style={{
+                fontSize:      '0.68rem',
+                fontWeight:    700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {label} Modunu Başlat
+            </motion.span>
+          </AnimatePresence>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M5 12h14M14 6l6 6-6 6" stroke="#14B8A6" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <span style={{ fontSize: '0.55rem', letterSpacing: '0.08em', color: 'rgba(20,184,166,0.75)', textTransform: 'uppercase' }}>
+          Sohbete geç →
+        </span>
       </motion.button>
 
       {/* ── Navigation dots ─────────────────────────────────────── */}

@@ -76,6 +76,7 @@ interface ChatComposerProps {
   autoMode:     boolean
   isConversing: boolean
   convHistory:  unknown[]
+  businessMode?:     boolean
   textareaRef:  RefObject<HTMLTextAreaElement>
   fileInputRef: RefObject<HTMLInputElement>
   onChange:          (e: React.ChangeEvent<HTMLTextAreaElement>) => void
@@ -87,6 +88,7 @@ interface ChatComposerProps {
   onRemoveFile:      () => void
   onVoiceTranscript: (text: string) => void
   onStartOver:       () => void
+  onToggleBusiness?: () => void
 }
 
 // ── Mode Dropdown ─────────────────────────────────────────────────────────────
@@ -376,7 +378,7 @@ function ModeDropdown({
 
 export function ChatComposer({
   input, mode, sailState, isActive, isMac, phIdx, attachment, fileError,
-  autoMode, isConversing, convHistory,
+  autoMode, isConversing, convHistory, businessMode, onToggleBusiness,
   textareaRef, fileInputRef,
   onChange, onSubmit, onModeChange, onAutoToggle,
   onFileSelect, onAttachClick, onRemoveFile, onVoiceTranscript, onStartOver,
@@ -393,7 +395,8 @@ export function ChatComposer({
       backdropFilter:      'blur(40px)',
       WebkitBackdropFilter:'blur(40px)',
       borderTop:           `1px solid ${T.outerBorder}`,
-      padding:             '0 24px 20px',
+      padding:             '0 16px 20px',
+      paddingBottom:       'max(20px, calc(20px + env(safe-area-inset-bottom)))',
       position:            'relative',
     }}>
 
@@ -458,7 +461,8 @@ export function ChatComposer({
         display:     'flex',
         alignItems:  'center',
         gap:          8,
-        padding:     '14px 0 10px',
+        padding:     '12px 0 8px',
+        flexWrap:    'nowrap',
       }}>
         <ModeDropdown
           mode={mode}
@@ -472,10 +476,52 @@ export function ChatComposer({
           fontSize:       9,
           color:          T.textFaint,
           letterSpacing: '0.04em',
+          flex:           1,
+          overflow:       'hidden',
+          whiteSpace:     'nowrap',
+          textOverflow:   'ellipsis',
         }}>
           · select your intelligence mode
         </span>
+
+        {/* Business / Personal toggle — only visible on mobile (dock hidden there) */}
+        {onToggleBusiness && (
+          <button
+            onClick={onToggleBusiness}
+            className="sail-biz-toggle"
+            title={businessMode ? 'Switch to Personal mode' : 'Switch to Business mode'}
+            style={{
+              display:       'flex',
+              alignItems:    'center',
+              gap:           '0.3rem',
+              flexShrink:     0,
+              padding:       '3px 9px',
+              background:    businessMode
+                ? 'linear-gradient(135deg, rgba(6,78,59,0.70) 0%, rgba(16,185,129,0.18) 100%)'
+                : 'rgba(255,255,255,0.06)',
+              border:        businessMode
+                ? '1px solid rgba(16,185,129,0.40)'
+                : '1px solid rgba(255,255,255,0.12)',
+              borderRadius:  '999px',
+              cursor:        'pointer',
+              fontFamily:    'Inter, sans-serif',
+              fontSize:      '0.60rem',
+              fontWeight:    600,
+              letterSpacing: '0.05em',
+              color:         businessMode ? '#34D399' : 'rgba(255,255,255,0.45)',
+              whiteSpace:    'nowrap',
+              transition:    'all 0.2s',
+            }}
+          >
+            <span style={{ fontSize: '0.7rem' }}>{businessMode ? '💼' : '✨'}</span>
+            <span>{businessMode ? 'BIZ' : 'Personal'}</span>
+          </button>
+        )}
       </div>
+      <style>{`
+        /* Desktop: floating dock pill handles this → hide inline toggle */
+        @media (min-width: 769px) { .sail-biz-toggle { display: none !important; } }
+      `}</style>
 
       {/* ── Light glass input card ── */}
       <div style={{

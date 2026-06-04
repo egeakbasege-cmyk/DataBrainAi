@@ -838,6 +838,8 @@ export default function ChatPage() {
               onRemoveFile={() => { setAttachment(null); setFileError('') }}
               onVoiceTranscript={text => setInput(prev => prev ? `${prev} ${text}` : text)}
               onStartOver={handleReset}
+              businessMode={businessMode}
+              onToggleBusiness={() => setBusinessMode(v => !v)}
             />
           </div>
         </div>

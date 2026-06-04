@@ -205,8 +205,8 @@ export function InChatModeSwitcher({ mode, onChange, disabled }: InChatModeSwitc
           alignItems:     'center',
           gap:            '0.4rem',
           padding:        '0.35rem 0.625rem 0.35rem 0.5rem',
-          background:     open ? `${current.color}18` : 'rgba(0,0,0,0.05)',
-          border:         `1.5px solid ${open ? current.color + '55' : 'rgba(0,0,0,0.09)'}`,
+          background:     open ? `${current.color}22` : 'rgba(255,255,255,0.08)',
+          border:         `1.5px solid ${open ? current.color + '55' : 'rgba(255,255,255,0.18)'}`,
           borderRadius:   '8px',
           cursor:         disabled ? 'not-allowed' : 'pointer',
           transition:     'all 0.15s',
@@ -221,14 +221,14 @@ export function InChatModeSwitcher({ mode, onChange, disabled }: InChatModeSwitc
           fontWeight:    700,
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
-          color:         open ? current.color : '#374151',
+          color:         open ? current.color : 'rgba(255,255,255,0.85)',
           whiteSpace:    'nowrap',
         }}>
           {t(LABEL_KEYS[mode])}
         </span>
         <svg
           width="8" height="8" viewBox="0 0 24 24" fill="none"
-          stroke={open ? current.color : '#9CA3AF'}
+          stroke={open ? current.color : 'rgba(255,255,255,0.45)'}
           strokeWidth="2.5" strokeLinecap="round"
           style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}
         >
