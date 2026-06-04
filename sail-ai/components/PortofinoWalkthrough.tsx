@@ -18,6 +18,8 @@
 import { useEffect, useRef } from 'react'
 import { motion }            from 'framer-motion'
 import { PortofinoScene }    from '@/components/landing/PortofinoScene'
+import { IPhoneFrame }       from '@/components/landing/IPhoneFrame'
+import { UngatedApp }        from '@/components/landing/UngatedApp'
 import { useLanguage }       from '@/lib/i18n/LanguageContext'
 
 // ── ASCII palette — matches the harbour colours ───────────────────────────────
@@ -228,124 +230,145 @@ export function PortofinoWalkthrough() {
         pointerEvents: 'none',
       }} />
 
-      {/* ── Layer 3: content ── */}
+      {/* ── Layer 3: content — iPhone centre, steps right ── */}
       <div
-        className="max-w-6xl mx-auto px-6 md:px-10"
         style={{
           position:       'relative',
           zIndex:          10,
-          paddingTop:      120,
-          paddingBottom:   120,
           width:          '100%',
+          maxWidth:        1200,
+          margin:         '0 auto',
+          padding:        '100px 32px 100px',
+          display:        'flex',
+          alignItems:     'center',
+          gap:             48,
+          flexWrap:       'wrap',
+          justifyContent: 'center',
         }}
       >
-        {/* Section header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          style={{ marginBottom: 64, textAlign: 'center' }}
-        >
+
+        {/* ── Left: section label + iPhone ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, flex: '0 0 auto' }}>
+
           {/* Eyebrow */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: 20 }}>
-            <div style={{ width: 36, height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.5))' }} />
-            <span style={{
-              fontFamily:    'Inter, sans-serif',
-              fontSize:       10,
-              fontWeight:     700,
-              letterSpacing: '0.20em',
-              textTransform: 'uppercase',
-              color:         'rgba(201,169,110,0.75)',
-            }}>
-              Methodology
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+          >
+            <div style={{ width: 28, height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.55))' }} />
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.75)' }}>
+              Live Demo
             </span>
-            <div style={{ width: 36, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.5), transparent)' }} />
-          </div>
+            <div style={{ width: 28, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.55), transparent)' }} />
+          </motion.div>
 
-          <h2 style={{
-            fontFamily:    'Cormorant Garamond, Georgia, serif',
-            fontSize:      'clamp(2rem, 4.5vw, 3.5rem)',
-            fontWeight:     600,
-            fontStyle:     'italic',
-            color:         '#FAFAF8',
-            lineHeight:     1.12,
-            margin:        '0 0 20px',
-            letterSpacing: '-0.02em',
-          }}>
-            Three steps.{' '}
-            <span style={{ color: '#C9A96E' }}>One sovereign</span>
-            {' '}intelligence layer.
-          </h2>
+          {/* iPhone */}
+          <motion.div
+            initial={{ opacity: 0, y: 28, scale: 0.96 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <IPhoneFrame>
+              <UngatedApp />
+            </IPhoneFrame>
+          </motion.div>
 
-          <p style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize:    15,
-            lineHeight:  1.75,
-            color:      'rgba(250,250,248,0.42)',
-            fontWeight:  300,
-            maxWidth:   '52ch',
-            margin:     '0 auto',
-          }}>
-            Each analysis draws on verified industry benchmarks — not heuristics — and is calibrated to your specific numbers.
-          </p>
-        </motion.div>
-
-        {/* Step cards */}
-        <div style={{
-          display:   'flex',
-          gap:        20,
-          flexWrap:  'wrap',
-        }}>
-          {STEPS.map((s, i) => (
-            <Step key={s.n} {...s} delay={0.10 + i * 0.12} />
-          ))}
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(250,250,248,0.35)', textAlign: 'center', maxWidth: 220 }}
+          >
+            No account needed — tap the screen to begin
+          </motion.p>
         </div>
 
-        {/* Bottom CTA */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          style={{ textAlign: 'center', marginTop: 52 }}
-        >
-          <a
-            href="/chat"
-            style={{
-              display:       'inline-flex',
-              alignItems:    'center',
-              gap:            10,
-              padding:       '14px 32px',
-              background:    'rgba(201,169,110,0.12)',
-              border:        '1px solid rgba(201,169,110,0.38)',
-              borderRadius:   9999,
-              fontFamily:    'Inter, sans-serif',
-              fontSize:       12,
-              fontWeight:     700,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              color:         '#C9A96E',
-              textDecoration:'none',
-              transition:    'all 0.2s ease',
-            }}
-            onMouseEnter={e => {
-              const el = e.currentTarget
-              el.style.background = 'rgba(201,169,110,0.22)'
-              el.style.borderColor = 'rgba(201,169,110,0.60)'
-            }}
-            onMouseLeave={e => {
-              const el = e.currentTarget
-              el.style.background = 'rgba(201,169,110,0.12)'
-              el.style.borderColor = 'rgba(201,169,110,0.38)'
-            }}
+        {/* ── Right: heading + steps ── */}
+        <div style={{ flex: 1, minWidth: 280, maxWidth: 480 }}>
+
+          {/* Heading */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            style={{ marginBottom: 36 }}
           >
-            Begin your analysis
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </a>
-        </motion.div>
+            <h2 style={{
+              fontFamily:    'Cormorant Garamond, Georgia, serif',
+              fontSize:      'clamp(1.8rem, 3.5vw, 3rem)',
+              fontWeight:     600,
+              fontStyle:     'italic',
+              color:         '#FAFAF8',
+              lineHeight:     1.14,
+              margin:        '0 0 14px',
+              letterSpacing: '-0.02em',
+            }}>
+              Three steps.{' '}
+              <span style={{ color: '#C9A96E' }}>One sovereign</span>
+              {' '}intelligence layer.
+            </h2>
+            <p style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize:    14,
+              lineHeight:  1.75,
+              color:      'rgba(250,250,248,0.40)',
+              fontWeight:  300,
+              margin:      0,
+            }}>
+              Each analysis draws on verified industry benchmarks — calibrated to your specific numbers.
+            </p>
+          </motion.div>
+
+          {/* Steps — vertical stack */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {STEPS.map((s, i) => (
+              <Step key={s.n} {...s} delay={0.12 + i * 0.10} />
+            ))}
+          </div>
+
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            style={{ marginTop: 32 }}
+          >
+            <a
+              href="/chat"
+              style={{
+                display:       'inline-flex',
+                alignItems:    'center',
+                gap:            10,
+                padding:       '13px 28px',
+                background:    'rgba(201,169,110,0.12)',
+                border:        '1px solid rgba(201,169,110,0.38)',
+                borderRadius:   9999,
+                fontFamily:    'Inter, sans-serif',
+                fontSize:       11,
+                fontWeight:     700,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                color:         '#C9A96E',
+                textDecoration:'none',
+                transition:    'all 0.2s ease',
+              }}
+              onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(201,169,110,0.22)'; el.style.borderColor = 'rgba(201,169,110,0.60)' }}
+              onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(201,169,110,0.12)'; el.style.borderColor = 'rgba(201,169,110,0.38)' }}
+            >
+              Begin your analysis
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </motion.div>
+        </div>
       </div>
     </section>
   )

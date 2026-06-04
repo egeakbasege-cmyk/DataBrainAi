@@ -30,38 +30,48 @@ const WATER_VERT = /* glsl */`
 precision highp float;
 
 uniform float uTime;
-uniform float uWaveScale;
 
 varying vec2  vUv;
 varying float vElevation;
 varying vec3  vWorldPos;
+varying vec3  vNormal;
 
-float wave(float x, float z, float freq, float amp, float speed, float phase) {
-  return sin(x * freq + z * freq * 0.5 + uTime * speed + phase) * amp;
+struct GWave { vec2 dir; float amp; float freq; float speed; float steep; };
+
+vec3 gerstner(GWave w, vec2 xz, float t, inout vec3 tangent, inout vec3 bitangent) {
+  float phi = w.freq * dot(w.dir, xz) + w.speed * t;
+  float c = cos(phi); float s = sin(phi);
+  tangent   += vec3(-w.dir.x*w.dir.x*(w.steep*s),  w.dir.x*w.amp*c, -w.dir.x*w.dir.y*(w.steep*s));
+  bitangent += vec3(-w.dir.x*w.dir.y*(w.steep*s),  w.dir.y*w.amp*c, -w.dir.y*w.dir.y*(w.steep*s));
+  return vec3(w.steep*w.amp*w.dir.x*c, w.amp*s, w.steep*w.amp*w.dir.y*c);
 }
 
 void main() {
-  vUv      = uv;
+  vUv = uv;
   vec3 pos = position;
 
-  float e =
-    wave(pos.x * uWaveScale, pos.z * uWaveScale, 0.9,  0.22, 0.75, 0.0) +
-    wave(pos.x * uWaveScale, pos.z * uWaveScale, 1.4,  0.10, 1.10, 1.2) +
-    wave(pos.x * uWaveScale, pos.z * uWaveScale, 0.45, 0.26, 0.50, 2.5) +
-    wave(pos.z * uWaveScale, pos.x * uWaveScale, 0.65, 0.14, 0.70, 0.8);
+  GWave w0 = GWave(normalize(vec2(1.0, 0.6)),  0.16, 0.44, 1.10, 0.42);
+  GWave w1 = GWave(normalize(vec2(-0.4, 1.0)), 0.09, 0.78, 1.40, 0.35);
+  GWave w2 = GWave(normalize(vec2(0.7, -0.3)), 0.05, 1.20, 0.90, 0.28);
+  GWave w3 = GWave(normalize(vec2(0.2, 0.9)),  0.03, 1.80, 1.60, 0.20);
 
-  pos.y   += e;
-  vElevation = e;
+  vec3 tangent   = vec3(1.0, 0.0, 0.0);
+  vec3 bitangent = vec3(0.0, 0.0, 1.0);
+  vec3 disp = gerstner(w0,pos.xz,uTime,tangent,bitangent)
+            + gerstner(w1,pos.xz,uTime,tangent,bitangent)
+            + gerstner(w2,pos.xz,uTime,tangent,bitangent)
+            + gerstner(w3,pos.xz,uTime,tangent,bitangent);
+  pos += disp;
+  vElevation = disp.y;
+  vNormal    = normalize(cross(bitangent, tangent));
 
   vec4 world4 = modelMatrix * vec4(pos, 1.0);
   vWorldPos   = world4.xyz;
-
   gl_Position = projectionMatrix * viewMatrix * world4;
 }
 `
 
 const WATER_FRAG = /* glsl */`
-#extension GL_OES_standard_derivatives : enable
 precision highp float;
 
 uniform vec3  uDeepColor;
@@ -72,36 +82,33 @@ uniform float uProgress;
 varying vec2  vUv;
 varying float vElevation;
 varying vec3  vWorldPos;
+varying vec3  vNormal;
 
 void main() {
-  // Per-fragment normal from screen-space derivatives
-  vec3 dx   = dFdx(vWorldPos);
-  vec3 dz   = dFdy(vWorldPos);
-  vec3 norm = normalize(cross(dz, dx));
+  vec3 norm = normalize(vNormal);
 
-  // Base water colour
-  float t      = clamp((vElevation + 0.55) * 1.3, 0.0, 1.0);
-  vec3  water  = mix(uDeepColor, uSurfaceColor, t);
+  // Richer deep Mediterranean blue
+  float t     = clamp((vElevation + 0.22) * 2.2, 0.0, 1.0);
+  vec3 water  = mix(uDeepColor, uSurfaceColor, t);
 
-  // Golden-hour tint grows with boat progress
-  water = mix(water, water * vec3(1.18, 0.96, 0.72), uProgress * 0.60);
+  // Golden-hour tint with progress
+  water = mix(water, water * vec3(1.18, 0.96, 0.72), uProgress * 0.55);
 
-  // Champagne-gold sun specular
-  vec3  viewDir  = normalize(vec3(0.0, 1.0, 0.45));
-  vec3  halfVec  = normalize(uSunPos + viewDir);
-  float spec     = pow(max(dot(norm, halfVec), 0.0), 90.0);
-  vec3  goldSpec = vec3(0.769, 0.604, 0.235);
-  water         += goldSpec * spec * mix(0.50, 1.10, uProgress);
+  // Champagne-gold sun specular (sharper highlight)
+  vec3 viewDir = normalize(vec3(0.0, 1.0, 0.45));
+  vec3 halfVec = normalize(uSunPos + viewDir);
+  float spec   = pow(max(dot(norm, halfVec), 0.0), 120.0);
+  water       += vec3(0.769, 0.604, 0.235) * spec * mix(0.55, 1.30, uProgress);
 
-  // Foam at crests
-  float foam = smoothstep(0.30, 0.46, vElevation);
-  water = mix(water, vec3(0.96, 0.98, 1.0), foam * 0.28);
+  // White foam at crests
+  float foam = smoothstep(0.26, 0.42, vElevation);
+  water = mix(water, vec3(0.97, 0.99, 1.0), foam * 0.26);
 
-  // Horizon fade (softer blend to sky)
-  float horizon = smoothstep(0.25, 0.65, vUv.y);
-  water = mix(water * 0.6, water, horizon);
+  // Horizon atmospheric fade
+  float horizon = smoothstep(0.20, 0.60, vUv.y);
+  water = mix(water * 0.62, water, horizon);
 
-  gl_FragColor = vec4(water, mix(0.88, 0.95, horizon));
+  gl_FragColor = vec4(water, mix(0.88, 0.96, horizon));
 }
 `
 
@@ -113,10 +120,9 @@ function WaterSurface() {
 
   const uniforms = useMemo(() => ({
     uTime:         { value: 0.0 },
-    uWaveScale:    { value: 0.40 },
     uProgress:     { value: 0.0 },
-    uDeepColor:    { value: new THREE.Color('#061428') },
-    uSurfaceColor: { value: new THREE.Color('#14B8A6') },
+    uDeepColor:    { value: new THREE.Color('#04162E') },
+    uSurfaceColor: { value: new THREE.Color('#1E8FBF') },
     uSunPos:       { value: new THREE.Vector3(1.0, 0.5, -0.3) },
   }), [])
 
@@ -125,24 +131,15 @@ function WaterSurface() {
   }, [node])
 
   useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    uniforms.uTime.value += 0.016
-    const p = uniforms.uProgress.value
-    const target = progressRef.current
-    uniforms.uProgress.value += (target - p) * 0.006
-
-    // Sun descends and shifts west → golden hour
+    uniforms.uTime.value = clock.getElapsedTime() * 0.52
+    uniforms.uProgress.value += (progressRef.current - uniforms.uProgress.value) * 0.006
     const pp = uniforms.uProgress.value
-    uniforms.uSunPos.value.set(
-      1.0 - pp * 0.45,
-      0.60 - pp * 0.30,
-      -0.30 + pp * 0.10,
-    ).normalize()
+    uniforms.uSunPos.value.set(1.0 - pp * 0.45, 0.60 - pp * 0.30, -0.30 + pp * 0.10).normalize()
   })
 
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.85, 0]}>
-      <planeGeometry args={[90, 70, 140, 140]} />
+      <planeGeometry args={[90, 70, 180, 180]} />
       <shaderMaterial
         vertexShader={WATER_VERT}
         fragmentShader={WATER_FRAG}
