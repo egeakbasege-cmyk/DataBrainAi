@@ -145,32 +145,42 @@ function MarqueeBand({ dark }: { dark?: boolean }) {
   )
 }
 
-// ── Mode card ──────────────────────────────────────────────────
+// ── Mode card — dark glassmorphism edition ─────────────────────
 function ModeCard({
-  badge, name, color, bg, border, icon, desc, detail,
+  badge, name, color, border, icon, desc, detail,
 }: {
-  badge:  string; name: string; color: string; bg: string
+  badge:  string; name: string; color: string
   border: string; icon: React.ReactNode; desc: string; detail: string
 }) {
   return (
     <div
       className="hover-lift"
       style={{
-        padding:       '2.25rem',
-        background:    bg,
-        border:        `1px solid ${border}`,
-        borderRadius:  '12px',
-        display:       'flex',
-        flexDirection: 'column',
-        height:        '100%',
+        padding:             '2.25rem',
+        background:          'rgba(10,17,40,0.72)',
+        backdropFilter:      'blur(18px)',
+        WebkitBackdropFilter:'blur(18px)',
+        border:              `1px solid ${border}`,
+        borderRadius:        '14px',
+        display:             'flex',
+        flexDirection:       'column',
+        height:              '100%',
+        position:            'relative',
+        overflow:            'hidden',
       }}
     >
+      {/* Colour top hairline */}
+      <div style={{
+        position:   'absolute', top: 0, left: '10%', right: '10%', height: 1,
+        background: `linear-gradient(90deg, transparent, ${border}, transparent)`,
+      }} />
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
         <div
           className="mode-icon-box"
           style={{
-            width: 34, height: 34, borderRadius: '8px',
-            background: `color-mix(in srgb, ${color} 12%, transparent)`,
+            width: 36, height: 36, borderRadius: '9px',
+            background: `rgba(255,255,255,0.06)`,
             border: `1px solid ${border}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
@@ -180,19 +190,20 @@ function ModeCard({
           {icon}
         </div>
         <div>
-          <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.2rem', fontWeight: 700, color, display: 'block', lineHeight: 1.1 }}>
+          <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.25rem', fontWeight: 700, color, display: 'block', lineHeight: 1.1 }}>
             {name}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.6 }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.7 }}>
             {badge}
           </span>
         </div>
       </div>
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', lineHeight: 1.78, color: '#0C0C0E', fontWeight: 300, marginBottom: '1rem', flex: 1 }}>
+
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.78, color: 'rgba(232,237,243,0.82)', fontWeight: 300, marginBottom: '1rem', flex: 1 }}>
         {desc}
       </p>
-      <div style={{ height: 1, background: border, marginBottom: '0.875rem' }} />
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', lineHeight: 1.6, margin: 0 }}>
+      <div style={{ height: 1, background: border, opacity: 0.5, marginBottom: '0.875rem' }} />
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(232,237,243,0.45)', lineHeight: 1.6, margin: 0 }}>
         {detail}
       </p>
     </div>
@@ -568,20 +579,18 @@ export default function LandingPage() {
       ══════════════════════════════════════════════ */}
       <PortofinoWalkthrough />
 
-      {/* ── Diagonal divider: dark video → light ─────── */}
-      <SectionDivider from="#08090D" to="#F4F4F2" direction="down-left" height={52} />
-
-      {/* ── Marquee Band 2 ───────────────────────────── */}
-      <MarqueeBand />
+      {/* ── Marquee Band 2 (dark) ─────────────────────── */}
+      <MarqueeBand dark />
 
       {/* ══════════════════════════════════════════════
           SECTION 4 — INTELLIGENCE MODES
-          Light canvas. Stagger 3 cards.
+          Dark — glassmorphism cards over topo texture.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#FAFAF8', borderTop: '1px solid rgba(0,0,0,0.07)', position: 'relative', overflow: 'hidden' }}>
-        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.35, pointerEvents: 'none' }} />
+      <section style={{ background: '#0C0C0E', position: 'relative', overflow: 'hidden' }}>
+        <TopoBackground />
+        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.25, pointerEvents: 'none', zIndex: 1 }} />
 
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-24" style={{ position: 'relative' }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-24" style={{ position: 'relative', zIndex: 2 }}>
 
           {/* Header */}
           <motion.div
@@ -592,12 +601,12 @@ export default function LandingPage() {
             style={{ marginBottom: '3.5rem' }}
           >
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1rem' }}>
-              <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
+              <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
                 {t('landing.intelligenceModes')}
               </span>
             </motion.div>
-            <motion.p variants={fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: '#71717A', fontWeight: 300, maxWidth: '52ch', lineHeight: 1.75 }}>
+            <motion.p variants={fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: 'rgba(232,237,243,0.55)', fontWeight: 300, maxWidth: '52ch', lineHeight: 1.75 }}>
               {t('landing.modesCount')}
             </motion.p>
           </motion.div>
@@ -615,15 +624,14 @@ export default function LandingPage() {
               <ModeCard
                 badge={t('landing.upwindBadge')}
                 name="Upwind"
-                color="#1A5276"
-                bg="rgba(26,82,118,0.04)"
-                border="rgba(26,82,118,0.15)"
+                color="#5B9BD5"
+                border="rgba(91,155,213,0.28)"
                 icon={
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 3L12 19L4 19Z" fill="#1A5276" opacity="0.85"/>
-                    <path d="M12 3L12 19L20 12Z" fill="#1A5276" opacity="0.3"/>
-                    <line x1="12" y1="2" x2="12" y2="20" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M5 19Q12 22 19 19" stroke="#1A5276" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                    <path d="M12 3L12 19L4 19Z" fill="#5B9BD5" opacity="0.85"/>
+                    <path d="M12 3L12 19L20 12Z" fill="#5B9BD5" opacity="0.3"/>
+                    <line x1="12" y1="2" x2="12" y2="20" stroke="#5B9BD5" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M5 19Q12 22 19 19" stroke="#5B9BD5" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
                   </svg>
                 }
                 desc={t('landing.upwindDesc')}
@@ -636,16 +644,15 @@ export default function LandingPage() {
               <ModeCard
                 badge={t('landing.sailBadge')}
                 name="SAIL"
-                color="#7C3AED"
-                bg="rgba(124,58,237,0.04)"
-                border="rgba(124,58,237,0.15)"
+                color="#A78BFA"
+                border="rgba(167,139,250,0.30)"
                 icon={
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 3C18 5 22 11 20 19L12 19Z" fill="#7C3AED" opacity="0.85"/>
-                    <path d="M12 8C16 9 18 14 17 19L12 19Z" fill="#7C3AED" opacity="0.4"/>
-                    <line x1="12" y1="2" x2="12" y2="20" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M5 19Q12 22 19 19" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-                    <circle cx="5" cy="6" r="1.8" fill="#7C3AED" opacity="0.6"/>
+                    <path d="M12 3C18 5 22 11 20 19L12 19Z" fill="#A78BFA" opacity="0.85"/>
+                    <path d="M12 8C16 9 18 14 17 19L12 19Z" fill="#A78BFA" opacity="0.4"/>
+                    <line x1="12" y1="2" x2="12" y2="20" stroke="#A78BFA" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M5 19Q12 22 19 19" stroke="#A78BFA" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                    <circle cx="5" cy="6" r="1.8" fill="#A78BFA" opacity="0.6"/>
                   </svg>
                 }
                 desc={t('landing.sailDesc')}
@@ -658,17 +665,16 @@ export default function LandingPage() {
               <ModeCard
                 badge={t('landing.operatorBadge')}
                 name="Operator"
-                color="#CC2200"
-                bg="rgba(204,34,0,0.03)"
-                border="rgba(204,34,0,0.18)"
+                color="#F87171"
+                border="rgba(248,113,113,0.28)"
                 icon={
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="9" stroke="#CC2200" strokeWidth="1.4" opacity="0.4"/>
-                    <circle cx="12" cy="12" r="3" fill="#CC2200" opacity="0.9"/>
-                    <line x1="12" y1="3" x2="12" y2="7" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                    <line x1="12" y1="17" x2="12" y2="21" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                    <line x1="3" y1="12" x2="7" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
-                    <line x1="17" y1="12" x2="21" y2="12" stroke="#CC2200" strokeWidth="1.5" strokeLinecap="round"/>
+                    <circle cx="12" cy="12" r="9" stroke="#F87171" strokeWidth="1.4" opacity="0.4"/>
+                    <circle cx="12" cy="12" r="3" fill="#F87171" opacity="0.9"/>
+                    <line x1="12" y1="3" x2="12" y2="7" stroke="#F87171" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="12" y1="17" x2="12" y2="21" stroke="#F87171" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="3" y1="12" x2="7" y2="12" stroke="#F87171" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="17" y1="12" x2="21" y2="12" stroke="#F87171" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 }
                 desc={t('landing.operatorDesc')}
@@ -691,11 +697,11 @@ export default function LandingPage() {
                 fontFamily:    'Inter, sans-serif',
                 fontSize:      '0.75rem',
                 fontWeight:    500,
-                color:         '#71717A',
+                color:         'rgba(201,169,110,0.80)',
                 textDecoration:'none',
-                borderBottom:  '1px solid rgba(0,0,0,0.15)',
+                borderBottom:  '1px solid rgba(201,169,110,0.30)',
                 paddingBottom: '2px',
-                letterSpacing: '0.03em',
+                letterSpacing: '0.06em',
               }}
             >
               {t('landing.exploreAllModes')} →
@@ -706,10 +712,10 @@ export default function LandingPage() {
 
       {/* ══════════════════════════════════════════════
           SECTION 5 — SAMPLE OUTCOMES
-          Off-white. Stagger rows. Hover highlight.
+          Dark — stagger rows with light text.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-24">
+      <section style={{ background: '#0C0C0E', borderTop: '1px solid rgba(255,255,255,0.06)', position: 'relative', overflow: 'hidden' }}>
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-24" style={{ position: 'relative', zIndex: 1 }}>
 
           {/* Header */}
           <motion.div
@@ -721,18 +727,18 @@ export default function LandingPage() {
           >
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
+                <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
                   {t('landing.indicativeOutputs')}
                 </span>
               </div>
-              <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: '#A1A1AA' }}>
+              <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: 'rgba(232,237,243,0.38)' }}>
                 {t('landing.realisticProjections')}
               </span>
             </motion.div>
           </motion.div>
 
-          <div style={{ height: 1, background: 'rgba(0,0,0,0.09)', marginBottom: 0 }} />
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 0 }} />
 
           {/* Case rows — stagger */}
           <motion.div
@@ -752,11 +758,11 @@ export default function LandingPage() {
                   gap:                 '1.75rem',
                   alignItems:          'center',
                   padding:             '2rem 0.5rem',
-                  borderBottom:        '1px solid rgba(0,0,0,0.07)',
+                  borderBottom:        '1px solid rgba(255,255,255,0.06)',
                   borderRadius:        '6px',
                 }}
               >
-                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.875rem', color: 'var(--sv-teal)', fontWeight: 600, paddingLeft: '0.25rem' }}>
+                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.875rem', color: '#14B8A6', fontWeight: 600, paddingLeft: '0.25rem' }}>
                   ◈ {c.n}
                 </span>
 
@@ -768,18 +774,18 @@ export default function LandingPage() {
                       fontWeight:    700,
                       letterSpacing: '0.14em',
                       textTransform: 'uppercase',
-                      color:         '#0C0C0E',
+                      color:         'rgba(232,237,243,0.75)',
                       padding:       '2px 8px',
-                      border:        '1px solid rgba(0,0,0,0.12)',
+                      border:        '1px solid rgba(255,255,255,0.12)',
                       borderRadius:  '2px',
                     }}>
                       {c.sector}
                     </span>
                   </div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 1.5vw, 1.15rem)', color: '#0C0C0E', lineHeight: 1.4, marginBottom: '0.4rem' }}>
+                  <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 1.5vw, 1.15rem)', color: '#E8EDF3', lineHeight: 1.4, marginBottom: '0.4rem' }}>
                     {c.headline}
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', lineHeight: 1.6 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'rgba(232,237,243,0.50)', lineHeight: 1.6 }}>
                     {c.detail}
                   </p>
                 </div>
@@ -788,7 +794,7 @@ export default function LandingPage() {
                   <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.3rem, 2.2vw, 1.75rem)', fontWeight: 700, color: '#C9A96E', lineHeight: 1, display: 'block', letterSpacing: '-0.01em' }}>
                     <AnimatedCounter value={c.outcome} />
                   </span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A1A1AA', display: 'block', marginTop: '0.25rem' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(232,237,243,0.35)', display: 'block', marginTop: '0.25rem' }}>
                     {t('landing.estOutcome')}
                   </span>
                 </div>
@@ -801,7 +807,7 @@ export default function LandingPage() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.55, delay: 0.4 }}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', lineHeight: 1.6, marginTop: '1.5rem', maxWidth: '60ch' }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(232,237,243,0.35)', lineHeight: 1.6, marginTop: '1.5rem', maxWidth: '60ch' }}
           >
             {t('landing.disclaimer')}
           </motion.p>
