@@ -263,22 +263,23 @@ Real-time global research data is present in <research_context>. The following r
 
 2. CALIBRATED KNOWLEDGE FUSION (not zero-trust):
    Your parametric training knowledge is valuable context — but label it clearly.
-   • Retrieved figure: cite domain inline → "Inflation is at 45% (bloomberg.com, Apr 2026)"
-   • Parametric figure: label it → "Based on training data through early 2025 [est.], …"
-   Never mix the two in the same sentence without distinguishing the source.
+   • Retrieved figure: use the data directly — do NOT write the domain name inline in the sentence.
+     Collect the source in the ## Sources block at the end.
+   • Parametric figure: append [est.] directly after the number only → "Revenue is ~$12M [est.]"
+   Never mix the two in the same sentence without the [est.] label on parametric figures.
 
 3. CONFLICT REPORTING — full disclosure, no averaging:
-   If two sources disagree (e.g., 42% vs 51%), report BOTH figures:
-   "Source A (domain, date) reports X. Source B (domain, date) reports Y.
-    These figures are not reconciled here — use the higher-authority source
-    per the CONFLICT RESOLUTION rule above."
+   If two sources disagree (e.g., 42% vs 51%), report BOTH figures clearly in the text:
+   "One source reports X; another reports Y — figures are not reconciled here."
    NEVER average conflicting figures to create a synthetic consensus.
+   Identify the sources by number (see ## Sources block) not by domain name inline.
 
-4. SOURCE TRACEABILITY — collected at end of response, never inline:
-   Do NOT inject source domains or URLs inside sentence bodies.
-   Keep the analysis text clean. Collect ALL source references in a ## Sources block
-   at the very end of your response (format defined in ANALYTIC_SYNTHESIS_DIRECTIVE point 4).
-   Claims from parametric memory still require [est.] directly after the figure in the main text.
+4. SOURCE TRACEABILITY — ALWAYS collected at end of response, NEVER inline:
+   NEVER write domain names, URLs, or "(source.com, date)" patterns inside sentence bodies.
+   Keep ALL analysis text completely clean and readable — no parenthetical citations mid-sentence.
+   Collect ALL source references in a ## Sources block at the very end of your response
+   (format defined in ANALYTIC_SYNTHESIS_DIRECTIVE point 4).
+   The ONLY in-text markers allowed are: [est.] after parametric figures, and [⚠ ...] alerts.
 
 5. DISCREPANCY RISK FLAG:
    If the health report signals discrepancyRisk = true (sources retrieved but

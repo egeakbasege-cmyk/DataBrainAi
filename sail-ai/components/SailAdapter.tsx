@@ -445,22 +445,38 @@ interface ParsedSource {
   snippet: string
 }
 
+/** Strip inline source noise from a body string */
+function cleanBodyText(text: string): string {
+  return text
+    // (domain.com, date) or (domain.com) — parenthetical inline citations
+    .replace(/\s*\([a-zA-Z0-9._-]+\.[a-zA-Z]{2,}[^)]{0,60}\)/g, '')
+    // bare [1] [2] [3] numbered reference markers
+    .replace(/\[\d+\]/g, '')
+    // [text](url) markdown links → keep the label, drop the URL
+    .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
+    // [TRAINING EST — verify] and similar labels → drop entirely
+    .replace(/\[TRAINING EST[^\]]*\]/gi, '[est.]')
+    // [DATA UNAVAILABLE: ...] → replace with a clean note
+    .replace(/\[DATA UNAVAILABLE:[^\]]*\]/gi, '—')
+    // [STALE LOCAL CURRENCY...] → drop
+    .replace(/\[STALE[^\]]*\]/gi, '')
+    // Collapse extra whitespace left by removals
+    .replace(/  +/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 function extractSourcesBlock(raw: string): { body: string; sources: ParsedSource[] } {
   // Match the ## Sources (or ## Kaynaklar / ## Quellen etc.) section at the end
   const sourcesHeadRegex = /^##\s+(Sources?|References?|Kaynaklar?|Referanslar?|Quellen|Fuentes|Sources)\s*$/im
   const match = sourcesHeadRegex.exec(raw)
 
   if (!match || match.index === undefined) {
-    // No structured block — strip any stray inline fragments and return clean text
-    const cleaned = raw
-      .replace(/\[\d+\]/g, '')                               // [1] [2] numbered refs
-      .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')   // [text](url) → text only
-      .replace(/\n{3,}/g, '\n\n')
-      .trim()
-    return { body: cleaned, sources: [] }
+    // No structured block — clean inline noise and return
+    return { body: cleanBodyText(raw), sources: [] }
   }
 
-  const body = raw.slice(0, match.index).replace(/\n{3,}/g, '\n\n').trim()
+  const body = cleanBodyText(raw.slice(0, match.index))
   const block = raw.slice(match.index + match[0].length).trim()
 
   // Parse numbered list: "1. domain.com (date) — description" or "- domain.com ..."
