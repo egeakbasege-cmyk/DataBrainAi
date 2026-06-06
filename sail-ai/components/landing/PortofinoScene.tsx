@@ -194,7 +194,7 @@ void main() {
 }
 `
 
-// ── Canvas building texture — stucco, windows, mullions, shutters ─────────────
+// ── Canvas building texture — rich Portofino stucco, deep-green shutters ──────
 
 function makeWallTexture(baseHex: string, floors = 4, cols = 3): THREE.CanvasTexture {
   const W = 256, H = 512
@@ -202,73 +202,95 @@ function makeWallTexture(baseHex: string, floors = 4, cols = 3): THREE.CanvasTex
   cv.width = W; cv.height = H
   const ctx = cv.getContext('2d')!
 
-  // Base plaster
+  // Base plaster — keep the colour vibrant
   ctx.fillStyle = baseHex
   ctx.fillRect(0, 0, W, H)
 
-  // Weathering: lighter top, darker base
+  // Subtle sun-bleaching on upper half, damp shadow at base
   const grad = ctx.createLinearGradient(0, 0, 0, H)
-  grad.addColorStop(0.0, 'rgba(255,255,255,0.07)')
-  grad.addColorStop(0.6, 'rgba(0,0,0,0.0)')
-  grad.addColorStop(1.0, 'rgba(0,0,0,0.22)')
+  grad.addColorStop(0.0, 'rgba(255,255,255,0.10)')
+  grad.addColorStop(0.5, 'rgba(0,0,0,0.0)')
+  grad.addColorStop(1.0, 'rgba(0,0,0,0.18)')
   ctx.fillStyle = grad
   ctx.fillRect(0, 0, W, H)
 
-  // Horizontal stucco scoring
-  ctx.strokeStyle = 'rgba(0,0,0,0.07)'
+  // Horizontal stucco scoring (lighter — keeps colours popping)
+  ctx.strokeStyle = 'rgba(0,0,0,0.05)'
   ctx.lineWidth = 1
-  for (let y = 18; y < H; y += 18) {
+  for (let y = 16; y < H; y += 16) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke()
   }
 
+  // Ground floor: painted arcade stripe (slightly darker band at base)
+  ctx.fillStyle = 'rgba(0,0,0,0.12)'
+  ctx.fillRect(0, H * 0.82, W, H * 0.18)
+
   // Windows with frames, mullions, shutters
   const cellW = W / cols,  cellH = H / floors
-  const winW  = cellW * 0.36, winH = cellH * 0.38
-  const shuW  = winW  * 0.38
+  const winW  = cellW * 0.38, winH = cellH * 0.42
+  const shuW  = winW  * 0.42
 
   for (let r = 0; r < floors; r++) {
     for (let c = 0; c < cols; c++) {
       const wx = c * cellW + (cellW - winW) / 2
-      const wy = r * cellH + cellH * 0.22
+      const wy = r * cellH + cellH * 0.18
 
-      // Sill ledge
-      ctx.fillStyle = 'rgba(255,255,255,0.18)'
-      ctx.fillRect(wx - 3, wy + winH, winW + 6, 4)
+      // Stone sill — bright ledge
+      ctx.fillStyle = 'rgba(255,255,255,0.28)'
+      ctx.fillRect(wx - 4, wy + winH, winW + 8, 5)
 
-      // Dark wood frame
-      ctx.fillStyle = '#3C2810'
+      // Plaster window surround (slightly lighter than wall)
+      ctx.fillStyle = 'rgba(255,255,255,0.14)'
+      ctx.fillRect(wx - 5, wy - 5, winW + 10, winH + 10)
+
+      // Dark frame
+      ctx.fillStyle = '#2E1C0A'
       ctx.fillRect(wx - 2, wy - 2, winW + 4, winH + 4)
 
-      // Glass — sky-blue tint
-      ctx.fillStyle = '#6B9EC0'
+      // Glass — warm Mediterranean sky reflection
+      ctx.fillStyle = '#5A8FB8'
       ctx.fillRect(wx, wy, winW, winH)
 
-      // Inner glass shadow
-      const gShadow = ctx.createLinearGradient(wx, wy, wx + winW, wy + winH)
-      gShadow.addColorStop(0,   'rgba(0,0,0,0.30)')
-      gShadow.addColorStop(0.5, 'rgba(0,0,0,0.0)')
-      gShadow.addColorStop(1,   'rgba(0,0,0,0.15)')
-      ctx.fillStyle = gShadow
+      // Glass highlight
+      const ghi = ctx.createLinearGradient(wx, wy, wx + winW * 0.5, wy + winH * 0.5)
+      ghi.addColorStop(0, 'rgba(255,255,255,0.22)')
+      ghi.addColorStop(1, 'rgba(0,0,0,0.0)')
+      ctx.fillStyle = ghi
+      ctx.fillRect(wx, wy, winW, winH)
+
+      // Inner shadow
+      const gsh = ctx.createLinearGradient(wx, wy, wx + winW, wy + winH)
+      gsh.addColorStop(0,   'rgba(0,0,0,0.28)')
+      gsh.addColorStop(0.5, 'rgba(0,0,0,0.0)')
+      gsh.addColorStop(1,   'rgba(0,0,0,0.12)')
+      ctx.fillStyle = gsh
       ctx.fillRect(wx, wy, winW, winH)
 
       // Mullions
-      ctx.fillStyle = '#3C2810'
+      ctx.fillStyle = '#2E1C0A'
       ctx.fillRect(wx + winW / 2 - 1, wy, 2, winH)
       ctx.fillRect(wx, wy + winH / 2 - 1, winW, 2)
 
-      // Dark-green shutters (partially open)
-      ctx.fillStyle = '#1F4A2C'
-      ctx.fillRect(wx - shuW - 2, wy, shuW, winH)
-      ctx.fillRect(wx + winW + 2,  wy, shuW, winH)
+      // ── Portofino-green shutters (the defining visual) ──
+      const shutterGreen = r === floors - 1 ? '#3A6E28' : '#2A5E20'  // lighter on top floor
+      ctx.fillStyle = shutterGreen
+      ctx.fillRect(wx - shuW - 3, wy, shuW, winH)
+      ctx.fillRect(wx + winW + 3,  wy, shuW, winH)
 
-      // Shutter slats
-      ctx.strokeStyle = 'rgba(0,0,0,0.30)'
+      // Shutter slats — horizontal louvres
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)'
       ctx.lineWidth = 1
-      for (let s = 1; s < 5; s++) {
-        const sy = wy + (s / 5) * winH
-        ctx.beginPath(); ctx.moveTo(wx - shuW - 2, sy); ctx.lineTo(wx - 2, sy); ctx.stroke()
-        ctx.beginPath(); ctx.moveTo(wx + winW + 2, sy); ctx.lineTo(wx + winW + 2 + shuW, sy); ctx.stroke()
+      const slats = 6
+      for (let s = 1; s < slats; s++) {
+        const sy = wy + (s / slats) * winH
+        ctx.beginPath(); ctx.moveTo(wx - shuW - 3, sy); ctx.lineTo(wx - 3, sy); ctx.stroke()
+        ctx.beginPath(); ctx.moveTo(wx + winW + 3, sy); ctx.lineTo(wx + winW + 3 + shuW, sy); ctx.stroke()
       }
+      // Shutter highlight edge
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)'
+      ctx.lineWidth = 1
+      ctx.strokeRect(wx - shuW - 3, wy, shuW, winH)
+      ctx.strokeRect(wx + winW + 3, wy, shuW, winH)
     }
   }
 
@@ -349,30 +371,52 @@ interface BuildingCfg {
   color: string
   floors?: number; cols?: number
   rowY?: number
+  rotY?: number   // Y-axis rotation in radians (for side-facing buildings)
 }
 
+// ── Authentic Portofino colour palette (from reference photos) ────────────────
+// Deep orange-red, yellow-ochre, lemon yellow, salmon, burnt sienna, cream
 const BUILDINGS: BuildingCfg[] = [
-  // ── Front waterfront row ──────────────────────────────────────────────────
-  { x: -13, z: -20, w: 3.6, h:  9, d: 3.0, color: '#C84B31', floors: 3, cols: 2 },
-  { x:  -9, z: -21, w: 4.2, h: 14, d: 3.0, color: '#F0D090', floors: 4, cols: 3 },
-  { x:  -5, z: -21, w: 3.2, h: 11, d: 3.0, color: '#E8845C', floors: 3, cols: 2 },
-  { x:  -1, z: -22, w: 4.6, h: 16, d: 3.0, color: '#E6B870', floors: 5, cols: 3 },
-  { x:   4, z: -22, w: 3.8, h: 12, d: 3.0, color: '#FAFAF8', floors: 4, cols: 3 },
-  { x:   8, z: -21, w: 4.0, h: 13, d: 3.0, color: '#C84B31', floors: 4, cols: 3 },
-  { x:  12, z: -20, w: 3.4, h: 10, d: 3.0, color: '#E8845C', floors: 3, cols: 2 },
-  { x:  16, z: -19, w: 4.0, h:  9, d: 3.0, color: '#F0D090', floors: 3, cols: 3 },
-  { x:  20, z: -18, w: 3.6, h:  8, d: 3.0, color: '#D4956A', floors: 3, cols: 2 },
-  // ── Second row (elevated on hillside) ─────────────────────────────────────
-  { x: -11, z: -26, w: 3.0, h:  7, d: 3.0, color: '#FAFAF8', rowY: 1.5, floors: 2, cols: 2 },
-  { x:  -7, z: -27, w: 3.5, h:  9, d: 3.0, color: '#E6B870', rowY: 2.0, floors: 3, cols: 2 },
-  { x:  -3, z: -28, w: 3.0, h:  8, d: 3.0, color: '#C84B31', rowY: 2.5, floors: 3, cols: 2 },
-  { x:   1, z: -28, w: 4.0, h: 10, d: 3.0, color: '#E8845C', rowY: 2.5, floors: 3, cols: 3 },
-  { x:   5, z: -28, w: 3.0, h:  8, d: 3.0, color: '#F0D090', rowY: 2.5, floors: 3, cols: 2 },
-  { x:   9, z: -27, w: 3.5, h:  9, d: 3.0, color: '#D4956A', rowY: 2.0, floors: 3, cols: 2 },
-  { x:  13, z: -26, w: 3.0, h:  7, d: 3.0, color: '#FAFAF8', rowY: 1.5, floors: 2, cols: 2 },
-  // ── Far-left wing (left headland) ─────────────────────────────────────────
-  { x: -17, z: -18, w: 3.5, h: 10, d: 3.0, color: '#E8845C', floors: 3, cols: 2 },
-  { x: -20, z: -16, w: 3.0, h:  8, d: 3.0, color: '#F0D090', floors: 3, cols: 2 },
+
+  // ════ FRONT WATERFRONT ROW — the iconic coloured facade ════════════════════
+  { x: -14, z: -21, w: 3.8, h: 10, d: 3.4, color: '#CC4E18', floors: 3, cols: 2 },  // deep orange
+  { x: -10, z: -22, w: 4.4, h: 15, d: 3.4, color: '#D4A828', floors: 4, cols: 3 },  // yellow-ochre tall
+  { x:  -5, z: -22, w: 3.6, h: 12, d: 3.4, color: '#E07848', floors: 3, cols: 2 },  // warm salmon
+  { x:  -1, z: -23, w: 5.0, h: 17, d: 3.4, color: '#C84020', floors: 5, cols: 3 },  // vivid burnt red
+  { x:   4, z: -23, w: 4.2, h: 14, d: 3.4, color: '#E8C840', floors: 4, cols: 3 },  // bright lemon
+  { x:   9, z: -22, w: 4.4, h: 15, d: 3.4, color: '#D46030', floors: 4, cols: 3 },  // vivid orange
+  { x:  14, z: -21, w: 3.6, h: 11, d: 3.4, color: '#DCA828', floors: 3, cols: 2 },  // golden ochre
+  { x:  18, z: -20, w: 4.0, h: 10, d: 3.4, color: '#E07040', floors: 3, cols: 3 },  // salmon-orange
+  { x:  22, z: -19, w: 3.8, h:  9, d: 3.4, color: '#F0E0A0', floors: 3, cols: 2 },  // pale cream
+
+  // ════ LEFT FLANK — buildings wrapping the left headland ════════════════════
+  // rotY = -π/6 so front faces angle toward harbour centre
+  { x: -18, z: -19, w: 3.8, h: 11, d: 3.2, color: '#B03A18', floors: 3, cols: 2, rotY: -0.52 },
+  { x: -22, z: -16, w: 4.2, h: 10, d: 3.2, color: '#D4A828', floors: 3, cols: 3, rotY: -0.62 },
+  { x: -25, z: -12, w: 3.6, h:  9, d: 3.2, color: '#E07848', floors: 3, cols: 2, rotY: -0.72 },
+
+  // ════ RIGHT FLANK — buildings wrapping right headland ══════════════════════
+  // rotY = +π/6 so front faces angle toward harbour centre
+  { x:  26, z: -16, w: 4.0, h: 11, d: 3.2, color: '#CC4E18', floors: 3, cols: 2, rotY:  0.55 },
+  { x:  29, z: -12, w: 3.8, h: 10, d: 3.2, color: '#E8C840', floors: 3, cols: 3, rotY:  0.65 },
+  { x:  32, z:  -8, w: 3.4, h:  9, d: 3.2, color: '#E07040', floors: 3, cols: 2, rotY:  0.72 },
+
+  // ════ SECOND ROW — hillside, elevated 2–3m above waterfront ════════════════
+  { x: -12, z: -27, w: 3.2, h:  8, d: 3.2, color: '#F0E4C0', rowY: 2.0, floors: 2, cols: 2 },
+  { x:  -8, z: -28, w: 3.8, h: 11, d: 3.2, color: '#CC4E18', rowY: 2.5, floors: 3, cols: 2 },
+  { x:  -4, z: -29, w: 3.4, h: 10, d: 3.2, color: '#D4A828', rowY: 3.0, floors: 3, cols: 2 },
+  { x:   0, z: -29, w: 4.4, h: 12, d: 3.2, color: '#B03A18', rowY: 3.0, floors: 3, cols: 3 },
+  { x:   5, z: -29, w: 3.4, h: 10, d: 3.2, color: '#E07848', rowY: 3.0, floors: 3, cols: 2 },
+  { x:   9, z: -28, w: 3.8, h: 11, d: 3.2, color: '#E8C840', rowY: 2.5, floors: 3, cols: 2 },
+  { x:  13, z: -27, w: 3.2, h:  8, d: 3.2, color: '#D4A828', rowY: 2.0, floors: 2, cols: 2 },
+
+  // ════ THIRD ROW — upper hillside, lighter/sun-bleached tones ═══════════════
+  { x: -10, z: -33, w: 3.2, h:  8, d: 3.0, color: '#ECD49A', rowY: 5.5, floors: 2, cols: 2 },
+  { x:  -6, z: -34, w: 3.4, h:  9, d: 3.0, color: '#D4886A', rowY: 6.0, floors: 2, cols: 2 },
+  { x:  -2, z: -34, w: 4.2, h: 10, d: 3.0, color: '#F0DCA8', rowY: 6.0, floors: 3, cols: 3 },
+  { x:   3, z: -34, w: 3.8, h:  9, d: 3.0, color: '#D49858', rowY: 6.0, floors: 3, cols: 2 },
+  { x:   7, z: -33, w: 3.2, h:  8, d: 3.0, color: '#ECC880', rowY: 5.5, floors: 2, cols: 2 },
+  { x:  11, z: -32, w: 3.0, h:  7, d: 3.0, color: '#DCC490', rowY: 5.0, floors: 2, cols: 2 },
 ]
 
 function HarborBuildings() {
@@ -392,26 +436,28 @@ function HarborBuildings() {
         <mesh
           key={i}
           position={[b.x, (b.rowY ?? 0) + b.h / 2 - 1.0, b.z]}
+          rotation={[0, b.rotY ?? 0, 0]}
           castShadow receiveShadow
         >
           <boxGeometry args={[b.w, b.h, b.d]} />
           <meshStandardMaterial
             map={textures[i]}
-            roughness={0.82}
+            roughness={0.78}
             metalness={0.0}
           />
         </mesh>
       ))}
 
-      {/* Terracotta rooftops on front row */}
-      {BUILDINGS.slice(0, 9).map((b, i) => (
+      {/* Terracotta rooftops — all rows */}
+      {BUILDINGS.map((b, i) => (
         <mesh
           key={`roof-${i}`}
-          position={[b.x, (b.rowY ?? 0) + b.h - 1.0 + 0.55, b.z]}
+          position={[b.x, (b.rowY ?? 0) + b.h - 1.0 + 0.50, b.z]}
+          rotation={[0, b.rotY ?? 0, 0]}
           castShadow
         >
-          <boxGeometry args={[b.w + 0.1, 0.35, b.d + 0.1]} />
-          <meshStandardMaterial color="#8C3A1C" roughness={0.9} />
+          <boxGeometry args={[b.w + 0.12, 0.32, b.d + 0.12]} />
+          <meshStandardMaterial color="#8A3618" roughness={0.88} />
         </mesh>
       ))}
     </group>
@@ -461,7 +507,7 @@ function HillTerrain() {
 
 function Church() {
   return (
-    <group position={[10, 4, -31]}>
+    <group position={[12, 6, -35]}>
       <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
         <boxGeometry args={[3.5, 5, 3.5]} />
         <meshStandardMaterial color="#FAFAF8" roughness={0.75} />
@@ -490,7 +536,7 @@ function Church() {
 
 function Castello() {
   return (
-    <group position={[-19, 7, -26]}>
+    <group position={[-22, 9, -28]}>
       <mesh position={[0, 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[4, 6, 4]} />
         <meshStandardMaterial color="#8B7355" roughness={0.9} />
@@ -510,6 +556,51 @@ function Castello() {
         <coneGeometry args={[0.9, 1.5, 8]} />
         <meshStandardMaterial color="#5A4A30" roughness={0.85} />
       </mesh>
+    </group>
+  )
+}
+
+// ── Harbor piazza — the sandy stone square at the back of the harbour ─────────
+
+function HarborPiazza() {
+  return (
+    <group>
+      {/* Main piazza floor — warm sandy stone */}
+      <mesh position={[0, -0.88, -16.5]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[28, 9]} />
+        <meshStandardMaterial color="#C4B080" roughness={0.96} />
+      </mesh>
+      {/* Stone paving — slightly lighter central band */}
+      <mesh position={[0, -0.87, -16.5]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[18, 6]} />
+        <meshStandardMaterial color="#CEC090" roughness={0.95} />
+      </mesh>
+      {/* Café awning 1 — green (left) */}
+      <mesh position={[-8, 0.20, -19.5]} rotation={[0.18, 0, 0]}>
+        <boxGeometry args={[5.5, 0.12, 2.2]} />
+        <meshStandardMaterial color="#2A6030" roughness={0.85} />
+      </mesh>
+      {/* Café awning 2 — green (right) */}
+      <mesh position={[6, 0.20, -19.5]} rotation={[0.18, 0, 0]}>
+        <boxGeometry args={[5.0, 0.12, 2.2]} />
+        <meshStandardMaterial color="#246428" roughness={0.85} />
+      </mesh>
+      {/* White parasols — scattered around piazza */}
+      {([ [-4, -15.5], [0, -14.5], [4, -15.0], [-7, -14.0], [7, -14.5] ] as [number,number][])
+        .map(([px, pz], i) => (
+          <group key={i} position={[px, 0.0, pz]}>
+            {/* Pole */}
+            <mesh position={[0, 0.55, 0]}>
+              <cylinderGeometry args={[0.04, 0.04, 1.1, 5]} />
+              <meshStandardMaterial color="#B0A890" roughness={0.8} />
+            </mesh>
+            {/* Canopy */}
+            <mesh position={[0, 1.15, 0]}>
+              <coneGeometry args={[0.75, 0.28, 8]} />
+              <meshStandardMaterial color="#F8F4EC" roughness={0.85} />
+            </mesh>
+          </group>
+        ))}
     </group>
   )
 }
@@ -1211,7 +1302,8 @@ function PortofinoInner() {
       <SceneLighting />
       <SceneSky />
       <WaterSurface />
-      <HarborQuay />       {/* stone promenade + seawall — anchors buildings to water */}
+      <HarborPiazza />     {/* sandy stone piazza + café awnings */}
+      <HarborQuay />       {/* stone promenade + seawall */}
       <HarborBuildings />
       <HillTerrain />
       <Church />
@@ -1230,7 +1322,7 @@ export const PortofinoScene = dynamic(
       function PortofinoCanvas() {
         return (
           <Canvas
-            camera={{ position: [0, 3.5, 18], fov: 55, near: 0.1, far: 200 }}
+            camera={{ position: [-1, 6.5, 24], fov: 68, near: 0.1, far: 220 }}
             style={{ position: 'fixed', inset: 0, zIndex: 0 }}
             gl={{ antialias: true, alpha: false }}
             shadows
