@@ -111,53 +111,57 @@ export function Nav() {
         {/* Nav */}
         <nav style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <LanguageSelector />
-          <Link
-            href="/research"
-            style={{
-              fontFamily:    'Inter, sans-serif',
-              fontSize:      '0.6875rem',
-              fontWeight:    600,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color:         navResearchColor,
-              textDecoration:'none',
-              borderBottom:  '1px solid rgba(20,184,166,0.4)',
-              paddingBottom: '1px',
-              transition:    'color 0.4s',
-            }}
-          >
-            {t('nav.research')}
-          </Link>
-          <Link
-            href="/data-lab"
-            style={{
-              fontFamily:    'Inter, sans-serif',
-              fontSize:      '0.6875rem',
-              fontWeight:    600,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color:         navLinkColor,
-              textDecoration:'none',
-              transition:    'color 0.4s',
-            }}
-          >
-            {t('nav.dataLab')}
-          </Link>
-          <Link
-            href="/pricing"
-            style={{
-              fontFamily:    'Inter, sans-serif',
-              fontSize:      '0.6875rem',
-              fontWeight:    600,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color:         navLinkColor,
-              textDecoration:'none',
-              transition:    'color 0.4s',
-            }}
-          >
-            {t('nav.pricing')}
-          </Link>
+
+          {/* Desktop-only nav links — hidden on mobile to prevent overflow */}
+          <div className="hidden md:flex" style={{ alignItems: 'center', gap: '1.25rem' }}>
+            <Link
+              href="/research"
+              style={{
+                fontFamily:    'Inter, sans-serif',
+                fontSize:      '0.6875rem',
+                fontWeight:    600,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color:         navResearchColor,
+                textDecoration:'none',
+                borderBottom:  '1px solid rgba(20,184,166,0.4)',
+                paddingBottom: '1px',
+                transition:    'color 0.4s',
+              }}
+            >
+              {t('nav.research')}
+            </Link>
+            <Link
+              href="/data-lab"
+              style={{
+                fontFamily:    'Inter, sans-serif',
+                fontSize:      '0.6875rem',
+                fontWeight:    600,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color:         navLinkColor,
+                textDecoration:'none',
+                transition:    'color 0.4s',
+              }}
+            >
+              {t('nav.dataLab')}
+            </Link>
+            <Link
+              href="/pricing"
+              style={{
+                fontFamily:    'Inter, sans-serif',
+                fontSize:      '0.6875rem',
+                fontWeight:    600,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color:         navLinkColor,
+                textDecoration:'none',
+                transition:    'color 0.4s',
+              }}
+            >
+              {t('nav.pricing')}
+            </Link>
+          </div>
 
           {session?.user ? (
             /* User avatar + dropdown */
