@@ -100,6 +100,7 @@ uniform vec3  uDeepColor;
 uniform vec3  uSurfaceColor;
 uniform vec3  uSunDir;
 uniform float uProgress;
+uniform float uShoreZ;   // world-Z of the seawall — water fades to 0 here
 
 varying vec2  vUv;
 varying float vElevation;
@@ -148,7 +149,11 @@ void main() {
   float horizon = smoothstep(0.20, 0.70, vUv.y);
   water = mix(water * 0.55, water, horizon);
 
-  gl_FragColor = vec4(water, mix(0.90, 0.97, horizon));
+  // Shore cut-off — water fades to transparent at the seawall edge.
+  // smoothstep: 0 when worldZ < uShoreZ-1.5 (behind wall), 1 when worldZ > uShoreZ+1.5 (open sea)
+  float shoreFade = smoothstep(uShoreZ - 1.5, uShoreZ + 1.5, vWorldPos.z);
+
+  gl_FragColor = vec4(water, mix(0.90, 0.97, horizon) * shoreFade);
 }
 `
 
@@ -283,6 +288,7 @@ function WaterSurface() {
     uDeepColor:    { value: new THREE.Color('#062434') },   // Ligurian deep teal-navy
     uSurfaceColor: { value: new THREE.Color('#0E9E8C') },   // warm Mediterranean surface
     uSunDir:       { value: new THREE.Vector3(0.55, 0.72, -0.42).normalize() },
+    uShoreZ:       { value: -9.5 },   // seawall front edge in world-Z
   }), [])
 
   useEffect(() => {
@@ -516,38 +522,33 @@ function HarborQuay() {
 
   return (
     <group>
-      {/* Stone promenade floor — spans full harbor front */}
-      <mesh position={[0, quayY, -17.0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[56, 16]} />
+      {/* Stone promenade floor — extends to z=-7 (past seawall) so it covers
+          the water's shore-fade transition zone (-11 to -8) */}
+      <mesh position={[0, quayY, -17.5]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[56, 21]} />
         <meshStandardMaterial color="#A0917E" roughness={0.97} metalness={0.0} />
       </mesh>
 
-      {/* Shallow step/ramp from promenade down to water line */}
-      <mesh position={[0, quayY - 0.10, -10.2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[56, 1.2]} />
-        <meshStandardMaterial color="#8E8070" roughness={0.97} />
-      </mesh>
-
-      {/* Seawall — low stone retaining wall at the harbor edge */}
-      <mesh position={[0, quayY + 0.28, -10.7]} castShadow receiveShadow>
+      {/* Seawall — low stone retaining wall sitting right at the water edge */}
+      <mesh position={[0, quayY + 0.28, -9.5]} castShadow receiveShadow>
         <boxGeometry args={[56, 0.55, 0.72]} />
         <meshStandardMaterial color="#8C7B6A" roughness={0.95} />
       </mesh>
       {/* Seawall cap / coping stone */}
-      <mesh position={[0, quayY + 0.60, -10.7]} castShadow>
+      <mesh position={[0, quayY + 0.60, -9.5]} castShadow>
         <boxGeometry args={[56.2, 0.13, 0.90]} />
         <meshStandardMaterial color="#9E8E7C" roughness={0.90} />
       </mesh>
 
       {/* Rear embankment — rises against base of buildings */}
-      <mesh position={[0, quayY + 0.18, -24.5]} castShadow receiveShadow>
+      <mesh position={[0, quayY + 0.18, -27.0]} castShadow receiveShadow>
         <boxGeometry args={[56, 0.42, 0.60]} />
         <meshStandardMaterial color="#8B7A6A" roughness={0.95} />
       </mesh>
 
       {/* Mooring posts / bollards along seawall */}
       {([-18, -10, -2, 6, 14, 20] as number[]).map((x, i) => (
-        <mesh key={i} position={[x, quayY + 0.72, -10.7]} castShadow>
+        <mesh key={i} position={[x, quayY + 0.72, -9.5]} castShadow>
           <cylinderGeometry args={[0.14, 0.18, 0.30, 8]} />
           <meshStandardMaterial color="#6A5A4C" roughness={0.9} />
         </mesh>
