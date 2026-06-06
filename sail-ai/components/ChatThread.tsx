@@ -7,16 +7,16 @@
  * AssistantCard:  white card, thin top border in mode color, dark readable text
  */
 
-import { useRef, useState, useCallback, memo } from 'react'
-import { motion, AnimatePresence }             from 'framer-motion'
-import type { ChatMessage }                    from '@/hooks/useChatMessages'
-import type { AnalysisMode }                   from '@/components/ModeSelector'
-import { SailAdapter }                         from '@/components/SailAdapter'
-import { ExecutiveResponseCard }               from '@/components/ExecutiveResponseCard'
-import { TrimTimelineCard }                    from '@/components/TrimTimelineCard'
-import { CatamaranResponseCard }               from '@/components/CatamaranResponseCard'
-import { SynergyResponseCard }                 from '@/components/SynergyResponseCard'
-import { StreamingCursor }                     from '@/components/chat/StreamingCursor'
+import { memo, useMemo } from 'react'
+import { motion, AnimatePresence }                      from 'framer-motion'
+import type { ChatMessage }                             from '@/hooks/useChatMessages'
+import type { AnalysisMode }                            from '@/components/ModeSelector'
+import { SailAdapter, extractSuggestedQuestions }       from '@/components/SailAdapter'
+import { ExecutiveResponseCard }                        from '@/components/ExecutiveResponseCard'
+import { TrimTimelineCard }                             from '@/components/TrimTimelineCard'
+import { CatamaranResponseCard }                        from '@/components/CatamaranResponseCard'
+import { SynergyResponseCard }                          from '@/components/SynergyResponseCard'
+import { StreamingCursor }                              from '@/components/chat/StreamingCursor'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -31,15 +31,19 @@ const MODE_META: Record<AnalysisMode, { label: string; color: string }> = {
   scenario:  { label: 'Scenario',  color: '#0891B2' },
 }
 
-const FOLLOW_UPS: Record<AnalysisMode, string[]> = {
+// Fallback chips used only for JSON-schema modes (trim/catamaran/upwind/downwind)
+// where the AI returns structured data and cannot embed a ## Suggested Questions block.
+// Text-streaming modes (sail/operator/scenario/synergy/personalised) generate
+// contextual questions dynamically via CONTEXTUAL_FOLLOWUP_DIRECTIVE in the prompt.
+const FALLBACK_FOLLOW_UPS: Record<AnalysisMode, string[]> = {
   upwind:    ['What are the biggest execution risks?', 'How should we prioritize these steps?', 'Build a 90-day milestone roadmap.'],
   downwind:  ['How do I overcome the main obstacle?', 'What metrics should I track?', 'Give me a one-week action list.'],
-  sail:      ['Drill deeper into the highest-impact insight.', 'What competitive threats should I monitor?', 'Turn this into a board-ready summary.'],
+  sail:      [],
   trim:      ['Which milestone is most at risk?', 'Who should own each milestone?', 'Add contingency buffers to the critical path.'],
   catamaran: ['How do we balance both tracks?', 'What if we focus only on Track A first?', 'Build the resource allocation plan.'],
-  operator:  ['Give me the next 3 tactical moves right now.', 'What is the highest-leverage action this week?', 'Identify the single biggest constraint.'],
-  synergy:   ["Which mode's perspective is most critical?", 'Where do the modes disagree and why?', 'Synthesise all perspectives into one action.'],
-  scenario:  ['What is the worst-case scenario probability?', 'How do I hedge against the downside?', 'Run the bull-case scenario instead.'],
+  operator:  [],
+  synergy:   [],
+  scenario:  [],
 }
 
 // ── User bubble ────────────────────────────────────────────────────────────────
@@ -104,9 +108,20 @@ const AssistantCard = memo(function AssistantCard({
   message:    ChatMessage
   onFollowUp: (text: string) => void
 }) {
-  const meta  = MODE_META[message.mode] ?? MODE_META.upwind
-  const chips = FOLLOW_UPS[message.mode] ?? []
-  const ts    = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const meta = MODE_META[message.mode] ?? MODE_META.upwind
+  const ts   = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+  // Dynamic chips: extract AI-generated follow-up questions from the response text.
+  // Falls back to static mode chips for JSON modes (trim/catamaran/upwind/downwind)
+  // which return structured data and cannot embed a ## Suggested Questions block.
+  const chips = useMemo(() => {
+    if (message.streaming) return FALLBACK_FOLLOW_UPS[message.mode] ?? []
+    if (message.payload.type === 'text' && message.payload.text) {
+      const dynamic = extractSuggestedQuestions(message.payload.text)
+      if (dynamic.length >= 2) return dynamic
+    }
+    return FALLBACK_FOLLOW_UPS[message.mode] ?? []
+  }, [message.streaming, message.payload, message.mode])
 
   return (
     <motion.div

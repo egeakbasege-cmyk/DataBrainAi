@@ -585,6 +585,23 @@ function cleanBodyText(text: string): string {
     .trim()
 }
 
+// Strip the ## Suggested Questions section from response text before display.
+// ChatThread extracts the questions separately for the chip buttons.
+function stripSuggestedQuestions(raw: string): string {
+  return raw.replace(/\n{0,2}\s*##\s*Suggested Questions[\s\S]*$/i, '').trimEnd()
+}
+
+// Exported so ChatThread can extract questions from raw message.payload.text
+export function extractSuggestedQuestions(raw: string): string[] {
+  const match = raw.match(/##\s*Suggested Questions\s*\n([\s\S]*?)(?:\n##\s|\s*$)/i)
+  if (!match) return []
+  return match[1]
+    .split('\n')
+    .map(l => l.replace(/^[-*•\d.]\s*/, '').trim())
+    .filter(l => l.length > 8 && l.length < 160)
+    .slice(0, 3)
+}
+
 function extractSourcesBlock(raw: string): { body: string; sources: ParsedSource[] } {
   // Lenient match — catches all formats the AI produces:
   // "## Sources"  "## Sources:"  "## Kaynaklar"  "**Sources**"  "Sources:"  etc.
@@ -687,7 +704,11 @@ export function SailAdapter({ text, intent, streaming }: Props) {
   const accent = INTENT_ACCENT[intent]
 
   const { segments, sources } = useMemo(() => {
-    const { body, sources } = extractSourcesBlock(text)
+    // Strip ## Suggested Questions block before rendering — it is extracted
+    // separately by ChatThread for the follow-up chips and must not appear in
+    // the visible response body.
+    const textWithoutFollowUps = stripSuggestedQuestions(text)
+    const { body, sources } = extractSourcesBlock(textWithoutFollowUps)
     const parsed    = parseMarkdown(body)
     const hasMrrRef = /\bmrr\b/i.test(body)
     if (intent === 'analytic' && hasMrrRef) {

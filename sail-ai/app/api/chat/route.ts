@@ -65,6 +65,7 @@ import {
   DATA_UNCERTAINTY_SUFFIX,
   SEARCH_FAILED_WARNING,
   BLUF_DIRECTIVE,
+  CONTEXTUAL_FOLLOWUP_DIRECTIVE,
 } from '@/lib/prompts/enhanced-modes'
 
 // ── Skill + governance layer ──────────────────────────────────────────────────
@@ -713,8 +714,10 @@ SCOPE RULES — NON-NEGOTIABLE:
 
   const governanceSuffix  = _appliedCards.length > 0 ? GOVERNANCE_SYSTEM_SUFFIX : ''
   const liveDataPrefix    = _hasSynthesisContext ? LIVE_DATA_SYSTEM_PREFIX : ''
-  const streamingModes    = new Set(['sail', 'operator', 'personalised', 'synergy', 'scenario'])
-  const uncertaintySuffix = streamingModes.has(analysisMode) ? DATA_UNCERTAINTY_SUFFIX : ''
+  // Apply uncertainty rules to ALL modes — previously only 5/8 modes had this,
+  // allowing upwind/downwind/trim/catamaran to silently serve stale training data.
+  const uncertaintySuffix = DATA_UNCERTAINTY_SUFFIX
+  const followUpDirective = CONTEXTUAL_FOLLOWUP_DIRECTIVE
   const synthesisSuffix   = _hasSynthesisContext
     ? `\n\n⚡ REMINDER — LIVE DATA ACTIVE: The user message contains fresh web search results ` +
       `inside ━━ REAL-TIME WEB SEARCH RESULTS ━━. ` +
@@ -746,10 +749,10 @@ SCOPE RULES — NON-NEGOTIABLE:
       ? liveDataPrefix +
         buildPersonalisedAISystemPrompt(
           draftResult.drafts, language, companyName, primaryConstraint,
-        ) + synthesisSuffix
+        ) + synthesisSuffix + followUpDirective
       : liveDataPrefix +
         buildPersonalisedAIFallbackPrompt(language, companyName, primaryConstraint) +
-        uncertaintySuffix + synthesisSuffix
+        uncertaintySuffix + synthesisSuffix + followUpDirective
 
     const synthRes = await groqFetch(
       {
@@ -841,7 +844,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         messages:    buildGroqMessages(
           liveDataPrefix + domainPrefix +
           buildEnhancedSailPrompt(language, primaryConstraint) +
-          governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          governanceSuffix + uncertaintySuffix + synthesisSuffix + followUpDirective,
           userMessage,
           body.messages,
         ),
@@ -949,7 +952,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         messages:    buildGroqMessages(
           liveDataPrefix + domainPrefix +
           buildScenarioSystemPrompt(language, primaryConstraint) +
-          governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          governanceSuffix + uncertaintySuffix + synthesisSuffix + followUpDirective,
           userMessage,
           body.messages,
         ),
@@ -1024,7 +1027,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         messages:    buildGroqMessages(
           liveDataPrefix + domainPrefix +
           buildEnhancedOperatorPrompt(language, primaryConstraint) +
-          governanceSuffix + uncertaintySuffix + synthesisSuffix,
+          governanceSuffix + uncertaintySuffix + synthesisSuffix + followUpDirective,
           userMessage,
           body.messages,
         ),
@@ -1095,7 +1098,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         model:           modelSelection.model,
         messages:        buildGroqMessages(
           liveDataPrefix + domainPrefix +
-          buildEnhancedTrimPrompt(language, primaryConstraint) + synthesisSuffix,
+          buildEnhancedTrimPrompt(language, primaryConstraint) + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),
@@ -1143,7 +1146,7 @@ SCOPE RULES — NON-NEGOTIABLE:
         model:           modelSelection.model,
         messages:        buildGroqMessages(
           liveDataPrefix + domainPrefix +
-          buildEnhancedCatamaranPrompt(language, primaryConstraint) + synthesisSuffix,
+          buildEnhancedCatamaranPrompt(language, primaryConstraint) + uncertaintySuffix + synthesisSuffix,
           userMessage,
           body.messages,
         ),

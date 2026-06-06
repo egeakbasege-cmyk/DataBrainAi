@@ -186,6 +186,35 @@ Treat all figures as historical estimates only. Strongly recommend verifying wit
 
 `
 
+// ══════════════════════════════════════════════════════════════════════════════
+// CONTEXTUAL FOLLOW-UP DIRECTIVE
+// Injected into EVERY mode prompt so the AI ends each response with 3 follow-up
+// questions that are specific to the content of that exact response — not generic
+// mode-level phrases. The frontend extracts the ## Suggested Questions block,
+// strips it from the displayed text, and uses it to populate the chip buttons.
+// ══════════════════════════════════════════════════════════════════════════════
+
+export const CONTEXTUAL_FOLLOWUP_DIRECTIVE = `
+
+FOLLOW-UP QUESTIONS — MANDATORY CLOSING BLOCK:
+At the very end of your response (after ## Sources if present), append exactly this:
+
+## Suggested Questions
+- [First question]
+- [Second question]
+- [Third question]
+
+STRICT RULES for the questions:
+1. Each question MUST reference a specific insight, figure, or entity FROM your response above.
+   ✓ "How does the 34% margin compare to industry average for SaaS?"
+   ✗ "What are the biggest risks?" (too generic)
+2. Write in the SAME LANGUAGE as the user's message.
+3. Keep each question under 12 words.
+4. The three questions should cover different angles: e.g. deeper drill, competitive context, next action.
+5. NEVER output placeholder text like "[First question]" — always write real questions.
+
+`
+
 export const ANALYTIC_SYNTHESIS_DIRECTIVE = `
 
 LIVE RESEARCH CONTEXT ACTIVE — SYNTHESIS PROTOCOL:
