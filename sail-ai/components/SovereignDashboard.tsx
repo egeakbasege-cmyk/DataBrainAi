@@ -686,7 +686,7 @@ export function SovereignDashboard({
                 textTransform: 'uppercase',
               }}
             >
-              {label} Modunu Başlat
+              {t('sovereign.startModePrefix')}{label}{t('sovereign.startModeSuffix')}
             </motion.span>
           </AnimatePresence>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -694,7 +694,7 @@ export function SovereignDashboard({
           </svg>
         </div>
         <span style={{ fontSize: '0.55rem', letterSpacing: '0.08em', color: 'rgba(20,184,166,0.75)', textTransform: 'uppercase' }}>
-          Sohbete geç →
+          {t('sovereign.goToChat')}
         </span>
       </motion.button>
 

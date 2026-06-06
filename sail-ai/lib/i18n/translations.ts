@@ -201,6 +201,11 @@ const translations = {
     'dock.pricing':           'Pricing',
     'dock.datalab':           'Data Lab',
 
+    // ── Sovereign dashboard ───────────────────────────────
+    'sovereign.startModePrefix': 'Start ',
+    'sovereign.startModeSuffix': ' Mode',
+    'sovereign.goToChat':        'Go to chat →',
+
     // ── Login ────────────────────────────────────────────
     'login.signIn':           'Sign In',
     'login.register':         'Register',
@@ -995,6 +1000,11 @@ const translations = {
     'dock.pricing':           'Fiyatlandırma',
     'dock.datalab':           'Veri Laboratuvarı',
 
+    // ── Sovereign dashboard ───────────────────────────────
+    'sovereign.startModePrefix': '',
+    'sovereign.startModeSuffix': ' Modunu Başlat',
+    'sovereign.goToChat':        'Sohbete geç →',
+
     'login.signIn':           'Giriş Yap',
     'login.register':         'Kayıt Ol',
     'login.withGoogle':       'Google ile Devam Et',
@@ -1779,6 +1789,11 @@ const translations = {
     'dock.pricing':           'Precios',
     'dock.datalab':           'Lab de Datos',
 
+    // ── Sovereign dashboard ───────────────────────────────
+    'sovereign.startModePrefix': 'Iniciar ',
+    'sovereign.startModeSuffix': '',
+    'sovereign.goToChat':        'Ir al chat →',
+
     'login.signIn':           'Iniciar sesión',
     'login.register':         'Registrarse',
     'login.withGoogle':       'Continuar con Google',
@@ -2550,6 +2565,11 @@ const translations = {
     'dock.chartCourse':       'Kurs setzen',
     'dock.pricing':           'Preise',
     'dock.datalab':           'Datenlabor',
+
+    // ── Sovereign dashboard ───────────────────────────────
+    'sovereign.startModePrefix': '',
+    'sovereign.startModeSuffix': '-Modus starten',
+    'sovereign.goToChat':        'Zum Chat →',
 
     'login.signIn':           'Anmelden',
     'login.register':         'Registrieren',
@@ -3323,6 +3343,11 @@ const translations = {
     'dock.pricing':           'Tarifs',
     'dock.datalab':           'Labo Données',
 
+    // ── Sovereign dashboard ───────────────────────────────
+    'sovereign.startModePrefix': 'Démarrer ',
+    'sovereign.startModeSuffix': '',
+    'sovereign.goToChat':        'Aller au chat →',
+
     'login.signIn':           'Se connecter',
     'login.register':         'S\'inscrire',
     'login.withGoogle':       'Continuer avec Google',
@@ -4094,6 +4119,11 @@ const translations = {
     'dock.chartCourse':       '制定航线',
     'dock.pricing':           '定价',
     'dock.datalab':           '数据实验室',
+
+    // ── Sovereign dashboard ───────────────────────────────
+    'sovereign.startModePrefix': '开始',
+    'sovereign.startModeSuffix': '模式',
+    'sovereign.goToChat':        '进入聊天 →',
 
     'login.signIn':           '登录',
     'login.register':         '注册',
