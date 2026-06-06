@@ -397,34 +397,15 @@ function HarborBuildings() {
         </mesh>
       ))}
 
-      {/* Pitched gable rooftops — all rows get terracotta ridge roofs.
-          Technique: box rotated 45° on Z creates a diamond cross-section
-          whose upper "V" reads as a triangular roof ridge from any angle. */}
-      {BUILDINGS.map((b, i) => {
-        const rh    = Math.max(b.w * 0.36, 0.95)   // pitch height ∝ building width
-        const diag  = rh * 1.414                    // diagonal of the rotated square
-        const baseY = (b.rowY ?? 0) + b.h - 1.0    // top of building wall
-        return (
-          <mesh
-            key={`roof-${i}`}
-            position={[b.x, baseY + rh * 0.45, b.z]}
-            rotation={[0, 0, Math.PI / 4]}
-            castShadow
-          >
-            <boxGeometry args={[diag, diag, b.d + 0.50]} />
-            <meshStandardMaterial color="#7E3018" roughness={0.92} />
-          </mesh>
-        )
-      })}
-      {/* Eave overhang strip — darker fascia board at roofline */}
+      {/* Terracotta rooftops on front row */}
       {BUILDINGS.slice(0, 9).map((b, i) => (
         <mesh
-          key={`eave-${i}`}
-          position={[b.x, (b.rowY ?? 0) + b.h - 1.0 + 0.08, b.z]}
+          key={`roof-${i}`}
+          position={[b.x, (b.rowY ?? 0) + b.h - 1.0 + 0.55, b.z]}
           castShadow
         >
-          <boxGeometry args={[b.w + 0.32, 0.18, b.d + 0.32]} />
-          <meshStandardMaterial color="#5A2E12" roughness={0.95} />
+          <boxGeometry args={[b.w + 0.1, 0.35, b.d + 0.1]} />
+          <meshStandardMaterial color="#8C3A1C" roughness={0.9} />
         </mesh>
       ))}
     </group>
@@ -432,54 +413,37 @@ function HarborBuildings() {
 }
 
 // ── Hill terrain ──────────────────────────────────────────────────────────────
-// NOTE: FrontSide hemispheres positioned with base at ground-level so they read
-// as convex hills. BackSide was causing a concave "bowl" effect.
 
 function HillTerrain() {
   return (
     <group>
-      {/* Main central green hill — large dome directly behind harbor row */}
-      <mesh position={[0, -2.2, -38]}>
-        <sphereGeometry args={[26, 36, 18, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#3D6B42" roughness={0.88} />
+      <mesh position={[0, 4, -35]}>
+        <sphereGeometry args={[22, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#3A6B40" side={THREE.BackSide} roughness={0.9} />
       </mesh>
-      {/* Left headland — juts out to frame harbor */}
-      <mesh position={[-26, -2.0, -25]}>
-        <sphereGeometry args={[14, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#2E5A35" roughness={0.9} />
+      <mesh position={[-22, 3, -22]}>
+        <sphereGeometry args={[12, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#2D5A35" side={THREE.BackSide} roughness={0.9} />
       </mesh>
-      {/* Right headland */}
-      <mesh position={[28, -2.0, -23]}>
-        <sphereGeometry args={[16, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#365E3C" roughness={0.9} />
-      </mesh>
-      {/* Terrain fill — earth/grass between buildings and hills */}
-      <mesh position={[0, -1.15, -29]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[90, 26]} />
-        <meshStandardMaterial color="#3B5E40" roughness={0.96} />
+      <mesh position={[24, 3, -20]}>
+        <sphereGeometry args={[14, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#365E3C" side={THREE.BackSide} roughness={0.9} />
       </mesh>
 
-      {/* Pine trees — Italian stone pines on the hillside */}
+      {/* Pine trees */}
       {([
-        [-18, -28, 4.0], [-16, -30, 4.5], [-14, -31, 3.8],
-        [ 18, -26, 4.2], [ 21, -28, 4.8], [ 23, -25, 3.9],
-        [  0, -33, 4.5], [  3, -34, 4.0], [ -4, -33, 4.3],
-        [-10, -32, 5.0], [ 10, -31, 4.6],
-      ] as [number, number, number][]).map(([x, z, baseY], i) => (
-        <group key={i} position={[x, baseY, z]}>
-          {/* Trunk */}
-          <mesh position={[0, -1.6, 0]} castShadow>
-            <cylinderGeometry args={[0.10, 0.16, 2.0, 7]} />
+        [-18, -28], [-16, -30], [-14, -31],
+        [ 18, -26], [ 21, -28], [ 23, -25],
+        [  0, -32], [  3, -33], [ -4, -32],
+      ] as [number, number][]).map(([x, z], i) => (
+        <group key={i} position={[x, 3.5 + (i % 3) * 0.8, z]}>
+          <mesh position={[0, -1.5, 0]} castShadow>
+            <cylinderGeometry args={[0.12, 0.18, 1.8, 6]} />
             <meshStandardMaterial color="#5C3D1E" roughness={0.95} />
           </mesh>
-          {/* Canopy — layered cones for stone pine silhouette */}
-          <mesh position={[0, 0.2, 0]} castShadow>
-            <coneGeometry args={[1.1, 1.8, 7]} />
-            <meshStandardMaterial color="#1F5228" roughness={0.85} />
-          </mesh>
-          <mesh position={[0, 1.2, 0]} castShadow>
-            <coneGeometry args={[0.72, 1.4, 7]} />
-            <meshStandardMaterial color="#265E30" roughness={0.82} />
+          <mesh castShadow>
+            <coneGeometry args={[0.9, 2.4, 6]} />
+            <meshStandardMaterial color="#2A5C32" roughness={0.85} />
           </mesh>
         </group>
       ))}
