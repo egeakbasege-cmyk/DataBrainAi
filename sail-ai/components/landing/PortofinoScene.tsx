@@ -600,9 +600,8 @@ const HARBOR_PATH = new THREE.CatmullRomCurve3([
 ])
 
 function SailboatWithPhone() {
-  const boatRef       = useRef<THREE.Group>(null)
-  const iphoneGlowRef = useRef<THREE.MeshStandardMaterial>(null)
-  const { node }      = useNarrative()
+  const boatRef  = useRef<THREE.Group>(null)
+  const { node } = useNarrative()
 
   const targetProgress = useRef(0)
   const smoothProgress = useRef(0)
@@ -632,11 +631,6 @@ function SailboatWithPhone() {
     boatRef.current.rotation.x = Math.sin(t * 0.38) * 0.025
     boatRef.current.rotation.z = Math.sin(t * 0.29 + 1.3) * 0.018
 
-    // iPhone screen glow pulses softly
-    if (iphoneGlowRef.current) {
-      iphoneGlowRef.current.emissiveIntensity =
-        0.18 + Math.sin(t * 1.2) * 0.06 + smoothProgress.current * 0.15
-    }
   })
 
   return (
@@ -697,61 +691,6 @@ function SailboatWithPhone() {
       {/* ── Main sail — proper Bermuda rig triangle (cream canvas) ───────── */}
       <MainSail />
 
-      {/* ── iPhone as mainsail ───────────────────────────────────────────── */}
-      <group position={[0, 4.8, 0.4]} rotation={[0.15, 0, 0.04]}>
-        {/* Phone body — titanium/space black */}
-        <mesh>
-          <boxGeometry args={[2.10, 4.55, 0.14]} />
-          <meshStandardMaterial
-            color="#1C1C1E"
-            metalness={0.85}
-            roughness={0.15}
-          />
-        </mesh>
-
-        {/* Screen surface — glowing tiffany/champagne */}
-        <mesh position={[0, 0, 0.075]}>
-          <planeGeometry args={[1.88, 4.10]} />
-          <meshStandardMaterial
-            ref={iphoneGlowRef}
-            color="#0A1A2A"
-            emissive="#14B8A6"
-            emissiveIntensity={0.22}
-            roughness={0.05}
-            metalness={0.0}
-          />
-        </mesh>
-
-        {/* Screen content hint — gold UI lines (purely visual) */}
-        {[1.2, 0.4, -0.4, -1.2].map((y, i) => (
-          <mesh key={i} position={[0.1, y, 0.077]}>
-            <planeGeometry args={[i === 0 ? 1.2 : 0.8 + Math.random() * 0.5, 0.045]} />
-            <meshStandardMaterial
-              color="#C49A3C"
-              emissive="#C49A3C"
-              emissiveIntensity={0.6}
-            />
-          </mesh>
-        ))}
-
-        {/* Dynamic Island */}
-        <mesh position={[0, 1.95, 0.078]}>
-          <capsuleGeometry args={[0.09, 0.28, 8, 16]} />
-          <meshStandardMaterial color="#050505" />
-        </mesh>
-
-        {/* Subtle screen edge glow */}
-        <mesh position={[0, 0, 0.076]}>
-          <planeGeometry args={[1.90, 4.12]} />
-          <meshStandardMaterial
-            color="#14B8A6"
-            emissive="#14B8A6"
-            emissiveIntensity={0.05}
-            transparent
-            opacity={0.12}
-          />
-        </mesh>
-      </group>
 
       {/* ── Animated wake foam trail ─────────────────────────────────────── */}
       <WakeTrail />
