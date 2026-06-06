@@ -1,9 +1,10 @@
 'use client'
 
 /**
- * DataLabChatPanel
+ * DataLabChatPanel — Portofino Light Design
  * ─────────────────────────────────────────────────────────────────────────────
  * Slide-in AI chat panel for Data Lab.
+ * • White glass morphism aligned with the app's Portofino palette
  * • Context-aware: knows which data source is connected + its summary
  * • Calls /api/chat/ in 'operator' mode with the source data injected as context
  * • App Integration menu: shows connectable external apps (Slack, Notion, etc.)
@@ -75,44 +76,44 @@ function AppConnectionMenu({
       exit={{    opacity: 0, scale: 0.95, y: 8 }}
       transition={{ duration: 0.18 }}
       style={{
-        position:       'absolute',
-        bottom:         'calc(100% + 0.5rem)',
-        right:           0,
-        width:           340,
-        background:     'linear-gradient(160deg, rgba(14,16,28,0.97) 0%, rgba(8,9,13,0.98) 100%)',
-        backdropFilter: 'blur(28px)',
-        WebkitBackdropFilter: 'blur(28px)',
-        border:         '1px solid rgba(20,184,166,0.22)',
-        borderRadius:   16,
-        boxShadow:      '0 20px 60px rgba(0,0,0,0.5)',
-        zIndex:          10,
-        overflow:        'hidden',
+        position:             'absolute',
+        bottom:               'calc(100% + 0.5rem)',
+        right:                 0,
+        width:                 340,
+        background:           'rgba(255,255,255,0.96)',
+        backdropFilter:       'blur(28px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+        border:               '1px solid rgba(129,199,185,0.30)',
+        borderRadius:          16,
+        boxShadow:            '0 20px 60px rgba(20,184,166,0.10), 0 4px 16px rgba(0,0,0,0.08)',
+        zIndex:                10,
+        overflow:              'hidden',
       }}
     >
       {/* Header */}
       <div style={{
         padding:        '1rem 1.25rem 0.75rem',
-        borderBottom:   '1px solid rgba(255,255,255,0.07)',
+        borderBottom:   '1px solid rgba(129,199,185,0.20)',
         display:        'flex',
         alignItems:     'center',
         justifyContent: 'space-between',
       }}>
         <div>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#14B8A6', margin: 0 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#0D9488', margin: 0 }}>
             App Bağlantıları
           </p>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.40)', margin: '0.15rem 0 0' }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(26,43,60,0.50)', margin: '0.15rem 0 0' }}>
             AI analizlerini uygulamalarınıza gönderin
           </p>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}>✕</button>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(26,43,60,0.40)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}>✕</button>
       </div>
 
       {/* App grid */}
       <div style={{ padding: '0.75rem', maxHeight: 340, overflowY: 'auto' }}>
         {categories.map(cat => (
           <div key={cat} style={{ marginBottom: '0.75rem' }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)', margin: '0 0 0.4rem 0.25rem' }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.38)', margin: '0 0 0.4rem 0.25rem' }}>
               {cat}
             </p>
             {APP_INTEGRATIONS.filter(a => a.category === cat).map(app => {
@@ -127,25 +128,25 @@ function AppConnectionMenu({
                     padding:        '0.6rem 0.75rem',
                     borderRadius:   10,
                     marginBottom:   '0.25rem',
-                    background:     connected ? `${app.color}15` : 'rgba(255,255,255,0.03)',
-                    border:         connected ? `1px solid ${app.color}40` : '1px solid transparent',
+                    background:     connected ? `${app.color}12` : 'rgba(20,184,166,0.03)',
+                    border:         connected ? `1px solid ${app.color}35` : '1px solid rgba(129,199,185,0.15)',
                     cursor:         'pointer',
                     transition:     'all 0.15s',
                   }}
-                  onMouseEnter={e => { if (!connected) (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.06)' }}
-                  onMouseLeave={e => { if (!connected) (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.03)' }}
+                  onMouseEnter={e => { if (!connected) (e.currentTarget as HTMLDivElement).style.background = 'rgba(20,184,166,0.06)' }}
+                  onMouseLeave={e => { if (!connected) (e.currentTarget as HTMLDivElement).style.background = 'rgba(20,184,166,0.03)' }}
                   onClick={() => onToggle(app.id)}
                 >
                   <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{app.icon}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: 'rgba(255,255,255,0.88)', margin: 0 }}>{app.name}</p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.40)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.desc}</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: '#1A2B3C', margin: 0 }}>{app.name}</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(26,43,60,0.50)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.desc}</p>
                   </div>
                   <div style={{
                     width:        32,
                     height:       18,
                     borderRadius: 9,
-                    background:   connected ? '#14B8A6' : 'rgba(255,255,255,0.12)',
+                    background:   connected ? '#14B8A6' : 'rgba(129,199,185,0.28)',
                     position:     'relative',
                     flexShrink:   0,
                     transition:   'background 0.2s',
@@ -158,6 +159,7 @@ function AppConnectionMenu({
                       height:      14,
                       borderRadius: '50%',
                       background:  '#fff',
+                      boxShadow:   '0 1px 4px rgba(0,0,0,0.15)',
                       transition:  'left 0.2s',
                     }} />
                   </div>
@@ -168,8 +170,8 @@ function AppConnectionMenu({
         ))}
       </div>
 
-      <div style={{ padding: '0.65rem 1.25rem', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: 'rgba(255,255,255,0.28)', margin: 0, textAlign: 'center' }}>
+      <div style={{ padding: '0.65rem 1.25rem', borderTop: '1px solid rgba(129,199,185,0.18)' }}>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: 'rgba(26,43,60,0.38)', margin: 0, textAlign: 'center' }}>
           {connectedApps.size} uygulama bağlı · Webhook URL yakında
         </p>
       </div>
@@ -232,7 +234,6 @@ export function DataLabChatPanel({
     setLoading(true)
 
     try {
-      // Build context from connected source
       const sourceContext = source
         ? `Connected data source: ${source.name} | Revenue: ${source.revenue} | Orders: ${source.orders} | AOV: ${source.aov} | Top Product: ${source.topProduct} | ${source.extra.map(e => `${e.label}: ${e.value}`).join(' | ')}`
         : 'No data source connected yet.'
@@ -253,9 +254,7 @@ export function DataLabChatPanel({
         }),
       })
 
-      if (!res.ok || !res.body) {
-        throw new Error(`API error: ${res.status}`)
-      }
+      if (!res.ok || !res.body) throw new Error(`API error: ${res.status}`)
 
       const reader  = res.body.getReader()
       const decoder = new TextDecoder()
@@ -265,7 +264,6 @@ export function DataLabChatPanel({
         const { done, value } = await reader.read()
         if (done) break
         fullText += decoder.decode(value, { stream: true })
-        // Strip any JSON meta lines (healthReport, scopeMetadata)
         const displayText = fullText
           .split('\n')
           .filter(l => {
@@ -278,7 +276,6 @@ export function DataLabChatPanel({
         ))
       }
 
-      // Mark streaming done
       setMessages(prev => prev.map(m =>
         m.id === assistantId ? { ...m, streaming: false } : m
       ))
@@ -310,13 +307,13 @@ export function DataLabChatPanel({
     <AnimatePresence>
       {open && (
         <>
-          {/* Overlay (mobile) */}
+          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 49, display: 'block' }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(26,43,60,0.25)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', zIndex: 49 }}
             className="dl-chat-overlay"
           />
 
@@ -327,67 +324,82 @@ export function DataLabChatPanel({
             exit={{    x: '100%', opacity: 0 }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
             style={{
-              position:       'fixed',
-              top:             0,
-              right:           0,
-              bottom:          0,
-              width:           'min(420px, 100vw)',
-              background:     'linear-gradient(160deg, rgba(10,12,22,0.97) 0%, rgba(8,9,13,0.98) 100%)',
-              backdropFilter: 'blur(32px)',
-              WebkitBackdropFilter: 'blur(32px)',
-              borderLeft:     '1px solid rgba(20,184,166,0.20)',
-              boxShadow:      '-20px 0 60px rgba(0,0,0,0.5)',
-              zIndex:          50,
-              display:         'flex',
-              flexDirection:   'column',
+              position:             'fixed',
+              top:                   0,
+              right:                 0,
+              bottom:                0,
+              width:                 'min(420px, 100vw)',
+              background:           'rgba(255,255,255,0.94)',
+              backdropFilter:       'blur(32px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+              borderLeft:           '1px solid rgba(129,199,185,0.30)',
+              boxShadow:            '-20px 0 60px rgba(20,184,166,0.10), -4px 0 20px rgba(0,0,0,0.06)',
+              zIndex:                50,
+              display:               'flex',
+              flexDirection:         'column',
             }}
           >
             {/* Header */}
             <div style={{
               padding:        '1rem 1.25rem',
-              borderBottom:   '1px solid rgba(255,255,255,0.07)',
+              borderBottom:   '1px solid rgba(129,199,185,0.20)',
               display:        'flex',
               alignItems:     'center',
               gap:            '0.75rem',
               flexShrink:      0,
+              background:     'rgba(255,255,255,0.60)',
             }}>
               <div style={{
-                width:        36,
-                height:       36,
-                borderRadius: '50%',
-                background:   'linear-gradient(135deg, rgba(20,184,166,0.35) 0%, rgba(8,9,13,0.6) 100%)',
-                border:       '1px solid rgba(20,184,166,0.45)',
-                display:      'flex',
-                alignItems:   'center',
+                width:          36,
+                height:         36,
+                borderRadius:   '50%',
+                background:     'linear-gradient(135deg, rgba(20,184,166,0.20) 0%, rgba(212,238,233,0.80) 100%)',
+                border:         '1px solid rgba(129,199,185,0.40)',
+                display:        'flex',
+                alignItems:     'center',
                 justifyContent: 'center',
-                fontSize:     '1rem',
-                flexShrink:    0,
+                fontSize:       '1rem',
+                flexShrink:      0,
               }}>
                 ⚗️
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.87rem', fontWeight: 700, color: 'rgba(255,255,255,0.92)', margin: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.87rem', fontWeight: 700, color: '#1A2B3C', margin: 0 }}>
                   Data Lab AI
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: source ? '#14B8A6' : 'rgba(255,255,255,0.38)', margin: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: source ? '#0D9488' : 'rgba(26,43,60,0.40)', margin: 0 }}>
                   {source ? `${source.name} bağlı` : 'Veri kaynağı bekleniyor…'}
                 </p>
               </div>
               <button
                 onClick={onClose}
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', fontSize: '0.8rem' }}
+                style={{
+                  background:   'rgba(255,255,255,0.80)',
+                  border:       '1px solid rgba(129,199,185,0.28)',
+                  borderRadius:  8,
+                  width:         30,
+                  height:        30,
+                  display:      'flex',
+                  alignItems:   'center',
+                  justifyContent: 'center',
+                  color:        'rgba(26,43,60,0.50)',
+                  cursor:       'pointer',
+                  fontSize:     '0.8rem',
+                }}
               >
                 ✕
               </button>
             </div>
 
             {/* Messages */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'linear-gradient(160deg, rgba(232,245,242,0.40) 0%, rgba(255,255,255,0.20) 100%)' }}>
               {messages.length === 0 && !source && (
-                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔌</div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: 'rgba(255,255,255,0.65)', margin: '0 0 0.5rem' }}>Veri kaynağı bağlayın</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, margin: 0 }}>Shopify, Stripe, Google Ads veya başka bir kaynak bağladıktan sonra AI analizi başlatabilirsiniz.</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', fontWeight: 600, color: '#1A2B3C', margin: '0 0 0.5rem' }}>Veri kaynağı bağlayın</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(26,43,60,0.50)', lineHeight: 1.6, margin: 0 }}>
+                    Shopify, Stripe, Google Ads veya başka bir kaynak bağladıktan sonra AI analizi başlatabilirsiniz.
+                  </p>
                 </div>
               )}
 
@@ -401,29 +413,30 @@ export function DataLabChatPanel({
                 >
                   {msg.role === 'user' ? (
                     <div style={{
-                      maxWidth:       '85%',
-                      background:     'linear-gradient(135deg, rgba(20,184,166,0.20) 0%, rgba(8,9,13,0.75) 100%)',
-                      border:         '1px solid rgba(20,184,166,0.35)',
-                      borderRadius:   '14px 14px 4px 14px',
-                      padding:        '0.7rem 1rem',
-                      fontFamily:     'Inter, sans-serif',
-                      fontSize:       '0.85rem',
-                      color:          'rgba(255,255,255,0.90)',
-                      lineHeight:     1.6,
-                      whiteSpace:     'pre-wrap',
-                      wordBreak:      'break-word',
+                      maxWidth:    '85%',
+                      background:  'linear-gradient(135deg, rgba(20,184,166,0.16) 0%, rgba(212,238,233,0.70) 100%)',
+                      border:      '1px solid rgba(20,184,166,0.28)',
+                      borderRadius: '14px 14px 4px 14px',
+                      padding:     '0.7rem 1rem',
+                      fontFamily:  'Inter, sans-serif',
+                      fontSize:    '0.85rem',
+                      color:       '#1A2B3C',
+                      lineHeight:  1.6,
+                      whiteSpace:  'pre-wrap',
+                      wordBreak:   'break-word',
                     }}>
                       {msg.text}
                     </div>
                   ) : (
                     <div style={{
-                      maxWidth: '92%',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(20,184,166,0.15)',
-                      borderTop: '2px solid rgba(20,184,166,0.60)',
+                      maxWidth:     '92%',
+                      background:   'rgba(255,255,255,0.88)',
+                      border:       '1px solid rgba(129,199,185,0.25)',
+                      borderTop:    '2px solid #14B8A6',
                       borderRadius: '4px 14px 14px 14px',
-                      padding: '0.85rem 1rem',
-                      fontSize: '0.85rem',
+                      padding:      '0.85rem 1rem',
+                      fontSize:     '0.85rem',
+                      boxShadow:    '0 4px 16px rgba(20,184,166,0.06)',
                     }}>
                       {msg.text ? (
                         <SailAdapter text={msg.text} intent="analytic" streaming={msg.streaming} />
@@ -448,12 +461,12 @@ export function DataLabChatPanel({
             {/* Quick prompts */}
             {messages.length <= 1 && source && (
               <div style={{ padding: '0 1rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', flexShrink: 0 }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: '0 0 0.25rem' }}>Hızlı başlangıç</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.38)', margin: '0 0 0.25rem' }}>Hızlı başlangıç</p>
                 {QUICK_PROMPTS.map((p, i) => (
                   <button key={i} onClick={() => { setInput(p); setTimeout(() => inputRef.current?.focus(), 50) }}
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(20,184,166,0.25)', borderRadius: 8, padding: '0.55rem 0.875rem', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(255,255,255,0.70)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', lineHeight: 1.4 }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.10)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.70)' }}
+                    style={{ background: 'rgba(255,255,255,0.80)', border: '1px solid rgba(20,184,166,0.28)', borderRadius: 8, padding: '0.55rem 0.875rem', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(26,43,60,0.68)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', lineHeight: 1.4 }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.10)'; (e.currentTarget as HTMLButtonElement).style.color = '#0D9488' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.80)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(26,43,60,0.68)' }}
                   >
                     {p}
                   </button>
@@ -462,7 +475,7 @@ export function DataLabChatPanel({
             )}
 
             {/* Input bar */}
-            <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, position: 'relative' }}>
+            <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid rgba(129,199,185,0.20)', flexShrink: 0, position: 'relative', background: 'rgba(255,255,255,0.70)' }}>
               {/* App menu */}
               <AnimatePresence>
                 {showApps && (
@@ -482,10 +495,11 @@ export function DataLabChatPanel({
                 display:        'flex',
                 alignItems:     'flex-end',
                 gap:            '0.5rem',
-                background:     'rgba(255,255,255,0.06)',
-                border:         '1px solid rgba(20,184,166,0.25)',
+                background:     'rgba(255,255,255,0.92)',
+                border:         '1.5px solid rgba(20,184,166,0.30)',
                 borderRadius:   12,
                 padding:        '0.6rem 0.6rem 0.6rem 0.875rem',
+                boxShadow:      '0 2px 12px rgba(20,184,166,0.06)',
               }}>
                 <textarea
                   ref={inputRef}
@@ -503,7 +517,7 @@ export function DataLabChatPanel({
                     resize:      'none',
                     fontFamily:  'Inter, sans-serif',
                     fontSize:    '0.87rem',
-                    color:       'rgba(255,255,255,0.88)',
+                    color:       '#1A2B3C',
                     lineHeight:  1.55,
                     maxHeight:   120,
                     overflowY:   'auto',
@@ -517,23 +531,23 @@ export function DataLabChatPanel({
                     onClick={() => setShowApps(s => !s)}
                     title="App bağlantıları"
                     style={{
-                      width:        32,
-                      height:       32,
-                      borderRadius: 8,
-                      background:   connectedApps.size > 0 ? 'rgba(20,184,166,0.20)' : 'rgba(255,255,255,0.07)',
-                      border:       connectedApps.size > 0 ? '1px solid rgba(20,184,166,0.45)' : '1px solid rgba(255,255,255,0.12)',
-                      color:        connectedApps.size > 0 ? '#14B8A6' : 'rgba(255,255,255,0.45)',
-                      cursor:       'pointer',
-                      fontSize:     '0.9rem',
-                      display:      'flex',
-                      alignItems:   'center',
+                      width:          32,
+                      height:         32,
+                      borderRadius:   8,
+                      background:     connectedApps.size > 0 ? 'rgba(20,184,166,0.15)' : 'rgba(129,199,185,0.12)',
+                      border:         connectedApps.size > 0 ? '1px solid rgba(20,184,166,0.40)' : '1px solid rgba(129,199,185,0.28)',
+                      color:          connectedApps.size > 0 ? '#0D9488' : 'rgba(26,43,60,0.45)',
+                      cursor:         'pointer',
+                      fontSize:       '0.9rem',
+                      display:        'flex',
+                      alignItems:     'center',
                       justifyContent: 'center',
-                      position:     'relative',
+                      position:       'relative',
                     }}
                   >
                     🔗
                     {connectedApps.size > 0 && (
-                      <span style={{ position: 'absolute', top: -4, right: -4, background: '#14B8A6', color: '#000', borderRadius: '50%', width: 14, height: 14, fontSize: '0.55rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ position: 'absolute', top: -4, right: -4, background: '#14B8A6', color: '#fff', borderRadius: '50%', width: 14, height: 14, fontSize: '0.55rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {connectedApps.size}
                       </span>
                     )}
@@ -543,30 +557,30 @@ export function DataLabChatPanel({
                     onClick={sendMessage}
                     disabled={!input.trim() || loading || !source}
                     style={{
-                      width:        32,
-                      height:       32,
-                      borderRadius: 8,
-                      background:   input.trim() && source && !loading ? '#14B8A6' : 'rgba(255,255,255,0.08)',
-                      border:       'none',
-                      color:        input.trim() && source && !loading ? '#000' : 'rgba(255,255,255,0.30)',
-                      cursor:       input.trim() && source && !loading ? 'pointer' : 'not-allowed',
-                      fontSize:     '0.85rem',
-                      display:      'flex',
-                      alignItems:   'center',
+                      width:          32,
+                      height:         32,
+                      borderRadius:   8,
+                      background:     input.trim() && source && !loading ? '#14B8A6' : 'rgba(129,199,185,0.18)',
+                      border:         'none',
+                      color:          input.trim() && source && !loading ? '#fff' : 'rgba(26,43,60,0.35)',
+                      cursor:         input.trim() && source && !loading ? 'pointer' : 'not-allowed',
+                      fontSize:       '0.85rem',
+                      display:        'flex',
+                      alignItems:     'center',
                       justifyContent: 'center',
-                      transition:   'all 0.15s',
-                      flexShrink:    0,
+                      transition:     'all 0.15s',
+                      flexShrink:     0,
                     }}
                   >
                     {loading ? (
                       <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                        style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%' }}
+                        style={{ width: 14, height: 14, border: '2px solid rgba(26,43,60,0.20)', borderTopColor: '#14B8A6', borderRadius: '50%' }}
                       />
                     ) : '↑'}
                   </button>
                 </div>
               </div>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.22)', textAlign: 'center', margin: '0.4rem 0 0' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(26,43,60,0.30)', textAlign: 'center', margin: '0.4rem 0 0' }}>
                 Enter ile gönder · Shift+Enter yeni satır
               </p>
             </div>

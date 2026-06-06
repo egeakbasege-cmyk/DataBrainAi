@@ -830,7 +830,7 @@ export default function DataLabPage() {
 
   if (status === 'loading') {
     return (
-      <div className="sv-grid-bg" style={{ minHeight: '100vh', background: 'rgba(8,9,13,1)' }}>
+      <div className="sv-grid-bg" style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #E8F5F2 0%, #D4EEE9 30%, #E0F2EE 65%, #EAF6F3 100%)' }}>
         <Nav />
         <div
           style={{
@@ -840,7 +840,7 @@ export default function DataLabPage() {
             height: 'calc(100vh - 72px)',
           }}
         >
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'Inter, sans-serif' }}>Loading…</p>
+          <p style={{ color: 'rgba(26,43,60,0.50)', fontFamily: 'Inter, sans-serif' }}>Loading…</p>
         </div>
       </div>
     )
@@ -848,7 +848,7 @@ export default function DataLabPage() {
 
   if (!session) {
     return (
-      <div className="sv-grid-bg" style={{ minHeight: '100vh', background: 'rgba(8,9,13,1)' }}>
+      <div className="sv-grid-bg" style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #E8F5F2 0%, #D4EEE9 30%, #E0F2EE 65%, #EAF6F3 100%)' }}>
         <Nav />
         <div
           style={{
@@ -866,13 +866,13 @@ export default function DataLabPage() {
               fontFamily: 'Cormorant Garamond, serif',
               fontSize: '2rem',
               fontWeight: 600,
-              color: 'rgba(255,255,255,0.92)',
+              color: '#1A2B3C',
               margin: 0,
             }}
           >
             Sign in to access DataLab
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'Inter, sans-serif', margin: 0 }}>
+          <p style={{ color: 'rgba(26,43,60,0.50)', fontFamily: 'Inter, sans-serif', margin: 0 }}>
             Connect your data sources and benchmark your performance.
           </p>
           <Link
@@ -898,12 +898,12 @@ export default function DataLabPage() {
   // ── Shared card style ───────────────────────────────────────────────────────
 
   const cardStyle: React.CSSProperties = {
-    background:           'linear-gradient(135deg, rgba(20,184,166,0.06) 0%, rgba(8,9,13,0.80) 100%)',
-    backdropFilter:       'blur(24px)',
-    WebkitBackdropFilter: 'blur(24px)',
-    border:               '1px solid rgba(20,184,166,0.18)',
+    background:           'rgba(255,255,255,0.82)',
+    backdropFilter:       'blur(20px) saturate(160%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+    border:               '1px solid rgba(129,199,185,0.30)',
     borderRadius:          12,
-    boxShadow:            '0 4px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06)',
+    boxShadow:            '0 8px 40px rgba(20,184,166,0.08), 0 2px 10px rgba(0,0,0,0.05)',
     padding:              '1.75rem',
   }
 
@@ -914,7 +914,7 @@ export default function DataLabPage() {
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.35)',
+        background: 'rgba(26,43,60,0.30)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -936,19 +936,19 @@ export default function DataLabPage() {
                 fontSize: '1.4rem',
                 fontWeight: 600,
                 margin: 0,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#1A2B3C',
               }}
             >
               Connect {modalConnector.name}
             </h3>
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', margin: 0, fontFamily: 'Inter, sans-serif' }}>
+            <p style={{ color: 'rgba(26,43,60,0.50)', fontSize: '0.82rem', margin: 0, fontFamily: 'Inter, sans-serif' }}>
               {modalConnector.description}
             </p>
           </div>
         </div>
 
         {/* ── Field 1: primary key / URL ── */}
-        <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'rgba(255,255,255,0.65)', marginBottom: '0.4rem', fontFamily: 'Inter, sans-serif' }}>
+        <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'rgba(26,43,60,0.68)', marginBottom: '0.4rem', fontFamily: 'Inter, sans-serif' }}>
           {modalConnector.fieldLabel}
         </label>
         <input
@@ -959,9 +959,9 @@ export default function DataLabPage() {
           disabled={connecting}
           style={{
             width: '100%', padding: '0.65rem 0.9rem',
-            border: connectError ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(20,184,166,0.25)',
+            border: connectError ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(129,199,185,0.40)',
             borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: '0.87rem',
-            color: 'rgba(255,255,255,0.65)', background: 'rgba(255,255,255,0.06)', boxSizing: 'border-box',
+            color: 'rgba(26,43,60,0.68)', background: 'rgba(255,255,255,0.80)', boxSizing: 'border-box',
             marginBottom: modalConnector.field2Label ? '0.85rem' : '1.25rem', outline: 'none',
           }}
         />
@@ -969,7 +969,7 @@ export default function DataLabPage() {
         {/* ── Field 2: optional secondary credential (Shopify token) ── */}
         {modalConnector.field2Label && (
           <>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'rgba(255,255,255,0.65)', marginBottom: '0.4rem', fontFamily: 'Inter, sans-serif' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'rgba(26,43,60,0.68)', marginBottom: '0.4rem', fontFamily: 'Inter, sans-serif' }}>
               {modalConnector.field2Label}
             </label>
             <input
@@ -980,9 +980,9 @@ export default function DataLabPage() {
               disabled={connecting}
               style={{
                 width: '100%', padding: '0.65rem 0.9rem',
-                border: connectError ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(20,184,166,0.25)',
+                border: connectError ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(129,199,185,0.40)',
                 borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: '0.87rem',
-                color: 'rgba(255,255,255,0.65)', background: 'rgba(255,255,255,0.06)', boxSizing: 'border-box',
+                color: 'rgba(26,43,60,0.68)', background: 'rgba(255,255,255,0.80)', boxSizing: 'border-box',
                 marginBottom: '1.25rem', outline: 'none',
               }}
             />
@@ -1041,12 +1041,12 @@ export default function DataLabPage() {
               onClick={() => { setModalConnector(null); setApiInput(''); setApiInput2(''); setConnectError(null) }}
               style={{
                 background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.12)',
+                border: '1px solid rgba(129,199,185,0.30)',
                 borderRadius: 8,
                 padding: '0.7rem 1rem',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '0.9rem',
-                color: 'rgba(255,255,255,0.45)',
+                color: 'rgba(26,43,60,0.50)',
                 cursor: 'pointer',
               }}
             >
@@ -1069,10 +1069,10 @@ export default function DataLabPage() {
           <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>Data Intelligence</span>
           <div style={{ width: 24, height: 1, background: '#C9A96E', opacity: 0.6 }} />
         </motion.div>
-        <motion.h1 variants={_fadeUp} style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 'clamp(2.2rem, 5vw, 3.5rem)', fontWeight: 600, color: 'rgba(255,255,255,0.95)', margin: '0 0 0.75rem', letterSpacing: '-0.02em', lineHeight: 1.08 }}>
+        <motion.h1 variants={_fadeUp} style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 'clamp(2.2rem, 5vw, 3.5rem)', fontWeight: 600, color: '#0F1A24', margin: '0 0 0.75rem', letterSpacing: '-0.02em', lineHeight: 1.08 }}>
           DataLab
         </motion.h1>
-        <motion.p variants={_fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(255,255,255,0.45)', maxWidth: 520, margin: '0 auto', lineHeight: 1.75, fontWeight: 300 }}>
+        <motion.p variants={_fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(26,43,60,0.50)', maxWidth: 520, margin: '0 auto', lineHeight: 1.75, fontWeight: 300 }}>
           Sektörünüzü seçin, veri kaynağınızı bağlayın.{' '}
           <span style={{ color: '#14B8A6', fontWeight: 500 }}>Gerçek zamanlı AI analizi başlasın.</span>
         </motion.p>
@@ -1088,9 +1088,9 @@ export default function DataLabPage() {
               display: 'flex', alignItems: 'center', gap: '0.45rem',
               padding: '0.5rem 1.1rem',
               borderRadius: 999,
-              border: selectedIndustry === ind.id ? `1.5px solid ${ind.color}` : '1.5px solid rgba(255,255,255,0.12)',
-              background: selectedIndustry === ind.id ? `${ind.color}15` : 'rgba(255,255,255,0.05)',
-              color: selectedIndustry === ind.id ? ind.color : 'rgba(255,255,255,0.50)',
+              border: selectedIndustry === ind.id ? `1.5px solid ${ind.color}` : '1.5px solid rgba(129,199,185,0.30)',
+              background: selectedIndustry === ind.id ? `${ind.color}15` : 'rgba(255,255,255,0.72)',
+              color: selectedIndustry === ind.id ? ind.color : 'rgba(26,43,60,0.50)',
               fontFamily: 'Inter, sans-serif', fontSize: '0.83rem', fontWeight: selectedIndustry === ind.id ? 600 : 400,
               cursor: 'pointer', transition: 'all 0.15s ease',
             }}
@@ -1113,8 +1113,8 @@ export default function DataLabPage() {
               <ConnectorLogo id={c.id} size={32} />
             </div>
             <div style={{ flex: 1 }}>
-              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 600, color: 'rgba(255,255,255,0.92)', margin: '0 0 0.2rem' }}>{c.name}</h3>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', margin: '0 0 0.75rem', lineHeight: 1.5 }}>{c.description}</p>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 600, color: '#1A2B3C', margin: '0 0 0.2rem' }}>{c.name}</h3>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(26,43,60,0.50)', margin: '0 0 0.75rem', lineHeight: 1.5 }}>{c.description}</p>
               <button
                 onClick={() => setModalConnector(c)}
                 style={{ background: 'transparent', border: `1.5px solid ${activeIndustry.color}`, color: activeIndustry.color, borderRadius: 6, padding: '0.35rem 0.9rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.15s' }}
@@ -1132,12 +1132,12 @@ export default function DataLabPage() {
       <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
         <button
           onClick={() => { setConnectedSource(MOCK_SOURCES.shopify); setStep(2) }}
-          style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.30)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(156,163,175,0.4)' }}
+          style={{ background: 'transparent', border: 'none', color: 'rgba(26,43,60,0.38)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(156,163,175,0.4)' }}
         >
           {t('userdata.noSourcesYet')}
         </button>
-        <span style={{ color: 'rgba(255,255,255,0.20)', fontSize: '0.7rem' }}>|</span>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(255,255,255,0.30)' }}>
+        <span style={{ color: 'rgba(26,43,60,0.28)', fontSize: '0.7rem' }}>|</span>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(26,43,60,0.38)' }}>
           {INDUSTRY_GROUPS.reduce((s, g) => s + g.connectors.length, 0)} platform · {INDUSTRY_GROUPS.length} {t('datalab.sectors')}
         </span>
       </div>
@@ -1161,7 +1161,7 @@ export default function DataLabPage() {
                     fontFamily: 'Cormorant Garamond, serif',
                     fontSize: '1.05rem',
                     fontWeight: 600,
-                    color: 'rgba(255,255,255,0.92)',
+                    color: '#1A2B3C',
                     margin: 0,
                   }}
                 >
@@ -1195,11 +1195,11 @@ export default function DataLabPage() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   padding: '0.55rem 0',
-                  borderBottom: '1px solid rgba(20,184,166,0.07)',
+                  borderBottom: '1px solid rgba(129,199,185,0.20)',
                 }}
               >
                 <span
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)' }}
+                  style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'rgba(26,43,60,0.50)' }}
                 >
                   {s.label}
                 </span>
@@ -1208,7 +1208,7 @@ export default function DataLabPage() {
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '0.82rem',
                     fontWeight: 600,
-                    color: 'rgba(255,255,255,0.92)',
+                    color: '#1A2B3C',
                   }}
                 >
                   {s.value}
@@ -1223,12 +1223,12 @@ export default function DataLabPage() {
                 marginTop: '1rem',
                 width: '100%',
                 background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.12)',
+                border: '1px solid rgba(129,199,185,0.30)',
                 borderRadius: 7,
                 padding: '0.5rem',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '0.82rem',
-                color: 'rgba(255,255,255,0.45)',
+                color: 'rgba(26,43,60,0.50)',
                 cursor: 'pointer',
               }}
             >
@@ -1246,7 +1246,7 @@ export default function DataLabPage() {
               { id: 'benchmarks',  label: '📈 Benchmark' },
               { id: 'price-scout', label: `🛒 ${t('datalab.priceSearchButton').replace(' →', '')}` },
             ] as { id: TabType; label: string }[]).map((t) => (
-              <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: '0.5rem 1.1rem', borderRadius: 7, border: activeTab === t.id ? '1px solid rgba(20,184,166,0.50)' : '1px solid rgba(255,255,255,0.10)', background: activeTab === t.id ? 'rgba(20,184,166,0.22)' : 'rgba(255,255,255,0.06)', color: activeTab === t.id ? '#14B8A6' : 'rgba(255,255,255,0.50)', fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', fontWeight: activeTab === t.id ? 600 : 400, cursor: 'pointer' }}>
+              <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: '0.5rem 1.1rem', borderRadius: 7, border: activeTab === t.id ? '1px solid rgba(20,184,166,0.55)' : '1px solid rgba(129,199,185,0.28)', background: activeTab === t.id ? 'rgba(20,184,166,0.18)' : 'rgba(255,255,255,0.70)', color: activeTab === t.id ? '#0D9488' : 'rgba(26,43,60,0.60)', fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', fontWeight: activeTab === t.id ? 600 : 400, cursor: 'pointer' }}>
                 {t.label}
               </button>
             ))}
@@ -1257,15 +1257,15 @@ export default function DataLabPage() {
             <>
               {/* Query bar */}
               <form onSubmit={handleQuerySubmit} style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1.5px solid rgba(20,184,166,0.25)', borderRadius: 10, padding: '0.5rem 0.5rem 0.5rem 1rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1.5px solid rgba(20,184,166,0.35)', borderRadius: 10, padding: '0.5rem 0.5rem 0.5rem 1rem', alignItems: 'center' }}>
                   <input
                     ref={queryRef} type="text" value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={t('datalab.analysisPlaceholder')}
-                    style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: 'rgba(255,255,255,0.65)', background: 'transparent' }}
+                    style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: 'rgba(26,43,60,0.68)', background: 'transparent' }}
                   />
                   <button type="submit" disabled={!query.trim() || analyzing}
-                    style={{ background: query.trim() ? '#14B8A6' : 'rgba(255,255,255,0.08)', color: query.trim() ? '#fff' : 'rgba(255,255,255,0.30)', border: 'none', borderRadius: 7, padding: '0.6rem 1.1rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', cursor: query.trim() ? 'pointer' : 'not-allowed' }}>
+                    style={{ background: query.trim() ? '#14B8A6' : 'rgba(129,199,185,0.18)', color: query.trim() ? '#fff' : 'rgba(26,43,60,0.38)', border: 'none', borderRadius: 7, padding: '0.6rem 1.1rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', cursor: query.trim() ? 'pointer' : 'not-allowed' }}>
                     {t('datalab.analyzeButton')}
                   </button>
                 </div>
@@ -1278,7 +1278,7 @@ export default function DataLabPage() {
                   <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
                     {activeIndustry.queryCategories.map((cat, idx) => (
                       <button key={cat.label} onClick={() => setActiveQueryCategory(idx)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem 0.85rem', borderRadius: 999, border: activeQueryCategory === idx ? `1.5px solid ${activeIndustry.color}` : '1.5px solid rgba(255,255,255,0.12)', background: activeQueryCategory === idx ? `${activeIndustry.color}12` : 'rgba(255,255,255,0.05)', color: activeQueryCategory === idx ? activeIndustry.color : 'rgba(255,255,255,0.45)', fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', fontWeight: activeQueryCategory === idx ? 600 : 400, cursor: 'pointer' }}>
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem 0.85rem', borderRadius: 999, border: activeQueryCategory === idx ? `1.5px solid ${activeIndustry.color}` : '1.5px solid rgba(129,199,185,0.35)', background: activeQueryCategory === idx ? `${activeIndustry.color}14` : 'rgba(255,255,255,0.75)', color: activeQueryCategory === idx ? activeIndustry.color : 'rgba(26,43,60,0.58)', fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', fontWeight: activeQueryCategory === idx ? 600 : 400, cursor: 'pointer' }}>
                         <span>{cat.icon}</span> {cat.label}
                       </button>
                     ))}
@@ -1287,7 +1287,7 @@ export default function DataLabPage() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
                     {activeIndustry.queryCategories[activeQueryCategory]?.queries.map((ex) => (
                       <button key={ex} onClick={() => { setQuery(ex); handleAnalyze(ex) }}
-                        style={{ background: 'rgba(20,184,166,0.05)', border: '1px solid rgba(20,184,166,0.14)', borderRadius: 20, padding: '0.35rem 0.85rem', fontFamily: 'Inter, sans-serif', fontSize: '0.77rem', color: '#0D9488', cursor: 'pointer', textAlign: 'left', lineHeight: 1.4, transition: 'background 0.12s' }}
+                        style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.22)', borderRadius: 20, padding: '0.35rem 0.85rem', fontFamily: 'Inter, sans-serif', fontSize: '0.77rem', color: '#0D9488', cursor: 'pointer', textAlign: 'left', lineHeight: 1.4, transition: 'background 0.12s' }}
                         onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.11)')}
                         onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.05)')}>
                         {ex}
@@ -1300,10 +1300,10 @@ export default function DataLabPage() {
               {/* Placeholder */}
               <div style={{ ...cardStyle, textAlign: 'center', padding: '2.5rem 2rem' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.6rem' }}>{activeTab === 'analysis' ? '🔍' : '📈'}</div>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 600, color: 'rgba(255,255,255,0.92)', margin: '0 0 0.35rem' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 600, color: '#1A2B3C', margin: '0 0 0.35rem' }}>
                   {activeTab === 'analysis' ? t('datalab.analysisHeading') : t('datalab.benchmarkHeading')}
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: 'rgba(255,255,255,0.30)', margin: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: 'rgba(26,43,60,0.38)', margin: 0 }}>
                   {t('datalab.instructions')}
                 </p>
               </div>
@@ -1314,16 +1314,16 @@ export default function DataLabPage() {
           {activeTab === 'price-scout' && (
             <div>
               <form onSubmit={(e) => { e.preventDefault(); handlePriceSearch(priceQuery) }} style={{ marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1.5px solid rgba(201,169,110,0.35)', borderRadius: 10, padding: '0.5rem 0.5rem 0.5rem 1rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1.5px solid rgba(201,169,110,0.45)', borderRadius: 10, padding: '0.5rem 0.5rem 0.5rem 1rem', alignItems: 'center' }}>
                   <span style={{ fontSize: '1rem', flexShrink: 0 }}>🔎</span>
                   <input
                     ref={priceQueryRef} type="text" value={priceQuery}
                     onChange={(e) => setPriceQuery(e.target.value)}
                     placeholder={t('datalab.priceScoutPlaceholder')}
-                    style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: 'rgba(255,255,255,0.65)', background: 'transparent' }}
+                    style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: 'rgba(26,43,60,0.68)', background: 'transparent' }}
                   />
                   <button type="submit" disabled={!priceQuery.trim() || priceSearching}
-                    style={{ background: priceQuery.trim() ? '#C9A96E' : 'rgba(255,255,255,0.08)', color: priceQuery.trim() ? '#fff' : 'rgba(255,255,255,0.30)', border: 'none', borderRadius: 7, padding: '0.6rem 1.1rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', cursor: priceQuery.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
+                    style={{ background: priceQuery.trim() ? '#C9A96E' : 'rgba(201,169,110,0.15)', color: priceQuery.trim() ? '#fff' : 'rgba(26,43,60,0.38)', border: 'none', borderRadius: 7, padding: '0.6rem 1.1rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', cursor: priceQuery.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
                     {priceSearching ? t('datalab.priceSearching') : t('datalab.priceSearchButton')}
                   </button>
                 </div>
@@ -1332,7 +1332,7 @@ export default function DataLabPage() {
               {/* Quick search suggestions */}
               {!priceResults && !priceSearching && (
                 <div style={{ marginBottom: '1.5rem' }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', color: 'rgba(255,255,255,0.30)', margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('datalab.quickExamples')}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', color: 'rgba(26,43,60,0.38)', margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('datalab.quickExamples')}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                     {[
                       'Sony WH-1000XM5 kulaklık', 'Shopify Plus plan price', 'Istanbul Airbnb 2 bedroom',
@@ -1352,8 +1352,8 @@ export default function DataLabPage() {
               {priceSearching && (
                 <div style={{ ...cardStyle, textAlign: 'center', padding: '3rem 2rem' }}>
                   <div style={{ fontSize: '2rem', marginBottom: '0.75rem', animation: 'pulse 1s infinite' }}>🔍</div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: 'rgba(255,255,255,0.92)', margin: 0 }}>{t('datalab.priceSearchLoading')}</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'rgba(255,255,255,0.30)', margin: '0.5rem 0 0' }}>{t('datalab.priceSearchSubtext')}</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#1A2B3C', margin: 0 }}>{t('datalab.priceSearchLoading')}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'rgba(26,43,60,0.38)', margin: '0.5rem 0 0' }}>{t('datalab.priceSearchSubtext')}</p>
                 </div>
               )}
 
@@ -1364,21 +1364,21 @@ export default function DataLabPage() {
                   {priceAiSummary && (
                     <div style={{ ...cardStyle, borderLeft: '3px solid #C9A96E', marginBottom: '1rem', padding: '1rem 1.25rem' }}>
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A96E', margin: '0 0 0.4rem' }}>AI Özeti</p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.65, margin: 0 }}>{priceAiSummary}</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(26,43,60,0.68)', lineHeight: 1.65, margin: 0 }}>{priceAiSummary}</p>
                     </div>
                   )}
 
                   {priceResults.length === 0 ? (
                     <div style={{ ...cardStyle, textAlign: 'center', padding: '2.5rem' }}>
-                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: 'rgba(255,255,255,0.92)', margin: 0 }}>{t('datalab.priceNoResults')}</p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: 'rgba(255,255,255,0.30)', margin: '0.4rem 0 0' }}>{t('datalab.priceNoResultsSub')}</p>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#1A2B3C', margin: 0 }}>{t('datalab.priceNoResults')}</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: 'rgba(26,43,60,0.38)', margin: '0.4rem 0 0' }}>{t('datalab.priceNoResultsSub')}</p>
                     </div>
                   ) : (
                     <>
                       {/* Direct matches */}
                       {priceResults.filter(r => !r.isAlternative).length > 0 && (
                         <div style={{ marginBottom: '1.25rem' }}>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.65)', margin: '0 0 0.6rem' }}>{t('datalab.priceBestPrices')}</p>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.68)', margin: '0 0 0.6rem' }}>{t('datalab.priceBestPrices')}</p>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
                             {priceResults.filter(r => !r.isAlternative).map((r, i) => (
                               <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
@@ -1387,13 +1387,13 @@ export default function DataLabPage() {
                                   onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)' }}>
                                   {i === 0 && <div style={{ display: 'inline-block', background: '#14B8A6', color: '#fff', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem' }}>EN UCUZ</div>}
                                   {r.savings && <div style={{ display: 'inline-block', background: 'rgba(239,68,68,0.1)', color: '#DC2626', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem', marginLeft: i === 0 ? '0.35rem' : 0 }}>{r.savings}</div>}
-                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'rgba(255,255,255,0.65)', margin: '0 0 0.35rem', lineHeight: 1.35, fontWeight: 500 }}>{r.title}</p>
-                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 700, color: 'rgba(255,255,255,0.95)', margin: '0 0 0.25rem' }}>{r.price}</p>
+                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'rgba(26,43,60,0.68)', margin: '0 0 0.35rem', lineHeight: 1.35, fontWeight: 500 }}>{r.title}</p>
+                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 700, color: '#0F1A24', margin: '0 0 0.25rem' }}>{r.price}</p>
                                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: 'rgba(255,255,255,0.45)' }}>{r.platform}</span>
+                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: 'rgba(26,43,60,0.50)' }}>{r.platform}</span>
                                     {r.rating && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: '#C9A96E', fontWeight: 600 }}>★ {r.rating}</span>}
                                   </div>
-                                  {r.snippet && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.30)', margin: '0.4rem 0 0', lineHeight: 1.4 }}>{r.snippet}</p>}
+                                  {r.snippet && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(26,43,60,0.38)', margin: '0.4rem 0 0', lineHeight: 1.4 }}>{r.snippet}</p>}
                                 </div>
                               </a>
                             ))}
@@ -1404,7 +1404,7 @@ export default function DataLabPage() {
                       {/* Alternatives */}
                       {priceResults.filter(r => r.isAlternative).length > 0 && (
                         <div>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.65)', margin: '0 0 0.6rem' }}>{t('datalab.priceAlternatives')}</p>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.68)', margin: '0 0 0.6rem' }}>{t('datalab.priceAlternatives')}</p>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
                             {priceResults.filter(r => r.isAlternative).map((r, i) => (
                               <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
@@ -1412,13 +1412,13 @@ export default function DataLabPage() {
                                   onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)' }}
                                   onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)' }}>
                                   <div style={{ display: 'inline-block', background: 'rgba(201,169,110,0.12)', color: '#92683A', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem' }}>{t('datalab.priceAltLabel')}</div>
-                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'rgba(255,255,255,0.65)', margin: '0 0 0.35rem', lineHeight: 1.35, fontWeight: 500 }}>{r.title}</p>
-                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 700, color: 'rgba(255,255,255,0.95)', margin: '0 0 0.25rem' }}>{r.price}</p>
+                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'rgba(26,43,60,0.68)', margin: '0 0 0.35rem', lineHeight: 1.35, fontWeight: 500 }}>{r.title}</p>
+                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 700, color: '#0F1A24', margin: '0 0 0.25rem' }}>{r.price}</p>
                                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: 'rgba(255,255,255,0.45)' }}>{r.platform}</span>
+                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: 'rgba(26,43,60,0.50)' }}>{r.platform}</span>
                                     {r.rating && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: '#C9A96E', fontWeight: 600 }}>★ {r.rating}</span>}
                                   </div>
-                                  {r.snippet && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.30)', margin: '0.4rem 0 0', lineHeight: 1.4 }}>{r.snippet}</p>}
+                                  {r.snippet && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(26,43,60,0.38)', margin: '0.4rem 0 0', lineHeight: 1.4 }}>{r.snippet}</p>}
                                 </div>
                               </a>
                             ))}
@@ -1457,7 +1457,7 @@ export default function DataLabPage() {
           fontFamily: 'Cormorant Garamond, serif',
           fontSize: '2rem',
           fontWeight: 600,
-          color: 'rgba(255,255,255,0.92)',
+          color: '#1A2B3C',
           margin: 0,
         }}
       >
@@ -1480,7 +1480,7 @@ export default function DataLabPage() {
                 width: 20,
                 height: 20,
                 borderRadius: '50%',
-                background: i < loadingStage ? '#14B8A6' : i === loadingStage ? '#99E6DD' : 'rgba(255,255,255,0.12)',
+                background: i < loadingStage ? '#14B8A6' : i === loadingStage ? '#99E6DD' : 'rgba(129,199,185,0.22)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1496,7 +1496,7 @@ export default function DataLabPage() {
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '0.9rem',
-                color: i <= loadingStage ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.30)',
+                color: i <= loadingStage ? '#1A2B3C' : 'rgba(26,43,60,0.35)',
               }}
             >
               {stage}
@@ -1517,7 +1517,7 @@ export default function DataLabPage() {
         style={{
           background: 'transparent',
           border: 'none',
-          color: 'rgba(255,255,255,0.45)',
+          color: 'rgba(26,43,60,0.50)',
           fontFamily: 'Inter, sans-serif',
           fontSize: '0.87rem',
           cursor: 'pointer',
@@ -1539,7 +1539,7 @@ export default function DataLabPage() {
               fontFamily: 'Cormorant Garamond, serif',
               fontSize: '2rem',
               fontWeight: 700,
-              color: 'rgba(255,255,255,0.92)',
+              color: '#1A2B3C',
               margin: 0,
             }}
           >
@@ -1593,7 +1593,7 @@ export default function DataLabPage() {
           style={{
             fontFamily: 'Inter, sans-serif',
             fontSize: '0.97rem',
-            color: 'rgba(255,255,255,0.65)',
+            color: 'rgba(26,43,60,0.68)',
             lineHeight: 1.7,
             margin: 0,
           }}
@@ -1617,7 +1617,7 @@ export default function DataLabPage() {
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '0.78rem',
-                color: 'rgba(255,255,255,0.45)',
+                color: 'rgba(26,43,60,0.50)',
                 margin: '0 0 0.3rem',
                 fontWeight: 500,
               }}
@@ -1629,7 +1629,7 @@ export default function DataLabPage() {
                 fontFamily: 'Cormorant Garamond, serif',
                 fontSize: '1.6rem',
                 fontWeight: 700,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#1A2B3C',
                 margin: '0 0 0.2rem',
               }}
             >
@@ -1650,7 +1650,7 @@ export default function DataLabPage() {
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '0.75rem',
-                color: 'rgba(255,255,255,0.30)',
+                color: 'rgba(26,43,60,0.38)',
                 margin: 0,
               }}
             >
@@ -1709,7 +1709,7 @@ export default function DataLabPage() {
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '0.92rem',
                     fontWeight: 600,
-                    color: 'rgba(255,255,255,0.92)',
+                    color: '#1A2B3C',
                     margin: '0 0 0.2rem',
                   }}
                 >
@@ -1719,7 +1719,7 @@ export default function DataLabPage() {
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '0.83rem',
-                    color: 'rgba(255,255,255,0.45)',
+                    color: 'rgba(26,43,60,0.50)',
                     margin: '0 0 0.2rem',
                     lineHeight: 1.5,
                   }}
@@ -1730,7 +1730,7 @@ export default function DataLabPage() {
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '0.78rem',
-                    color: 'rgba(255,255,255,0.30)',
+                    color: 'rgba(26,43,60,0.38)',
                     margin: 0,
                   }}
                 >
@@ -1768,7 +1768,7 @@ export default function DataLabPage() {
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '0.75rem',
                     fontWeight: 600,
-                    color: 'rgba(255,255,255,0.30)',
+                    color: 'rgba(26,43,60,0.38)',
                     paddingBottom: '0.6rem',
                     borderBottom: '1px solid rgba(20,184,166,0.10)',
                   }}
@@ -1793,7 +1793,7 @@ export default function DataLabPage() {
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '0.85rem',
-                      color: ci === 1 ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.50)',
+                      color: ci === 1 ? '#1A2B3C' : 'rgba(26,43,60,0.55)',
                       fontWeight: ci === 1 ? 600 : 400,
                       padding: '0.65rem 0',
                       borderBottom: i < analysisResult.benchmarks.length - 1 ? '1px solid rgba(20,184,166,0.06)' : 'none',
@@ -1807,13 +1807,13 @@ export default function DataLabPage() {
                               ? 'rgba(16,185,129,0.10)'
                               : row.status === 'below'
                               ? 'rgba(239,68,68,0.10)'
-                              : 'rgba(156,163,175,0.15)',
+                              : 'rgba(129,199,185,0.15)',
                           color:
                             row.status === 'above'
                               ? '#059669'
                               : row.status === 'below'
                               ? '#DC2626'
-                              : 'rgba(255,255,255,0.50)',
+                              : 'rgba(26,43,60,0.50)',
                           borderRadius: 5,
                           padding: '0.15rem 0.55rem',
                           fontSize: '0.75rem',
@@ -1883,7 +1883,7 @@ export default function DataLabPage() {
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '0.87rem',
-                    color: 'rgba(255,255,255,0.65)',
+                    color: 'rgba(26,43,60,0.68)',
                     margin: '0 0 0.2rem',
                     fontWeight: 500,
                   }}
@@ -1894,7 +1894,7 @@ export default function DataLabPage() {
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '0.8rem',
-                    color: 'rgba(255,255,255,0.45)',
+                    color: 'rgba(26,43,60,0.50)',
                     margin: 0,
                   }}
                 >
@@ -1928,7 +1928,7 @@ export default function DataLabPage() {
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '0.87rem',
-                color: 'rgba(255,255,255,0.65)',
+                color: 'rgba(26,43,60,0.68)',
                 lineHeight: 1.6,
                 marginBottom: i < analysisResult.nextActions.length - 1 ? '0.5rem' : 0,
               }}
@@ -1946,7 +1946,7 @@ export default function DataLabPage() {
   return (
     <div
       className="sv-grid-bg"
-      style={{ minHeight: '100vh', background: 'rgba(8,9,13,1)' }}
+      style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #E8F5F2 0%, #D4EEE9 30%, #E0F2EE 65%, #EAF6F3 100%)' }}
     >
       <Nav />
       {modal}
@@ -1967,16 +1967,16 @@ export default function DataLabPage() {
           height:          52,
           borderRadius:   '50%',
           background:     connectedSource
-            ? 'linear-gradient(135deg, rgba(20,184,166,0.40) 0%, rgba(8,9,13,0.90) 100%)'
-            : 'rgba(255,255,255,0.07)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
+            ? 'linear-gradient(135deg, rgba(20,184,166,0.22) 0%, rgba(255,255,255,0.90) 100%)'
+            : 'rgba(255,255,255,0.88)',
+          backdropFilter: 'blur(16px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(160%)',
           border:         connectedSource
-            ? '1.5px solid rgba(20,184,166,0.60)'
-            : '1.5px solid rgba(255,255,255,0.15)',
+            ? '1.5px solid rgba(20,184,166,0.45)'
+            : '1.5px solid rgba(129,199,185,0.30)',
           boxShadow:      connectedSource
-            ? '0 0 20px rgba(20,184,166,0.30), 0 4px 20px rgba(0,0,0,0.40)'
-            : '0 4px 20px rgba(0,0,0,0.30)',
+            ? '0 0 20px rgba(20,184,166,0.20), 0 4px 20px rgba(0,0,0,0.10)'
+            : '0 4px 20px rgba(0,0,0,0.08)',
           cursor:          'pointer',
           display:         'flex',
           alignItems:      'center',
@@ -1996,7 +1996,7 @@ export default function DataLabPage() {
             height:         12,
             borderRadius:  '50%',
             background:    '#14B8A6',
-            border:         '2px solid rgba(8,9,13,1)',
+            border:         '2px solid rgba(255,255,255,0.95)',
             animation:     'pulse 2s infinite',
           }} />
         )}
