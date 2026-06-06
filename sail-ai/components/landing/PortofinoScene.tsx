@@ -280,8 +280,8 @@ function WaterSurface() {
     uTime:         { value: 0.0 },
     uWaveScale:    { value: 0.38 },
     uProgress:     { value: 0.0 },
-    uDeepColor:    { value: new THREE.Color('#041220') },
-    uSurfaceColor: { value: new THREE.Color('#0D9B8A') },
+    uDeepColor:    { value: new THREE.Color('#062434') },   // Ligurian deep teal-navy
+    uSurfaceColor: { value: new THREE.Color('#0E9E8C') },   // warm Mediterranean surface
     uSunDir:       { value: new THREE.Vector3(0.55, 0.72, -0.42).normalize() },
   }), [])
 
@@ -397,15 +397,34 @@ function HarborBuildings() {
         </mesh>
       ))}
 
-      {/* Terracotta rooftops on front row */}
+      {/* Pitched gable rooftops — all rows get terracotta ridge roofs.
+          Technique: box rotated 45° on Z creates a diamond cross-section
+          whose upper "V" reads as a triangular roof ridge from any angle. */}
+      {BUILDINGS.map((b, i) => {
+        const rh    = Math.max(b.w * 0.36, 0.95)   // pitch height ∝ building width
+        const diag  = rh * 1.414                    // diagonal of the rotated square
+        const baseY = (b.rowY ?? 0) + b.h - 1.0    // top of building wall
+        return (
+          <mesh
+            key={`roof-${i}`}
+            position={[b.x, baseY + rh * 0.45, b.z]}
+            rotation={[0, 0, Math.PI / 4]}
+            castShadow
+          >
+            <boxGeometry args={[diag, diag, b.d + 0.50]} />
+            <meshStandardMaterial color="#7E3018" roughness={0.92} />
+          </mesh>
+        )
+      })}
+      {/* Eave overhang strip — darker fascia board at roofline */}
       {BUILDINGS.slice(0, 9).map((b, i) => (
         <mesh
-          key={`roof-${i}`}
-          position={[b.x, (b.rowY ?? 0) + b.h - 1.0 + 0.55, b.z]}
+          key={`eave-${i}`}
+          position={[b.x, (b.rowY ?? 0) + b.h - 1.0 + 0.08, b.z]}
           castShadow
         >
-          <boxGeometry args={[b.w + 0.1, 0.35, b.d + 0.1]} />
-          <meshStandardMaterial color="#8C3A1C" roughness={0.9} />
+          <boxGeometry args={[b.w + 0.32, 0.18, b.d + 0.32]} />
+          <meshStandardMaterial color="#5A2E12" roughness={0.95} />
         </mesh>
       ))}
     </group>
@@ -413,37 +432,54 @@ function HarborBuildings() {
 }
 
 // ── Hill terrain ──────────────────────────────────────────────────────────────
+// NOTE: FrontSide hemispheres positioned with base at ground-level so they read
+// as convex hills. BackSide was causing a concave "bowl" effect.
 
 function HillTerrain() {
   return (
     <group>
-      <mesh position={[0, 4, -35]}>
-        <sphereGeometry args={[22, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#3A6B40" side={THREE.BackSide} roughness={0.9} />
+      {/* Main central green hill — large dome directly behind harbor row */}
+      <mesh position={[0, -2.2, -38]}>
+        <sphereGeometry args={[26, 36, 18, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#3D6B42" roughness={0.88} />
       </mesh>
-      <mesh position={[-22, 3, -22]}>
-        <sphereGeometry args={[12, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#2D5A35" side={THREE.BackSide} roughness={0.9} />
+      {/* Left headland — juts out to frame harbor */}
+      <mesh position={[-26, -2.0, -25]}>
+        <sphereGeometry args={[14, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#2E5A35" roughness={0.9} />
       </mesh>
-      <mesh position={[24, 3, -20]}>
-        <sphereGeometry args={[14, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#365E3C" side={THREE.BackSide} roughness={0.9} />
+      {/* Right headland */}
+      <mesh position={[28, -2.0, -23]}>
+        <sphereGeometry args={[16, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#365E3C" roughness={0.9} />
+      </mesh>
+      {/* Terrain fill — earth/grass between buildings and hills */}
+      <mesh position={[0, -1.15, -29]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[90, 26]} />
+        <meshStandardMaterial color="#3B5E40" roughness={0.96} />
       </mesh>
 
-      {/* Pine trees */}
+      {/* Pine trees — Italian stone pines on the hillside */}
       {([
-        [-18, -28], [-16, -30], [-14, -31],
-        [ 18, -26], [ 21, -28], [ 23, -25],
-        [  0, -32], [  3, -33], [ -4, -32],
-      ] as [number, number][]).map(([x, z], i) => (
-        <group key={i} position={[x, 3.5 + (i % 3) * 0.8, z]}>
-          <mesh position={[0, -1.5, 0]} castShadow>
-            <cylinderGeometry args={[0.12, 0.18, 1.8, 6]} />
+        [-18, -28, 4.0], [-16, -30, 4.5], [-14, -31, 3.8],
+        [ 18, -26, 4.2], [ 21, -28, 4.8], [ 23, -25, 3.9],
+        [  0, -33, 4.5], [  3, -34, 4.0], [ -4, -33, 4.3],
+        [-10, -32, 5.0], [ 10, -31, 4.6],
+      ] as [number, number, number][]).map(([x, z, baseY], i) => (
+        <group key={i} position={[x, baseY, z]}>
+          {/* Trunk */}
+          <mesh position={[0, -1.6, 0]} castShadow>
+            <cylinderGeometry args={[0.10, 0.16, 2.0, 7]} />
             <meshStandardMaterial color="#5C3D1E" roughness={0.95} />
           </mesh>
-          <mesh castShadow>
-            <coneGeometry args={[0.9, 2.4, 6]} />
-            <meshStandardMaterial color="#2A5C32" roughness={0.85} />
+          {/* Canopy — layered cones for stone pine silhouette */}
+          <mesh position={[0, 0.2, 0]} castShadow>
+            <coneGeometry args={[1.1, 1.8, 7]} />
+            <meshStandardMaterial color="#1F5228" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, 1.2, 0]} castShadow>
+            <coneGeometry args={[0.72, 1.4, 7]} />
+            <meshStandardMaterial color="#265E30" roughness={0.82} />
           </mesh>
         </group>
       ))}
@@ -504,6 +540,54 @@ function Castello() {
         <coneGeometry args={[0.9, 1.5, 8]} />
         <meshStandardMaterial color="#5A4A30" roughness={0.85} />
       </mesh>
+    </group>
+  )
+}
+
+// ── Harbor quay — stone promenade + seawall that anchors buildings to water ───
+// This fixes the "buildings floating on sea" issue by providing a solid ground.
+
+function HarborQuay() {
+  const quayY = -0.90   // matches water surface (y = -0.85) + tiny overlap
+
+  return (
+    <group>
+      {/* Stone promenade floor — spans full harbor front */}
+      <mesh position={[0, quayY, -17.0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[56, 16]} />
+        <meshStandardMaterial color="#A0917E" roughness={0.97} metalness={0.0} />
+      </mesh>
+
+      {/* Shallow step/ramp from promenade down to water line */}
+      <mesh position={[0, quayY - 0.10, -10.2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[56, 1.2]} />
+        <meshStandardMaterial color="#8E8070" roughness={0.97} />
+      </mesh>
+
+      {/* Seawall — low stone retaining wall at the harbor edge */}
+      <mesh position={[0, quayY + 0.28, -10.7]} castShadow receiveShadow>
+        <boxGeometry args={[56, 0.55, 0.72]} />
+        <meshStandardMaterial color="#8C7B6A" roughness={0.95} />
+      </mesh>
+      {/* Seawall cap / coping stone */}
+      <mesh position={[0, quayY + 0.60, -10.7]} castShadow>
+        <boxGeometry args={[56.2, 0.13, 0.90]} />
+        <meshStandardMaterial color="#9E8E7C" roughness={0.90} />
+      </mesh>
+
+      {/* Rear embankment — rises against base of buildings */}
+      <mesh position={[0, quayY + 0.18, -24.5]} castShadow receiveShadow>
+        <boxGeometry args={[56, 0.42, 0.60]} />
+        <meshStandardMaterial color="#8B7A6A" roughness={0.95} />
+      </mesh>
+
+      {/* Mooring posts / bollards along seawall */}
+      {([-18, -10, -2, 6, 14, 20] as number[]).map((x, i) => (
+        <mesh key={i} position={[x, quayY + 0.72, -10.7]} castShadow>
+          <cylinderGeometry args={[0.14, 0.18, 0.30, 8]} />
+          <meshStandardMaterial color="#6A5A4C" roughness={0.9} />
+        </mesh>
+      ))}
     </group>
   )
 }
@@ -838,12 +922,20 @@ function SceneLighting() {
 
   return (
     <>
-      <ambientLight intensity={0.55} color="#C8D4E8" />
-      <directionalLight ref={dirRef} position={[8, 14, 6]} intensity={1.4} color="#FFFFFF" />
-      {/* Subtle blue-sky fill from above */}
-      <hemisphereLight
-        args={['#87CEEB', '#3A6B40', 0.35]}
+      {/* Warmer ambient — Mediterranean afternoon sun bounce */}
+      <ambientLight intensity={0.62} color="#D4CEB8" />
+      <directionalLight ref={dirRef} position={[8, 14, 6]} intensity={1.6} color="#FFF8EE" castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-near={0.5}
+        shadow-camera-far={80}
+        shadow-camera-left={-35}
+        shadow-camera-right={35}
+        shadow-camera-top={30}
+        shadow-camera-bottom={-30}
       />
+      {/* Sky fill — cerulean from above, warm earth bounce from below */}
+      <hemisphereLight args={['#7EC8E3', '#5A7A40', 0.40]} />
     </>
   )
 }
@@ -859,20 +951,17 @@ function SceneSky() {
     progressRef.current = NODE_ORDER.indexOf(node) / (NODE_ORDER.length - 1)
   }, [node])
 
+  // Mediterranean afternoon — clear cerulean sky with warm sun at ~45° elevation
   return (
     <Sky
       distance={4500}
-      sunPosition={[
-        Math.cos(0.25 * Math.PI * 2) * Math.cos(0.485 * Math.PI),
-        Math.sin(0.485 * Math.PI),
-        Math.sin(0.25 * Math.PI * 2) * Math.cos(0.485 * Math.PI),
-      ]}
-      inclination={0.485}
-      azimuth={0.25}
-      turbidity={6}
-      rayleigh={1.8}
-      mieCoefficient={0.006}
-      mieDirectionalG={0.82}
+      sunPosition={[1.0, 0.62, -0.8]}
+      inclination={0.50}
+      azimuth={0.20}
+      turbidity={3.5}
+      rayleigh={2.2}
+      mieCoefficient={0.004}
+      mieDirectionalG={0.86}
     />
   )
 }
@@ -880,7 +969,8 @@ function SceneSky() {
 // ── Scene fog ─────────────────────────────────────────────────────────────────
 
 function SceneFog() {
-  return <fog attach="fog" args={['#B8CCE0', 22, 70]} />
+  // Warm Ligurian atmospheric haze — slightly greenish-grey, not cool blue
+  return <fog attach="fog" args={['#C2CEB8', 30, 90]} />
 }
 
 // ── Inner scene (used inside Canvas) ─────────────────────────────────────────
@@ -892,6 +982,7 @@ function PortofinoInner() {
       <SceneLighting />
       <SceneSky />
       <WaterSurface />
+      <HarborQuay />       {/* stone promenade + seawall — anchors buildings to water */}
       <HarborBuildings />
       <HillTerrain />
       <Church />
@@ -910,7 +1001,7 @@ export const PortofinoScene = dynamic(
       function PortofinoCanvas() {
         return (
           <Canvas
-            camera={{ position: [0, 2.5, 18], fov: 58, near: 0.1, far: 200 }}
+            camera={{ position: [0, 3.5, 18], fov: 55, near: 0.1, far: 200 }}
             style={{ position: 'fixed', inset: 0, zIndex: 0 }}
             gl={{ antialias: true, alpha: false }}
             shadows
