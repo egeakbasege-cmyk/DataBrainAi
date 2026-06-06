@@ -326,18 +326,18 @@ function WaterSurface() {
 function WakeTrail() {
   const uniforms = useMemo(() => ({ uTime: { value: 0.0 } }), [])
   useFrame(({ clock }) => { uniforms.uTime.value = clock.getElapsedTime() })
+  // Two wake trails — one per hull
   return (
-    <mesh position={[0, -0.78, 6]} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={[3.2, 8, 1, 1]} />
-      <shaderMaterial
-        vertexShader={WAKE_VERT}
-        fragmentShader={WAKE_FRAG}
-        uniforms={uniforms}
-        transparent
-        depthWrite={false}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
+    <>
+      <mesh position={[-1.7, -0.78, 6]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.4, 8, 1, 1]} />
+        <shaderMaterial vertexShader={WAKE_VERT} fragmentShader={WAKE_FRAG} uniforms={uniforms} transparent depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[1.7, -0.78, 6]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.4, 8, 1, 1]} />
+        <shaderMaterial vertexShader={WAKE_VERT} fragmentShader={WAKE_FRAG} uniforms={uniforms} transparent depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+    </>
   )
 }
 
@@ -636,49 +636,130 @@ function SailboatWithPhone() {
   return (
     <group ref={boatRef} position={[18, 0, -6]}>
 
-      {/* ── Hull ─────────────────────────────────────────────────────────── */}
-      {/* Main hull body */}
-      <mesh position={[0, -0.22, 0]}>
-        <boxGeometry args={[2.6, 0.72, 9.0]} />
-        <meshStandardMaterial color="#1E3A5F" metalness={0.15} roughness={0.7} />
-      </mesh>
-      {/* Deck (white) */}
-      <mesh position={[0, 0.22, 0]}>
-        <boxGeometry args={[2.4, 0.10, 8.6]} />
-        <meshStandardMaterial color="#FAFAF8" roughness={0.6} />
-      </mesh>
-      {/* Waterline stripe (blue) */}
-      <mesh position={[0, -0.55, 0]}>
-        <boxGeometry args={[2.62, 0.08, 9.04]} />
-        <meshStandardMaterial color="#C49A3C" metalness={0.2} roughness={0.4} />
-      </mesh>
-      {/* Cabin */}
-      <mesh position={[0, 0.70, 1.2]}>
-        <boxGeometry args={[1.8, 0.75, 3.2]} />
-        <meshStandardMaterial color="#FAFAF8" roughness={0.5} />
-      </mesh>
-      {/* Cabin windows */}
-      {[-0.9, 0.9].map((x, i) => (
-        <mesh key={i} position={[x, 0.72, 1.2]}>
-          <planeGeometry args={[0.4, 0.28]} />
-          <meshStandardMaterial color="#87CEEB" emissive="#87CEEB" emissiveIntensity={0.3} />
+      {/* ════════════════════════════════════════════════════════════════════
+          CATAMARAN HULL
+          Two slim parallel hulls (port + starboard) connected by:
+            • forward crossbeam
+            • aft crossbeam
+            • trampoline deck (mesh net area) represented as a flat panel
+            • central cabin/cockpit bridge on top
+         ════════════════════════════════════════════════════════════════════ */}
+
+      {/* ── Port hull (left, x = -1.7) ───────────────────────────────────── */}
+      <group position={[-1.7, 0, 0]}>
+        {/* Hull body — narrow and deep */}
+        <mesh position={[0, -0.28, 0]}>
+          <boxGeometry args={[1.0, 0.68, 9.2]} />
+          <meshStandardMaterial color="#1E3A5F" metalness={0.15} roughness={0.68} />
         </mesh>
-      ))}
-      {/* Bow and stern finishing */}
-      <mesh position={[0, -0.20, -4.6]} rotation={[0.3, 0, 0]}>
-        <boxGeometry args={[2.0, 0.65, 0.8]} />
-        <meshStandardMaterial color="#1E3A5F" />
+        {/* Deck strip */}
+        <mesh position={[0, 0.10, 0]}>
+          <boxGeometry args={[0.92, 0.09, 8.8]} />
+          <meshStandardMaterial color="#FAFAF8" roughness={0.6} />
+        </mesh>
+        {/* Gold waterline stripe */}
+        <mesh position={[0, -0.58, 0]}>
+          <boxGeometry args={[1.02, 0.07, 9.24]} />
+          <meshStandardMaterial color="#C49A3C" metalness={0.2} roughness={0.4} />
+        </mesh>
+        {/* Bow taper (angled cap) */}
+        <mesh position={[0, -0.24, -4.8]} rotation={[0.35, 0, 0]}>
+          <boxGeometry args={[0.92, 0.60, 0.70]} />
+          <meshStandardMaterial color="#1E3A5F" />
+        </mesh>
+        {/* Stern cap */}
+        <mesh position={[0, -0.24, 4.7]} rotation={[-0.2, 0, 0]}>
+          <boxGeometry args={[0.92, 0.60, 0.60]} />
+          <meshStandardMaterial color="#1E3A5F" />
+        </mesh>
+        {/* Port hull porthole window */}
+        <mesh position={[0.48, -0.15, 1.0]}>
+          <planeGeometry args={[0.28, 0.20]} />
+          <meshStandardMaterial color="#87CEEB" emissive="#87CEEB" emissiveIntensity={0.28} />
+        </mesh>
+      </group>
+
+      {/* ── Starboard hull (right, x = +1.7) ────────────────────────────── */}
+      <group position={[1.7, 0, 0]}>
+        <mesh position={[0, -0.28, 0]}>
+          <boxGeometry args={[1.0, 0.68, 9.2]} />
+          <meshStandardMaterial color="#1E3A5F" metalness={0.15} roughness={0.68} />
+        </mesh>
+        <mesh position={[0, 0.10, 0]}>
+          <boxGeometry args={[0.92, 0.09, 8.8]} />
+          <meshStandardMaterial color="#FAFAF8" roughness={0.6} />
+        </mesh>
+        <mesh position={[0, -0.58, 0]}>
+          <boxGeometry args={[1.02, 0.07, 9.24]} />
+          <meshStandardMaterial color="#C49A3C" metalness={0.2} roughness={0.4} />
+        </mesh>
+        <mesh position={[0, -0.24, -4.8]} rotation={[0.35, 0, 0]}>
+          <boxGeometry args={[0.92, 0.60, 0.70]} />
+          <meshStandardMaterial color="#1E3A5F" />
+        </mesh>
+        <mesh position={[0, -0.24, 4.7]} rotation={[-0.2, 0, 0]}>
+          <boxGeometry args={[0.92, 0.60, 0.60]} />
+          <meshStandardMaterial color="#1E3A5F" />
+        </mesh>
+        {/* Starboard hull porthole */}
+        <mesh position={[-0.48, -0.15, 1.0]}>
+          <planeGeometry args={[0.28, 0.20]} />
+          <meshStandardMaterial color="#87CEEB" emissive="#87CEEB" emissiveIntensity={0.28} />
+        </mesh>
+      </group>
+
+      {/* ── Forward crossbeam ────────────────────────────────────────────── */}
+      <mesh position={[0, 0.08, -2.8]}>
+        <boxGeometry args={[3.8, 0.18, 0.42]} />
+        <meshStandardMaterial color="#D8D0C0" roughness={0.6} />
       </mesh>
 
+      {/* ── Aft crossbeam ────────────────────────────────────────────────── */}
+      <mesh position={[0, 0.08, 2.6]}>
+        <boxGeometry args={[3.8, 0.18, 0.42]} />
+        <meshStandardMaterial color="#D8D0C0" roughness={0.6} />
+      </mesh>
+
+      {/* ── Trampoline deck (net area between hulls) ─────────────────────── */}
+      <mesh position={[0, 0.05, -0.2]}>
+        <boxGeometry args={[2.42, 0.06, 5.6]} />
+        <meshStandardMaterial color="#C8B898" roughness={0.95} transparent opacity={0.82} />
+      </mesh>
+
+      {/* ── Central cabin / cockpit (sits on crossbeams) ─────────────────── */}
+      <mesh position={[0, 0.62, 1.4]}>
+        <boxGeometry args={[2.80, 0.80, 3.0]} />
+        <meshStandardMaterial color="#FAFAF8" roughness={0.5} />
+      </mesh>
+      {/* Cabin roof */}
+      <mesh position={[0, 1.06, 1.4]}>
+        <boxGeometry args={[2.85, 0.14, 3.05]} />
+        <meshStandardMaterial color="#E8E2D8" roughness={0.6} />
+      </mesh>
+      {/* Cabin windows — port side */}
+      {[-0.8, 0.2, 1.2].map((z, i) => (
+        <mesh key={`win-p-${i}`} position={[-1.41, 0.65, z]}>
+          <planeGeometry args={[0.45, 0.30]} />
+          <meshStandardMaterial color="#87CEEB" emissive="#87CEEB" emissiveIntensity={0.30} />
+        </mesh>
+      ))}
+      {/* Cabin windows — starboard side */}
+      {[-0.8, 0.2, 1.2].map((z, i) => (
+        <mesh key={`win-s-${i}`} position={[1.41, 0.65, z]}>
+          <planeGeometry args={[0.45, 0.30]} />
+          <meshStandardMaterial color="#87CEEB" emissive="#87CEEB" emissiveIntensity={0.30} />
+        </mesh>
+      ))}
+
       {/* ── Mast ─────────────────────────────────────────────────────────── */}
-      <mesh position={[0, 4.2, 0.8]}>
-        <cylinderGeometry args={[0.07, 0.10, 9.5, 8]} />
+      <mesh position={[0, 4.5, 0.6]}>
+        <cylinderGeometry args={[0.07, 0.10, 9.8, 8]} />
         <meshStandardMaterial color="#8B7355" metalness={0.2} roughness={0.7} />
       </mesh>
 
       {/* ── Boom ─────────────────────────────────────────────────────────── */}
-      <mesh position={[0, 1.1, -0.6]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.045, 0.055, 5.5, 6]} />
+      <mesh position={[0, 1.25, -0.4]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.045, 0.055, 5.8, 6]} />
         <meshStandardMaterial color="#8B7355" roughness={0.8} />
       </mesh>
 
@@ -707,14 +788,18 @@ function RiggingLines() {
       return geo
     }
     return [
-      // Forestay: mast top → bow
-      create(new THREE.Vector3(0, 9, 0.8), new THREE.Vector3(0, 0.3, -4.2)),
-      // Port shroud
-      create(new THREE.Vector3(0, 7.5, 0.8), new THREE.Vector3(-1.2, 0.3, 1.0)),
-      // Starboard shroud
-      create(new THREE.Vector3(0, 7.5, 0.8), new THREE.Vector3( 1.2, 0.3, 1.0)),
-      // Backstay: mast top → stern
-      create(new THREE.Vector3(0, 9, 0.8), new THREE.Vector3(0, 0.3, 4.2)),
+      // Forestay: mast top → bow midpoint
+      create(new THREE.Vector3(0, 9.4, 0.6), new THREE.Vector3(0, 0.2, -4.4)),
+      // Port shroud: mast → port hull deck
+      create(new THREE.Vector3(0, 8.0, 0.6), new THREE.Vector3(-1.7, 0.12, 0.8)),
+      // Starboard shroud: mast → starboard hull deck
+      create(new THREE.Vector3(0, 8.0, 0.6), new THREE.Vector3( 1.7, 0.12, 0.8)),
+      // Backstay: mast top → stern crossbeam centre
+      create(new THREE.Vector3(0, 9.4, 0.6), new THREE.Vector3(0, 0.2, 4.4)),
+      // Port running backstay → port stern
+      create(new THREE.Vector3(0, 8.0, 0.6), new THREE.Vector3(-1.7, 0.12, 3.2)),
+      // Starboard running backstay → starboard stern
+      create(new THREE.Vector3(0, 8.0, 0.6), new THREE.Vector3( 1.7, 0.12, 3.2)),
     ]
   }, [])
 
@@ -735,9 +820,9 @@ function RiggingLines() {
 function JibSail() {
   const geo = useMemo(() => {
     const v = new Float32Array([
-      0,   0.3, -3.8,    // clew (bow attachment)
-      0,   9.0,  0.8,    // head (mast top)
-      0,   1.2,  0.8,    // tack (mast base)
+      0,   0.2, -4.2,    // clew (bow)
+      0,   9.4,  0.6,    // head (mast top)
+      0,   1.3,  0.6,    // tack (mast base)
     ])
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.BufferAttribute(v, 3))
@@ -759,25 +844,21 @@ function JibSail() {
   )
 }
 
-// ── Main sail (proper Bermuda rig triangle) ───────────────────────────────────
-//   Head:  mast top (0, 9.0, 0.8)
-//   Tack:  mast base / boom jaw (0, 1.05, 0.8)
-//   Clew:  boom end (0, 1.05, 3.5)   ← stern side, opposite to bow
-// Two triangles for front + back faces with slight billow offset
+// ── Main sail (Bermuda rig — updated for catamaran mast position) ─────────────
+//   Head:  mast top  (0, 9.4, 0.6)
+//   Tack:  boom jaw  (0, 1.25, 0.6)
+//   Clew:  boom end  (0, 1.25, 3.6)  ← stern side
 
 function MainSail() {
   const geo = useMemo(() => {
-    // Slight belly/billow: push mid-chord forward a touch
     const v = new Float32Array([
-      // Face 1 (front)
-       0.00, 9.00,  0.80,   // head
-      -0.12, 4.80,  2.00,   // mid-luff with billow
-       0.00, 1.05,  0.80,   // tack
-       0.00, 1.05,  3.50,   // clew
+       0.00, 9.40,  0.60,   // head
+      -0.14, 5.00,  2.10,   // mid-luff billow
+       0.00, 1.25,  0.60,   // tack
+       0.00, 1.25,  3.60,   // clew
     ])
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.BufferAttribute(v, 3))
-    // Two triangles: head–mid–tack and head–clew–mid
     g.setIndex([0, 2, 3,  0, 3, 1,  0, 1, 2])
     g.computeVertexNormals()
     return g
