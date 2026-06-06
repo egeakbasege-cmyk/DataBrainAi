@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Nav } from '@/components/Nav'
 import { ConnectorLogo } from '@/components/ConnectorLogos'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
@@ -828,1192 +828,611 @@ export default function DataLabPage() {
 
   // ── Auth guard ──────────────────────────────────────────────────────────────
 
-  if (status === 'loading') {
-    return (
-      <div className="sv-grid-bg" style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #E8F5F2 0%, #D4EEE9 30%, #E0F2EE 65%, #EAF6F3 100%)' }}>
-        <Nav />
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: 'calc(100vh - 72px)',
-          }}
-        >
-          <p style={{ color: 'rgba(26,43,60,0.50)', fontFamily: 'Inter, sans-serif' }}>Loading…</p>
+  // ── Shared design tokens ────────────────────────────────────────────────────
+
+  const BG  = 'linear-gradient(160deg, #E8F5F2 0%, #D4EEE9 30%, #E0F2EE 65%, #EAF6F3 100%)'
+  const TEAL = '#14B8A6'
+  const GOLD = '#C9A96E'
+  const INK  = '#1A2B3C'
+  const INK2 = 'rgba(26,43,60,0.60)'
+  const INK3 = 'rgba(26,43,60,0.38)'
+
+  const glass: React.CSSProperties = {
+    background:           'rgba(255,255,255,0.88)',
+    backdropFilter:       'blur(22px) saturate(160%)',
+    WebkitBackdropFilter: 'blur(22px) saturate(160%)',
+    border:               '1px solid rgba(129,199,185,0.28)',
+    borderRadius:          14,
+    boxShadow:            '0 8px 40px rgba(20,184,166,0.08), 0 2px 10px rgba(0,0,0,0.04)',
+  }
+
+  const labelCaps: React.CSSProperties = {
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '0.6rem',
+    fontWeight: 700,
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+  }
+
+  // ── Auth guards ─────────────────────────────────────────────────────────────
+
+  if (status === 'loading') return (
+    <div className="sv-grid-bg" style={{ minHeight: '100vh', background: BG }}>
+      <Nav />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 72px)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', border: `2px solid ${TEAL}`, borderTopColor: 'transparent', animation: 'spin 0.9s linear infinite' }} />
+          <p style={{ ...labelCaps, color: INK3 }}>Loading</p>
         </div>
       </div>
-    )
-  }
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
 
-  if (!session) {
-    return (
-      <div className="sv-grid-bg" style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #E8F5F2 0%, #D4EEE9 30%, #E0F2EE 65%, #EAF6F3 100%)' }}>
-        <Nav />
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: 'calc(100vh - 72px)',
-            gap: '1.5rem',
-          }}
-        >
-          <div style={{ fontSize: '2.5rem' }}>🔒</div>
-          <h2
-            style={{
-              fontFamily: 'Cormorant Garamond, serif',
-              fontSize: '2rem',
-              fontWeight: 600,
-              color: '#1A2B3C',
-              margin: 0,
-            }}
-          >
-            Sign in to access DataLab
-          </h2>
-          <p style={{ color: 'rgba(26,43,60,0.50)', fontFamily: 'Inter, sans-serif', margin: 0 }}>
-            Connect your data sources and benchmark your performance.
-          </p>
-          <Link
-            href="/api/auth/signin"
-            style={{
-              background: '#14B8A6',
-              color: '#fff',
-              padding: '0.75rem 2rem',
-              borderRadius: 8,
-              fontFamily: 'Inter, sans-serif',
-              fontWeight: 600,
-              fontSize: '0.95rem',
-              textDecoration: 'none',
-            }}
-          >
-            Sign In
-          </Link>
-        </div>
+  if (!session) return (
+    <div className="sv-grid-bg" style={{ minHeight: '100vh', background: BG }}>
+      <Nav />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 72px)', gap: '1.5rem' }}>
+        <div style={{ width: 56, height: 56, background: 'rgba(255,255,255,0.90)', border: `1px solid rgba(129,199,185,0.30)`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(20,184,166,0.10)' }}>🔒</div>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontStyle: 'italic', fontWeight: 600, color: INK, margin: 0 }}>Sign in to access Data Lab</h2>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: INK2, margin: 0 }}>Connect your data sources and benchmark your performance.</p>
+        <Link href="/api/auth/signin" style={{ background: TEAL, color: '#fff', padding: '0.75rem 2rem', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.88rem', textDecoration: 'none', letterSpacing: '0.02em' }}>Sign In</Link>
       </div>
-    )
-  }
+    </div>
+  )
 
-  // ── Shared card style ───────────────────────────────────────────────────────
-
-  const cardStyle: React.CSSProperties = {
-    background:           'rgba(255,255,255,0.82)',
-    backdropFilter:       'blur(20px) saturate(160%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-    border:               '1px solid rgba(129,199,185,0.30)',
-    borderRadius:          12,
-    boxShadow:            '0 8px 40px rgba(20,184,166,0.08), 0 2px 10px rgba(0,0,0,0.05)',
-    padding:              '1.75rem',
-  }
-
-  // ── Modal ───────────────────────────────────────────────────────────────────
+  // ── Connection modal ────────────────────────────────────────────────────────
 
   const modal = modalConnector && (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(26,43,60,0.30)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 999,
-        padding: '1rem',
-      }}
-      onClick={() => { if (!connecting) { setModalConnector(null); setApiInput(''); setApiInput2(''); setConnectError(null) } }}
-    >
-      <div
-        style={{ ...cardStyle, width: '100%', maxWidth: 480 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-          <ConnectorLogo id={modalConnector.id} size={36} />
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,43,60,0.28)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '1rem' }}
+      onClick={() => { if (!connecting) { setModalConnector(null); setApiInput(''); setApiInput2(''); setConnectError(null) } }}>
+      <div style={{ ...glass, width: '100%', maxWidth: 460, padding: '2rem' }} onClick={e => e.stopPropagation()}>
+        {/* Modal header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div style={{ width: 40, height: 40, background: `${activeIndustry.color}12`, border: `1px solid ${activeIndustry.color}30`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+            <ConnectorLogo id={modalConnector.id} size={24} />
+          </div>
           <div>
-            <h3
-              style={{
-                fontFamily: 'Cormorant Garamond, serif',
-                fontSize: '1.4rem',
-                fontWeight: 600,
-                margin: 0,
-                color: '#1A2B3C',
-              }}
-            >
-              Connect {modalConnector.name}
-            </h3>
-            <p style={{ color: 'rgba(26,43,60,0.50)', fontSize: '0.82rem', margin: 0, fontFamily: 'Inter, sans-serif' }}>
-              {modalConnector.description}
-            </p>
+            <p style={{ ...labelCaps, color: TEAL, margin: '0 0 0.15rem' }}>Connect Source</p>
+            <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: INK, margin: 0 }}>{modalConnector.name}</h3>
           </div>
         </div>
 
-        {/* ── Field 1: primary key / URL ── */}
-        <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'rgba(26,43,60,0.68)', marginBottom: '0.4rem', fontFamily: 'Inter, sans-serif' }}>
-          {modalConnector.fieldLabel}
-        </label>
-        <input
-          type="text"
-          value={apiInput}
-          onChange={(e) => { setApiInput(e.target.value); setConnectError(null) }}
-          placeholder={modalConnector.placeholder}
-          disabled={connecting}
-          style={{
-            width: '100%', padding: '0.65rem 0.9rem',
-            border: connectError ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(129,199,185,0.40)',
-            borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: '0.87rem',
-            color: 'rgba(26,43,60,0.68)', background: 'rgba(255,255,255,0.80)', boxSizing: 'border-box',
-            marginBottom: modalConnector.field2Label ? '0.85rem' : '1.25rem', outline: 'none',
-          }}
-        />
+        {/* Field 1 */}
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ ...labelCaps, color: INK2, display: 'block', marginBottom: '0.4rem' }}>{modalConnector.fieldLabel}</label>
+          <input
+            value={apiInput}
+            onChange={e => setApiInput(e.target.value)}
+            placeholder={modalConnector.placeholder}
+            disabled={connecting}
+            style={{ width: '100%', padding: '0.7rem 0.9rem', fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: INK, background: 'rgba(255,255,255,0.95)', border: connectError ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(129,199,185,0.35)', borderRadius: 8, outline: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
 
-        {/* ── Field 2: optional secondary credential (Shopify token) ── */}
+        {/* Field 2 (optional) */}
         {modalConnector.field2Label && (
-          <>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'rgba(26,43,60,0.68)', marginBottom: '0.4rem', fontFamily: 'Inter, sans-serif' }}>
-              {modalConnector.field2Label}
-            </label>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ ...labelCaps, color: INK2, display: 'block', marginBottom: '0.4rem' }}>{modalConnector.field2Label}</label>
             <input
-              type="text"
               value={apiInput2}
-              onChange={(e) => { setApiInput2(e.target.value); setConnectError(null) }}
+              onChange={e => setApiInput2(e.target.value)}
               placeholder={modalConnector.field2Placeholder ?? ''}
               disabled={connecting}
-              style={{
-                width: '100%', padding: '0.65rem 0.9rem',
-                border: connectError ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(129,199,185,0.40)',
-                borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: '0.87rem',
-                color: 'rgba(26,43,60,0.68)', background: 'rgba(255,255,255,0.80)', boxSizing: 'border-box',
-                marginBottom: '1.25rem', outline: 'none',
-              }}
+              style={{ width: '100%', padding: '0.7rem 0.9rem', fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: INK, background: 'rgba(255,255,255,0.95)', border: connectError ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(129,199,185,0.35)', borderRadius: 8, outline: 'none', boxSizing: 'border-box' }}
             />
-          </>
+          </div>
         )}
 
-        {/* ── Inline error ── */}
+        {/* Error */}
         {connectError && (
-          <div style={{
-            background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)',
-            borderRadius: 8, padding: '0.7rem 0.9rem', marginBottom: '1rem',
-          }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.83rem', fontWeight: 600, color: '#DC2626', margin: '0 0 0.25rem' }}>
-              {connectError.error}
-            </p>
-            {connectError.hint && (
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#9B1C1C', margin: 0, lineHeight: 1.5 }}>
-                {connectError.hint}
-              </p>
-            )}
+          <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.22)', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1rem' }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.83rem', fontWeight: 600, color: '#DC2626', margin: '0 0 0.2rem' }}>Connection Failed</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#9B1C1C', margin: 0, lineHeight: 1.5 }}>{connectError.error}{connectError.hint ? ` — ${connectError.hint}` : ''}</p>
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button
-            onClick={handleConnect}
-            disabled={connecting}
-            style={{
-              flex: 1,
-              background: connecting ? '#99E6DD' : '#14B8A6',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              padding: '0.7rem 1.25rem',
-              fontFamily: 'Inter, sans-serif',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              cursor: connecting ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            {connecting ? (
-              <>
-                <span style={{ display: 'inline-block', animation: 'pulse 1s infinite' }}>•</span>
-                Authorising…
-              </>
-            ) : (
-              'Authorize & Pull Data'
-            )}
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+          <button onClick={() => { setModalConnector(null); setApiInput(''); setApiInput2(''); setConnectError(null) }}
+            style={{ flex: 1, padding: '0.7rem', background: 'transparent', border: '1px solid rgba(129,199,185,0.35)', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: '0.87rem', color: INK2, cursor: 'pointer' }}>
+            Cancel
           </button>
-          {!connecting && (
-            <button
-              onClick={() => { setModalConnector(null); setApiInput(''); setApiInput2(''); setConnectError(null) }}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(129,199,185,0.30)',
-                borderRadius: 8,
-                padding: '0.7rem 1rem',
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.9rem',
-                color: 'rgba(26,43,60,0.50)',
-                cursor: 'pointer',
-              }}
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-
-  // ── Step 1: Connect Your Data ───────────────────────────────────────────────
-
-  const step1 = (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '3.5rem 2rem' }}>
-      {/* Hero */}
-      <motion.div variants={_stagger} initial="hidden" animate="show" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <motion.div variants={_fadeUp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.875rem', marginBottom: '1rem' }}>
-          <div style={{ width: 24, height: 1, background: '#C9A96E', opacity: 0.6 }} />
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>Data Intelligence</span>
-          <div style={{ width: 24, height: 1, background: '#C9A96E', opacity: 0.6 }} />
-        </motion.div>
-        <motion.h1 variants={_fadeUp} style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 'clamp(2.2rem, 5vw, 3.5rem)', fontWeight: 600, color: '#0F1A24', margin: '0 0 0.75rem', letterSpacing: '-0.02em', lineHeight: 1.08 }}>
-          DataLab
-        </motion.h1>
-        <motion.p variants={_fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(26,43,60,0.50)', maxWidth: 520, margin: '0 auto', lineHeight: 1.75, fontWeight: 300 }}>
-          Sektörünüzü seçin, veri kaynağınızı bağlayın.{' '}
-          <span style={{ color: '#14B8A6', fontWeight: 500 }}>Gerçek zamanlı AI analizi başlasın.</span>
-        </motion.p>
-      </motion.div>
-
-      {/* Industry selector */}
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '2rem' }}>
-        {INDUSTRY_GROUPS.map((ind) => (
-          <button
-            key={ind.id}
-            onClick={() => { setSelectedIndustry(ind.id); setActiveQueryCategory(0) }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '0.45rem',
-              padding: '0.5rem 1.1rem',
-              borderRadius: 999,
-              border: selectedIndustry === ind.id ? `1.5px solid ${ind.color}` : '1.5px solid rgba(129,199,185,0.30)',
-              background: selectedIndustry === ind.id ? `${ind.color}15` : 'rgba(255,255,255,0.72)',
-              color: selectedIndustry === ind.id ? ind.color : 'rgba(26,43,60,0.50)',
-              fontFamily: 'Inter, sans-serif', fontSize: '0.83rem', fontWeight: selectedIndustry === ind.id ? 600 : 400,
-              cursor: 'pointer', transition: 'all 0.15s ease',
-            }}
-          >
-            <span>{ind.icon}</span> {ind.name}
+          <button onClick={handleConnect} disabled={!apiInput.trim() || connecting}
+            style={{ flex: 2, padding: '0.7rem', background: connecting ? '#99E6DD' : TEAL, border: 'none', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: '0.87rem', fontWeight: 600, color: '#fff', cursor: connecting ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}>
+            {connecting ? 'Connecting…' : `Connect ${modalConnector.name}`}
           </button>
-        ))}
-      </div>
-
-      {/* Connector grid for selected industry */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
-        {activeIndustry.connectors.map((c) => (
-          <div
-            key={c.id}
-            style={{ ...cardStyle, display: 'flex', alignItems: 'flex-start', gap: '0.9rem', cursor: 'pointer', transition: 'box-shadow 0.18s, transform 0.18s' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = `0 6px 28px ${activeIndustry.color}20`; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)' }}
-          >
-            <div style={{ width: 44, height: 44, background: `${activeIndustry.color}10`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-              <ConnectorLogo id={c.id} size={32} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 600, color: '#1A2B3C', margin: '0 0 0.2rem' }}>{c.name}</h3>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(26,43,60,0.50)', margin: '0 0 0.75rem', lineHeight: 1.5 }}>{c.description}</p>
-              <button
-                onClick={() => setModalConnector(c)}
-                style={{ background: 'transparent', border: `1.5px solid ${activeIndustry.color}`, color: activeIndustry.color, borderRadius: 6, padding: '0.35rem 0.9rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.15s' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = activeIndustry.color; (e.currentTarget as HTMLButtonElement).style.color = '#fff' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = activeIndustry.color }}
-              >
-                {t('userdata.connect')}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Sample data + industry count */}
-      <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
-        <button
-          onClick={() => { setConnectedSource(MOCK_SOURCES.shopify); setStep(2) }}
-          style={{ background: 'transparent', border: 'none', color: 'rgba(26,43,60,0.38)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(156,163,175,0.4)' }}
-        >
-          {t('userdata.noSourcesYet')}
-        </button>
-        <span style={{ color: 'rgba(26,43,60,0.28)', fontSize: '0.7rem' }}>|</span>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(26,43,60,0.38)' }}>
-          {INDUSTRY_GROUPS.reduce((s, g) => s + g.connectors.length, 0)} platform · {INDUSTRY_GROUPS.length} {t('datalab.sectors')}
-        </span>
-      </div>
-    </div>
-  )
-
-  // ── Step 2: Data Overview ──────────────────────────────────────────────────
-
-  const step2 = connectedSource && (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '3rem 2rem' }}>
-      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-        {/* Left panel */}
-        <div style={{ width: '30%', minWidth: 260, flexShrink: 0 }}>
-          <div style={{ ...cardStyle, marginBottom: '1rem' }}>
-            {/* Source header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
-              <ConnectorLogo id={connectedSource.type} size={32} />
-              <div>
-                <p
-                  style={{
-                    fontFamily: 'Cormorant Garamond, serif',
-                    fontSize: '1.05rem',
-                    fontWeight: 600,
-                    color: '#1A2B3C',
-                    margin: 0,
-                  }}
-                >
-                  {connectedSource.name}
-                </p>
-                <p
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.75rem',
-                    color: '#10B981',
-                    margin: 0,
-                    fontWeight: 500,
-                  }}
-                >
-                  ● Data synced — {connectedSource.syncedAt}
-                </p>
-              </div>
-            </div>
-
-            {/* Stats */}
-            {[
-              { label: 'Total Revenue', value: connectedSource.revenue + '/mo' },
-              { label: 'Total Orders', value: connectedSource.orders + '/mo' },
-              { label: 'Avg Order Value', value: connectedSource.aov },
-              { label: 'Top Product', value: connectedSource.topProduct },
-              ...connectedSource.extra,
-            ].map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '0.55rem 0',
-                  borderBottom: '1px solid rgba(129,199,185,0.20)',
-                }}
-              >
-                <span
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'rgba(26,43,60,0.50)' }}
-                >
-                  {s.label}
-                </span>
-                <span
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    color: '#1A2B3C',
-                  }}
-                >
-                  {s.value}
-                </span>
-              </div>
-            ))}
-
-            {/* Switch source */}
-            <button
-              onClick={() => { setStep(1); setConnectedSource(null) }}
-              style={{
-                marginTop: '1rem',
-                width: '100%',
-                background: 'transparent',
-                border: '1px solid rgba(129,199,185,0.30)',
-                borderRadius: 7,
-                padding: '0.5rem',
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.82rem',
-                color: 'rgba(26,43,60,0.50)',
-                cursor: 'pointer',
-              }}
-            >
-              Switch Source
-            </button>
-          </div>
-        </div>
-
-        {/* Right panel */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-            {([
-              { id: 'analysis',    label: `🔍 ${t('trim.analysisLabel')}` },
-              { id: 'benchmarks',  label: '📈 Benchmark' },
-              { id: 'price-scout', label: `🛒 ${t('datalab.priceSearchButton').replace(' →', '')}` },
-            ] as { id: TabType; label: string }[]).map((t) => (
-              <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: '0.5rem 1.1rem', borderRadius: 7, border: activeTab === t.id ? '1px solid rgba(20,184,166,0.55)' : '1px solid rgba(129,199,185,0.28)', background: activeTab === t.id ? 'rgba(20,184,166,0.18)' : 'rgba(255,255,255,0.70)', color: activeTab === t.id ? '#0D9488' : 'rgba(26,43,60,0.60)', fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', fontWeight: activeTab === t.id ? 600 : 400, cursor: 'pointer' }}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {/* ── ANALYSIS & BENCHMARKS tab ── */}
-          {activeTab !== 'price-scout' && (
-            <>
-              {/* Query bar */}
-              <form onSubmit={handleQuerySubmit} style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1.5px solid rgba(20,184,166,0.35)', borderRadius: 10, padding: '0.5rem 0.5rem 0.5rem 1rem', alignItems: 'center' }}>
-                  <input
-                    ref={queryRef} type="text" value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder={t('datalab.analysisPlaceholder')}
-                    style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: 'rgba(26,43,60,0.68)', background: 'transparent' }}
-                  />
-                  <button type="submit" disabled={!query.trim() || analyzing}
-                    style={{ background: query.trim() ? '#14B8A6' : 'rgba(129,199,185,0.18)', color: query.trim() ? '#fff' : 'rgba(26,43,60,0.38)', border: 'none', borderRadius: 7, padding: '0.6rem 1.1rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', cursor: query.trim() ? 'pointer' : 'not-allowed' }}>
-                    {t('datalab.analyzeButton')}
-                  </button>
-                </div>
-              </form>
-
-              {/* Category tabs + query pills */}
-              {activeIndustry.queryCategories.length > 0 && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                  {/* Category pills */}
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                    {activeIndustry.queryCategories.map((cat, idx) => (
-                      <button key={cat.label} onClick={() => setActiveQueryCategory(idx)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem 0.85rem', borderRadius: 999, border: activeQueryCategory === idx ? `1.5px solid ${activeIndustry.color}` : '1.5px solid rgba(129,199,185,0.35)', background: activeQueryCategory === idx ? `${activeIndustry.color}14` : 'rgba(255,255,255,0.75)', color: activeQueryCategory === idx ? activeIndustry.color : 'rgba(26,43,60,0.58)', fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', fontWeight: activeQueryCategory === idx ? 600 : 400, cursor: 'pointer' }}>
-                        <span>{cat.icon}</span> {cat.label}
-                      </button>
-                    ))}
-                  </div>
-                  {/* Query pills for active category */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
-                    {activeIndustry.queryCategories[activeQueryCategory]?.queries.map((ex) => (
-                      <button key={ex} onClick={() => { setQuery(ex); handleAnalyze(ex) }}
-                        style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.22)', borderRadius: 20, padding: '0.35rem 0.85rem', fontFamily: 'Inter, sans-serif', fontSize: '0.77rem', color: '#0D9488', cursor: 'pointer', textAlign: 'left', lineHeight: 1.4, transition: 'background 0.12s' }}
-                        onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.11)')}
-                        onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.05)')}>
-                        {ex}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Placeholder */}
-              <div style={{ ...cardStyle, textAlign: 'center', padding: '2.5rem 2rem' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '0.6rem' }}>{activeTab === 'analysis' ? '🔍' : '📈'}</div>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 600, color: '#1A2B3C', margin: '0 0 0.35rem' }}>
-                  {activeTab === 'analysis' ? t('datalab.analysisHeading') : t('datalab.benchmarkHeading')}
-                </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: 'rgba(26,43,60,0.38)', margin: 0 }}>
-                  {t('datalab.instructions')}
-                </p>
-              </div>
-            </>
-          )}
-
-          {/* ── PRICE SCOUT tab ── */}
-          {activeTab === 'price-scout' && (
-            <div>
-              <form onSubmit={(e) => { e.preventDefault(); handlePriceSearch(priceQuery) }} style={{ marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1.5px solid rgba(201,169,110,0.45)', borderRadius: 10, padding: '0.5rem 0.5rem 0.5rem 1rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>🔎</span>
-                  <input
-                    ref={priceQueryRef} type="text" value={priceQuery}
-                    onChange={(e) => setPriceQuery(e.target.value)}
-                    placeholder={t('datalab.priceScoutPlaceholder')}
-                    style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: 'rgba(26,43,60,0.68)', background: 'transparent' }}
-                  />
-                  <button type="submit" disabled={!priceQuery.trim() || priceSearching}
-                    style={{ background: priceQuery.trim() ? '#C9A96E' : 'rgba(201,169,110,0.15)', color: priceQuery.trim() ? '#fff' : 'rgba(26,43,60,0.38)', border: 'none', borderRadius: 7, padding: '0.6rem 1.1rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', cursor: priceQuery.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
-                    {priceSearching ? t('datalab.priceSearching') : t('datalab.priceSearchButton')}
-                  </button>
-                </div>
-              </form>
-
-              {/* Quick search suggestions */}
-              {!priceResults && !priceSearching && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', color: 'rgba(26,43,60,0.38)', margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('datalab.quickExamples')}</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    {[
-                      'Sony WH-1000XM5 kulaklık', 'Shopify Plus plan price', 'Istanbul Airbnb 2 bedroom',
-                      'Klaviyo email marketing pricing', 'Booking.com hotel management software',
-                      'WooCommerce vs Shopify pricing', 'Amazon FBA tool software',
-                    ].map((s) => (
-                      <button key={s} onClick={() => { setPriceQuery(s); handlePriceSearch(s) }}
-                        style={{ background: 'rgba(201,169,110,0.07)', border: '1px solid rgba(201,169,110,0.2)', borderRadius: 20, padding: '0.33rem 0.85rem', fontFamily: 'Inter, sans-serif', fontSize: '0.77rem', color: '#92683A', cursor: 'pointer' }}>
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Loading state */}
-              {priceSearching && (
-                <div style={{ ...cardStyle, textAlign: 'center', padding: '3rem 2rem' }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.75rem', animation: 'pulse 1s infinite' }}>🔍</div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#1A2B3C', margin: 0 }}>{t('datalab.priceSearchLoading')}</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'rgba(26,43,60,0.38)', margin: '0.5rem 0 0' }}>{t('datalab.priceSearchSubtext')}</p>
-                </div>
-              )}
-
-              {/* Results */}
-              {priceResults && !priceSearching && (
-                <div>
-                  {/* AI Summary */}
-                  {priceAiSummary && (
-                    <div style={{ ...cardStyle, borderLeft: '3px solid #C9A96E', marginBottom: '1rem', padding: '1rem 1.25rem' }}>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A96E', margin: '0 0 0.4rem' }}>AI Özeti</p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(26,43,60,0.68)', lineHeight: 1.65, margin: 0 }}>{priceAiSummary}</p>
-                    </div>
-                  )}
-
-                  {priceResults.length === 0 ? (
-                    <div style={{ ...cardStyle, textAlign: 'center', padding: '2.5rem' }}>
-                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#1A2B3C', margin: 0 }}>{t('datalab.priceNoResults')}</p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: 'rgba(26,43,60,0.38)', margin: '0.4rem 0 0' }}>{t('datalab.priceNoResultsSub')}</p>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Direct matches */}
-                      {priceResults.filter(r => !r.isAlternative).length > 0 && (
-                        <div style={{ marginBottom: '1.25rem' }}>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.68)', margin: '0 0 0.6rem' }}>{t('datalab.priceBestPrices')}</p>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
-                            {priceResults.filter(r => !r.isAlternative).map((r, i) => (
-                              <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                                <div style={{ ...cardStyle, padding: '1rem', cursor: 'pointer', transition: 'all 0.15s', border: i === 0 ? '1.5px solid rgba(20,184,166,0.4)' : '1px solid rgba(20,184,166,0.10)' }}
-                                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)' }}
-                                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)' }}>
-                                  {i === 0 && <div style={{ display: 'inline-block', background: '#14B8A6', color: '#fff', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem' }}>EN UCUZ</div>}
-                                  {r.savings && <div style={{ display: 'inline-block', background: 'rgba(239,68,68,0.1)', color: '#DC2626', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem', marginLeft: i === 0 ? '0.35rem' : 0 }}>{r.savings}</div>}
-                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'rgba(26,43,60,0.68)', margin: '0 0 0.35rem', lineHeight: 1.35, fontWeight: 500 }}>{r.title}</p>
-                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 700, color: '#0F1A24', margin: '0 0 0.25rem' }}>{r.price}</p>
-                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: 'rgba(26,43,60,0.50)' }}>{r.platform}</span>
-                                    {r.rating && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: '#C9A96E', fontWeight: 600 }}>★ {r.rating}</span>}
-                                  </div>
-                                  {r.snippet && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(26,43,60,0.38)', margin: '0.4rem 0 0', lineHeight: 1.4 }}>{r.snippet}</p>}
-                                </div>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Alternatives */}
-                      {priceResults.filter(r => r.isAlternative).length > 0 && (
-                        <div>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.68)', margin: '0 0 0.6rem' }}>{t('datalab.priceAlternatives')}</p>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
-                            {priceResults.filter(r => r.isAlternative).map((r, i) => (
-                              <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                                <div style={{ ...cardStyle, padding: '1rem', cursor: 'pointer', transition: 'all 0.15s', background: 'rgba(248,250,252,0.9)' }}
-                                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)' }}
-                                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 20px rgba(0,0,0,0.04)' }}>
-                                  <div style={{ display: 'inline-block', background: 'rgba(201,169,110,0.12)', color: '#92683A', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, marginBottom: '0.5rem' }}>{t('datalab.priceAltLabel')}</div>
-                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'rgba(26,43,60,0.68)', margin: '0 0 0.35rem', lineHeight: 1.35, fontWeight: 500 }}>{r.title}</p>
-                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 700, color: '#0F1A24', margin: '0 0 0.25rem' }}>{r.price}</p>
-                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: 'rgba(26,43,60,0.50)' }}>{r.platform}</span>
-                                    {r.rating && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: '#C9A96E', fontWeight: 600 }}>★ {r.rating}</span>}
-                                  </div>
-                                  {r.snippet && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(26,43,60,0.38)', margin: '0.4rem 0 0', lineHeight: 1.4 }}>{r.snippet}</p>}
-                                </div>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>
   )
 
-  // ── Step 2 loading overlay ─────────────────────────────────────────────────
+  // ── Loading overlay ─────────────────────────────────────────────────────────
 
   const loadingOverlay = analyzing && (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(240,253,251,0.92)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 800,
-        gap: '2rem',
-      }}
-    >
-      <h2
-        style={{
-          fontFamily: 'Cormorant Garamond, serif',
-          fontSize: '2rem',
-          fontWeight: 600,
-          color: '#1A2B3C',
-          margin: 0,
-        }}
-      >
-        Analysing your data…
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', minWidth: 340 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(240,253,251,0.94)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 800, gap: '2.5rem' }}>
+      <div style={{ textAlign: 'center' }}>
+        <p style={{ ...labelCaps, color: TEAL, margin: '0 0 0.6rem' }}>Data Intelligence</p>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.2rem', fontStyle: 'italic', fontWeight: 600, color: INK, margin: 0 }}>Analysing your data…</h2>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', minWidth: 320 }}>
         {LOADING_STAGES.map((stage, i) => (
-          <div
-            key={stage}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              opacity: i <= loadingStage ? 1 : 0.35,
-              transition: 'opacity 0.3s ease',
-            }}
-          >
-            <span
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: i < loadingStage ? '#14B8A6' : i === loadingStage ? '#99E6DD' : 'rgba(129,199,185,0.22)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.7rem',
-                color: i < loadingStage ? '#fff' : 'transparent',
-                transition: 'background 0.3s ease',
-                flexShrink: 0,
-              }}
-            >
-              ✓
-            </span>
-            <span
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.9rem',
-                color: i <= loadingStage ? '#1A2B3C' : 'rgba(26,43,60,0.35)',
-              }}
-            >
-              {stage}
-            </span>
+          <div key={stage} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', opacity: i <= loadingStage ? 1 : 0.3, transition: 'opacity 0.4s ease' }}>
+            <div style={{ width: 22, height: 22, borderRadius: '50%', background: i < loadingStage ? TEAL : i === loadingStage ? '#99E6DD' : 'rgba(129,199,185,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.3s' }}>
+              {i < loadingStage && <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: 700 }}>✓</span>}
+              {i === loadingStage && <div style={{ width: 8, height: 8, borderRadius: '50%', border: `1.5px solid #0D9488`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />}
+            </div>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: i <= loadingStage ? INK : INK3 }}>{stage}</span>
           </div>
         ))}
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 
-  // ── Step 3: Analysis Results ───────────────────────────────────────────────
+  // ── STEP 1 — Source Selection ───────────────────────────────────────────────
+
+  const step1 = (
+    <motion.div initial="hidden" animate="show" variants={_stagger} style={{ maxWidth: 1060, margin: '0 auto', padding: '3rem 1.5rem 6rem' }}>
+
+      {/* Page header */}
+      <motion.div variants={_fadeUp} style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.85rem' }}>
+          <div style={{ width: 24, height: 1, background: GOLD, opacity: 0.7 }} />
+          <span style={{ ...labelCaps, color: GOLD }}>Data Intelligence</span>
+          <div style={{ width: 24, height: 1, background: GOLD, opacity: 0.7 }} />
+        </div>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 600, color: INK, margin: '0 0 0.75rem', lineHeight: 1.1 }}>
+          Connect Your Data Source
+        </h1>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.92rem', color: INK2, margin: '0 auto', maxWidth: 480, lineHeight: 1.7 }}>
+          Link your platform and get instant AI-powered benchmarking, analysis, and strategic recommendations.
+        </p>
+      </motion.div>
+
+      {/* Industry tab bar */}
+      <motion.div variants={_fadeUp} style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', marginBottom: '2rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+        {INDUSTRY_GROUPS.map(ind => (
+          <button key={ind.id}
+            onClick={() => { setSelectedIndustry(ind.id); setActiveQueryCategory(0) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.5rem 1.1rem', borderRadius: 999,
+              border: selectedIndustry === ind.id ? `1.5px solid ${ind.color}` : '1.5px solid rgba(129,199,185,0.28)',
+              background: selectedIndustry === ind.id ? `${ind.color}15` : 'rgba(255,255,255,0.75)',
+              color: selectedIndustry === ind.id ? ind.color : INK2,
+              fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', fontWeight: selectedIndustry === ind.id ? 600 : 400,
+              cursor: 'pointer', transition: 'all 0.18s', whiteSpace: 'nowrap',
+            }}>
+            <span style={{ fontSize: '0.9rem' }}>{ind.icon}</span> {ind.name}
+          </button>
+        ))}
+      </motion.div>
+
+      {/* Connector grid */}
+      <motion.div variants={_stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+        {activeIndustry.connectors.map(c => (
+          <motion.div key={c.id} variants={_fadeUp}
+            style={{ ...glass, padding: '1.4rem', cursor: 'pointer', transition: 'box-shadow 0.2s, transform 0.2s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = `0 12px 40px ${activeIndustry.color}18` }}
+            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 40px rgba(20,184,166,0.08), 0 2px 10px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.9rem' }}>
+              <div style={{ width: 42, height: 42, background: `${activeIndustry.color}10`, border: `1px solid ${activeIndustry.color}25`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                <ConnectorLogo id={c.id} size={26} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', fontWeight: 600, color: INK, margin: '0 0 0.2rem' }}>{c.name}</h3>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.77rem', color: INK2, margin: '0 0 0.9rem', lineHeight: 1.5 }}>{c.description}</p>
+                <button
+                  onClick={() => setModalConnector(c)}
+                  style={{ background: 'transparent', border: `1.5px solid ${activeIndustry.color}`, color: activeIndustry.color, borderRadius: 6, padding: '0.32rem 0.85rem', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.77rem', cursor: 'pointer', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = activeIndustry.color; (e.currentTarget as HTMLButtonElement).style.color = '#fff' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = activeIndustry.color }}>
+                  Connect
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* Footer note */}
+      <motion.div variants={_fadeUp} style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+        <button onClick={() => setModalConnector(activeIndustry.connectors[0])}
+          style={{ background: 'transparent', border: 'none', color: INK3, fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(26,43,60,0.20)' }}>
+          {t('userdata.noSourcesYet')}
+        </button>
+        <span style={{ color: 'rgba(26,43,60,0.22)', fontSize: '0.7rem' }}>|</span>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: INK3 }}>
+          {INDUSTRY_GROUPS.reduce((s, g) => s + g.connectors.length, 0)} platforms · {INDUSTRY_GROUPS.length} {t('datalab.sectors')}
+        </span>
+      </motion.div>
+    </motion.div>
+  )
+
+  // ── STEP 2 — Analysis Hub ──────────────────────────────────────────────────
+
+  const TABS = [
+    { id: 'analysis',    label: 'AI Analysis' },
+    { id: 'benchmarks',  label: 'Benchmarks' },
+    { id: 'price-scout', label: 'Price Scout' },
+  ] as const
+
+  const step2 = connectedSource && (
+    <motion.div initial="hidden" animate="show" variants={_stagger} style={{ maxWidth: 960, margin: '0 auto', padding: '2.5rem 1.5rem 6rem' }}>
+
+      {/* Source summary strip */}
+      <motion.div variants={_fadeUp} style={{ ...glass, padding: '1.25rem 1.5rem', marginBottom: '1.75rem', borderLeft: `3px solid ${TEAL}`, display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: 38, height: 38, background: `${TEAL}12`, border: `1px solid ${TEAL}30`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+            <ConnectorLogo id={connectedSource.type} size={22} />
+          </div>
+          <div>
+            <p style={{ ...labelCaps, color: TEAL, margin: '0 0 0.1rem' }}>Connected Source</p>
+            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', fontWeight: 600, color: INK, margin: 0 }}>{connectedSource.name}</h2>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+          {[
+            { l: 'Revenue', v: connectedSource.revenue },
+            { l: 'Orders',  v: connectedSource.orders },
+            { l: 'AOV',     v: connectedSource.aov },
+            { l: 'Top Product', v: connectedSource.topProduct },
+          ].map(m => (
+            <div key={m.l}>
+              <p style={{ ...labelCaps, color: INK3, margin: '0 0 0.1rem' }}>{m.l}</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 600, color: INK, margin: 0 }}>{m.v}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
+          <button onClick={() => { setStep(1); setConnectedSource(null); setAnalysisResult(null) }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: INK3, background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.3rem 0.6rem' }}>
+            ← Switch
+          </button>
+          <button onClick={() => setChatOpen(true)}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: TEAL, background: `${TEAL}10`, border: `1px solid ${TEAL}30`, borderRadius: 6, cursor: 'pointer', padding: '0.3rem 0.8rem' }}>
+            ⚗ AI Chat
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Tab navigation */}
+      <motion.div variants={_fadeUp} style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(129,199,185,0.22)', borderRadius: 10, padding: '0.3rem', width: 'fit-content' }}>
+        {TABS.map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)}
+            style={{ padding: '0.45rem 1.1rem', borderRadius: 7, border: 'none', background: activeTab === tab.id ? '#fff' : 'transparent', color: activeTab === tab.id ? TEAL : INK2, fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', fontWeight: activeTab === tab.id ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s', boxShadow: activeTab === tab.id ? '0 1px 6px rgba(20,184,166,0.12)' : 'none' }}>
+            {tab.label}
+          </button>
+        ))}
+      </motion.div>
+
+      {/* ── ANALYSIS TAB ─────────────────────────────────────────────────── */}
+      {activeTab === 'analysis' && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+
+          {/* Query form */}
+          <div style={{ ...glass, padding: '1.5rem', marginBottom: '1.25rem' }}>
+            <p style={{ ...labelCaps, color: TEAL, margin: '0 0 0.85rem' }}>Ask your data anything</p>
+            <form onSubmit={handleQuerySubmit} style={{ display: 'flex', gap: '0.6rem', marginBottom: '1rem' }}>
+              <input
+                ref={queryRef}
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder={`e.g. "What's my biggest revenue opportunity this month?"`}
+                style={{ flex: 1, padding: '0.75rem 1rem', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: INK, background: 'rgba(255,255,255,0.95)', border: '1.5px solid rgba(20,184,166,0.28)', borderRadius: 9, outline: 'none' }}
+              />
+              <button type="submit" disabled={!query.trim()}
+                style={{ padding: '0.75rem 1.5rem', background: query.trim() ? TEAL : 'rgba(129,199,185,0.18)', border: 'none', borderRadius: 9, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', color: query.trim() ? '#fff' : INK3, cursor: query.trim() ? 'pointer' : 'not-allowed', transition: 'background 0.2s' }}>
+                Analyse →
+              </button>
+            </form>
+
+            {/* Category filters */}
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
+              {activeIndustry.queryCategories.map((cat, idx) => (
+                <button key={cat.label} onClick={() => setActiveQueryCategory(idx)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.28rem 0.8rem', borderRadius: 999, border: activeQueryCategory === idx ? `1.5px solid ${activeIndustry.color}` : '1.5px solid rgba(129,199,185,0.28)', background: activeQueryCategory === idx ? `${activeIndustry.color}14` : 'rgba(255,255,255,0.72)', color: activeQueryCategory === idx ? activeIndustry.color : INK2, fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: activeQueryCategory === idx ? 600 : 400, cursor: 'pointer' }}>
+                  <span>{cat.icon}</span> {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Suggested queries */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              {activeIndustry.queryCategories[activeQueryCategory]?.queries.map(q => (
+                <button key={q} onClick={() => handleAnalyze(q)}
+                  style={{ background: `${TEAL}08`, border: `1px solid ${TEAL}22`, borderRadius: 20, padding: '0.32rem 0.85rem', fontFamily: 'Inter, sans-serif', fontSize: '0.77rem', color: '#0D9488', cursor: 'pointer', textAlign: 'left', lineHeight: 1.4, transition: 'background 0.12s' }}
+                  onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = `${TEAL}14`)}
+                  onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = `${TEAL}08`)}>
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Extra metrics from source */}
+          {connectedSource.extra.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+              {connectedSource.extra.map(e => (
+                <div key={e.label} style={{ ...glass, padding: '1.1rem 1.25rem' }}>
+                  <p style={{ ...labelCaps, color: INK3, margin: '0 0 0.35rem' }}>{e.label}</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', fontWeight: 700, color: INK, margin: 0 }}>{e.value}</p>
+                </div>
+              ))}
+              <div style={{ ...glass, padding: '1.1rem 1.25rem' }}>
+                <p style={{ ...labelCaps, color: INK3, margin: '0 0 0.35rem' }}>Synced</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: TEAL, margin: 0 }}>✓ {connectedSource.syncedAt}</p>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* ── BENCHMARKS TAB ───────────────────────────────────────────────── */}
+      {activeTab === 'benchmarks' && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <div style={{ ...glass, padding: '1.75rem', textAlign: 'center', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📊</div>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 600, fontStyle: 'italic', color: INK, margin: '0 0 0.35rem' }}>Run an analysis first</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: INK3, margin: 0 }}>Ask a question in the AI Analysis tab to see your benchmark comparison here.</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── PRICE SCOUT TAB ──────────────────────────────────────────────── */}
+      {activeTab === 'price-scout' && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          {/* Input */}
+          <div style={{ ...glass, padding: '1.5rem', marginBottom: '1.25rem' }}>
+            <p style={{ ...labelCaps, color: GOLD, margin: '0 0 0.85rem' }}>Price Intelligence</p>
+            <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '0.85rem' }}>
+              <input
+                ref={priceQueryRef}
+                value={priceQuery}
+                onChange={e => setPriceQuery(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && priceQuery.trim() && handlePriceSearch(priceQuery)}
+                placeholder={t('datalab.priceScoutPlaceholder')}
+                style={{ flex: 1, padding: '0.75rem 1rem', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: INK, background: 'rgba(255,255,255,0.95)', border: '1.5px solid rgba(201,169,110,0.38)', borderRadius: 9, outline: 'none' }}
+              />
+              <button onClick={() => priceQuery.trim() && handlePriceSearch(priceQuery)} disabled={!priceQuery.trim()}
+                style={{ padding: '0.75rem 1.4rem', background: priceQuery.trim() ? GOLD : 'rgba(201,169,110,0.15)', border: 'none', borderRadius: 9, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.87rem', color: priceQuery.trim() ? '#fff' : INK3, cursor: priceQuery.trim() ? 'pointer' : 'not-allowed', transition: 'background 0.2s' }}>
+                {t('datalab.priceSearchButton')}
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {['Cheapest Shopify apps 2025', 'WooCommerce vs Shopify pricing', 'Amazon FBA tool software'].map(s => (
+                <button key={s} onClick={() => { setPriceQuery(s); handlePriceSearch(s) }}
+                  style={{ background: 'rgba(201,169,110,0.07)', border: '1px solid rgba(201,169,110,0.22)', borderRadius: 20, padding: '0.3rem 0.82rem', fontFamily: 'Inter, sans-serif', fontSize: '0.76rem', color: '#92683A', cursor: 'pointer' }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {priceSearching && (
+            <div style={{ ...glass, textAlign: 'center', padding: '3rem 2rem' }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', fontStyle: 'italic', color: INK, margin: '0 0 0.4rem' }}>{t('datalab.priceSearchLoading')}</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: INK3, margin: 0 }}>{t('datalab.priceSearchSubtext')}</p>
+            </div>
+          )}
+
+          {priceResults && !priceSearching && (
+            <div>
+              {priceAiSummary && (
+                <div style={{ ...glass, borderLeft: `3px solid ${GOLD}`, marginBottom: '1rem', padding: '1rem 1.25rem' }}>
+                  <p style={{ ...labelCaps, color: GOLD, margin: '0 0 0.4rem' }}>AI Summary</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: INK2, lineHeight: 1.65, margin: 0 }}>{priceAiSummary}</p>
+                </div>
+              )}
+              {priceResults.length === 0 ? (
+                <div style={{ ...glass, textAlign: 'center', padding: '2.5rem' }}>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', fontStyle: 'italic', color: INK, margin: 0 }}>{t('datalab.priceNoResults')}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.84rem', color: INK3, margin: '0.4rem 0 0' }}>{t('datalab.priceNoResultsSub')}</p>
+                </div>
+              ) : (
+                <>
+                  {priceResults.filter(r => !r.isAlternative).length > 0 && (
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <p style={{ ...labelCaps, color: INK3, margin: '0 0 0.65rem' }}>{t('datalab.priceBestPrices')}</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.85rem' }}>
+                        {priceResults.filter(r => !r.isAlternative).map((r, i) => (
+                          <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                            <div style={{ ...glass, padding: '1rem', transition: 'all 0.18s', border: i === 0 ? `1.5px solid ${TEAL}40` : '1px solid rgba(129,199,185,0.28)' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 32px rgba(20,184,166,0.12)' }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 40px rgba(20,184,166,0.08), 0 2px 10px rgba(0,0,0,0.04)' }}>
+                              <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                                {i === 0 && <span style={{ background: TEAL, color: '#fff', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.64rem', fontWeight: 700 }}>BEST PRICE</span>}
+                                {r.savings && <span style={{ background: 'rgba(239,68,68,0.10)', color: '#DC2626', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.64rem', fontWeight: 700 }}>{r.savings}</span>}
+                              </div>
+                              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: INK2, margin: '0 0 0.3rem', lineHeight: 1.4, fontWeight: 500 }}>{r.title}</p>
+                              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', fontWeight: 700, color: INK, margin: '0 0 0.25rem' }}>{r.price}</p>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: INK3 }}>{r.platform}</span>
+                                {r.rating && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: GOLD, fontWeight: 600 }}>★ {r.rating}</span>}
+                              </div>
+                              {r.snippet && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: INK3, margin: '0.4rem 0 0', lineHeight: 1.4 }}>{r.snippet}</p>}
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {priceResults.filter(r => r.isAlternative).length > 0 && (
+                    <div>
+                      <p style={{ ...labelCaps, color: INK3, margin: '0 0 0.65rem' }}>{t('datalab.priceAlternatives')}</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.85rem' }}>
+                        {priceResults.filter(r => r.isAlternative).map((r, i) => (
+                          <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                            <div style={{ ...glass, padding: '1rem', background: 'rgba(248,252,251,0.88)', transition: 'all 0.18s' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)' }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)' }}>
+                              <span style={{ background: `${GOLD}18`, color: '#92683A', borderRadius: 4, padding: '0.1rem 0.45rem', fontFamily: 'Inter, sans-serif', fontSize: '0.64rem', fontWeight: 700, display: 'inline-block', marginBottom: '0.5rem' }}>{t('datalab.priceAltLabel')}</span>
+                              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: INK2, margin: '0 0 0.3rem', lineHeight: 1.4, fontWeight: 500 }}>{r.title}</p>
+                              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', fontWeight: 700, color: INK, margin: '0 0 0.25rem' }}>{r.price}</p>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: INK3 }}>{r.platform}</span>
+                                {r.rating && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.73rem', color: GOLD, fontWeight: 600 }}>★ {r.rating}</span>}
+                              </div>
+                              {r.snippet && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: INK3, margin: '0.4rem 0 0', lineHeight: 1.4 }}>{r.snippet}</p>}
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </motion.div>
+      )}
+    </motion.div>
+  )
+
+  // ── STEP 3 — Analysis Results ──────────────────────────────────────────────
 
   const step3 = analysisResult && connectedSource && (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '3rem 2rem' }}>
+    <motion.div initial="hidden" animate="show" variants={_stagger} style={{ maxWidth: 960, margin: '0 auto', padding: '2.5rem 1.5rem 6rem' }}>
+
       {/* Back */}
-      <button
+      <motion.button variants={_fadeUp}
         onClick={() => { setStep(2); setQuery('') }}
-        style={{
-          background: 'transparent',
-          border: 'none',
-          color: 'rgba(26,43,60,0.50)',
-          fontFamily: 'Inter, sans-serif',
-          fontSize: '0.87rem',
-          cursor: 'pointer',
-          marginBottom: '1.75rem',
-          padding: 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.35rem',
-        }}
-      >
-        ← Back to data overview
-      </button>
+        style={{ background: 'transparent', border: 'none', color: INK3, fontFamily: 'Inter, sans-serif', fontSize: '0.87rem', cursor: 'pointer', marginBottom: '1.75rem', padding: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        ← Back to analysis
+      </motion.button>
 
       {/* Header */}
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-          <h1
-            style={{
-              fontFamily: 'Cormorant Garamond, serif',
-              fontSize: '2rem',
-              fontWeight: 700,
-              color: '#1A2B3C',
-              margin: 0,
-            }}
-          >
-            {analysisResult.query}
-          </h1>
-          <span
-            style={{
-              background: 'rgba(20,184,166,0.10)',
-              color: '#0D9488',
-              borderRadius: 20,
-              padding: '0.2rem 0.75rem',
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-            }}
-          >
-            {analysisResult.confidence}% confidence
-          </span>
-          <span
-            style={{
-              background: 'rgba(201,169,110,0.10)',
-              color: '#92683A',
-              borderRadius: 20,
-              padding: '0.2rem 0.75rem',
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-            }}
-          >
-            {analysisResult.source}
-          </span>
+      <motion.div variants={_fadeUp} style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+          <span style={{ background: `${TEAL}12`, color: '#0D9488', borderRadius: 20, padding: '0.2rem 0.75rem', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 600 }}>{analysisResult.confidence}% confidence</span>
+          <span style={{ background: `${GOLD}12`, color: '#92683A', borderRadius: 20, padding: '0.2rem 0.75rem', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 600 }}>{analysisResult.source}</span>
         </div>
-      </div>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 700, color: INK, margin: 0, lineHeight: 1.15 }}>{analysisResult.query}</h1>
+      </motion.div>
 
       {/* Executive Summary */}
-      <div style={{ ...cardStyle, marginBottom: '1.5rem', borderLeft: '3px solid #14B8A6' }}>
-        <p
-          style={{
-            fontFamily: 'Cormorant Garamond, serif',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            color: '#14B8A6',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            margin: '0 0 0.6rem',
-          }}
-        >
-          Executive Summary
-        </p>
-        <p
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.97rem',
-            color: 'rgba(26,43,60,0.68)',
-            lineHeight: 1.7,
-            margin: 0,
-          }}
-        >
-          {analysisResult.executiveSummary}
-        </p>
-      </div>
+      <motion.div variants={_fadeUp} style={{ ...glass, padding: '1.75rem', marginBottom: '1.25rem', borderLeft: `3px solid ${TEAL}` }}>
+        <p style={{ ...labelCaps, color: TEAL, margin: '0 0 0.65rem' }}>Executive Summary</p>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.97rem', color: INK2, lineHeight: 1.75, margin: 0 }}>{analysisResult.executiveSummary}</p>
+      </motion.div>
 
-      {/* Key Metrics grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.5rem',
-        }}
-      >
-        {analysisResult.keyMetrics.map((m) => (
-          <div key={m.label} style={{ ...cardStyle, padding: '1.25rem' }}>
-            <p
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.78rem',
-                color: 'rgba(26,43,60,0.50)',
-                margin: '0 0 0.3rem',
-                fontWeight: 500,
-              }}
-            >
-              {m.label}
-            </p>
-            <p
-              style={{
-                fontFamily: 'Cormorant Garamond, serif',
-                fontSize: '1.6rem',
-                fontWeight: 700,
-                color: '#1A2B3C',
-                margin: '0 0 0.2rem',
-              }}
-            >
-              {m.value}
-            </p>
-            <p
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.78rem',
-                color: m.trend === 'up' ? '#10B981' : m.trend === 'down' ? '#EF4444' : 'rgba(255,255,255,0.40)',
-                margin: '0 0 0.15rem',
-                fontWeight: 600,
-              }}
-            >
+      {/* Key Metrics */}
+      <motion.div variants={_stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+        {analysisResult.keyMetrics.map(m => (
+          <motion.div key={m.label} variants={_fadeUp} style={{ ...glass, padding: '1.25rem' }}>
+            <p style={{ ...labelCaps, color: INK3, margin: '0 0 0.4rem' }}>{m.label}</p>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.7rem', fontWeight: 700, color: INK, margin: '0 0 0.2rem', lineHeight: 1 }}>{m.value}</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: m.trend === 'up' ? '#059669' : m.trend === 'down' ? '#DC2626' : INK3, margin: '0 0 0.1rem', fontWeight: 600 }}>
               {m.trend === 'up' ? '▲' : m.trend === 'down' ? '▼' : '—'} {m.delta} vs benchmark
             </p>
-            <p
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.75rem',
-                color: 'rgba(26,43,60,0.38)',
-                margin: 0,
-              }}
-            >
-              Industry avg: {m.benchmark}
-            </p>
-          </div>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: INK3, margin: 0 }}>Avg: {m.benchmark}</p>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Recommendations */}
-      <div style={{ ...cardStyle, marginBottom: '1.5rem' }}>
-        <p
-          style={{
-            fontFamily: 'Cormorant Garamond, serif',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            color: '#14B8A6',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            margin: '0 0 1rem',
-          }}
-        >
-          Recommendations
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+      <motion.div variants={_fadeUp} style={{ ...glass, padding: '1.75rem', marginBottom: '1.25rem' }}>
+        <p style={{ ...labelCaps, color: TEAL, margin: '0 0 1.1rem' }}>Recommendations</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {analysisResult.actionSteps.map((a, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                gap: '1rem',
-                paddingBottom: '0.85rem',
-                borderBottom:
-                  i < analysisResult.actionSteps.length - 1 ? '1px solid rgba(20,184,166,0.07)' : 'none',
-              }}
-            >
-              <span
-                style={{
-                  background: PRIORITY_COLOUR[a.priority] + '18',
-                  color: PRIORITY_COLOUR[a.priority],
-                  borderRadius: 6,
-                  padding: '0.2rem 0.55rem',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  height: 'fit-content',
-                  flexShrink: 0,
-                  marginTop: 2,
-                }}
-              >
+            <div key={i} style={{ display: 'flex', gap: '1rem', paddingBottom: '1rem', borderBottom: i < analysisResult.actionSteps.length - 1 ? '1px solid rgba(129,199,185,0.15)' : 'none' }}>
+              <span style={{ background: PRIORITY_COLOUR[a.priority] + '16', color: PRIORITY_COLOUR[a.priority], borderRadius: 6, padding: '0.2rem 0.55rem', fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 700, height: 'fit-content', flexShrink: 0, marginTop: 2, letterSpacing: '0.06em' }}>
                 {a.priority}
               </span>
               <div>
-                <p
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.92rem',
-                    fontWeight: 600,
-                    color: '#1A2B3C',
-                    margin: '0 0 0.2rem',
-                  }}
-                >
-                  {a.title}
-                </p>
-                <p
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.83rem',
-                    color: 'rgba(26,43,60,0.50)',
-                    margin: '0 0 0.2rem',
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {a.rationale}
-                </p>
-                <p
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.78rem',
-                    color: 'rgba(26,43,60,0.38)',
-                    margin: 0,
-                  }}
-                >
-                  Timeframe: {a.timeframe}
-                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.93rem', fontWeight: 600, color: INK, margin: '0 0 0.2rem' }}>{a.title}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.83rem', color: INK2, margin: '0 0 0.2rem', lineHeight: 1.6 }}>{a.rationale}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.77rem', color: INK3, margin: 0 }}>Timeframe: {a.timeframe}</p>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
-      {/* Benchmark comparison table */}
-      <div style={{ ...cardStyle, marginBottom: '1.5rem' }}>
-        <p
-          style={{
-            fontFamily: 'Cormorant Garamond, serif',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            color: '#14B8A6',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            margin: '0 0 1rem',
-          }}
-        >
-          Benchmark Comparison
-        </p>
+      {/* Benchmark Table */}
+      <motion.div variants={_fadeUp} style={{ ...glass, padding: '1.75rem', marginBottom: '1.25rem' }}>
+        <p style={{ ...labelCaps, color: TEAL, margin: '0 0 1.1rem' }}>Benchmark Comparison</p>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {['Metric', 'Your Value', 'Industry Avg', 'Delta', 'Status'].map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    textAlign: 'left',
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: 'rgba(26,43,60,0.38)',
-                    paddingBottom: '0.6rem',
-                    borderBottom: '1px solid rgba(20,184,166,0.10)',
-                  }}
-                >
-                  {h}
-                </th>
+              {['Metric', 'Your Value', 'Industry Avg', 'Delta', 'Status'].map(h => (
+                <th key={h} style={{ textAlign: 'left', ...labelCaps as object, color: INK3, paddingBottom: '0.65rem', borderBottom: '1px solid rgba(129,199,185,0.20)' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {analysisResult.benchmarks.map((row, i) => (
               <tr key={i}>
-                {[
-                  row.metric,
-                  row.yourValue,
-                  row.industryAvg,
-                  row.delta,
-                  null,
-                ].map((cell, ci) => (
-                  <td
-                    key={ci}
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '0.85rem',
-                      color: ci === 1 ? '#1A2B3C' : 'rgba(26,43,60,0.55)',
-                      fontWeight: ci === 1 ? 600 : 400,
-                      padding: '0.65rem 0',
-                      borderBottom: i < analysisResult.benchmarks.length - 1 ? '1px solid rgba(20,184,166,0.06)' : 'none',
-                    }}
-                  >
+                {[row.metric, row.yourValue, row.industryAvg, row.delta, null].map((cell, ci) => (
+                  <td key={ci} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: ci === 1 ? INK : INK2, fontWeight: ci === 1 ? 600 : 400, padding: '0.65rem 0', borderBottom: i < analysisResult.benchmarks.length - 1 ? '1px solid rgba(129,199,185,0.12)' : 'none' }}>
                     {ci === 4 ? (
-                      <span
-                        style={{
-                          background:
-                            row.status === 'above'
-                              ? 'rgba(16,185,129,0.10)'
-                              : row.status === 'below'
-                              ? 'rgba(239,68,68,0.10)'
-                              : 'rgba(129,199,185,0.15)',
-                          color:
-                            row.status === 'above'
-                              ? '#059669'
-                              : row.status === 'below'
-                              ? '#DC2626'
-                              : 'rgba(26,43,60,0.50)',
-                          borderRadius: 5,
-                          padding: '0.15rem 0.55rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                        }}
-                      >
+                      <span style={{ background: row.status === 'above' ? 'rgba(16,185,129,0.10)' : row.status === 'below' ? 'rgba(239,68,68,0.10)' : 'rgba(129,199,185,0.15)', color: row.status === 'above' ? '#059669' : row.status === 'below' ? '#DC2626' : INK2, borderRadius: 5, padding: '0.15rem 0.55rem', fontSize: '0.75rem', fontWeight: 600 }}>
                         {row.status === 'above' ? '↑ Above' : row.status === 'below' ? '↓ Below' : '→ On par'}
                       </span>
-                    ) : (
-                      cell
-                    )}
+                    ) : cell}
                   </td>
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+      </motion.div>
 
       {/* Risk Flags */}
       {analysisResult.riskFlags.length > 0 && (
-        <div style={{ ...cardStyle, marginBottom: '1.5rem' }}>
-          <p
-            style={{
-              fontFamily: 'Cormorant Garamond, serif',
-              fontSize: '0.82rem',
-              fontWeight: 600,
-              color: '#14B8A6',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              margin: '0 0 1rem',
-            }}
-          >
-            Risk Flags
-          </p>
+        <motion.div variants={_fadeUp} style={{ ...glass, padding: '1.75rem', marginBottom: '1.25rem' }}>
+          <p style={{ ...labelCaps, color: TEAL, margin: '0 0 1rem' }}>Risk Flags</p>
           {analysisResult.riskFlags.map((r, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                gap: '0.75rem',
-                padding: '0.75rem',
-                background: SEVERITY_COLOUR[r.severity] + '08',
-                borderRadius: 8,
-                border: `1px solid ${SEVERITY_COLOUR[r.severity]}22`,
-              }}
-            >
-              <span
-                style={{
-                  background: SEVERITY_COLOUR[r.severity] + '20',
-                  color: SEVERITY_COLOUR[r.severity],
-                  borderRadius: 5,
-                  padding: '0.15rem 0.55rem',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  height: 'fit-content',
-                  flexShrink: 0,
-                  marginTop: 2,
-                  textTransform: 'uppercase',
-                }}
-              >
-                {r.severity}
-              </span>
+            <div key={i} style={{ display: 'flex', gap: '0.75rem', padding: '0.85rem', background: SEVERITY_COLOUR[r.severity] + '07', borderRadius: 9, border: `1px solid ${SEVERITY_COLOUR[r.severity]}20` }}>
+              <span style={{ background: SEVERITY_COLOUR[r.severity] + '18', color: SEVERITY_COLOUR[r.severity], borderRadius: 5, padding: '0.15rem 0.55rem', fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 700, height: 'fit-content', flexShrink: 0, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{r.severity}</span>
               <div>
-                <p
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.87rem',
-                    color: 'rgba(26,43,60,0.68)',
-                    margin: '0 0 0.2rem',
-                    fontWeight: 500,
-                  }}
-                >
-                  {r.risk}
-                </p>
-                <p
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.8rem',
-                    color: 'rgba(26,43,60,0.50)',
-                    margin: 0,
-                  }}
-                >
-                  Mitigation: {r.mitigation}
-                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.87rem', color: INK2, margin: '0 0 0.2rem', fontWeight: 500 }}>{r.risk}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: INK3, margin: 0 }}>Mitigation: {r.mitigation}</p>
               </div>
             </div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Next Actions */}
-      <div style={{ ...cardStyle }}>
-        <p
-          style={{
-            fontFamily: 'Cormorant Garamond, serif',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            color: '#14B8A6',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            margin: '0 0 0.85rem',
-          }}
-        >
-          Next Actions
-        </p>
-        <ol style={{ margin: 0, paddingLeft: '1.25rem' }}>
+      <motion.div variants={_fadeUp} style={{ ...glass, padding: '1.75rem' }}>
+        <p style={{ ...labelCaps, color: GOLD, margin: '0 0 1rem' }}>Next Actions</p>
+        <ol style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
           {analysisResult.nextActions.map((action, i) => (
-            <li
-              key={i}
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.87rem',
-                color: 'rgba(26,43,60,0.68)',
-                lineHeight: 1.6,
-                marginBottom: i < analysisResult.nextActions.length - 1 ? '0.5rem' : 0,
-              }}
-            >
-              {action}
-            </li>
+            <li key={i} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.88rem', color: INK2, lineHeight: 1.6 }}>{action}</li>
           ))}
         </ol>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Main render ─────────────────────────────────────────────────────────────
 
   return (
-    <div
-      className="sv-grid-bg"
-      style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #E8F5F2 0%, #D4EEE9 30%, #E0F2EE 65%, #EAF6F3 100%)' }}
-    >
+    <div className="sv-grid-bg" style={{ minHeight: '100vh', background: BG }}>
       <Nav />
       {modal}
       {loadingOverlay}
-      {step === 1 && step1}
-      {step === 2 && step2}
-      {step === 3 && step3}
 
-      {/* ── Floating AI Chat Button ─────────────────────────────────────── */}
-      <button
-        onClick={() => setChatOpen(true)}
-        title="Data Lab AI"
-        style={{
-          position:       'fixed',
-          bottom:         '6.5rem',
-          right:          '1.25rem',
-          width:           52,
-          height:          52,
-          borderRadius:   '50%',
-          background:     connectedSource
-            ? 'linear-gradient(135deg, rgba(20,184,166,0.22) 0%, rgba(255,255,255,0.90) 100%)'
-            : 'rgba(255,255,255,0.88)',
-          backdropFilter: 'blur(16px) saturate(160%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(160%)',
-          border:         connectedSource
-            ? '1.5px solid rgba(20,184,166,0.45)'
-            : '1.5px solid rgba(129,199,185,0.30)',
-          boxShadow:      connectedSource
-            ? '0 0 20px rgba(20,184,166,0.20), 0 4px 20px rgba(0,0,0,0.10)'
-            : '0 4px 20px rgba(0,0,0,0.08)',
-          cursor:          'pointer',
-          display:         'flex',
-          alignItems:      'center',
-          justifyContent: 'center',
-          fontSize:        '1.35rem',
-          zIndex:           48,
-          transition:      'all 0.2s',
-        }}
-      >
+      <AnimatePresence mode="wait">
+        {step === 1 && <motion.div key="s1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }}>{step1}</motion.div>}
+        {step === 2 && <motion.div key="s2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }}>{step2}</motion.div>}
+        {step === 3 && <motion.div key="s3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }}>{step3}</motion.div>}
+      </AnimatePresence>
+
+      {/* AI Chat Button */}
+      <button onClick={() => setChatOpen(true)} title="Data Lab AI"
+        style={{ position: 'fixed', bottom: '6.5rem', right: '1.25rem', width: 50, height: 50, borderRadius: '50%', background: connectedSource ? `linear-gradient(135deg, ${TEAL}22 0%, rgba(255,255,255,0.92) 100%)` : 'rgba(255,255,255,0.88)', backdropFilter: 'blur(16px) saturate(160%)', WebkitBackdropFilter: 'blur(16px) saturate(160%)', border: connectedSource ? `1.5px solid ${TEAL}45` : '1.5px solid rgba(129,199,185,0.30)', boxShadow: connectedSource ? `0 0 18px ${TEAL}20, 0 4px 16px rgba(0,0,0,0.08)` : '0 4px 16px rgba(0,0,0,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', zIndex: 48, transition: 'all 0.2s' }}>
         ⚗️
-        {connectedSource && (
-          <span style={{
-            position:     'absolute',
-            top:            -3,
-            right:          -3,
-            width:          12,
-            height:         12,
-            borderRadius:  '50%',
-            background:    '#14B8A6',
-            border:         '2px solid rgba(255,255,255,0.95)',
-            animation:     'pulse 2s infinite',
-          }} />
-        )}
+        {connectedSource && <span style={{ position: 'absolute', top: -3, right: -3, width: 11, height: 11, borderRadius: '50%', background: TEAL, border: '2px solid rgba(255,255,255,0.95)', animation: 'pulse 2s infinite' }} />}
       </button>
 
-      {/* ── AI Chat Panel ───────────────────────────────────────────────── */}
-      <DataLabChatPanel
-        source={connectedSource}
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-      />
+      <DataLabChatPanel source={connectedSource} open={chatOpen} onClose={() => setChatOpen(false)} />
 
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.3); }
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.3); } }
+        @keyframes spin  { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   )
