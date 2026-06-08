@@ -102,7 +102,7 @@ function AsciiCanvas() {
         pointerEvents: 'none',
         zIndex:      5,
         mixBlendMode:'screen',
-        opacity:     0.38,
+        opacity:     0.20,
       }}
     />
   )
@@ -231,7 +231,7 @@ export function PortofinoWalkthrough() {
         position:   'absolute',
         inset:       0,
         zIndex:      6,
-        background: 'radial-gradient(ellipse 85% 70% at 50% 50%, rgba(8,9,13,0.08) 0%, rgba(8,9,13,0.55) 100%)',
+        background: 'radial-gradient(ellipse 85% 70% at 50% 50%, rgba(8,9,13,0.04) 0%, rgba(8,9,13,0.38) 100%)',
         pointerEvents: 'none',
       }} />
       {/* ── Layer 2b: linear top+bottom darkening ── */}
@@ -239,7 +239,7 @@ export function PortofinoWalkthrough() {
         position:   'absolute',
         inset:       0,
         zIndex:      7,
-        background: 'linear-gradient(180deg, rgba(8,9,13,0.45) 0%, rgba(8,9,13,0.0) 20%, rgba(8,9,13,0.0) 80%, rgba(8,9,13,0.45) 100%)',
+        background: 'linear-gradient(180deg, rgba(8,9,13,0.32) 0%, rgba(8,9,13,0.0) 22%, rgba(8,9,13,0.0) 78%, rgba(8,9,13,0.32) 100%)',
         pointerEvents: 'none',
       }} />
 

@@ -307,8 +307,8 @@ function WaterSurface() {
     uTime:         { value: 0.0 },
     uWaveScale:    { value: 0.38 },
     uProgress:     { value: 0.0 },
-    uDeepColor:    { value: new THREE.Color('#062434') },   // Ligurian deep teal-navy
-    uSurfaceColor: { value: new THREE.Color('#0E9E8C') },   // warm Mediterranean surface
+    uDeepColor:    { value: new THREE.Color('#041C2C') },   // Ligurian deep navy
+    uSurfaceColor: { value: new THREE.Color('#0A8C7E') },   // clear Mediterranean teal
     uSunDir:       { value: new THREE.Vector3(0.55, 0.72, -0.42).normalize() },
     uShoreZ:       { value: -9.5 },   // seawall front edge in world-Z
   }), [])
@@ -1243,8 +1243,8 @@ function SceneLighting() {
   return (
     <>
       {/* Warmer ambient — Mediterranean afternoon sun bounce */}
-      <ambientLight intensity={0.62} color="#D4CEB8" />
-      <directionalLight ref={dirRef} position={[8, 14, 6]} intensity={1.6} color="#FFF8EE" castShadow
+      <ambientLight intensity={0.55} color="#D8D0BC" />
+      <directionalLight ref={dirRef} position={[8, 14, 6]} intensity={1.85} color="#FFF8EE" castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-camera-near={0.5}
@@ -1254,8 +1254,8 @@ function SceneLighting() {
         shadow-camera-top={30}
         shadow-camera-bottom={-30}
       />
-      {/* Sky fill — cerulean from above, warm earth bounce from below */}
-      <hemisphereLight args={['#7EC8E3', '#5A7A40', 0.40]} />
+      {/* Sky fill — softer cerulean above, warm earth bounce below */}
+      <hemisphereLight args={['#A0CDE0', '#5A7A40', 0.36]} />
     </>
   )
 }
@@ -1271,17 +1271,17 @@ function SceneSky() {
     progressRef.current = NODE_ORDER.indexOf(node) / (NODE_ORDER.length - 1)
   }, [node])
 
-  // Mediterranean afternoon — clear cerulean sky with warm sun at ~45° elevation
+  // Mediterranean early afternoon — warm cerulean sky, slight summer haze
   return (
     <Sky
       distance={4500}
-      sunPosition={[1.0, 0.62, -0.8]}
-      inclination={0.50}
-      azimuth={0.20}
-      turbidity={3.5}
-      rayleigh={2.2}
-      mieCoefficient={0.004}
-      mieDirectionalG={0.86}
+      sunPosition={[0.85, 0.60, -0.75]}
+      inclination={0.48}
+      azimuth={0.22}
+      turbidity={4.5}
+      rayleigh={1.8}
+      mieCoefficient={0.005}
+      mieDirectionalG={0.84}
     />
   )
 }
@@ -1289,8 +1289,8 @@ function SceneSky() {
 // ── Scene fog ─────────────────────────────────────────────────────────────────
 
 function SceneFog() {
-  // Warm Ligurian atmospheric haze — slightly greenish-grey, not cool blue
-  return <fog attach="fog" args={['#C2CEB8', 30, 90]} />
+  // Warm Ligurian atmospheric haze — golden-grey, unified with afternoon light
+  return <fog attach="fog" args={['#C8C4B0', 32, 95]} />
 }
 
 // ── Inner scene (used inside Canvas) ─────────────────────────────────────────
@@ -1322,7 +1322,7 @@ export const PortofinoScene = dynamic(
       function PortofinoCanvas() {
         return (
           <Canvas
-            camera={{ position: [-1, 6.5, 24], fov: 68, near: 0.1, far: 220 }}
+            camera={{ position: [-2, 5.8, 21], fov: 62, near: 0.1, far: 220 }}
             style={{ position: 'fixed', inset: 0, zIndex: 0 }}
             gl={{ antialias: true, alpha: false }}
             shadows
