@@ -45,6 +45,13 @@ import {
 } from '@/lib/clients/groq'
 import type { GroqMessage, GroqRequest }           from '@/lib/clients/groq'
 
+// ── Multi-Mission Orchestrator ────────────────────────────────────────────────
+import {
+  planMissions,
+  executeMissions,
+  streamSynthesis,
+} from '@/lib/orchestration/missionOrchestrator'
+
 // ── PersonalisedAI orchestrator (replaces legacy Synergy) ────────────────────
 import {
   executeChainOfDraft,
@@ -117,6 +124,7 @@ export const runtime = 'edge'
 type AnalysisMode =
   | 'upwind' | 'downwind' | 'sail' | 'trim' | 'catamaran'
   | 'operator' | 'personalised' | 'synergy' | 'scenario' | 'auto'
+  | 'mission'   // Multi-Mission Orchestrator — parallel specialist agents + 70B synthesis
 
 type ExtendedPayload = Omit<AetherisPayload, 'analysisMode'> & {
   apiKey?:            string
@@ -273,7 +281,7 @@ async function criticGuardrailSearch(
 
 const VALID_MODES = [
   'upwind', 'downwind', 'sail', 'trim', 'catamaran',
-  'operator', 'personalised', 'scenario',
+  'operator', 'personalised', 'scenario', 'mission',
 ] as const
 type ValidMode  = typeof VALID_MODES[number]
 type RouterMood = 'analytical' | 'exploratory' | 'urgent' | 'planning' | 'creative'
@@ -292,12 +300,13 @@ const VALID_MODES_SET = new Set<string>(VALID_MODES)
 const ALTERNATIVE_MODE_MAP: Record<ValidMode, ValidMode> = {
   upwind:       'sail',
   sail:         'operator',
-  operator:     'personalised',
-  personalised: 'operator',
+  operator:     'mission',
+  personalised: 'mission',
   trim:         'operator',
   catamaran:    'personalised',
   downwind:     'sail',
   scenario:     'sail',
+  mission:      'personalised',
 }
 
 const MODE_SIMILARITY: Record<string, ValidMode> = {
@@ -360,13 +369,13 @@ function sanitizeRouterResult(raw: Record<string, unknown>): RouterResult {
 }
 
 const DOMAIN_MODE_BIAS: Partial<Record<SkillCard['domain'][number], string>> = {
-  financial_analysis:       'trim',
-  business_strategy:        'personalised',
-  risk_assessment:          'personalised',
+  financial_analysis:       'mission',      // needs financial + strategic + risk in parallel
+  business_strategy:        'mission',      // multi-dimensional → mission orchestrator
+  risk_assessment:          'mission',      // risk + financial + strategic lenses needed
   product_strategy:         'personalised',
-  market_research:          'sail',
+  market_research:          'mission',      // search + strategic + competitive in parallel
   operations:               'operator',
-  competitive_intelligence: 'upwind',
+  competitive_intelligence: 'mission',      // search + strategic + financial simultaneously
   data_governance:          'operator',
 }
 
@@ -383,6 +392,7 @@ Available modes:
 - "operator"     → comprehensive deep intelligence, multi-domain strategy
 - "personalised" → bespoke advisory: multi-specialist intelligence synthesised into a unified brief
 - "scenario"     → predictive simulation, what-if analysis
+- "mission"      → HIGHEST CAPABILITY: parallel multi-specialist missions (financial+strategic+risk+search+memory) synthesised by 70B — use for complex, multi-dimensional questions requiring simultaneous expert perspectives
 
 Mood signals: "analytical" | "exploratory" | "urgent" | "planning" | "creative"
 urgencyLevel: 0.0–1.0. Set ≥ 0.8 only for genuine crises or 48-hour deadlines.
@@ -727,6 +737,108 @@ SCOPE RULES — NON-NEGOTIABLE:
     : (_researchAttempted ? SEARCH_FAILED_WARNING : '')
 
   const encoder = new TextEncoder()
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MISSION MODE — Multi-Mission Orchestrator
+  // Decomposes query into parallel specialist missions, then synthesises via 70B.
+  // Returns SSE with: plan → mission_done×N → synthesis chunks → done
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  if (analysisMode === 'mission') {
+    const queryText   = body.message?.trim() ?? ''
+    const missionLang = body.language ?? _queryLanguage ?? 'en'
+
+    function missionSse(event: string, data: unknown): Uint8Array {
+      return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+    }
+
+    const mStream = new ReadableStream({
+      async start(ctrl) {
+        try {
+          // Phase 1 — plan
+          const plan = await planMissions(
+            queryText, body.context, Boolean(body.fileContent?.trim()), body.apiKey,
+          )
+          ctrl.enqueue(missionSse('plan', {
+            complexity: plan.complexity,
+            reasoning:  plan.reasoning,
+            missions:   plan.missions.map(m => ({ id: m.id, type: m.type, label: m.label })),
+          }))
+
+          // Phase 2 — parallel execution
+          const results = await executeMissions(plan.missions, queryText, {
+            userId:      session.user.email!,
+            context:     body.context,
+            fileContent: body.fileContent,
+            language:    missionLang,
+            byokKey:     body.apiKey,
+          })
+          for (const r of results) {
+            ctrl.enqueue(missionSse('mission_done', {
+              missionId:  r.missionId,
+              label:      r.label,
+              type:       r.type,
+              elapsedMs:  r.elapsedMs,
+              confidence: r.confidence,
+              hasContent: r.content.length > 0,
+              error:      r.error ?? null,
+            }))
+          }
+
+          // Phase 3 — synthesis streaming
+          ctrl.enqueue(missionSse('synthesis_start', {}))
+          const synthRes = await streamSynthesis(queryText, results, body.context, body.apiKey)
+          if (!synthRes.ok || !synthRes.body) {
+            ctrl.enqueue(missionSse('error', { message: 'Synthesis unavailable.' }))
+            ctrl.close()
+            return
+          }
+          const mReader  = synthRes.body.getReader()
+          const mDecoder = new TextDecoder()
+          let   mBuf     = ''
+          while (true) {
+            const { done, value } = await mReader.read()
+            if (done) break
+            mBuf += mDecoder.decode(value, { stream: true })
+            const lines = mBuf.split('\n')
+            mBuf = lines.pop() ?? ''
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue
+              const payload = line.slice(6).trim()
+              if (payload === '[DONE]') continue
+              try {
+                const token = (JSON.parse(payload) as { choices?: Array<{ delta?: { content?: string } }> })
+                  .choices?.[0]?.delta?.content
+                if (token) ctrl.enqueue(missionSse('chunk', { text: token }))
+              } catch { /* skip */ }
+            }
+          }
+          ctrl.enqueue(missionSse('done', {
+            missionCount:   results.length,
+            complexity:     plan.complexity,
+            modelsUsed:     ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile',
+                             ...(results.some(r => r.type === 'SEARCH')  ? ['tavily']          : []),
+                             ...(results.some(r => r.type === 'RECALL')  ? ['pinecone+cohere'] : []),
+                             ...(results.some(r => r.type === 'ANALYZE') ? ['gemini-2.0-flash'] : [])],
+          }))
+        } catch (err) {
+          ctrl.enqueue(missionSse('error', {
+            message: err instanceof Error ? err.message : 'Orchestration failed.',
+          }))
+        } finally {
+          ctrl.close()
+        }
+      },
+    })
+
+    return new Response(mStream, {
+      headers: {
+        'Content-Type':      'text/event-stream',
+        'Cache-Control':     'no-store',
+        'X-Accel-Buffering': 'no',
+      },
+    })
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PERSONALISED AI (replaces legacy Synergy)
