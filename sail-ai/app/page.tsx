@@ -797,7 +797,7 @@ export default function LandingPage() {
               <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.85rem', color: '#C9A96E', marginBottom: '0.25rem' }}>
                 {t('landing.est')}
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#A1A1AA', letterSpacing: '0.04em' }}>
+              <p suppressHydrationWarning style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#A1A1AA', letterSpacing: '0.04em' }}>
                 © {new Date().getFullYear()} Sail AI
               </p>
             </div>

@@ -1030,7 +1030,7 @@ export default function ChatPage() {
                         {expanded ? s.summary : `${s.summary?.slice(0, 100) ?? ''}${(s.summary?.length ?? 0) > 100 ? '…' : ''}`}
                       </p>
                       {s.createdAt && (
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.28)', margin: 0 }}>
+                        <p suppressHydrationWarning style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.28)', margin: 0 }}>
                           {new Date(s.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       )}

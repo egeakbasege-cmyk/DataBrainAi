@@ -71,6 +71,12 @@ function buildProviders() {
   return list
 }
 
+// Production runs over HTTPS (Vercel) → use secure, prefixed cookies.
+// Local dev runs over HTTP → plain cookie name so the browser still stores it.
+const useSecureCookies =
+  (process.env.NEXT_PUBLIC_APP_URL ?? process.env.AUTH_URL ?? '').startsWith('https://') ||
+  process.env.NODE_ENV === 'production'
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   trustHost: true,
@@ -79,7 +85,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // Only attach the Prisma adapter when the database is actually reachable
   ...(hasValidDb() ? { adapter: PrismaAdapter(prisma) } : {}),
 
-  session:   { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 }, // 30 days
+  session: {
+    strategy:  'jwt',
+    maxAge:    30 * 24 * 60 * 60, // 30 days — absolute lifetime
+    updateAge: 24 * 60 * 60,      // re-issue the JWT cookie at most once/day so
+                                  // returning users (mobile app-switch, refresh,
+                                  // second tab) get a rolling, always-fresh session
+  },
+
+  // Explicit, persistent cookie so tokens survive tab switches, mobile
+  // backgrounding, and page refreshes instead of silently dropping.
+  cookies: {
+    sessionToken: {
+      name: useSecureCookies ? '__Secure-authjs.session-token' : 'authjs.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',   // survives top-level navigations / OAuth return
+        path:     '/',
+        secure:   useSecureCookies,
+        maxAge:   30 * 24 * 60 * 60,
+      },
+    },
+  },
+
   providers: buildProviders(),
 
   callbacks: {

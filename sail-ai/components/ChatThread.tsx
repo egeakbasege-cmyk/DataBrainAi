@@ -90,7 +90,7 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
           <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.8 }}>
             {modeLabel}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.02em' }}>
+          <span suppressHydrationWarning style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.02em' }}>
             {ts}
           </span>
         </div>
@@ -146,7 +146,7 @@ const AssistantCard = memo(function AssistantCard({
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: meta.color }}>
           {meta.label}
         </span>
-        <span style={{
+        <span suppressHydrationWarning style={{
           fontFamily: 'Inter, sans-serif', fontSize: 10,
           color: message.streaming ? meta.color : 'rgba(255,255,255,0.35)',
           fontStyle: message.streaming ? 'italic' : 'normal', letterSpacing: '0.02em',

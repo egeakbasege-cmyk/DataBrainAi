@@ -619,7 +619,7 @@ export default function WelcomePage() {
       {/* ── Footer ─────────────────────────────────────────────────── */}
       <footer style={{ background: '#0C0C0E', padding: '2rem 1.5rem', textAlign: 'center', borderTop: '1px solid rgba(201,169,110,0.1)' }}>
         <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.4), rgba(20,184,166,0.3), transparent)', marginBottom: '1.25rem' }} />
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', margin: 0 }}>
+        <p suppressHydrationWarning style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', margin: 0 }}>
           © {new Date().getFullYear()} SAIL AI · <Link href="/pricing" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>{t('nav.pricing')}</Link> · <Link href="/chat" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>{t('nav.chartCourse')}</Link>
         </p>
       </footer>

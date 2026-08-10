@@ -1497,7 +1497,7 @@ export default function SwissPrecisionDashboard() {
 
       {/* Scrollable content */}
       <main
-        className="min-h-screen px-4 pb-24"
+        className="min-h-screen px-4 pb-24 w-full max-w-full overflow-x-hidden"
         style={{
           paddingTop: 'calc(max(56px, env(safe-area-inset-top, 56px)) + 56px)',
           maxWidth: 500,

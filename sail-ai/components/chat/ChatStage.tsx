@@ -230,20 +230,36 @@ export function ChatStage(props: ChatStageProps) {
   const bottomRef  = useRef<HTMLDivElement>(null)
   const [showFab, setShowFab] = useState(false)
 
-  // Auto-scroll to bottom on new content
+  // Tracks whether the user is pinned near the bottom. Starts true so the very
+  // first response streams into view; flips to false the moment the user
+  // scrolls up to read earlier content, so we never yank them back down.
+  const isNearBottomRef = useRef(true)
+
+  // Discrete events (a new message arrives, a mode phase flips) → smooth scroll.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    isNearBottomRef.current = true
   }, [messages.length, isActive, sailPhase, trimPhase, catamaranPhase, synergyPhase, operatorPhase, scenarioPhase, upwindState, coachState])
 
-  // Show "jump to bottom" FAB when scrolled up
+  // Streaming token growth → follow fluidly, but ONLY while the user is at the
+  // bottom. Uses instant ('auto') scroll so rapid token updates track smoothly
+  // without a backlog of queued smooth-scroll animations (the usual jank cause).
+  useEffect(() => {
+    if (!isNearBottomRef.current) return
+    bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' })
+  }, [sailText, synergyText, operatorText, scenarioText, response, trimResponse, catamaranResponse, moodGuide])
+
+  // Track scroll position: drives the FAB and the "am I at the bottom?" flag.
   const handleScroll = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
     const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    isNearBottomRef.current = distFromBottom < 120
     setShowFab(distFromBottom > 200)
   }, [])
 
   const scrollToBottom = () => {
+    isNearBottomRef.current = true
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
