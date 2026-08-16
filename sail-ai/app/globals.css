@@ -1066,3 +1066,43 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
 @media (prefers-reduced-motion: reduce) {
   .skeleton-sheen { animation: none; }
 }
+
+/* ============================================================
+   LEGAL PROSE
+   Scoped body copy for /terms, /privacy, /refund and /contact.
+   These pages are long-form text, so they need readable measure
+   and list styling that the app's reset strips everywhere else.
+   ============================================================ */
+.legal-prose p,
+.legal-prose li {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: #3F3F46;
+}
+
+.legal-prose p { margin: 0 0 0.875rem; }
+.legal-prose p:last-child { margin-bottom: 0; }
+
+.legal-prose ul {
+  margin: 0 0 0.875rem;
+  padding-left: 1.125rem;
+  list-style: disc;
+}
+
+.legal-prose li { margin-bottom: 0.5rem; }
+.legal-prose li::marker { color: #C9A96E; }
+
+.legal-prose strong {
+  font-weight: 600;
+  color: #0C0C0E;
+}
+
+.legal-prose a {
+  color: #8A6D3B;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.legal-prose a:hover { color: #0C0C0E; }

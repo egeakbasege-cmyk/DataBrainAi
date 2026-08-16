@@ -171,16 +171,21 @@ export default auth(async (req: NextRequest & { auth?: { user?: { email?: string
       "https://google.serper.dev",
       "https://generativelanguage.googleapis.com",
       "https://api.lemonsqueezy.com",
+      "https://api.dodopayments.com",
+      "https://live.dodopayments.com",
+      "https://test.dodopayments.com",
       "https://api.resend.com",
       "https://*.upstash.io",
       "https://*.pinecone.io",
       "https://*.sentry.io",
       "https://vitals.vercel-insights.com",
     ].join(' '),
-    "frame-src https://js.stripe.com https://hooks.stripe.com https://lemonsqueezy.com",
+    "frame-src https://js.stripe.com https://hooks.stripe.com https://lemonsqueezy.com https://live.dodopayments.com https://test.dodopayments.com",
+    // Checkout is a top-level redirect to the merchant of record, so the
+    // payment host must be an allowed form-action target.
+    "form-action 'self' https://live.dodopayments.com https://test.dodopayments.com",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
     "frame-ancestors 'none'",
     "upgrade-insecure-requests",
   ].join('; ')

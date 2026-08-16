@@ -790,6 +790,23 @@ export default function LandingPage() {
                   </Link>
                 ))}
               </div>
+              {/* Legal — required for payment-provider verification; the review
+                  team checks these are reachable from the public site. */}
+              <div>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
+                  Legal
+                </p>
+                {[
+                  { href: '/terms',   label: 'Terms of Service' },
+                  { href: '/privacy', label: 'Privacy Policy' },
+                  { href: '/refund',  label: 'Refund Policy' },
+                  { href: '/contact', label: 'Contact' },
+                ].map(l => (
+                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
             </div>
 
             {/* Copyright + Est. */}
