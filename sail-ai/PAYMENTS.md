@@ -52,11 +52,13 @@ değişkeniyle sağlayıcı değiştirilebiliyor.
 
 ```
 lib/payments/index.ts            → sağlayıcı seçimi + createCheckout()
+lib/payments/dodo-provider.ts    → Dodo checkout / müşteri portalı
 lib/payments/stripe-provider.ts  → Stripe checkout / billing portal
 app/api/checkout/route.ts        → sağlayıcıdan bağımsız checkout
-app/api/webhook/route.ts         → Lemon Squeezy webhook (mevcut)
-app/api/webhook/stripe/route.ts  → Stripe webhook (yeni)
-app/api/subscription/portal/     → her iki sağlayıcı için abonelik yönetimi
+app/api/webhook/route.ts         → Lemon Squeezy webhook
+app/api/webhook/stripe/route.ts  → Stripe webhook
+app/api/webhook/dodo/route.ts    → Dodo webhook (Standard Webhooks imzası)
+app/api/subscription/portal/     → üç sağlayıcı için abonelik yönetimi
 app/api/payments/status/         → teşhis endpoint'i
 ```
 
@@ -104,7 +106,82 @@ sırrı tanımlı mı, ve tespit edilen sorunların listesi. Lemon Squeezy için
 
 ---
 
-## 4. Seçenek B — Stripe'a geç (önerilen)
+## 4. Seçenek B — Dodo Payments (ÖNERİLEN, kurulu)
+
+Türkiye'den satış yapmak için tek gerçekçi "hem global hem TR" seçeneği.
+Neden diğerleri değil:
+
+- **Stripe Türkiye'yi desteklemiyor.** Türkiye'de yerleşik bir şirketle
+  doğrudan Stripe hesabı açılamıyor; ABD/İngiltere tüzel kişiliği gerekiyor.
+  `stripe-provider.ts` yalnızca o senaryo için duruyor.
+- **Lemon Squeezy'nin mağaza para birimi tek ve global.** Alıcının ülkesine
+  göre değişmiyor — TRY seçilirse yurt dışı müşteri de TRY görüyor.
+
+Dodo'da doğrulananlar:
+
+| | Durum |
+|---|---|
+| Türk satıcı kabulü | ✅ resmi ülke listesinde ("Türkiye"), TC kimlik ile doğrulama |
+| Şirket zorunluluğu | ❌ kayıtlı işletmesi olmayan bireyler onboard olabiliyor |
+| Türk banka hesabına payout | ✅ |
+| Checkout para birimi | ✅ 80+ para birimi, alıcı bölgesine göre (TR müşteri ₺ görür) |
+| Global KDV / sales tax | ✅ merchant of record — yükümlülük platformda |
+| Abonelik | ✅ native (trial, plan değişimi, usage-based) |
+| Komisyon | %4 + $0.40 · +%1.5 uluslararası · +%0.5 abonelik |
+
+### Kurulum
+
+1. [app.dodopayments.com](https://app.dodopayments.com) → kaydol, kimlik
+   doğrulamasını tamamla (şirket beklemek gerekmiyor).
+2. **Products** → "Sail AI Pro" → tekrarlayan fiyat → `product_id` kopyala.
+3. **Developer → API Keys** → **canlı** anahtar üret.
+4. **Developer → Webhooks** → endpoint ekle:
+   - URL: `https://<alan-adın>/api/webhook/dodo`
+   - Olaylar: `subscription.active`, `subscription.renewed`,
+     `subscription.plan_changed`, `subscription.unpaused`,
+     `subscription.cancelled`, `subscription.expired`, `subscription.failed`,
+     `subscription.paused`, `subscription.on_hold`, `refund.succeeded`,
+     `dispute.lost`
+   - Signing secret (`whsec_...`) kopyala.
+5. Vercel ortam değişkenleri:
+
+```bash
+vercel env add DODO_PAYMENTS_API_KEY  production
+vercel env add DODO_PRODUCT_ID        production
+vercel env add DODO_WEBHOOK_SECRET    production   # whsec_...
+vercel env add DODO_ENVIRONMENT       production   # live
+vercel env add PAYMENT_PROVIDER       production   # dodo
+```
+
+6. Deploy et ve `/api/payments/status` ile doğrula:
+   `{ "active": "dodo", "dodo": { "liveMode": true }, "healthy": true }`
+
+### Bilinmesi gerekenler
+
+- **Payout eşiği $1.000.** Altındaki çekimlerde $5 kesinti var; düşük hacimde
+  bakiyeyi biriktirip çekmek mantıklı.
+- **Taksit belirsiz.** Dodo'nun Türkiye sayfası taksitten söz ediyor ama hangi
+  bankalar / kaç taksit dokümante edilmemiş. Taksit kritikse yurt içi satış için
+  iyzico/PayTR gerekir.
+- **Genç şirket.** MoR modelinde para bir süre sağlayıcının bakiyesinde durur;
+  bu bir karşı taraf riskidir.
+
+### Webhook güvenliği
+
+Dodo, Standard Webhooks spesifikasyonunu kullanıyor: `webhook-id`,
+`webhook-timestamp`, `webhook-signature` başlıkları ve
+`{id}.{timestamp}.{body}` üzerinde HMAC-SHA256. Doğrulama `node:crypto` ile
+elle yapıldı (ek bağımlılık yok), 5 dakikalık replay toleransı var ve imza
+**ham gövde** üzerinden kontrol ediliyor — gövdeyi parse edip yeniden
+serileştirmek bayt sırasını değiştirip doğrulamayı kırardı.
+
+Pro yetkisi **yalnızca Dodo'nun kontrol ettiği alanlardan** veriliyor;
+`metadata` checkout çağrısından geri yansıtıldığı için güvenilmez girdi kabul
+edilir ve yetkilendirmede kullanılmaz.
+
+---
+
+## 4b. Seçenek C — Stripe (yalnızca ABD/İngiltere tüzel kişiliği varsa)
 
 Stripe SDK zaten bağımlılıklarda mevcuttu; `lib/proStore.ts` de Stripe
 aboneliklerini okuyabiliyordu. Eksik olan checkout, webhook ve portal
@@ -142,21 +219,24 @@ stripe listen --forward-to localhost:3000/api/webhook/stripe
 
 ---
 
-## 5. Türkiye için diğer alternatifler
+## 5. Değerlendirilen diğer alternatifler
 
-Stripe doğrudan Türkiye'de hesap açılışını desteklemiyorsa:
-
-| Sağlayıcı | Model | Not |
+| Sağlayıcı | Model | Neden seçilmedi |
 |---|---|---|
-| **Paddle** | Merchant of Record | KDV/vergiyi üstlenir, TR satıcıları kabul eder. Lemon Squeezy'ye en yakın alternatif. |
-| **Polar.sh** | Merchant of Record | Geliştirici odaklı, hızlı onboarding. |
-| **Creem** | Merchant of Record | SaaS için, TR dahil geniş destek. |
-| **iyzico / PayTR** | Yerel PSP | TL tahsilat, yurt içi satış için ideal; abonelik desteği var. |
+| **Polar.sh** | MoR | Türkiye destekli, iyi alternatif. Dodo daha basit onboarding (şirket gerektirmiyor) ve alıcı bazlı para birimi sunuyor. |
+| **Paddle** | MoR | Onay süreci ağır, minimum hacim beklentisi var. |
+| **Creem** | MoR | Ülke desteği net dokümante edilmemiş. |
+| **iyzico** | Yerel PSP | TL + taksit + e-fatura ✅ ama global KDV yükümlülüğü sende. Komisyon ~%4.29. |
+| **PayTR** | Yerel PSP | En ucuz (~%2.19) ve ertesi gün ödeme, ama şirket + vergi levhası + mesafeli satış sayfaları gerekiyor. |
 
-Yeni bir sağlayıcı eklemek için `lib/payments/stripe-provider.ts` dosyasını
-şablon alıp `lib/payments/index.ts` içindeki `activeProvider()` ve
-`createCheckout()` fonksiyonlarına bir dal eklemek yeterli — route'lar
-değişmez.
+**Hibrit yol (gelecek):** TR ziyaretçiyi iyzico'ya, diğerlerini Dodo'ya
+yönlendirmek — taksit ve e-fatura gerçekten gerekli olduğunda. Vercel'in
+`x-vercel-ip-country` başlığı ülke tespiti için yeterli; `activeProvider()`
+fonksiyonunu istek bazlı hale getirmek dışında çağrı noktaları değişmez.
+
+Yeni sağlayıcı eklemek için `lib/payments/dodo-provider.ts` dosyasını şablon
+alıp `lib/payments/index.ts` içindeki `activeProvider()` ve `createCheckout()`
+fonksiyonlarına bir dal eklemek yeterli — route'lar değişmez.
 
 ---
 

@@ -3,6 +3,7 @@ import { auth }             from '@/auth'
 import { lsRequest }        from '@/lib/lemonsqueezy'
 import { activeProvider }   from '@/lib/payments'
 import { createPortalUrl }  from '@/lib/payments/stripe-provider'
+import * as dodoProvider    from '@/lib/payments/dodo-provider'
 
 const APP_BASE_URL = (
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -19,6 +20,17 @@ export async function POST() {
   const email = session.user.email.toLowerCase()
 
   try {
+    if (activeProvider() === 'dodo') {
+      const url = await dodoProvider.createPortalUrl(email, `${APP_BASE_URL}/account`)
+      if (!url) {
+        return NextResponse.json(
+          { error: 'No active subscription found for this account.' },
+          { status: 404 },
+        )
+      }
+      return NextResponse.json({ url })
+    }
+
     if (activeProvider() === 'stripe') {
       const url = await createPortalUrl({
         email,

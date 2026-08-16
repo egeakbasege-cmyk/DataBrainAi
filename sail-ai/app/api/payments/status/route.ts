@@ -25,7 +25,16 @@ export async function GET() {
   const issues: string[] = []
 
   if (!status.active) {
-    issues.push('No payment provider is configured. Set STRIPE_SECRET_KEY + STRIPE_PRICE_ID, or the LEMONSQUEEZY_* variables.')
+    issues.push('No payment provider is configured. Set DODO_PAYMENTS_API_KEY + DODO_PRODUCT_ID, or STRIPE_SECRET_KEY + STRIPE_PRICE_ID, or the LEMONSQUEEZY_* variables.')
+  }
+
+  if (status.active === 'dodo') {
+    if (!status.dodo.liveMode) {
+      issues.push('Dodo is running in TEST mode (DODO_ENVIRONMENT=test). Real payments require live mode plus a live API key.')
+    }
+    if (!process.env.DODO_WEBHOOK_SECRET) {
+      issues.push('DODO_WEBHOOK_SECRET is missing — the webhook will reject every event, so Pro status will not be granted after payment.')
+    }
   }
 
   if (status.active === 'stripe') {
