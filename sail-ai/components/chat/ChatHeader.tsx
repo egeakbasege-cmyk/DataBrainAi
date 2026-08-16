@@ -101,7 +101,7 @@ export function ChatHeader({
         />
         {/* Mode label */}
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      10,
           fontWeight:    700,
           letterSpacing: '0.14em',
@@ -119,7 +119,7 @@ export function ChatHeader({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0 }}
               style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize:   10,
                 color:      'rgba(20,184,166,0.7)',
                 fontStyle:  'italic',
@@ -138,7 +138,7 @@ export function ChatHeader({
           <BrandNameplate config={brandConfig} onEdit={onBrandEdit} />
         ) : hasContext && contextLabel ? (
           <span style={{
-            fontFamily:  'Inter, sans-serif',
+            fontFamily:  'var(--font-inter), sans-serif',
             fontSize:    11,
             color:       '#9CA3AF',
             textAlign:   'center',
@@ -184,7 +184,7 @@ export function ChatHeader({
             <polyline points="9 12 11 14 15 10"/>
           </svg>
           <span style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      10,
             fontWeight:    600,
             letterSpacing: '0.08em',
@@ -217,7 +217,7 @@ export function ChatHeader({
         >
           <span style={{ fontSize: 9, lineHeight: 1 }}>{businessMode ? '💼' : '💬'}</span>
           <span style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      10,
             fontWeight:    600,
             color:         businessMode ? '#34D399' : '#9CA3AF',
@@ -308,7 +308,7 @@ export function ChatHeader({
         {/* Pro badge / Upgrade */}
         {isPro ? (
           <span style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      9,
             fontWeight:    700,
             letterSpacing: '0.12em',
@@ -333,7 +333,7 @@ export function ChatHeader({
               border:        '1.5px solid rgba(16,185,129,0.55)',
               borderRadius:  9999,
               cursor:        'pointer',
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      9,
               fontWeight:    700,
               letterSpacing: '0.1em',

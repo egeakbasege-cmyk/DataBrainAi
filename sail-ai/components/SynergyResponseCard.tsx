@@ -102,7 +102,7 @@ function LayerSection({ seg, isLast }: { seg: LayerSegment; isLast: boolean }) {
           flexShrink:    0,
         }} />
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.58rem',
           fontWeight:    700,
           letterSpacing: '0.1em',
@@ -117,7 +117,7 @@ function LayerSection({ seg, isLast }: { seg: LayerSegment; isLast: boolean }) {
             background:    'rgba(201,169,110,0.15)',
             border:        '1px solid rgba(201,169,110,0.4)',
             borderRadius:  '3px',
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.5rem',
             fontWeight:    700,
             letterSpacing: '0.08em',
@@ -132,7 +132,7 @@ function LayerSection({ seg, isLast }: { seg: LayerSegment; isLast: boolean }) {
 
       {/* Layer content */}
       <div style={{
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: 'var(--font-inter), sans-serif',
         fontSize:   '0.88rem',
         lineHeight: 1.7,
         color:      '#FFFFFF',
@@ -229,7 +229,7 @@ export function SynergyResponseCard({ text, streaming, modes, companyName }: Pro
               </div>
             )}
             <div style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.6rem',
               fontWeight:    700,
               letterSpacing: '0.12em',
@@ -249,7 +249,7 @@ export function SynergyResponseCard({ text, streaming, modes, companyName }: Pro
               borderRadius:  '999px',
               background:    `${MODE_META[m].color}22`,
               border:        `1px solid ${MODE_META[m].color}55`,
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.5rem',
               fontWeight:    700,
               letterSpacing: '0.08em',
@@ -264,7 +264,7 @@ export function SynergyResponseCard({ text, streaming, modes, companyName }: Pro
             borderRadius:  '999px',
             background:    'rgba(201,169,110,0.1)',
             border:        '1px solid rgba(201,169,110,0.3)',
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.5rem',
             fontWeight:    700,
             letterSpacing: '0.08em',
@@ -304,7 +304,7 @@ export function SynergyResponseCard({ text, streaming, modes, companyName }: Pro
         {/* Fallback: plain markdown when no ▸ markers found (streaming or complete) */}
         {segments.length === 0 && text.length > 0 && (
           <div style={{
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize:   '0.88rem',
             lineHeight: 1.7,
             color:      '#FFFFFF',
@@ -328,7 +328,7 @@ export function SynergyResponseCard({ text, streaming, modes, companyName }: Pro
             <polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9" fill="#C9A96E" opacity="0.7"/>
           </svg>
           <span style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.58rem',
             letterSpacing: '0.07em',
             textTransform: 'uppercase',

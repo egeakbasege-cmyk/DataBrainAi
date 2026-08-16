@@ -37,7 +37,7 @@ function MarqueeBand() {
     <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)', borderBottom: '1px solid rgba(0,0,0,0.07)', background: '#F4F4F2', padding: '0.875rem 0', overflow: 'hidden' }}>
       <div className="sv-marquee-track">
         {doubled.map((item, i) => (
-          <span key={i} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.67rem', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', padding: '0 2.75rem', display: 'inline-flex', alignItems: 'center', gap: '2.75rem' }}>
+          <span key={i} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.67rem', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', padding: '0 2.75rem', display: 'inline-flex', alignItems: 'center', gap: '2.75rem' }}>
             {item}
             <span style={{ display: 'inline-block', width: 3, height: 3, borderRadius: '50%', background: '#C9A96E', flexShrink: 0 }} />
           </span>
@@ -50,6 +50,7 @@ function MarqueeBand() {
 export default function PricingPage() {
   const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
 
   const TIERS = [
     {
@@ -115,14 +116,17 @@ export default function PricingPage() {
 
   async function handleStripe() {
     setLoading(true)
+    setCheckoutError(null)
     try {
       const res  = await fetch('/api/checkout', { method: 'POST' })
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
+      if (!res.ok || data.error) throw new Error(data.error ?? 'Could not start checkout.')
+      if (!data.url) throw new Error('Could not start checkout.')
       window.location.href = data.url
-    } catch (err: any) {
-      console.error('Checkout error:', err.message)
-      alert(err.message)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Could not start checkout.'
+      console.error('Checkout error:', msg)
+      setCheckoutError(msg)
       setLoading(false)
     }
   }
@@ -145,7 +149,7 @@ export default function PricingPage() {
           >
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.5rem' }}>
               <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
                 {t('pricing.membership')}
               </span>
             </motion.div>
@@ -153,7 +157,7 @@ export default function PricingPage() {
             <motion.h1
               variants={fadeUp}
               style={{
-                fontFamily:    'Cormorant Garamond, Georgia, serif',
+                fontFamily:    'var(--font-cormorant), Georgia, serif',
                 fontStyle:     'italic',
                 fontSize:      'clamp(2.25rem, 5vw, 3.5rem)',
                 fontWeight:    600,
@@ -168,7 +172,7 @@ export default function PricingPage() {
 
             <motion.p
               variants={fadeUp}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9375rem', color: 'rgba(255,255,255,0.42)', maxWidth: '44ch', fontWeight: 300, lineHeight: 1.78 }}
+              style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: 'rgba(255,255,255,0.42)', maxWidth: '44ch', fontWeight: 300, lineHeight: 1.78 }}
             >
               {t('pricing.subheadline')}
             </motion.p>
@@ -231,15 +235,15 @@ export default function PricingPage() {
                 </span>
 
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.5rem' }}>
-                  <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '3rem', fontWeight: 700, color: tier.accent ? '#FFFFFF' : '#0C0C0E', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                  <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '3rem', fontWeight: 700, color: tier.accent ? '#FFFFFF' : '#0C0C0E', lineHeight: 1, letterSpacing: '-0.02em' }}>
                     {tier.price}
                   </span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: tier.accent ? 'rgba(255,255,255,0.35)' : '#A1A1AA', fontWeight: 300 }}>
+                  <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: tier.accent ? 'rgba(255,255,255,0.35)' : '#A1A1AA', fontWeight: 300 }}>
                     {tier.period}
                   </span>
                 </div>
 
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.45)' : '#71717A', lineHeight: 1.7, marginBottom: '2rem', fontWeight: 300 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.45)' : '#71717A', lineHeight: 1.7, marginBottom: '2rem', fontWeight: 300 }}>
                   {tier.summary}
                 </p>
 
@@ -247,7 +251,7 @@ export default function PricingPage() {
 
                 <ul style={{ listStyle: 'none', marginBottom: '2.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {tier.features.map(f => (
-                    <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.65)' : '#3A3A3C', lineHeight: 1.5 }}>
+                    <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.65)' : '#3A3A3C', lineHeight: 1.5 }}>
                       <span style={{ color: tier.accent ? '#C9A96E' : 'var(--sv-teal)', fontSize: '0.5rem', flexShrink: 0, marginTop: '0.4rem' }}>◆</span>
                       {f}
                     </li>
@@ -255,24 +259,35 @@ export default function PricingPage() {
                 </ul>
 
                 {tier.cta.action === 'stripe' ? (
-                  <button
-                    onClick={handleStripe}
-                    disabled={loading}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.9rem', background: 'linear-gradient(135deg, #B8882A, #C9A96E)', color: '#0C0C0E', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s', boxShadow: '0 4px 16px rgba(201,169,110,0.4)' }}
-                  >
-                    {loading ? t('pricing.redirecting') : tier.cta.label}
-                  </button>
+                  <>
+                    <button
+                      onClick={handleStripe}
+                      disabled={loading}
+                      aria-busy={loading}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.9rem', background: 'linear-gradient(135deg, #B8882A, #C9A96E)', color: '#0C0C0E', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s', boxShadow: '0 4px 16px rgba(201,169,110,0.4)' }}
+                    >
+                      {loading ? t('pricing.redirecting') : tier.cta.label}
+                    </button>
+                    {checkoutError && (
+                      <p
+                        role="alert"
+                        style={{ marginTop: '0.6rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', lineHeight: 1.5, color: '#B4302B' }}
+                      >
+                        {checkoutError}
+                      </p>
+                    )}
+                  </>
                 ) : tier.cta.href?.startsWith('mailto') ? (
                   <a
                     href={tier.cta.href}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.9rem', background: 'transparent', color: '#0C0C0E', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid rgba(0,0,0,0.18)', textDecoration: 'none', textAlign: 'center', transition: 'background 0.18s' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.9rem', background: 'transparent', color: '#0C0C0E', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid rgba(0,0,0,0.18)', textDecoration: 'none', textAlign: 'center', transition: 'background 0.18s' }}
                   >
                     {tier.cta.label}
                   </a>
                 ) : (
                   <Link
                     href={tier.cta.href!}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.9rem', background: 'transparent', color: '#0C0C0E', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid rgba(0,0,0,0.18)', textDecoration: 'none', textAlign: 'center' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.9rem', background: 'transparent', color: '#0C0C0E', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid rgba(0,0,0,0.18)', textDecoration: 'none', textAlign: 'center' }}
                   >
                     {tier.cta.label}
                   </Link>
@@ -298,7 +313,7 @@ export default function PricingPage() {
           >
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '0' }}>
               <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
                 {t('pricing.commonQ')}
               </span>
               <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
@@ -317,11 +332,11 @@ export default function PricingPage() {
                 variants={fadeUp}
                 style={{ padding: '1.75rem 0', borderBottom: '1px solid rgba(0,0,0,0.07)' }}
               >
-                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600, fontSize: '1.15rem', color: '#0C0C0E', marginBottom: '0.5rem', lineHeight: 1.3 }}>
+                <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontWeight: 600, fontSize: '1.15rem', color: '#0C0C0E', marginBottom: '0.5rem', lineHeight: 1.3 }}>
                   <span style={{ color: 'var(--sv-teal)', marginRight: '0.5rem', fontSize: '0.7rem' }}>◈</span>
                   {faq.q}
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.78, color: '#71717A', fontWeight: 300 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', lineHeight: 1.78, color: '#71717A', fontWeight: 300 }}>
                   {faq.a}
                 </p>
               </motion.div>

@@ -98,7 +98,7 @@ function LoginForm() {
   const inp: React.CSSProperties = {
     width: '100%', padding: '0.75rem 0', background: 'transparent',
     border: 'none', borderBottom: '1px solid rgba(12,12,14,0.15)',
-    outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem',
+    outline: 'none', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9rem',
     color: '#0C0C0E', boxSizing: 'border-box', transition: 'border-color 0.15s',
   }
 
@@ -132,7 +132,7 @@ function LoginForm() {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2.5rem', justifyContent: 'center' }}>
           <Logo size={42} />
-          <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 600, letterSpacing: '0.08em', color: '#0C0C0E' }}>
+          <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.1rem', fontWeight: 600, letterSpacing: '0.08em', color: '#0C0C0E' }}>
             SAIL AI
           </span>
         </div>
@@ -143,7 +143,7 @@ function LoginForm() {
             <button
               key={m} type="button" onClick={() => switchMode(m)}
               style={{
-                padding: '0.625rem', fontFamily: 'Inter, sans-serif',
+                padding: '0.625rem', fontFamily: 'var(--font-inter), sans-serif',
                 fontSize: '0.72rem', fontWeight: mode === m ? 600 : 400,
                 letterSpacing: '0.07em', textTransform: 'uppercase',
                 background: mode === m ? '#0C0C0E' : 'transparent',
@@ -174,7 +174,7 @@ function LoginForm() {
             border: '1px solid rgba(12,12,14,0.16)',
             borderRadius: '3px',
             cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize: '0.875rem',
             fontWeight: 500,
             color: '#0C0C0E',
@@ -190,7 +190,7 @@ function LoginForm() {
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1.25rem 0' }}>
           <div style={{ flex: 1, height: 1, background: 'rgba(12,12,14,0.09)' }} />
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', letterSpacing: '0.05em' }}>{t('login.or')}</span>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#A1A1AA', letterSpacing: '0.05em' }}>{t('login.or')}</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(12,12,14,0.09)' }} />
         </div>
 
@@ -198,18 +198,18 @@ function LoginForm() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {mode === 'register' && (
             <div>
-              <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.nameLabel')}</label>
+              <label style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.nameLabel')}</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t('login.namePlaceholder')} required style={inp} autoComplete="name" />
             </div>
           )}
 
           <div>
-            <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.emailLabel')}</label>
+            <label style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.emailLabel')}</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required style={inp} autoComplete="email" />
           </div>
 
           <div>
-            <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.passwordLabel')}</label>
+            <label style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.passwordLabel')}</label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPw ? 'text' : 'password'} value={password}
@@ -226,20 +226,20 @@ function LoginForm() {
 
           {mode === 'register' && (
             <div>
-              <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.confirmLabel')}</label>
+              <label style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA' }}>{t('login.confirmLabel')}</label>
               <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder={t('login.confirmPlaceholder')} required style={inp} autoComplete="new-password" />
             </div>
           )}
 
           {error && (
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#991B1B', background: 'rgba(153,27,27,0.05)', border: '1px solid rgba(153,27,27,0.15)', padding: '0.625rem 0.75rem', margin: 0, borderRadius: '3px', lineHeight: 1.5 }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#991B1B', background: 'rgba(153,27,27,0.05)', border: '1px solid rgba(153,27,27,0.15)', padding: '0.625rem 0.75rem', margin: 0, borderRadius: '3px', lineHeight: 1.5 }}>
               {error}
             </p>
           )}
 
           <button
             type="submit" disabled={isLoading}
-            style={{ width: '100%', padding: '0.8125rem', background: isLoading ? '#3A3A3C' : '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '4px', cursor: isLoading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', transition: 'background 0.15s' }}
+            style={{ width: '100%', padding: '0.8125rem', background: isLoading ? '#3A3A3C' : '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '4px', cursor: isLoading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', transition: 'background 0.15s' }}
           >
             {loading
               ? (mode === 'register' ? t('login.creating') : t('login.signingIn'))
@@ -247,7 +247,7 @@ function LoginForm() {
           </button>
         </form>
 
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', textAlign: 'center', marginTop: '1.5rem', lineHeight: 1.6 }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#A1A1AA', textAlign: 'center', marginTop: '1.5rem', lineHeight: 1.6 }}>
           {t('login.terms')}{' '}
           <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>{t('login.termsLink')}</span>
           {' & '}
@@ -255,7 +255,7 @@ function LoginForm() {
         </p>
       </div>
 
-      <a href="/" style={{ marginTop: '1.5rem', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', textDecoration: 'none', letterSpacing: '0.04em' }}>
+      <a href="/" style={{ marginTop: '1.5rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#A1A1AA', textDecoration: 'none', letterSpacing: '0.04em' }}>
         {t('login.back')}
       </a>
     </main>

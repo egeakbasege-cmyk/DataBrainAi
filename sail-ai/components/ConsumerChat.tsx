@@ -144,7 +144,7 @@ function PriceCard({ result, cheapest }: { result: PriceResult; cheapest: boolea
           letterSpacing: '0.1em',
           padding:       '2px 7px',
           borderRadius:  '4px',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
         }}>
           BEST PRICE
         </span>
@@ -161,7 +161,7 @@ function PriceCard({ result, cheapest }: { result: PriceResult; cheapest: boolea
           letterSpacing: '0.08em',
           padding:       '2px 7px',
           borderRadius:  '4px',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           border:        '1px solid rgba(99,102,241,0.25)',
         }}>
           ALT
@@ -169,7 +169,7 @@ function PriceCard({ result, cheapest }: { result: PriceResult; cheapest: boolea
       )}
 
       <p style={{
-        fontFamily:   'Inter, sans-serif',
+        fontFamily:   'var(--font-inter), sans-serif',
         fontSize:     '0.82rem',
         fontWeight:   500,
         color:        '#0C0C0E',
@@ -186,7 +186,7 @@ function PriceCard({ result, cheapest }: { result: PriceResult; cheapest: boolea
 
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
         <span style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontFamily: 'var(--font-cormorant), Georgia, serif',
           fontSize:   '1.15rem',
           fontWeight: 700,
           color:      cheapest ? '#B8902A' : '#0C0C0E',
@@ -194,7 +194,7 @@ function PriceCard({ result, cheapest }: { result: PriceResult; cheapest: boolea
           {formatPrice(result)}
         </span>
         {result.savings && (
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#059669', fontWeight: 600 }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#059669', fontWeight: 600 }}>
             {result.savings}
           </span>
         )}
@@ -202,7 +202,7 @@ function PriceCard({ result, cheapest }: { result: PriceResult; cheapest: boolea
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
         <span style={{
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'var(--font-inter), sans-serif',
           fontSize:   '0.7rem',
           color:      '#71717A',
           fontWeight: 500,
@@ -210,7 +210,7 @@ function PriceCard({ result, cheapest }: { result: PriceResult; cheapest: boolea
           {result.platform}
         </span>
         {result.rating && (
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#F59E0B' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#F59E0B' }}>
             ★ {result.rating}
             {result.reviewCount && (
               <span style={{ color: '#A1A1AA' }}> ({result.reviewCount})</span>
@@ -221,7 +221,7 @@ function PriceCard({ result, cheapest }: { result: PriceResult; cheapest: boolea
 
       {result.snippet && (
         <p style={{
-          fontFamily:  'Inter, sans-serif',
+          fontFamily:  'var(--font-inter), sans-serif',
           fontSize:    '0.7rem',
           color:       '#A1A1AA',
           margin:      '0.3rem 0 0',
@@ -253,7 +253,7 @@ function PriceScoutResults({ msg }: { msg: ChatMessage }) {
           borderRadius:  '10px',
           padding:       '0.75rem 1rem',
           marginBottom:  '1rem',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.82rem',
           color:         '#3D3D3D',
           lineHeight:    1.7,
@@ -267,7 +267,7 @@ function PriceScoutResults({ msg }: { msg: ChatMessage }) {
       {direct.length > 0 && (
         <>
           <p style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.68rem',
             fontWeight:    700,
             letterSpacing: '0.08em',
@@ -289,7 +289,7 @@ function PriceScoutResults({ msg }: { msg: ChatMessage }) {
       {alts.length > 0 && (
         <>
           <p style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.68rem',
             fontWeight:    700,
             letterSpacing: '0.08em',
@@ -308,7 +308,7 @@ function PriceScoutResults({ msg }: { msg: ChatMessage }) {
       )}
 
       {msg.results.length === 0 && (
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#71717A', textAlign: 'center', padding: '1rem 0' }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.82rem', color: '#71717A', textAlign: 'center', padding: '1rem 0' }}>
           No price results found. Try a more specific product name.
         </p>
       )}
@@ -337,7 +337,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         }}>
           <span style={{ fontSize: '1rem' }}>🔍</span>
           <span style={{
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize:   '0.78rem',
             fontWeight: 600,
             color:      '#71717A',
@@ -348,7 +348,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         {msg.loading ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem 0' }}>
             <TypingDots />
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#A1A1AA' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#A1A1AA' }}>
               Scanning prices across the web…
             </span>
           </div>
@@ -403,7 +403,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
           <TypingDots />
         ) : (
           <p style={{
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize:   '0.875rem',
             lineHeight: 1.65,
             color:      isUser ? '#FFFFFF' : '#0C0C0E',
@@ -620,7 +620,7 @@ export function ConsumerChat({ onSwitchToBusiness }: Props) {
       }}>
         <div>
           <h1 style={{
-            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontFamily: 'var(--font-cormorant), Georgia, serif',
             fontSize:   '1.15rem',
             fontWeight: 600,
             color:      '#0C0C0E',
@@ -630,7 +630,7 @@ export function ConsumerChat({ onSwitchToBusiness }: Props) {
             Your Personal AI
           </h1>
           <p style={{
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize:   '0.7rem',
             color:      '#A1A1AA',
             margin:     '2px 0 0',
@@ -651,7 +651,7 @@ export function ConsumerChat({ onSwitchToBusiness }: Props) {
             border:        '1px solid rgba(201,169,110,0.3)',
             borderRadius:  '999px',
             cursor:        'pointer',
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.65rem',
             fontWeight:    600,
             letterSpacing: '0.06em',
@@ -701,7 +701,7 @@ export function ConsumerChat({ onSwitchToBusiness }: Props) {
                 ✦
               </div>
               <h2 style={{
-                fontFamily: 'Cormorant Garamond, Georgia, serif',
+                fontFamily: 'var(--font-cormorant), Georgia, serif',
                 fontSize:   'clamp(1.3rem, 5vw, 1.65rem)',
                 fontWeight: 600,
                 color:      '#0C0C0E',
@@ -710,7 +710,7 @@ export function ConsumerChat({ onSwitchToBusiness }: Props) {
                 Hi! How can I help you today?
               </h2>
               <p style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize:   '0.82rem',
                 color:      '#71717A',
                 margin:     '0 auto 1.5rem',
@@ -742,7 +742,7 @@ export function ConsumerChat({ onSwitchToBusiness }: Props) {
                       border:        '1px solid rgba(0,0,0,0.09)',
                       borderRadius:  '999px',
                       cursor:        'pointer',
-                      fontFamily:    'Inter, sans-serif',
+                      fontFamily:    'var(--font-inter), sans-serif',
                       fontSize:      '0.78rem',
                       color:         '#3D3D3D',
                       fontWeight:    400,
@@ -813,7 +813,7 @@ export function ConsumerChat({ onSwitchToBusiness }: Props) {
               padding:    '0.875rem 1.125rem 0.5rem',
               color:      '#0C0C0E',
               caretColor: '#C9A96E',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.9rem',
               lineHeight: 1.65,
               resize:     'none',
@@ -843,7 +843,7 @@ export function ConsumerChat({ onSwitchToBusiness }: Props) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   style={{
-                    fontFamily:    'Inter, sans-serif',
+                    fontFamily:    'var(--font-inter), sans-serif',
                     fontSize:      '0.62rem',
                     letterSpacing: '0.06em',
                     padding:       '2px 8px',
@@ -913,11 +913,11 @@ export function ConsumerChat({ onSwitchToBusiness }: Props) {
           margin:         '0.35rem auto 0',
           padding:        '0 0.25rem',
         }}>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#C4C4CC' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: '#C4C4CC' }}>
             ⌘ + Enter to send
           </span>
           {input.length > MAX * 0.8 && (
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: input.length >= MAX ? '#991B1B' : '#C4C4CC' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: input.length >= MAX ? '#991B1B' : '#C4C4CC' }}>
               {MAX - input.length} left
             </span>
           )}

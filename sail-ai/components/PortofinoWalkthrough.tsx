@@ -141,7 +141,7 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
       }} />
 
       <div style={{
-        fontFamily:    'Cormorant Garamond, Georgia, serif',
+        fontFamily:    'var(--font-cormorant), Georgia, serif',
         fontSize:       56,
         fontWeight:     300,
         color:         'rgba(201,169,110,0.55)',
@@ -156,7 +156,7 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
       <div style={{ width: 24, height: 1, background: '#C9A96E', opacity: 0.75, marginBottom: 14 }} />
 
       <p style={{
-        fontFamily:    'Inter, sans-serif',
+        fontFamily:    'var(--font-inter), sans-serif',
         fontSize:       11,
         fontWeight:     700,
         letterSpacing: '0.16em',
@@ -168,7 +168,7 @@ function Step({ n, title, body, delay }: { n: string; title: string; body: strin
         {title}
       </p>
       <p style={{
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: 'var(--font-inter), sans-serif',
         fontSize:    14,
         lineHeight:  1.72,
         color:      '#FFFFFF',
@@ -272,7 +272,7 @@ export function PortofinoWalkthrough() {
             style={{ display: 'flex', alignItems: 'center', gap: 10 }}
           >
             <div style={{ width: 28, height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.55))' }} />
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#C9A96E', textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#C9A96E', textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
               Live Demo
             </span>
             <div style={{ width: 28, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.55), transparent)' }} />
@@ -295,7 +295,7 @@ export function PortofinoWalkthrough() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)', textAlign: 'center', maxWidth: 220, textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}
+            style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)', textAlign: 'center', maxWidth: 220, textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}
           >
             No account needed — tap the screen to begin
           </motion.p>
@@ -313,7 +313,7 @@ export function PortofinoWalkthrough() {
             style={{ marginBottom: 36 }}
           >
             <h2 style={{
-              fontFamily:    'Cormorant Garamond, Georgia, serif',
+              fontFamily:    'var(--font-cormorant), Georgia, serif',
               fontSize:      'clamp(1.8rem, 3.5vw, 3rem)',
               fontWeight:     600,
               fontStyle:     'italic',
@@ -328,7 +328,7 @@ export function PortofinoWalkthrough() {
               {' '}intelligence layer.
             </h2>
             <p style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:    14,
               lineHeight:  1.75,
               color:      '#FFFFFF',
@@ -365,7 +365,7 @@ export function PortofinoWalkthrough() {
                 background:    'rgba(201,169,110,0.12)',
                 border:        '1px solid rgba(201,169,110,0.38)',
                 borderRadius:   9999,
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:       11,
                 fontWeight:     700,
                 letterSpacing: '0.10em',

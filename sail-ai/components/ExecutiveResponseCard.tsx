@@ -109,7 +109,7 @@ function HorizonSection({ horizons, isDark }: HorizonSectionProps) {
               {/* Horizon label */}
               <div style={{ marginBottom: 10 }}>
                 <span style={{
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.6rem',
                   fontWeight:    600,
                   letterSpacing: '0.16em',
@@ -133,7 +133,7 @@ function HorizonSection({ horizons, isDark }: HorizonSectionProps) {
                     }}
                   >
                     <p style={{
-                      fontFamily:  'Inter, sans-serif',
+                      fontFamily:  'var(--font-inter), sans-serif',
                       fontSize:    '0.72rem',
                       color:       bodyColor,
                       lineHeight:  1.5,
@@ -298,7 +298,7 @@ export function ExecutiveResponseCard({
             {/* ── Insight ── */}
             <div style={{ padding: '24px 24px 20px' }}>
               <p style={{
-                fontFamily:   'Cormorant Garamond, Georgia, serif',
+                fontFamily:   'var(--font-cormorant), Georgia, serif',
                 fontSize:     '1.375rem',
                 fontWeight:   600,
                 color:        insightColor,
@@ -316,7 +316,7 @@ export function ExecutiveResponseCard({
                 <div style={{ height: 1, background: ruleColor, marginBottom: 18 }} />
 
                 <span style={{
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.6rem',
                   fontWeight:    600,
                   letterSpacing: '0.16em',
@@ -374,7 +374,7 @@ export function ExecutiveResponseCard({
                   alignItems:    'center',
                   gap:           5,
                   padding:       '5px 11px',
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.68rem',
                   fontWeight:    500,
                   letterSpacing: '0.04em',
@@ -409,7 +409,7 @@ export function ExecutiveResponseCard({
                   alignItems:    'center',
                   gap:           5,
                   padding:       '5px 11px',
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.68rem',
                   fontWeight:    500,
                   letterSpacing: '0.04em',

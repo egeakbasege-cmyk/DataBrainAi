@@ -95,7 +95,7 @@ function ConnectorLogo({ c, active, size = 22 }: { c: ConnectorDef; active: bool
       fontSize:       letter.length === 1 ? size * 0.6 : size * 0.85,
       fontWeight:     700,
       lineHeight:     1,
-      fontFamily:     'Inter, sans-serif',
+      fontFamily:     'var(--font-inter), sans-serif',
       flexShrink:     0,
     }}>
       {letter}
@@ -231,19 +231,19 @@ export function ConnectorDock({
               display:    'block',
             }} />
           </button>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: '#0C0C0E' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', fontWeight: 600, color: '#0C0C0E' }}>
             {t('conn.analysis')}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#9CA3AF' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: '#9CA3AF' }}>
             {t('conn.whichPlatforms')}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <button onClick={onEnableAll}   style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{t('conn.enableAll')}</button>
+          <button onClick={onEnableAll}   style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{t('conn.enableAll')}</button>
           <span style={{ color: '#E5E7EB' }}>·</span>
-          <button onClick={onDisableAll}  style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{t('conn.disableAll')}</button>
+          <button onClick={onDisableAll}  style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{t('conn.disableAll')}</button>
           <span style={{ color: '#E5E7EB' }}>·</span>
-          <button onClick={onImportClick} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#C9A96E', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{t('conn.addData')}</button>
+          <button onClick={onImportClick} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', color: '#C9A96E', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{t('conn.addData')}</button>
         </div>
       </div>
 
@@ -251,7 +251,7 @@ export function ConnectorDock({
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.875rem', padding: '0.5rem 0.875rem 0.625rem', overflowX: 'auto', scrollbarWidth: 'none' }}>
         {grouped.map(group => (
           <div key={group.domain} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.52rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#C4C4CC', paddingLeft: 1 }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.52rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#C4C4CC', paddingLeft: 1 }}>
               {group.label}
             </span>
             <div style={{ display: 'flex', gap: '0.25rem' }}>
@@ -290,7 +290,7 @@ export function ConnectorDock({
                     )}
                     <ConnectorLogo c={c} active={active} size={20} />
                     <span style={{
-                      fontFamily: 'Inter, sans-serif',
+                      fontFamily: 'var(--font-inter), sans-serif',
                       fontSize:   '0.52rem',
                       fontWeight: 500,
                       color:      active ? c.accentColor : '#9CA3AF',

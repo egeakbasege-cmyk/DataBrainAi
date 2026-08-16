@@ -168,7 +168,7 @@ function ModeDropdown({
 
         {/* Label */}
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:       10,
           fontWeight:     700,
           letterSpacing: '0.12em',
@@ -230,7 +230,7 @@ function ModeDropdown({
               marginBottom:  2,
             }}>
               <span style={{
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:       8.5,
                 fontWeight:     700,
                 letterSpacing: '0.20em',
@@ -277,7 +277,7 @@ function ModeDropdown({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{
-                        fontFamily:    'Inter, sans-serif',
+                        fontFamily:    'var(--font-inter), sans-serif',
                         fontSize:       10.5,
                         fontWeight:     isActive ? 700 : 600,
                         letterSpacing: '0.08em',
@@ -289,7 +289,7 @@ function ModeDropdown({
                       {isActive && (
                         <span style={{
                           fontSize:   7.5,
-                          fontFamily: 'Inter, sans-serif',
+                          fontFamily: 'var(--font-inter), sans-serif',
                           fontWeight:  700,
                           letterSpacing: '0.14em',
                           textTransform: 'uppercase',
@@ -303,7 +303,7 @@ function ModeDropdown({
                       )}
                     </div>
                     <span style={{
-                      fontFamily: 'Inter, sans-serif',
+                      fontFamily: 'var(--font-inter), sans-serif',
                       fontSize:    10,
                       color:      'rgba(232,237,243,0.45)',
                       lineHeight:  1.35,
@@ -344,7 +344,7 @@ function ModeDropdown({
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{
-                    fontFamily:    'Inter, sans-serif',
+                    fontFamily:    'var(--font-inter), sans-serif',
                     fontSize:       10.5,
                     fontWeight:     autoMode ? 700 : 600,
                     letterSpacing: '0.08em',
@@ -355,14 +355,14 @@ function ModeDropdown({
                   </span>
                   {autoMode && (
                     <span style={{
-                      fontSize:   7.5, fontFamily: 'Inter, sans-serif', fontWeight: 700,
+                      fontSize:   7.5, fontFamily: 'var(--font-inter), sans-serif', fontWeight: 700,
                       letterSpacing: '0.14em', textTransform: 'uppercase',
                       color: T.gold, background: 'rgba(201,169,110,0.12)',
                       padding: '1px 5px', borderRadius: 3,
                     }}>Active</span>
                   )}
                 </div>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.45)', lineHeight: 1.35, display: 'block' }}>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.45)', lineHeight: 1.35, display: 'block' }}>
                   AI selects the best mode for your query
                 </span>
               </div>
@@ -440,13 +440,13 @@ export function ChatComposer({
               }}
             />
             <span style={{
-              fontFamily: 'Inter, sans-serif', fontSize: 11,
+              fontFamily: 'var(--font-inter), sans-serif', fontSize: 11,
               color: T.teal, fontWeight: 500, flex: 1,
             }}>
               Guided session · {Math.floor((convHistory as unknown[]).length / 2)} exchanges
             </span>
             <button onClick={onStartOver} style={{
-              fontFamily: 'Inter, sans-serif', fontSize: 11,
+              fontFamily: 'var(--font-inter), sans-serif', fontSize: 11,
               color: T.textMuted, background: 'none', border: 'none',
               cursor: 'pointer', padding: '0 4px',
             }}>
@@ -472,7 +472,7 @@ export function ChatComposer({
           onAutoToggle={onAutoToggle}
         />
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:       9,
           color:          T.textFaint,
           letterSpacing: '0.04em',
@@ -504,7 +504,7 @@ export function ChatComposer({
                 : '1px solid rgba(255,255,255,0.12)',
               borderRadius:  '999px',
               cursor:        'pointer',
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.60rem',
               fontWeight:    600,
               letterSpacing: '0.05em',
@@ -588,7 +588,7 @@ export function ChatComposer({
             border:       'none',
             outline:      'none',
             resize:       'none',
-            fontFamily:   'Inter, sans-serif',
+            fontFamily:   'var(--font-inter), sans-serif',
             fontSize:      14,
             lineHeight:    1.7,
             color:         T.textInput,
@@ -653,7 +653,7 @@ export function ChatComposer({
             <VoiceInput disabled={isActive} onTranscript={onVoiceTranscript} />
 
             <span style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:       10,
               fontWeight:     500,
               letterSpacing: '0.06em',
@@ -669,7 +669,7 @@ export function ChatComposer({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   style={{
-                    fontFamily:         'Inter, sans-serif',
+                    fontFamily:         'var(--font-inter), sans-serif',
                     fontSize:            10,
                     fontWeight:          500,
                     color:               warn ? '#DC2626' : T.textFaint,
@@ -698,7 +698,7 @@ export function ChatComposer({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:    12,
               color:      '#DC2626',
               margin:     '6px 4px 0',

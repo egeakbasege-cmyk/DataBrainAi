@@ -77,7 +77,7 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#0C0C0E' }}>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#0C0C0E' }}>
                 {t('export.title')}
               </span>
               <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A1A1AA', padding: 0 }}>
@@ -90,38 +90,38 @@ export function ExportModal({ open, onClose, result, sector }: Props) {
             {status === 'sent' ? (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✓</div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#0C0C0E', fontWeight: 500 }}>{t('export.sent')}</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', marginTop: '0.25rem' }}>{t('export.sentSub')}</p>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9rem', color: '#0C0C0E', fontWeight: 500 }}>{t('export.sent')}</p>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#71717A', marginTop: '0.25rem' }}>{t('export.sentSub')}</p>
               </motion.div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                 <div>
-                  <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA', display: 'block', marginBottom: '0.375rem' }}>
+                  <label style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA', display: 'block', marginBottom: '0.375rem' }}>
                     {t('export.emailLabel')}
                   </label>
                   <input
                     type="email" value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    style={{ width: '100%', padding: '0.625rem 0.75rem', border: '1px solid rgba(12,12,14,0.15)', background: 'transparent', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '0.625rem 0.75rem', border: '1px solid rgba(12,12,14,0.15)', background: 'transparent', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA', display: 'block', marginBottom: '0.375rem' }}>
+                  <label style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#A1A1AA', display: 'block', marginBottom: '0.375rem' }}>
                     {t('export.noteLabel')}
                   </label>
                   <textarea
                     value={note} onChange={e => setNote(e.target.value)} rows={2}
                     placeholder={t('export.notePlaceholder')}
-                    style={{ width: '100%', padding: '0.625rem 0.75rem', border: '1px solid rgba(12,12,14,0.15)', background: 'transparent', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '0.625rem 0.75rem', border: '1px solid rgba(12,12,14,0.15)', background: 'transparent', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
                   />
                 </div>
                 <button
                   onClick={handleSend} disabled={status === 'sending' || !email}
-                  style={{ width: '100%', padding: '0.8rem', background: email ? '#0C0C0E' : '#D4D4D8', color: '#FAFAF8', border: 'none', cursor: email ? 'pointer' : 'not-allowed', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase' }}
+                  style={{ width: '100%', padding: '0.8rem', background: email ? '#0C0C0E' : '#D4D4D8', color: '#FAFAF8', border: 'none', cursor: email ? 'pointer' : 'not-allowed', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase' }}
                 >
                   {status === 'sending' ? t('export.sending') : t('export.send')}
                 </button>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#A1A1AA', textAlign: 'center', margin: 0 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: '#A1A1AA', textAlign: 'center', margin: 0 }}>
                   {t('export.disclaimer')}
                 </p>
               </div>

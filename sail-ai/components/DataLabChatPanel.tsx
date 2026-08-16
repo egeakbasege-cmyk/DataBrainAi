@@ -99,10 +99,10 @@ function AppConnectionMenu({
         justifyContent: 'space-between',
       }}>
         <div>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#0D9488', margin: 0 }}>
+          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#0D9488', margin: 0 }}>
             App Bağlantıları
           </p>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(26,43,60,0.50)', margin: '0.15rem 0 0' }}>
+          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: 'rgba(26,43,60,0.50)', margin: '0.15rem 0 0' }}>
             AI analizlerini uygulamalarınıza gönderin
           </p>
         </div>
@@ -113,7 +113,7 @@ function AppConnectionMenu({
       <div style={{ padding: '0.75rem', maxHeight: 340, overflowY: 'auto' }}>
         {categories.map(cat => (
           <div key={cat} style={{ marginBottom: '0.75rem' }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.38)', margin: '0 0 0.4rem 0.25rem' }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.38)', margin: '0 0 0.4rem 0.25rem' }}>
               {cat}
             </p>
             {APP_INTEGRATIONS.filter(a => a.category === cat).map(app => {
@@ -139,8 +139,8 @@ function AppConnectionMenu({
                 >
                   <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{app.icon}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: '#1A2B3C', margin: 0 }}>{app.name}</p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(26,43,60,0.50)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.desc}</p>
+                    <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.82rem', fontWeight: 600, color: '#1A2B3C', margin: 0 }}>{app.name}</p>
+                    <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: 'rgba(26,43,60,0.50)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.desc}</p>
                   </div>
                   <div style={{
                     width:        32,
@@ -171,7 +171,7 @@ function AppConnectionMenu({
       </div>
 
       <div style={{ padding: '0.65rem 1.25rem', borderTop: '1px solid rgba(129,199,185,0.18)' }}>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: 'rgba(26,43,60,0.38)', margin: 0, textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: 'rgba(26,43,60,0.38)', margin: 0, textAlign: 'center' }}>
           {connectedApps.size} uygulama bağlı · Webhook URL yakında
         </p>
       </div>
@@ -364,10 +364,10 @@ export function DataLabChatPanel({
                 ⚗️
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.87rem', fontWeight: 700, color: '#1A2B3C', margin: 0 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.87rem', fontWeight: 700, color: '#1A2B3C', margin: 0 }}>
                   Data Lab AI
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: source ? '#0D9488' : 'rgba(26,43,60,0.40)', margin: 0 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: source ? '#0D9488' : 'rgba(26,43,60,0.40)', margin: 0 }}>
                   {source ? `${source.name} bağlı` : 'Veri kaynağı bekleniyor…'}
                 </p>
               </div>
@@ -396,8 +396,8 @@ export function DataLabChatPanel({
               {messages.length === 0 && !source && (
                 <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔌</div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', fontWeight: 600, color: '#1A2B3C', margin: '0 0 0.5rem' }}>Veri kaynağı bağlayın</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(26,43,60,0.50)', lineHeight: 1.6, margin: 0 }}>
+                  <p style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.15rem', fontWeight: 600, color: '#1A2B3C', margin: '0 0 0.5rem' }}>Veri kaynağı bağlayın</p>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: 'rgba(26,43,60,0.50)', lineHeight: 1.6, margin: 0 }}>
                     Shopify, Stripe, Google Ads veya başka bir kaynak bağladıktan sonra AI analizi başlatabilirsiniz.
                   </p>
                 </div>
@@ -418,7 +418,7 @@ export function DataLabChatPanel({
                       border:      '1px solid rgba(20,184,166,0.28)',
                       borderRadius: '14px 14px 4px 14px',
                       padding:     '0.7rem 1rem',
-                      fontFamily:  'Inter, sans-serif',
+                      fontFamily:  'var(--font-inter), sans-serif',
                       fontSize:    '0.85rem',
                       color:       '#1A2B3C',
                       lineHeight:  1.6,
@@ -461,10 +461,10 @@ export function DataLabChatPanel({
             {/* Quick prompts */}
             {messages.length <= 1 && source && (
               <div style={{ padding: '0 1rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', flexShrink: 0 }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.38)', margin: '0 0 0.25rem' }}>Hızlı başlangıç</p>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(26,43,60,0.38)', margin: '0 0 0.25rem' }}>Hızlı başlangıç</p>
                 {QUICK_PROMPTS.map((p, i) => (
                   <button key={i} onClick={() => { setInput(p); setTimeout(() => inputRef.current?.focus(), 50) }}
-                    style={{ background: 'rgba(255,255,255,0.80)', border: '1px solid rgba(20,184,166,0.28)', borderRadius: 8, padding: '0.55rem 0.875rem', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'rgba(26,43,60,0.68)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', lineHeight: 1.4 }}
+                    style={{ background: 'rgba(255,255,255,0.80)', border: '1px solid rgba(20,184,166,0.28)', borderRadius: 8, padding: '0.55rem 0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: 'rgba(26,43,60,0.68)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', lineHeight: 1.4 }}
                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(20,184,166,0.10)'; (e.currentTarget as HTMLButtonElement).style.color = '#0D9488' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.80)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(26,43,60,0.68)' }}
                   >
@@ -515,7 +515,7 @@ export function DataLabChatPanel({
                     border:      'none',
                     outline:     'none',
                     resize:      'none',
-                    fontFamily:  'Inter, sans-serif',
+                    fontFamily:  'var(--font-inter), sans-serif',
                     fontSize:    '0.87rem',
                     color:       '#1A2B3C',
                     lineHeight:  1.55,
@@ -580,7 +580,7 @@ export function DataLabChatPanel({
                   </button>
                 </div>
               </div>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(26,43,60,0.30)', textAlign: 'center', margin: '0.4rem 0 0' }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', color: 'rgba(26,43,60,0.30)', textAlign: 'center', margin: '0.4rem 0 0' }}>
                 Enter ile gönder · Shift+Enter yeni satır
               </p>
             </div>

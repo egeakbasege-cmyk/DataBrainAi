@@ -122,7 +122,7 @@ export function ActionMatrixCard({
         {/* Header: title + success rate badge */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
           <p style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.8125rem',
             fontWeight:    600,
             color:         tk.title,
@@ -144,7 +144,7 @@ export function ActionMatrixCard({
             flexShrink:    0,
           }}>
             <span style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.625rem',
               fontWeight:    700,
               letterSpacing: '0.08em',
@@ -157,7 +157,7 @@ export function ActionMatrixCard({
 
         {/* Description */}
         <p style={{
-          fontFamily:  'Inter, sans-serif',
+          fontFamily:  'var(--font-inter), sans-serif',
           fontSize:    '0.75rem',
           color:       tk.body,
           lineHeight:  1.55,
@@ -178,7 +178,7 @@ export function ActionMatrixCard({
             border:     `1px solid ${tk.timeframeBorder}`,
           }}>
             <span style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.6rem',
               fontWeight:    600,
               letterSpacing: '0.12em',
@@ -192,7 +192,7 @@ export function ActionMatrixCard({
           {/* Density label + bar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1 }}>
             <span style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.575rem',
               fontWeight:    600,
               letterSpacing: '0.14em',
@@ -217,7 +217,7 @@ export function ActionMatrixCard({
               />
             </div>
             <span style={{
-              fontFamily: 'Cormorant Garamond, Georgia, serif',
+              fontFamily: 'var(--font-cormorant), Georgia, serif',
               fontSize:   '0.875rem',
               fontWeight: 600,
               color:      tk.value,
@@ -230,7 +230,7 @@ export function ActionMatrixCard({
           {/* Success bar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1 }}>
             <span style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.575rem',
               fontWeight:    600,
               letterSpacing: '0.14em',

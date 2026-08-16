@@ -70,7 +70,7 @@ const OAUTH_PLATFORMS = [
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const BASE_FONT = { fontFamily: 'Inter, sans-serif' }
+const BASE_FONT = { fontFamily: 'var(--font-inter), sans-serif' }
 const LABEL_STYLE = { ...BASE_FONT, fontSize: '0.65rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '0.4rem' }
 const INPUT_STYLE = {
   ...BASE_FONT,

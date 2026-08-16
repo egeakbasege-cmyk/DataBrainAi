@@ -33,6 +33,7 @@ import { type NextRequest }                       from 'next/server'
 import NextAuth                                   from 'next-auth'
 import { authConfig }                             from '@/auth.config'
 import type { AetherisPayload }                   from '@/types/architecture'
+import { consumeQuota, quotaExceededBody }        from '@/lib/quota'
 
 // ── Groq client (key pool, circuit breaker, schemas, speculative fetch) ───────
 import {
@@ -461,6 +462,14 @@ export async function POST(req: NextRequest) {
       { error: 'Authentication required. Please sign in.' },
       { status: 401 },
     )
+  }
+
+  // ── 1b. Server-side quota ──────────────────────────────────────────────────
+  // The browser counter in `useSubscription` is advisory; enforce the real
+  // limit here so clearing localStorage cannot buy free AI calls.
+  const quota = await consumeQuota(req)
+  if (!quota.allowed) {
+    return Response.json(quotaExceededBody(quota), { status: 402 })
   }
 
   // ── 2. Parse payload ───────────────────────────────────────────────────────

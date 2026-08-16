@@ -158,3 +158,20 @@ model KairosCachedProduct {
   @@index([asinOrHandle])
   @@index([platform])
 }
+
+/// Server-side daily usage counter.
+///
+/// The free-tier limit used to live only in localStorage, which any user could
+/// reset by clearing site data. This table makes the quota authoritative.
+/// One row per (subject, day); `subject` is the user id, or `ip:<addr>` for
+/// anonymous callers.
+model DailyUsage {
+  id        String   @id @default(cuid())
+  subject   String
+  day       String   // YYYY-MM-DD (UTC)
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([subject, day])
+  @@index([day])
+}

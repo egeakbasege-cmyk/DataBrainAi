@@ -110,7 +110,7 @@ function StreamCard({
           />
         )}
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:       10,
           fontWeight:     700,
           letterSpacing: '0.14em',
@@ -324,10 +324,10 @@ export function ChatStage(props: ChatStageProps) {
               }}
             >
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#C9A96E', margin: '0 0 4px' }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 13, fontWeight: 600, color: '#C9A96E', margin: '0 0 4px' }}>
                   {t('paywall.inlineTitle')}
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(232,237,243,0.55)', margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 12, color: 'rgba(232,237,243,0.55)', margin: 0, lineHeight: 1.5 }}>
                   {t('paywall.inlineCta')}
                 </p>
               </div>
@@ -339,7 +339,7 @@ export function ChatStage(props: ChatStageProps) {
                   color:         '#C9A96E',
                   border:        '1px solid rgba(201,169,110,0.35)',
                   borderRadius:   8,
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:       11,
                   fontWeight:     700,
                   letterSpacing: '0.08em',
@@ -376,7 +376,7 @@ export function ChatStage(props: ChatStageProps) {
               }}
             >
               <span style={{ color: '#DC2626', flexShrink: 0 }}>⚠</span>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.6, color: 'rgba(220,38,38,0.85)', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 13, lineHeight: 1.6, color: 'rgba(220,38,38,0.85)', margin: 0 }}>
                 {activeError === 'RATE_LIMIT'
                   ? 'Request limit reached. Please wait a moment before trying again.'
                   : activeError?.toLowerCase().includes('sign in') || activeError?.toLowerCase().includes('unauthorized')
@@ -419,10 +419,10 @@ export function ChatStage(props: ChatStageProps) {
               style={{ padding: '12px 16px', background: 'linear-gradient(135deg, rgba(220,38,38,0.08) 0%, rgba(8,9,13,0.80) 100%)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(220,38,38,0.25)', borderLeft: '3px solid #DC2626', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}
             >
               <span style={{ color: '#DC2626' }}>⚠</span>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(220,38,38,0.85)', flex: 1 }}>{autoError}</span>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 13, color: 'rgba(220,38,38,0.85)', flex: 1 }}>{autoError}</span>
               <button
                 onClick={onDismissAutoError}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#DC2626', background: 'none', border: '1px solid rgba(220,38,38,0.22)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
+                style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 11, color: '#DC2626', background: 'none', border: '1px solid rgba(220,38,38,0.22)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
               >
                 Dismiss
               </button>
@@ -570,11 +570,11 @@ export function ChatStage(props: ChatStageProps) {
                     <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }}
                       style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#00695C', flexShrink: 0 }} />
                   )}
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#00695C' }}>
+                  <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#00695C' }}>
                     Downwind · Momentum Engine
                   </span>
                   {convHistory.length > 0 && (
-                    <span style={{ marginLeft: 'auto', fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(0,105,92,0.5)' }}>
+                    <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-inter), sans-serif', fontSize: 10, color: 'rgba(0,105,92,0.5)' }}>
                       {Math.floor(convHistory.length / 2)} turn{convHistory.length > 2 ? 's' : ''}
                     </span>
                   )}
@@ -587,18 +587,18 @@ export function ChatStage(props: ChatStageProps) {
                         style={{ width: 28, height: 3, borderRadius: 2, background: 'rgba(0,105,92,0.25)' }} />
                       <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.2 }}
                         style={{ width: 20, height: 3, borderRadius: 2, background: 'rgba(0,105,92,0.18)' }} />
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#C9A96E', marginLeft: 4 }}>Analyzing strategic drift…</span>
+                      <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 13, color: '#C9A96E', marginLeft: 4 }}>Analyzing strategic drift…</span>
                     </div>
                   )}
                   {(coachState === 'CONVERSING' || coachState === 'COMPLETE') && coachResult && (
                     <div>
                       {'chatMessage' in coachResult && (
                         <div>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, lineHeight: 1.75, color: '#C9A96E', margin: 0 }}>
+                          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 14, lineHeight: 1.75, color: '#C9A96E', margin: 0 }}>
                             {coachResult.chatMessage}
                           </p>
                           {coachResult.followUpQuestion && (
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.65, color: '#00695C', margin: '14px 0 0', fontStyle: 'italic', paddingLeft: 12, borderLeft: '2px solid rgba(0,105,92,0.3)' }}>
+                            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 13, lineHeight: 1.65, color: '#00695C', margin: '14px 0 0', fontStyle: 'italic', paddingLeft: 12, borderLeft: '2px solid rgba(0,105,92,0.3)' }}>
                               {coachResult.followUpQuestion}
                             </p>
                           )}
@@ -606,15 +606,15 @@ export function ChatStage(props: ChatStageProps) {
                       )}
                       {'headline' in coachResult && (
                         <div>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: '#C9A96E', margin: '0 0 8px', lineHeight: 1.5 }}>{coachResult.headline}</p>
-                          {'signal' in coachResult && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#D4B980', margin: 0, lineHeight: 1.6 }}>{coachResult.signal}</p>}
+                          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 14, fontWeight: 600, color: '#C9A96E', margin: '0 0 8px', lineHeight: 1.5 }}>{coachResult.headline}</p>
+                          {'signal' in coachResult && <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 13, color: '#D4B980', margin: 0, lineHeight: 1.6 }}>{coachResult.signal}</p>}
                         </div>
                       )}
                       {'question' in coachResult && (
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#00695C', margin: 0, fontStyle: 'italic', lineHeight: 1.7 }}>{coachResult.question}</p>
+                        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 14, color: '#00695C', margin: 0, fontStyle: 'italic', lineHeight: 1.7 }}>{coachResult.question}</p>
                       )}
                       {'freeText' in coachResult && (
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, lineHeight: 1.75, color: '#C9A96E', margin: 0 }}>{coachResult.freeText}</p>
+                        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 14, lineHeight: 1.75, color: '#C9A96E', margin: 0 }}>{coachResult.freeText}</p>
                       )}
                     </div>
                   )}
@@ -645,7 +645,7 @@ export function ChatStage(props: ChatStageProps) {
                   border:        '1px solid rgba(201,169,110,0.22)',
                   borderRadius:   8,
                   cursor:        'pointer',
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:       12,
                   fontWeight:     600,
                   letterSpacing: '0.06em',
@@ -666,7 +666,7 @@ export function ChatStage(props: ChatStageProps) {
                   border:        '1px solid rgba(201,169,110,0.4)',
                   borderRadius:   8,
                   cursor:        'pointer',
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:       11,
                   fontWeight:     700,
                   letterSpacing: '0.08em',

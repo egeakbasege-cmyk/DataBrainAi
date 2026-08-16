@@ -216,7 +216,7 @@ export function InChatModeSwitcher({ mode, onChange, disabled }: InChatModeSwitc
       >
         {current.icon}
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.62rem',
           fontWeight:    700,
           letterSpacing: '0.08em',
@@ -305,7 +305,7 @@ export function InChatModeSwitcher({ mode, onChange, disabled }: InChatModeSwitc
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                       <span style={{
-                        fontFamily:    'Inter, sans-serif',
+                        fontFamily:    'var(--font-inter), sans-serif',
                         fontSize:      '0.68rem',
                         fontWeight:    700,
                         letterSpacing: '0.07em',
@@ -317,7 +317,7 @@ export function InChatModeSwitcher({ mode, onChange, disabled }: InChatModeSwitc
                       </span>
                       {m.badge && (
                         <span style={{
-                          fontFamily:    'Inter, sans-serif',
+                          fontFamily:    'var(--font-inter), sans-serif',
                           fontSize:      '0.44rem',
                           fontWeight:    700,
                           letterSpacing: '0.1em',
@@ -333,7 +333,7 @@ export function InChatModeSwitcher({ mode, onChange, disabled }: InChatModeSwitc
                       )}
                     </div>
                     <p style={{
-                      fontFamily: 'Inter, sans-serif',
+                      fontFamily: 'var(--font-inter), sans-serif',
                       fontSize:   '0.6rem',
                       lineHeight: 1.4,
                       color:      isActive ? m.color : '#6B6B8A',

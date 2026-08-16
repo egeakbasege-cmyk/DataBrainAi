@@ -153,7 +153,6 @@ export function BrandSetupModal({ onComplete }: Props) {
     <>
       {/* Google Font import */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap');
 
         .brand-mode-card:hover { border-color: rgba(201,169,110,0.55) !important; background: rgba(201,169,110,0.07) !important; }
         .brand-continue-btn:hover { background: #B8935A !important; transform: translateY(-1px); box-shadow: 0 8px 28px rgba(201,169,110,0.35) !important; }
@@ -222,7 +221,7 @@ export function BrandSetupModal({ onComplete }: Props) {
               {aiName || 'Your AI'}
             </motion.div>
 
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: MUTED, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: MUTED, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
               {step === 1 ? 'Personalise your advisor' : 'Choose your intelligence modes'}
             </p>
 
@@ -253,7 +252,7 @@ export function BrandSetupModal({ onComplete }: Props) {
                   exit={{ opacity: 0, x: 16 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                  <label style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
                     Company Name
                   </label>
                   <input
@@ -280,12 +279,12 @@ export function BrandSetupModal({ onComplete }: Props) {
                     }}
                   />
                   {nameError && (
-                    <p style={{ color: '#C0392B', fontSize: '0.75rem', marginTop: '6px', fontFamily: 'Inter, sans-serif' }}>{nameError}</p>
+                    <p style={{ color: '#C0392B', fontSize: '0.75rem', marginTop: '6px', fontFamily: 'var(--font-inter), sans-serif' }}>{nameError}</p>
                   )}
 
                   {/* AI name customisation */}
                   <div style={{ marginTop: '20px' }}>
-                    <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                    <label style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
                       Your AI Name <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional — auto-generated)</span>
                     </label>
                     <input
@@ -321,7 +320,7 @@ export function BrandSetupModal({ onComplete }: Props) {
                       background:   GOLD_PRIMARY,
                       border:       'none',
                       borderRadius: '10px',
-                      fontFamily:   'Inter, sans-serif',
+                      fontFamily:   'var(--font-inter), sans-serif',
                       fontWeight:   600,
                       fontSize:     '0.88rem',
                       color:        '#1A1209',
@@ -344,7 +343,7 @@ export function BrandSetupModal({ onComplete }: Props) {
                   exit={{ opacity: 0, x: -16 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: MUTED, marginBottom: '16px', lineHeight: 1.5 }}>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: MUTED, marginBottom: '16px', lineHeight: 1.5 }}>
                     Select <strong style={{ color: INK }}>at least 2 modes</strong> — you can switch between them anytime.
                     Selecting 2 gives the sharpest results.
                   </p>
@@ -374,12 +373,12 @@ export function BrandSetupModal({ onComplete }: Props) {
                           <span style={{ fontSize: '1.1rem', lineHeight: 1, flexShrink: 0 }}>{m.icon}</span>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.82rem', color: INK }}>{m.label}</span>
+                              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontWeight: 600, fontSize: '0.82rem', color: INK }}>{m.label}</span>
                               {m.pro && (
-                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: GOLD_PRIMARY, background: GOLD_PALE, border: `1px solid ${GOLD_BORDER}`, padding: '1px 6px', borderRadius: '4px', letterSpacing: '0.06em' }}>PRO</span>
+                                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, color: GOLD_PRIMARY, background: GOLD_PALE, border: `1px solid ${GOLD_BORDER}`, padding: '1px 6px', borderRadius: '4px', letterSpacing: '0.06em' }}>PRO</span>
                               )}
                             </div>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: MUTED, margin: 0, lineHeight: 1.4, marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.sub}</p>
+                            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: MUTED, margin: 0, lineHeight: 1.4, marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.sub}</p>
                           </div>
                           {/* Checkmark */}
                           <div style={{
@@ -402,18 +401,18 @@ export function BrandSetupModal({ onComplete }: Props) {
                   </div>
 
                   {modeError && (
-                    <p style={{ color: '#C0392B', fontSize: '0.75rem', marginTop: '10px', fontFamily: 'Inter, sans-serif' }}>{modeError}</p>
+                    <p style={{ color: '#C0392B', fontSize: '0.75rem', marginTop: '10px', fontFamily: 'var(--font-inter), sans-serif' }}>{modeError}</p>
                   )}
 
                   {/* Selection counter */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px' }}>
                     <button
                       onClick={() => setStep(1)}
-                      style={{ background: 'none', border: 'none', color: MUTED, fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'Inter, sans-serif', padding: '4px 0' }}
+                      style={{ background: 'none', border: 'none', color: MUTED, fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', padding: '4px 0' }}
                     >
                       ← Back
                     </button>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: selected.size >= 2 ? GOLD_PRIMARY : MUTED, fontWeight: 500 }}>
+                    <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: selected.size >= 2 ? GOLD_PRIMARY : MUTED, fontWeight: 500 }}>
                       {selected.size} / 6 selected {selected.size >= 2 ? '✓' : `(${2 - selected.size} more needed)`}
                     </span>
                   </div>
@@ -429,7 +428,7 @@ export function BrandSetupModal({ onComplete }: Props) {
                       background:   selected.size >= 2 ? GOLD_PRIMARY : 'rgba(201,169,110,0.25)',
                       border:       'none',
                       borderRadius: '10px',
-                      fontFamily:   'Inter, sans-serif',
+                      fontFamily:   'var(--font-inter), sans-serif',
                       fontWeight:   600,
                       fontSize:     '0.88rem',
                       color:        selected.size >= 2 ? '#1A1209' : MUTED,
@@ -471,14 +470,13 @@ export function BrandNameplate({ config, onEdit }: NameplateProps) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap');
         .brand-nameplate-edit:hover { opacity: 1 !important; }
       `}</style>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 20px 8px', position: 'relative' }}>
         {/* Company name — small cap label */}
         <div style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.58rem',
           fontWeight:    600,
           letterSpacing: '0.18em',
@@ -512,7 +510,7 @@ export function BrandNameplate({ config, onEdit }: NameplateProps) {
             if (!def) return null
             return (
               <span key={m} style={{
-                fontFamily:  'Inter, sans-serif',
+                fontFamily:  'var(--font-inter), sans-serif',
                 fontSize:    '0.58rem',
                 fontWeight:  600,
                 letterSpacing: '0.06em',
@@ -539,7 +537,7 @@ export function BrandNameplate({ config, onEdit }: NameplateProps) {
               position: 'absolute', top: '10px', right: '12px',
               background: 'none', border: 'none', cursor: 'pointer',
               color: MUTED, fontSize: '0.68rem', opacity: 0.5,
-              fontFamily: 'Inter, sans-serif', padding: '4px',
+              fontFamily: 'var(--font-inter), sans-serif', padding: '4px',
               transition: 'opacity 0.2s',
             }}
           >

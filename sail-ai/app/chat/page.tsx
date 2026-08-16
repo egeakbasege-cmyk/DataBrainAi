@@ -876,10 +876,10 @@ export default function ChatPage() {
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                 <div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#C9A96E', margin: '0 0 5px', fontWeight: 700 }}>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#C9A96E', margin: '0 0 5px', fontWeight: 700 }}>
                     🔑 Groq API Key Required
                   </p>
-                  <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 400, color: '#E8EDF3', margin: 0, lineHeight: 1.2 }}>
+                  <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 18, fontWeight: 400, color: '#E8EDF3', margin: 0, lineHeight: 1.2 }}>
                     Connect your AI engine
                   </p>
                 </div>
@@ -892,7 +892,7 @@ export default function ChatPage() {
               </div>
 
               {/* Steps */}
-              <ol style={{ margin: '0 0 16px', padding: '0 0 0 16px', fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.55)', lineHeight: 1.7 }}>
+              <ol style={{ margin: '0 0 16px', padding: '0 0 0 16px', fontFamily: 'var(--font-inter), sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.55)', lineHeight: 1.7 }}>
                 <li>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E', textDecoration: 'none', fontWeight: 600 }}>console.groq.com/keys</a></li>
                 <li>Create a free account and generate a key</li>
                 <li>Paste it below — stored locally, never sent to our servers</li>
@@ -911,7 +911,7 @@ export default function ChatPage() {
                     flex: 1, padding: '9px 12px',
                     border: '1px solid rgba(201,169,110,0.30)',
                     borderRadius: 10, background: 'rgba(255,255,255,0.06)',
-                    outline: 'none', fontFamily: 'JetBrains Mono, monospace',
+                    outline: 'none', fontFamily: 'var(--font-mono), monospace',
                     fontSize: 12, color: '#E8EDF3',
                     transition: 'border-color 0.2s',
                   }}
@@ -923,7 +923,7 @@ export default function ChatPage() {
                   style={{
                     padding: '9px 18px', background: '#C9A96E', color: '#0A0F1E',
                     border: 'none', borderRadius: 10, cursor: 'pointer',
-                    fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800,
+                    fontFamily: 'var(--font-inter), sans-serif', fontSize: 10, fontWeight: 800,
                     letterSpacing: '0.08em', textTransform: 'uppercase',
                     transition: 'opacity 0.15s',
                   }}
@@ -937,12 +937,12 @@ export default function ChatPage() {
               {/* Current key status */}
               {apiKey && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,255,180,0.06)', border: '1px solid rgba(0,255,180,0.15)', borderRadius: 8 }}>
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'rgba(0,255,180,0.8)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono), monospace', fontSize: 10, color: 'rgba(0,255,180,0.8)' }}>
                     ✓ Key active: gsk_••••{apiKey.slice(-6)}
                   </span>
                   <button
                     onClick={() => { setApiKey(''); setApiKeyInput(''); localStorage.removeItem(API_KEY_STORE); setShowKeyPanel(false) }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.35)', padding: '0 2px' }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.35)', padding: '0 2px' }}
                   >
                     Remove
                   </button>
@@ -1002,14 +1002,14 @@ export default function ChatPage() {
             <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #C9A96E, transparent)', flexShrink: 0 }} />
             <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(201,169,110,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 300, color: '#E8EDF3', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.42)', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
+                <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 18, fontWeight: 300, color: '#E8EDF3', margin: 0 }}>{t('chat.sessionMemoryTitle')}</p>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.42)', margin: '2px 0 0' }}>{profile.sessions.length} {t(profile.sessions.length === 1 ? 'chat.analysis' : 'chat.analyses')} {t('chat.pastRecorded')}</p>
               </div>
               <button onClick={() => setShowHistory(false)} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,169,110,0.20)', borderRadius: 8, cursor: 'pointer', fontSize: 16, color: 'rgba(232,237,243,0.45)', lineHeight: 1, padding: '4px 8px' }}>×</button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
               {profile.sessions.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(232,237,243,0.35)', textAlign: 'center', marginTop: 32 }}>{t('chat.noAnalysesYet')}</p>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 13, color: 'rgba(232,237,243,0.35)', textAlign: 'center', marginTop: 32 }}>{t('chat.noAnalysesYet')}</p>
               ) : (
                 [...profile.sessions].reverse().map((s, i) => {
                   const key = s.id ?? String(i); const expanded = expandedSession === key
@@ -1023,20 +1023,20 @@ export default function ChatPage() {
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#E8EDF3', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>{s.prompt}</p>
+                        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 12, fontWeight: 600, color: '#E8EDF3', margin: '0 0 4px', lineHeight: 1.4, flex: 1 }}>{s.prompt}</p>
                         <span style={{ color: '#C9A96E', fontSize: 10, flexShrink: 0 }}>{expanded ? '▲' : '▼'}</span>
                       </div>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.50)', margin: '0 0 6px', lineHeight: 1.5 }}>
+                      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.50)', margin: '0 0 6px', lineHeight: 1.5 }}>
                         {expanded ? s.summary : `${s.summary?.slice(0, 100) ?? ''}${(s.summary?.length ?? 0) > 100 ? '…' : ''}`}
                       </p>
                       {s.createdAt && (
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.28)', margin: 0 }}>
+                        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 10, color: 'rgba(232,237,243,0.28)', margin: 0 }}>
                           {new Date(s.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       )}
                       {expanded && (
                         <button onClick={e => { e.stopPropagation(); setInput(s.prompt ?? ''); setShowHistory(false) }}
-                          style={{ marginTop: 12, padding: '6px 14px', background: 'rgba(201,169,110,0.10)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.35)', borderRadius: 6, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                          style={{ marginTop: 12, padding: '6px 14px', background: 'rgba(201,169,110,0.10)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.35)', borderRadius: 6, fontFamily: 'var(--font-inter), sans-serif', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                           {t('chat.rerunAnalysis')}
                         </button>
                       )}

@@ -51,18 +51,18 @@ function BenchmarkBar({ label, value, target, unit, lowerIsBetter, sectorLabel }
   return (
     <div style={{ marginBottom: '0.75rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)' }}>{label}</span>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: worse ? '#F87171' : '#C9A96E', fontWeight: 700 }}>{value}{unit}</span>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)' }}>{label}</span>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: worse ? '#F87171' : '#C9A96E', fontWeight: 700 }}>{value}{unit}</span>
       </div>
       <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, marginBottom: 4 }}>
         <div style={{ height: '100%', width: `${vPct}%`, background: worse ? '#F87171' : '#C9A96E', borderRadius: 2, transition: 'width 0.8s ease' }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>{sectorLabel}</span>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>{sectorLabel}</span>
         <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, flex: 1, margin: '0 8px', marginTop: 2 }}>
           <div style={{ height: '100%', width: `${tPct}%`, background: 'rgba(255,255,255,0.28)', borderRadius: 2 }} />
         </div>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: 700 }}>{target}{unit}</span>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: 700 }}>{target}{unit}</span>
       </div>
     </div>
   )
@@ -94,7 +94,7 @@ function Slide1_Input() {
           {['#FF5F57','#FFBD2E','#28C840'].map(c => <div key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />)}
         </div>
         <div style={{ flex: 1, height: 16, background: 'rgba(255,255,255,0.06)', borderRadius: '3px', display: 'flex', alignItems: 'center', paddingLeft: '0.5rem' }}>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>sail-ai.vercel.app/chat</span>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>sail-ai.vercel.app/chat</span>
         </div>
       </div>
 
@@ -103,14 +103,14 @@ function Slide1_Input() {
         {/* Context badge */}
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {[t('walk.demoTag1'), t('walk.demoTag2'), t('walk.demoTag3')].map(tag => (
-            <span key={tag} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#C9A96E', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.25)', borderRadius: '4px', padding: '2px 6px' }}>{tag}</span>
+            <span key={tag} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', color: '#C9A96E', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.25)', borderRadius: '4px', padding: '2px 6px' }}>{tag}</span>
           ))}
         </div>
 
         {/* Mode selector */}
         <div style={{ display: 'flex', gap: '0.35rem' }}>
           {['Upwind', 'SAIL', 'Operator', 'Downwind'].map((m, i) => (
-            <div key={m} style={{ padding: '3px 8px', borderRadius: '4px', background: i === 0 ? 'rgba(201,169,110,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${i === 0 ? 'rgba(201,169,110,0.4)' : 'rgba(255,255,255,0.08)'}`, fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: i === 0 ? '#C9A96E' : 'rgba(255,255,255,0.35)' }}>
+            <div key={m} style={{ padding: '3px 8px', borderRadius: '4px', background: i === 0 ? 'rgba(201,169,110,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${i === 0 ? 'rgba(201,169,110,0.4)' : 'rgba(255,255,255,0.08)'}`, fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', color: i === 0 ? '#C9A96E' : 'rgba(255,255,255,0.35)' }}>
               {m}
             </div>
           ))}
@@ -118,7 +118,7 @@ function Slide1_Input() {
 
         {/* Input field */}
         <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.625rem', position: 'relative' }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, margin: 0 }}>
             {typed}
             {typed.length < 140 && <span style={{ animation: 'blink 0.9s step-end infinite', borderRight: '2px solid #C9A96E', marginLeft: 1 }}>&nbsp;</span>}
           </p>
@@ -126,7 +126,7 @@ function Slide1_Input() {
 
         {/* Send button */}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ padding: '0.4rem 0.875rem', background: typed.length > 20 ? '#C9A96E' : 'rgba(201,169,110,0.2)', borderRadius: '5px', fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: typed.length > 20 ? '#0C0C0E' : 'rgba(255,255,255,0.2)', transition: 'all 0.3s' }}>
+          <div style={{ padding: '0.4rem 0.875rem', background: typed.length > 20 ? '#C9A96E' : 'rgba(201,169,110,0.2)', borderRadius: '5px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', fontWeight: 700, color: typed.length > 20 ? '#0C0C0E' : 'rgba(255,255,255,0.2)', transition: 'all 0.3s' }}>
             {t('walk.analyzeBtnLabel')}
           </div>
         </div>
@@ -160,7 +160,7 @@ function Slide2_ModeSelect() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 0.25rem' }}>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 0.25rem' }}>
         {t('walk.selectModeLabel')}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', flex: 1 }}>
@@ -180,16 +180,16 @@ function Slide2_ModeSelect() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
-                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.95rem', fontWeight: 700, color: active ? m.color : 'rgba(255,255,255,0.5)', lineHeight: 1 }}>{m.name}</span>
-                {active && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.08em', color: m.color, background: `${m.color}22`, padding: '1px 4px', borderRadius: '3px' }}>{m.badge}</span>}
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '0.95rem', fontWeight: 700, color: active ? m.color : 'rgba(255,255,255,0.5)', lineHeight: 1 }}>{m.name}</span>
+                {active && <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.08em', color: m.color, background: `${m.color}22`, padding: '1px 4px', borderRadius: '3px' }}>{m.badge}</span>}
               </div>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: active ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)', lineHeight: 1.4, margin: 0 }}>{m.desc}</p>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: active ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)', lineHeight: 1.4, margin: 0 }}>{m.desc}</p>
             </div>
           )
         })}
       </div>
       {selected && (
-        <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.3)', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#C9A96E' }}>
+        <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.3)', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#C9A96E' }}>
           ✓ <strong>{selected}</strong> {t('walk.modeSelectedMsg')}
         </div>
       )}
@@ -228,7 +228,7 @@ function Slide3_Analyzing() {
           animation: 'spin 0.9s linear infinite',
           margin: '0 auto 0.75rem',
         }} />
-        <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', color: '#FFFFFF', margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.1rem', color: '#FFFFFF', margin: 0 }}>
           {t('walk.analyzing')}{''.padEnd(dotCount, '.')}
         </p>
       </div>
@@ -253,8 +253,8 @@ function Slide3_Analyzing() {
           { label: 'Model',                  value: 'Groq 70B' },
         ].map(s => (
           <div key={s.label} style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', padding: '0.5rem', textAlign: 'center' }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 700, color: '#C9A96E', margin: 0 }}>{s.value}</p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', color: 'rgba(255,255,255,0.3)', margin: 0, letterSpacing: '0.05em' }}>{s.label}</p>
+            <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1rem', fontWeight: 700, color: '#C9A96E', margin: 0 }}>{s.value}</p>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.57rem', color: 'rgba(255,255,255,0.3)', margin: 0, letterSpacing: '0.05em' }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -271,13 +271,13 @@ function Slide4_Response() {
       {/* Response card header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.625rem', background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)', borderRadius: '6px' }}>
         <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#C9A96E' }} />
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A96E' }}>SAIL AI — Upwind</span>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)', marginLeft: 'auto' }}>Groq 70B · statista, baymard, klaviyo</span>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A96E' }}>SAIL AI — Upwind</span>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)', marginLeft: 'auto' }}>Groq 70B · statista, baymard, klaviyo</span>
       </div>
 
       {/* Insight */}
       <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', padding: '0.75rem' }}>
-        <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.82rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.65, margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: '0.82rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.65, margin: 0 }}>
           {DEMO_INSIGHT}
         </p>
       </div>
@@ -289,16 +289,16 @@ function Slide4_Response() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
         {DEMO_ACTIONS.map((a, i) => (
           <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', padding: '0.4rem 0.6rem', background: 'rgba(255,255,255,0.025)', borderRadius: '5px', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.8rem', fontWeight: 700, color: '#C9A96E', flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.67rem', color: 'rgba(255,255,255,0.72)', lineHeight: 1.5, margin: 0 }}>{a}</p>
+            <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '0.8rem', fontWeight: 700, color: '#C9A96E', flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.67rem', color: 'rgba(255,255,255,0.72)', lineHeight: 1.5, margin: 0 }}>{a}</p>
           </div>
         ))}
       </div>
 
       {/* 30-day target */}
       <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '6px' }}>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#10B981' }}>{t('walk.target30d')}</span>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)', margin: '2px 0 0', lineHeight: 1.4 }}>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#10B981' }}>{t('walk.target30d')}</span>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)', margin: '2px 0 0', lineHeight: 1.4 }}>
           {t('walk.demo30dTarget')}
         </p>
       </div>
@@ -315,11 +315,11 @@ function Slide5_Research() {
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <span style={{ fontSize: '0.75rem' }}>🔍</span>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A96E', margin: 0 }}>Deep Research</p>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.06em', color: '#0C0C0E', background: 'rgba(201,169,110,0.85)', padding: '1px 5px', borderRadius: '3px' }}>LIVE</span>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A96E', margin: 0 }}>Deep Research</p>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.06em', color: '#0C0C0E', background: 'rgba(201,169,110,0.85)', padding: '1px 5px', borderRadius: '3px' }}>LIVE</span>
       </div>
 
-      <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF', margin: 0, lineHeight: 1.2 }}>
+      <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF', margin: 0, lineHeight: 1.2 }}>
         {t('walk.demoResearchTitle')}
       </p>
 
@@ -327,22 +327,22 @@ function Slide5_Research() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
         {DEMO_FINDINGS.map((f, i) => (
           <div key={i} style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start', padding: '0.35rem 0.5rem', background: `rgba(${['201,169,110','16,185,129','99,102,241','245,158,11'][i]},0.08)`, borderLeft: `2px solid rgba(${['201,169,110','16,185,129','99,102,241','245,158,11'][i]},0.6)`, borderRadius: '0 4px 4px 0' }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', fontWeight: 700, color: `rgba(${['201,169,110','16,185,129','99,102,241','245,158,11'][i]},1)`, flexShrink: 0 }}>#{i+1}</span>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.4 }}>{f}</p>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.57rem', fontWeight: 700, color: `rgba(${['201,169,110','16,185,129','99,102,241','245,158,11'][i]},1)`, flexShrink: 0 }}>#{i+1}</span>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.4 }}>{f}</p>
           </div>
         ))}
       </div>
 
       {/* Sources */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: 0 }}>{t('walk.sources')}</p>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.57rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: 0 }}>{t('walk.sources')}</p>
         {REAL_SOURCES.map((s, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0.5rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '5px' }}>
             <div>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)', margin: 0 }}>{s.title}</p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>{s.domain}</p>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)', margin: 0 }}>{s.title}</p>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.57rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>{s.domain}</p>
             </div>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', fontWeight: 700, color: '#10B981', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '3px', padding: '1px 4px' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.57rem', fontWeight: 700, color: '#10B981', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '3px', padding: '1px 4px' }}>
               {s.rel}%
             </span>
           </div>
@@ -353,7 +353,7 @@ function Slide5_Research() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.35rem' }}>
         {IMAGE_LABELS.map(label => (
           <div key={label} style={{ aspectRatio: '16/9', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.57rem', color: 'rgba(255,255,255,0.3)' }}>{label}</span>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.57rem', color: 'rgba(255,255,255,0.3)' }}>{label}</span>
           </div>
         ))}
       </div>
@@ -366,10 +366,10 @@ function Slide6_Signup() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1rem' }}>
       <div style={{ textAlign: 'center' }}>
-        <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.4rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.25rem', lineHeight: 1.2 }}>
+        <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.4rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.25rem', lineHeight: 1.2 }}>
           {t('walk.slide6Chapter')}
         </p>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
           {t('walk.ctaSub')}
         </p>
       </div>
@@ -383,28 +383,28 @@ function Slide6_Signup() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#0C0C0E' }}>{t('walk.signupGoogle')}</span>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#0C0C0E' }}>{t('walk.signupGoogle')}</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>{t('walk.orEmail')}</span>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>{t('walk.orEmail')}</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
         </div>
 
-        <div style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', textAlign: 'center' }}>
+        <div style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', textAlign: 'center' }}>
           {t('walk.signupFree')}
         </div>
       </div>
 
       {/* Free tier badge */}
       <div style={{ textAlign: 'center', padding: '0.625rem', background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)', borderRadius: '8px', maxWidth: 280, margin: '0 auto', width: '100%' }}>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#C9A96E', fontWeight: 600, margin: '0 0 0.25rem' }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#C9A96E', fontWeight: 600, margin: '0 0 0.25rem' }}>
           {t('walk.freePlan')}
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', justifyContent: 'center' }}>
           {[t('walk.feat1'), t('walk.feat2'), t('walk.feat3'), t('walk.feat4')].map(f => (
-            <span key={f} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', padding: '2px 5px' }}>◆ {f}</span>
+            <span key={f} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', padding: '2px 5px' }}>◆ {f}</span>
           ))}
         </div>
       </div>
@@ -481,7 +481,7 @@ function StepDot({ active, done }: { active: boolean; done: boolean }) {
     }}>
       {done
         ? <span style={{ fontSize: '0.5rem', color: '#0C0C0E', fontWeight: 900 }}>✓</span>
-        : <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: active ? '#C9A96E' : 'rgba(255,255,255,0.25)' }} />
+        : <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.55rem', fontWeight: 700, color: active ? '#C9A96E' : 'rgba(255,255,255,0.25)' }} />
       }
     </div>
   )
@@ -640,7 +640,7 @@ export function ProductWalkthrough() {
             gap:          '0.4rem',
           }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', flexShrink: 0 }} />
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.28)', letterSpacing: '0.02em' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.28)', letterSpacing: '0.02em' }}>
               sail-ai.vercel.app
             </span>
           </div>
@@ -648,11 +648,11 @@ export function ProductWalkthrough() {
           {/* Mode badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '2px 8px', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.25)', borderRadius: '20px' }}>
             <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#C9A96E', animation: 'glowPulse 2s ease-in-out infinite' }} />
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.08em', color: '#C9A96E' }}>LIVE</span>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.08em', color: '#C9A96E' }}>LIVE</span>
           </div>
 
           {paused && (
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.52rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.04em' }}>⏸</span>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.52rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.04em' }}>⏸</span>
           )}
         </div>
 
@@ -725,7 +725,7 @@ export function ProductWalkthrough() {
           >
             <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
             <span style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.62rem',
               fontWeight:    700,
               letterSpacing: '0.18em',
@@ -739,7 +739,7 @@ export function ProductWalkthrough() {
           <h2
             className={`pw-header-animate in-d2 ${headerInView ? 'in' : ''}`}
             style={{
-              fontFamily:  'Cormorant Garamond, Georgia, serif',
+              fontFamily:  'var(--font-cormorant), Georgia, serif',
               fontSize:    'clamp(2rem, 4.5vw, 3.25rem)',
               fontWeight:  600,
               fontStyle:   'italic',
@@ -755,7 +755,7 @@ export function ProductWalkthrough() {
           <p
             className={`pw-header-animate in-d3 ${headerInView ? 'in' : ''}`}
             style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.9rem',
               color:      'rgba(255,255,255,0.38)',
               marginTop:  '1rem',
@@ -805,10 +805,10 @@ export function ProductWalkthrough() {
                         boxShadow:     active ? '0 0 12px rgba(201,169,110,0.2)' : 'none',
                       }}
                     >
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: active ? '#C9A96E' : done ? 'rgba(201,169,110,0.7)' : 'rgba(255,255,255,0.3)' }}>
+                      <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, color: active ? '#C9A96E' : done ? 'rgba(201,169,110,0.7)' : 'rgba(255,255,255,0.3)' }}>
                         {done ? '✓' : slide.id}
                       </span>
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: active ? 600 : 400, color: active ? 'rgba(255,255,255,0.9)' : done ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)' }}>
+                      <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', fontWeight: active ? 600 : 400, color: active ? 'rgba(255,255,255,0.9)' : done ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)' }}>
                         {slide.chapter}
                       </span>
                     </button>
@@ -826,7 +826,7 @@ export function ProductWalkthrough() {
                 padding:       '0.875rem',
                 background:    'linear-gradient(135deg, #B8882A, #C9A96E, #D4B87E)',
                 color:         '#0C0C0E',
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.75rem',
                 fontWeight:    700,
                 letterSpacing: '0.1em',
@@ -857,7 +857,7 @@ export function ProductWalkthrough() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                 <div style={{ width: 16, height: 1, background: 'rgba(255,255,255,0.2)' }} />
                 <p style={{
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.58rem',
                   fontWeight:    700,
                   letterSpacing: '0.14em',
@@ -926,7 +926,7 @@ export function ProductWalkthrough() {
                         <p
                           className="pw-chapter-name"
                           style={{
-                            fontFamily: 'Inter, sans-serif',
+                            fontFamily: 'var(--font-inter), sans-serif',
                             fontSize:   '0.72rem',
                             fontWeight: active ? 600 : 400,
                             color:      active ? '#FFFFFF' : done ? 'rgba(255,255,255,0.48)' : 'rgba(255,255,255,0.28)',
@@ -944,7 +944,7 @@ export function ProductWalkthrough() {
                         )}
                       </div>
 
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.56rem', color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
+                      <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.56rem', color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
                         {slide.time}
                       </span>
                     </button>
@@ -968,10 +968,10 @@ export function ProductWalkthrough() {
                 {/* Corner decoration */}
                 <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, background: 'radial-gradient(circle, rgba(201,169,110,0.15), transparent)', borderRadius: '50%', pointerEvents: 'none' }} />
 
-                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.375rem', lineHeight: 1.3 }}>
+                <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.375rem', lineHeight: 1.3 }}>
                   {t('walk.ctaHeadline')}
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', margin: '0 0 1rem', lineHeight: 1.5 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', margin: '0 0 1rem', lineHeight: 1.5 }}>
                   {t('walk.ctaSub')}
                 </p>
                 <Link
@@ -982,7 +982,7 @@ export function ProductWalkthrough() {
                     padding:       '0.6rem 1rem',
                     background:    'linear-gradient(135deg, #B8882A, #C9A96E)',
                     color:         '#0C0C0E',
-                    fontFamily:    'Inter, sans-serif',
+                    fontFamily:    'var(--font-inter), sans-serif',
                     fontSize:      '0.65rem',
                     fontWeight:    700,
                     letterSpacing: '0.1em',

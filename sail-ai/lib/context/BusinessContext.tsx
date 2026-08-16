@@ -37,6 +37,7 @@ const EMPTY_PROFILE: BusinessProfile = {
 type Action =
   | { type: 'SET_SECTOR';      sector:  string }
   | { type: 'ADD_METRIC';      label:   string; value: string }
+  | { type: 'REMOVE_METRIC';   label:   string }
   | { type: 'ADD_SESSION';     prompt:  string; summary: string }
   | { type: 'SET_DIAGNOSTIC';  data: DiagnosticInput; prompt: string }
   | { type: 'CLEAR' }
@@ -57,6 +58,9 @@ function reducer(state: BusinessProfile, action: Action): BusinessProfile {
         : [...state.metrics.slice(-9), metric]  // keep last 10
       return { ...state, metrics }
     }
+
+    case 'REMOVE_METRIC':
+      return { ...state, metrics: state.metrics.filter(m => m.label !== action.label) }
 
     case 'ADD_SESSION': {
       const session: BusinessSession = {
@@ -102,6 +106,7 @@ interface BusinessContextValue {
   profile:         BusinessProfile
   setSector:       (sector: string) => void
   addMetric:       (label: string, value: string) => void
+  removeMetric:    (label: string) => void
   addSession:      (prompt: string, summary: string) => void
   setDiagnostic:   (data: DiagnosticInput, prompt: string) => void
   clearProfile:    () => void
@@ -201,6 +206,7 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
 
   const setSector      = useCallback((sector: string) => dispatch({ type: 'SET_SECTOR', sector }), [])
   const addMetric      = useCallback((label: string, value: string) => dispatch({ type: 'ADD_METRIC', label, value }), [])
+  const removeMetric   = useCallback((label: string) => dispatch({ type: 'REMOVE_METRIC', label }), [])
   const addSession     = useCallback((prompt: string, summary: string) => dispatch({ type: 'ADD_SESSION', prompt, summary }), [])
   const setDiagnostic  = useCallback((data: DiagnosticInput, prompt: string) => dispatch({ type: 'SET_DIAGNOSTIC', data, prompt }), [])
   const clearProfile   = useCallback(() => dispatch({ type: 'CLEAR' }), [])
@@ -216,8 +222,12 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
       parts.push(`Business sector: ${profile.sector}`)
     }
 
-    if (profile.metrics.length > 0) {
-      const metricLines = profile.metrics
+    // Guard: never leak empty or legacy tombstone rows into the AI prompt.
+    const liveMetrics = profile.metrics.filter(
+      m => m.value && m.value !== '\x00DELETE',
+    )
+    if (liveMetrics.length > 0) {
+      const metricLines = liveMetrics
         .slice(-5)
         .map(m => `  • ${m.label}: ${m.value}`)
         .join('\n')
@@ -238,7 +248,7 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
   }, [profile])
 
   return (
-    <BusinessContext.Provider value={{ profile, setSector, addMetric, addSession, setDiagnostic, clearProfile, buildContext }}>
+    <BusinessContext.Provider value={{ profile, setSector, addMetric, removeMetric, addSession, setDiagnostic, clearProfile, buildContext }}>
       {children}
     </BusinessContext.Provider>
   )

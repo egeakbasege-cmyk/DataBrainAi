@@ -40,7 +40,7 @@ const makeVariants = (dir: 1 | -1) => ({
 
 const T = {
   label: {
-    fontFamily:    'Inter, sans-serif',
+    fontFamily:    'var(--font-inter), sans-serif',
     fontSize:      '0.65rem',
     letterSpacing: '0.1em',
     textTransform: 'uppercase' as const,
@@ -49,7 +49,7 @@ const T = {
     display:       'block',
   },
   heading: {
-    fontFamily:    'Cormorant Garamond, Georgia, serif',
+    fontFamily:    'var(--font-cormorant), Georgia, serif',
     fontStyle:     'italic' as const,
     fontWeight:    600,
     fontSize:      'clamp(1.5rem, 4vw, 2rem)',
@@ -59,14 +59,14 @@ const T = {
     margin:        0,
   },
   sub: {
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: 'var(--font-inter), sans-serif',
     fontSize:   '0.85rem',
     color:      '#71717A',
     marginTop:  '0.5rem',
     lineHeight: 1.5,
   },
   small: {
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: 'var(--font-inter), sans-serif',
     fontSize:   '0.72rem',
     color:      '#A1A1AA',
     letterSpacing: '0.04em',
@@ -87,7 +87,7 @@ function Tile({ label, selected, onClick, wide }: {
         background: selected ? 'rgba(201,169,110,0.07)' : '#FFFFFF',
         cursor:     'pointer',
         transition: 'all 0.14s',
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: 'var(--font-inter), sans-serif',
         fontSize:   '0.875rem',
         fontWeight: selected ? 500 : 400,
         color:      selected ? '#0C0C0E' : '#71717A',
@@ -111,7 +111,7 @@ function RangeSlider({ value, min, max, onChange, formatLabel, hint }: {
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1.5rem' }}>
         <span style={{
-          fontFamily:    'Cormorant Garamond, Georgia, serif',
+          fontFamily:    'var(--font-cormorant), Georgia, serif',
           fontSize:      'clamp(2rem, 7vw, 3rem)',
           fontWeight:    600,
           color:         '#0C0C0E',
@@ -186,7 +186,7 @@ function StepIndustry({ data, update, tFn }: { data: DiagnosticInput; update: (k
             width:       '100%',
             boxSizing:   'border-box',
             padding:     '0.75rem 1rem',
-            fontFamily:  'Inter, sans-serif',
+            fontFamily:  'var(--font-inter), sans-serif',
             fontSize:    '0.875rem',
             color:       '#0C0C0E',
             background:  '#FFFFFF',
@@ -283,7 +283,7 @@ function StepCashReserves({ data, update, tFn }: { data: DiagnosticInput; update
           padding: '0.75rem', background: 'rgba(12,12,14,0.025)', border: '1px solid rgba(12,12,14,0.07)',
         }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: health.color, flexShrink: 0 }} />
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#0C0C0E', fontWeight: 500 }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#0C0C0E', fontWeight: 500 }}>
             {health.label}
           </span>
           <span style={T.small}>
@@ -367,7 +367,7 @@ function ResultScreen({ result, onConfirm, tFn }: { result: DiagnosticResult; on
             alignItems: 'center', justifyContent: 'center',
           }}>
             <span style={{
-              fontFamily:    'Cormorant Garamond, Georgia, serif',
+              fontFamily:    'var(--font-cormorant), Georgia, serif',
               fontSize:      '1.75rem',
               fontWeight:    600,
               color:         '#0C0C0E',
@@ -376,7 +376,7 @@ function ResultScreen({ result, onConfirm, tFn }: { result: DiagnosticResult; on
             }}>
               {displayed}
             </span>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: '#A1A1AA', letterSpacing: '0.06em' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', color: '#A1A1AA', letterSpacing: '0.06em' }}>
               / 100
             </span>
           </div>
@@ -403,8 +403,8 @@ function ResultScreen({ result, onConfirm, tFn }: { result: DiagnosticResult; on
           return (
             <div key={key} style={{ marginBottom: i < BREAKDOWN_META.length - 1 ? '1rem' : 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#71717A' }}>{label}</span>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#0C0C0E', fontWeight: 500 }}>{result.breakdown[key]}<span style={{ color: '#A1A1AA' }}>/{max}</span></span>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#71717A' }}>{label}</span>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#0C0C0E', fontWeight: 500 }}>{result.breakdown[key]}<span style={{ color: '#A1A1AA' }}>/{max}</span></span>
               </div>
               <div style={{ height: 3, background: 'rgba(12,12,14,0.07)' }}>
                 <motion.div
@@ -463,7 +463,7 @@ function InsightBox({ icon, text }: { icon: 'margin' | 'cash'; text: string }) {
           </svg>
         )}
       </span>
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', lineHeight: 1.55, margin: 0 }}>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#71717A', lineHeight: 1.55, margin: 0 }}>
         {text}
       </p>
     </div>
@@ -610,7 +610,7 @@ export function DiagnosticFlow() {
             onClick={() => goTo(screen - 1)}
             disabled={screen === 0}
             style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.75rem',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',

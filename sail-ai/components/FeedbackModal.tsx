@@ -105,16 +105,16 @@ export function FeedbackModal({ open, onClose }: Props) {
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </div>
-                <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600, fontSize: '1.1rem', color: '#0C0C0E', marginBottom: '0.375rem' }}>
+                <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontWeight: 600, fontSize: '1.1rem', color: '#0C0C0E', marginBottom: '0.375rem' }}>
                   {t('feedback.successTitle')}
                 </p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', marginBottom: '1.25rem' }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#71717A', marginBottom: '1.25rem' }}>
                   {t('feedback.successSub')}
                 </p>
                 <button
                   onClick={onClose}
                   style={{
-                    fontFamily: 'Inter, sans-serif',
+                    fontFamily: 'var(--font-inter), sans-serif',
                     fontSize: '0.75rem',
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
@@ -139,10 +139,10 @@ export function FeedbackModal({ open, onClose }: Props) {
                   }}
                 >
                   <div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '2px' }}>
+                    <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '2px' }}>
                       {t('feedback.title')}
                     </p>
-                    <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#0C0C0E' }}>
+                    <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#0C0C0E' }}>
                       {t('feedback.subtitle')}
                     </p>
                   </div>
@@ -161,7 +161,7 @@ export function FeedbackModal({ open, onClose }: Props) {
 
                 {/* Category */}
                 <div style={{ padding: '1rem 1.25rem 0' }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.5rem' }}>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.5rem' }}>
                     {t('feedback.category')}
                   </p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
@@ -171,7 +171,7 @@ export function FeedbackModal({ open, onClose }: Props) {
                         type="button"
                         onClick={() => setCategory(key)}
                         style={{
-                          fontFamily:    'Inter, sans-serif',
+                          fontFamily:    'var(--font-inter), sans-serif',
                           fontSize:      '0.72rem',
                           letterSpacing: '0.03em',
                           padding:       '4px 10px',
@@ -204,7 +204,7 @@ export function FeedbackModal({ open, onClose }: Props) {
                       borderBottom: `1px solid ${feedback.length > 0 ? 'rgba(201,169,110,0.5)' : 'rgba(12,12,14,0.12)'}`,
                       outline:      'none',
                       resize:       'none',
-                      fontFamily:   'Inter, sans-serif',
+                      fontFamily:   'var(--font-inter), sans-serif',
                       fontSize:     '0.85rem',
                       lineHeight:   1.6,
                       color:        '#0C0C0E',
@@ -213,7 +213,7 @@ export function FeedbackModal({ open, onClose }: Props) {
                       boxSizing:    'border-box',
                     }}
                   />
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#A1A1AA', textAlign: 'right', marginTop: '0.25rem' }}>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#A1A1AA', textAlign: 'right', marginTop: '0.25rem' }}>
                     {feedback.length} / 500
                   </p>
                 </div>
@@ -233,7 +233,7 @@ export function FeedbackModal({ open, onClose }: Props) {
                     type="button"
                     onClick={onClose}
                     style={{
-                      fontFamily: 'Inter, sans-serif',
+                      fontFamily: 'var(--font-inter), sans-serif',
                       fontSize:   '0.75rem',
                       color:      '#71717A',
                       background: 'none',
@@ -247,7 +247,7 @@ export function FeedbackModal({ open, onClose }: Props) {
                     type="submit"
                     disabled={status === 'submitting' || !feedback.trim()}
                     style={{
-                      fontFamily:    'Inter, sans-serif',
+                      fontFamily:    'var(--font-inter), sans-serif',
                       fontSize:      '0.72rem',
                       letterSpacing: '0.07em',
                       textTransform: 'uppercase',

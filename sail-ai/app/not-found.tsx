@@ -11,13 +11,13 @@ export default function NotFound() {
           <Logo size={60} />
         </div>
       </div>
-      <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 700, fontSize: 'clamp(4rem, 12vw, 7rem)', color: 'rgba(201,169,110,0.12)', letterSpacing: '-0.04em', lineHeight: 1 }}>
+      <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontWeight: 700, fontSize: 'clamp(4rem, 12vw, 7rem)', color: 'rgba(201,169,110,0.12)', letterSpacing: '-0.04em', lineHeight: 1 }}>
         404
       </p>
-      <h1 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)', color: '#FFFFFF', marginTop: '0.5rem', marginBottom: '0.75rem' }}>
+      <h1 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)', color: '#FFFFFF', marginTop: '0.5rem', marginBottom: '0.75rem' }}>
         This page drifted off the chart
       </h1>
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: 'rgba(255,255,255,0.38)', marginBottom: '2.5rem' }}>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', color: 'rgba(255,255,255,0.38)', marginBottom: '2.5rem' }}>
         The waters here are uncharted.
       </p>
       <Link href="/" className="btn-primary">Back to port →</Link>

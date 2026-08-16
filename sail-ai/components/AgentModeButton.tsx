@@ -62,7 +62,7 @@ export function AgentModeButton({ value, onChange, variant = 'light' }: Props) {
           background:    d ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
           border:        `1px solid ${d ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
           color:         d ? 'rgba(255,255,255,0.65)' : '#3A3A3C',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.68rem',
           fontWeight:    500,
           letterSpacing: '0.07em',
@@ -118,7 +118,7 @@ export function AgentModeButton({ value, onChange, variant = 'light' }: Props) {
               }}
             >
               <span style={{
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.68rem',
                 fontWeight:    600,
                 letterSpacing: '0.08em',
@@ -128,7 +128,7 @@ export function AgentModeButton({ value, onChange, variant = 'light' }: Props) {
                 {t(LABEL_KEY[id])}
               </span>
               <span style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize:   '0.65rem',
                 color:      'rgba(255,255,255,0.3)',
                 marginTop:  '0.15rem',

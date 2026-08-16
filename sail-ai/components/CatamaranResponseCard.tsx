@@ -95,7 +95,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
             100% { transform: rotate(360deg); }
           }
         `}</style>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.60)' }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.60)' }}>
           Generating CATAMARAN analysis...
         </p>
       </div>
@@ -132,7 +132,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
       
       <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(212,175,55,0.12)' }}>
         <span style={{
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'var(--font-inter), sans-serif',
           fontSize: '0.6rem',
           fontWeight: 700,
           letterSpacing: '0.14em',
@@ -145,7 +145,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
           CATAMARAN
         </span>
         <h2 style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontFamily: 'var(--font-cormorant), Georgia, serif',
           fontSize: '1.5rem',
           fontWeight: 600,
           color: '#FFFFFF',
@@ -158,7 +158,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
       {/* Summary */}
       {summary && (
         <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(212,175,55,0.1)' }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.70)', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.70)', lineHeight: 1.6, margin: 0 }}>
             {summary}
           </p>
         </div>
@@ -174,7 +174,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
           padding: 16,
         }}>
           <span style={{
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize: '0.6rem',
             fontWeight: 700,
             letterSpacing: '0.12em',
@@ -184,7 +184,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
             Market Growth
           </span>
           <h4 style={{
-            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontFamily: 'var(--font-cormorant), Georgia, serif',
             fontSize: '1.05rem',
             fontWeight: 600,
             color: '#FFFFFF',
@@ -201,17 +201,17 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
               padding: 10,
               marginBottom: 8,
             }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: '#FFFFFF', margin: '0 0 4px' }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', fontWeight: 600, color: '#FFFFFF', margin: '0 0 4px' }}>
                 {String(action?.action || 'Action')}
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.60)', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.60)', margin: 0 }}>
                 {String(action?.impact || '')}
               </p>
             </div>
           ))}
           {marketGrowth.target && (
             <div style={{ marginTop: 12, padding: '8px 10px', background: `${goldColor}10`, borderRadius: 6 }}>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: goldColor }}>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 600, color: goldColor }}>
                 Target: {marketGrowth.target}
               </span>
             </div>
@@ -226,7 +226,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
           padding: 16,
         }}>
           <span style={{
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize: '0.6rem',
             fontWeight: 700,
             letterSpacing: '0.12em',
@@ -236,7 +236,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
             Customer Experience
           </span>
           <h4 style={{
-            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontFamily: 'var(--font-cormorant), Georgia, serif',
             fontSize: '1.05rem',
             fontWeight: 600,
             color: '#FFFFFF',
@@ -253,17 +253,17 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
               padding: 10,
               marginBottom: 8,
             }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: '#FFFFFF', margin: '0 0 4px' }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', fontWeight: 600, color: '#FFFFFF', margin: '0 0 4px' }}>
                 {String(action?.action || 'Action')}
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.60)', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.60)', margin: 0 }}>
                 {String(action?.impact || '')}
               </p>
             </div>
           ))}
           {customerExperience.target && (
             <div style={{ marginTop: 12, padding: '8px 10px', background: 'rgba(0,105,92,0.1)', borderRadius: 6 }}>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: '#00695C' }}>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 600, color: '#00695C' }}>
                 Target: {customerExperience.target}
               </span>
             </div>
@@ -281,7 +281,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
             padding: 14,
           }}>
             <span style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize: '0.6rem',
               fontWeight: 700,
               letterSpacing: '0.1em',
@@ -290,7 +290,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
             }}>
               Unified Strategy
             </span>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)', margin: '8px 0 0' }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)', margin: '8px 0 0' }}>
               {unifiedStrategy}
             </p>
           </div>
@@ -301,20 +301,20 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
       <div style={{ padding: '0 24px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12 }}>
         {thirtyDayTarget && (
           <div style={{ background: '#f8f8f8', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 6, padding: 12 }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: 'rgba(255,255,255,0.50)', textTransform: 'uppercase' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, color: 'rgba(255,255,255,0.50)', textTransform: 'uppercase' }}>
               30-Day Target
             </span>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.85)', margin: '6px 0 0' }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.85)', margin: '6px 0 0' }}>
               {thirtyDayTarget}
             </p>
           </div>
         )}
         {greatestRisk && (
           <div style={{ background: 'rgba(220,38,38,0.04)', border: '1px solid rgba(220,38,38,0.12)', borderRadius: 6, padding: 12 }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase' }}>
               Greatest Risk
             </span>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.75)', margin: '6px 0 0' }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.75)', margin: '6px 0 0' }}>
               {greatestRisk}
             </p>
           </div>
@@ -327,10 +327,10 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
           minWidth: 80,
           textAlign: 'center',
         }}>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: '#B8941F', textTransform: 'uppercase' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.55rem', fontWeight: 700, color: '#B8941F', textTransform: 'uppercase' }}>
             Confidence
           </span>
-          <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.4rem', fontWeight: 700, color: goldColor, margin: '4px 0 0' }}>
+          <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.4rem', fontWeight: 700, color: goldColor, margin: '4px 0 0' }}>
             {confidenceIndex}%
           </p>
         </div>
@@ -349,7 +349,7 @@ export function CatamaranResponseCard({ response, isStreaming = false, query }: 
             style={{
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '5px 11px',
-              fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 500,
+              fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', fontWeight: 500,
               color:      state === 'done' ? '#14B8A6' : state === 'error' ? '#DC2626' : '#71717A',
               background: 'rgba(0,0,0,0.03)',
               border:     '1px solid rgba(0,0,0,0.09)',

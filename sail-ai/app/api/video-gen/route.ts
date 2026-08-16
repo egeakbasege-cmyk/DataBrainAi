@@ -132,18 +132,19 @@ function detectProvider(): 'luma' | 'runway' | null {
 // ── POST — create generation ──────────────────────────────────────────────────
 
 export async function POST(req: Request): Promise<Response> {
+  // BUGFIX: `req.json()` consumes the body stream and can only be called once.
+  // Parse first, then apply the auth guard using the already-parsed payload.
+  let body: { node?: NarrativeNode }
+  try { body = await req.json() } catch { body = {} }
+
   // Auth guard — video generation is billed per call
   const session = await auth()
   if (!session?.user) {
     // Allow anonymous for INTRO only (first screen, no cost if provider absent)
-    const body = await req.json().catch(() => ({}) as { node?: NarrativeNode })
     if (body.node !== 'INTRO') {
       return jsonRes({ error: 'Sign in to enable cinematic backgrounds' }, 401)
     }
   }
-
-  let body: { node?: NarrativeNode }
-  try { body = await req.json() } catch { body = {} }
 
   const { node } = body
   if (!node || !SCENES[node]) {

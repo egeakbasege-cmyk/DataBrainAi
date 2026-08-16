@@ -99,11 +99,11 @@ export function FileAttachmentPill({ attachment, analyzing, onRemove }: Props) {
 
       {/* Name + size */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.05rem', minWidth: 0 }}>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 500, color: '#0C0C0E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 500, color: '#0C0C0E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {analyzing ? 'Analysing…' : displayName}
         </span>
         {!analyzing && (
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#A1A1AA' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: '#A1A1AA' }}>
             {fmt(attachment.size)}
           </span>
         )}

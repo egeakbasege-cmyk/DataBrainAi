@@ -106,7 +106,7 @@ export function GuideRail({
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span style={{
-            fontFamily:    'Cormorant Garamond, Georgia, serif',
+            fontFamily:    'var(--font-cormorant), Georgia, serif',
             fontSize:       20,
             fontWeight:     400,
             letterSpacing: '-0.02em',
@@ -121,7 +121,7 @@ export function GuideRail({
             }}>AI</span>
           </span>
           <span style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:       7,
             fontWeight:     700,
             letterSpacing: '0.22em',
@@ -153,7 +153,7 @@ export function GuideRail({
             }}
           />
           <span style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:       9.5,
             fontWeight:     700,
             letterSpacing: '0.14em',
@@ -169,7 +169,7 @@ export function GuideRail({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0 }}
                 style={{
-                  fontFamily: 'Inter, sans-serif',
+                  fontFamily: 'var(--font-inter), sans-serif',
                   fontSize:    8.5,
                   color:       T.teal,
                   fontStyle:  'italic',
@@ -186,7 +186,7 @@ export function GuideRail({
           <>
             <div style={{ width: 1, height: 20, background: T.border }} />
             <span style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:       9.5,
               color:          T.textMuted,
               letterSpacing: '0.02em',
@@ -280,7 +280,7 @@ export function GuideRail({
                 borderRadius:   9999,
                 cursor:        'pointer',
                 outline:       'none',
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:       9,
                 fontWeight:     700,
                 letterSpacing: '0.10em',
@@ -296,7 +296,7 @@ export function GuideRail({
 
         {isPro ? (
           <div style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:       9,
             fontWeight:     700,
             letterSpacing: '0.16em',
@@ -320,7 +320,7 @@ export function GuideRail({
               border:        `1px solid ${T.tealBorder}`,
               borderRadius:   9999,
               cursor:        'pointer',
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:       9,
               fontWeight:     700,
               letterSpacing: '0.12em',

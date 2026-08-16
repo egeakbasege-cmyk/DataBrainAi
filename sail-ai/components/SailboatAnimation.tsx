@@ -155,7 +155,7 @@ export function SailboatAnimation({ state }: Props) {
             position:      'absolute',
             top:            8,
             right:          10,
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.58rem',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',

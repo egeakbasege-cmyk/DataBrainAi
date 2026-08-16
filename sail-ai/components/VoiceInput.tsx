@@ -354,7 +354,7 @@ export function VoiceInput({ onTranscript, disabled }: Props) {
             <WaveformBars />
             {interim ? (
               <span style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize: '0.68rem',
                 color: '#059669',
                 overflow: 'hidden',
@@ -365,7 +365,7 @@ export function VoiceInput({ onTranscript, disabled }: Props) {
                 {interim}
               </span>
             ) : (
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#059669' }}>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#059669' }}>
                 Listening…
               </span>
             )}
@@ -377,7 +377,7 @@ export function VoiceInput({ onTranscript, disabled }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#71717A' }}
+            style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#71717A' }}
           >
             Got it ✓
           </motion.span>
@@ -388,7 +388,7 @@ export function VoiceInput({ onTranscript, disabled }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#991B1B' }}
+            style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#991B1B' }}
           >
             {isDenied ? 'Mic blocked' : 'Try again'}
           </motion.span>

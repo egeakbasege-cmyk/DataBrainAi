@@ -123,7 +123,7 @@ export function AnsoffMatrix({ data, loading = false, compact = false }: AnsoffM
   const focus  = hovered ?? active
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ fontFamily: 'var(--font-inter), sans-serif' }}>
       {/* Header */}
       {!compact && (
         <div style={{ marginBottom: 16 }}>
@@ -138,7 +138,7 @@ export function AnsoffMatrix({ data, loading = false, compact = false }: AnsoffM
             Strategic Framework
           </p>
           <p style={{
-            fontFamily:  'Cormorant Garamond, Georgia, serif',
+            fontFamily:  'var(--font-cormorant), Georgia, serif',
             fontSize:    '1.1rem',
             fontWeight:  600,
             color:       '#0C0C0E',

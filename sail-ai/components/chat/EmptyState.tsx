@@ -124,7 +124,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
           }}
         />
         <p style={{
-          fontFamily:    'Cormorant Garamond, Georgia, serif',
+          fontFamily:    'var(--font-cormorant), Georgia, serif',
           fontSize:       30,
           fontWeight:     300,
           letterSpacing: '-0.04em',
@@ -142,7 +142,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
           </span>
         </p>
         <p style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:       10,
           fontWeight:     500,
           letterSpacing: '0.16em',
@@ -220,7 +220,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
                   {m.icon}
                 </span>
                 <span style={{
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:       9,
                   fontWeight:     700,
                   letterSpacing: '0.20em',
@@ -232,7 +232,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
               </div>
 
               <p style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize:    12,
                 fontWeight:  500,
                 color:       isFocused ? T.textSub : T.textMuted,
@@ -244,7 +244,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
               </p>
 
               <p style={{
-                fontFamily:      'Inter, sans-serif',
+                fontFamily:      'var(--font-inter), sans-serif',
                 fontSize:         10,
                 color:            T.textFaint,
                 margin:           0,
@@ -266,7 +266,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
                   fontSize:      10,
                   color:         m.color,
                   opacity:       isFocused ? 1 : 0.55,
-                  fontFamily:   'Inter, sans-serif',
+                  fontFamily:   'var(--font-inter), sans-serif',
                   fontWeight:    700,
                   letterSpacing: '0.08em',
                   transition:   'opacity 0.2s',
@@ -293,7 +293,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
         }}
       >
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:       9,
           fontWeight:     600,
           letterSpacing: '0.18em',
@@ -323,7 +323,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
               borderRadius:   9999,
               background:     T.glass,
               backdropFilter:'blur(12px)',
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:       11,
               color:          T.textMuted,
               cursor:        'pointer',
@@ -343,7 +343,7 @@ export function EmptyState({ onModeSelect, onQuickPick }: EmptyStateProps) {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
         style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:       9,
           color:          T.textFaint,
           textAlign:     'center',

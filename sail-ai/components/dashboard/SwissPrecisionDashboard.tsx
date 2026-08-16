@@ -394,13 +394,13 @@ function PortofinoHero() {
       <div className="absolute top-4 left-4">
         <span
           className="text-xs tracking-[0.22em] uppercase font-medium"
-          style={{ color: '#c49a3c', fontFamily: "'Archivo', sans-serif", letterSpacing: '0.22em' }}
+          style={{ color: '#c49a3c', fontFamily: "var(--font-archivo), sans-serif", letterSpacing: '0.22em' }}
         >
           Sail AI
         </span>
         <div
           className="text-[10px] tracking-widest opacity-55"
-          style={{ color: '#81d8d0', fontFamily: "'Archivo', sans-serif" }}
+          style={{ color: '#81d8d0', fontFamily: "var(--font-archivo), sans-serif" }}
         >
           Portofino · Intelligence
         </div>
@@ -434,7 +434,7 @@ function MetricCard({ metric, index }: { metric: Metric; index: number }) {
 
       <div
         className="text-[10px] tracking-[0.18em] uppercase mb-2 opacity-60"
-        style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+        style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
       >
         {metric.label}
       </div>
@@ -487,7 +487,7 @@ function InsightBanner() {
       <div>
         <div
           className="text-[11px] font-medium mb-1"
-          style={{ color: '#81d8d0', fontFamily: "'Archivo', sans-serif", letterSpacing: '0.06em' }}
+          style={{ color: '#81d8d0', fontFamily: "var(--font-archivo), sans-serif", letterSpacing: '0.06em' }}
         >
           KAIROS Signal
         </div>
@@ -522,7 +522,7 @@ function OverviewTab() {
       <motion.div variants={fadeUp}>
         <div
           className="text-[10px] tracking-[0.22em] uppercase opacity-45 mb-3"
-          style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+          style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
         >
           Portfolio Metrics
         </div>
@@ -548,7 +548,7 @@ function OverviewTab() {
       >
         <div
           className="text-[10px] tracking-[0.18em] uppercase opacity-50 mb-3"
-          style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+          style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
         >
           Sector Position
         </div>
@@ -632,7 +632,7 @@ function AnalyticsTab() {
                   style={{
                     color: '#81d8d0',
                     background: 'rgba(129, 216, 208, 0.10)',
-                    fontFamily: "'Archivo', sans-serif",
+                    fontFamily: "var(--font-archivo), sans-serif",
                   }}
                 >
                   {s.bracket}
@@ -676,7 +676,7 @@ function AnalyticsTab() {
       <motion.div variants={fadeUp}>
         <div
           className="text-[10px] tracking-[0.18em] uppercase opacity-45 mb-3"
-          style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+          style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
         >
           Momentum Signals
         </div>
@@ -728,7 +728,7 @@ function ImpactBadge({ label, value }: { label: string; value: string }) {
       style={{
         color:      IMPACT_COLOR[value] ?? '#81d8d0',
         background: `${IMPACT_COLOR[value] ?? '#81d8d0'}14`,
-        fontFamily: "'Archivo', sans-serif",
+        fontFamily: "var(--font-archivo), sans-serif",
       }}
     >
       {label} {value}
@@ -742,6 +742,54 @@ function InsightPanel({ insight, meta, onReset }: {
   onReset: () => void
 }) {
   const pct = Math.round(insight.confidence * 100)
+  const [actionFlash, setActionFlash] = useState<string | null>(null)
+
+  function flash(msg: string) {
+    setActionFlash(msg)
+    setTimeout(() => setActionFlash(null), 2000)
+  }
+
+  /** Copy the full analysis to the clipboard as readable plain text. */
+  async function handleSave() {
+    const lines = [
+      'KAIROS Analysis',
+      `Confidence: ${pct}%`,
+      `Sources: ${meta.sourcesFound} · Model: ${meta.model}`,
+      '',
+      ...(insight.actions.length
+        ? ['Priority Actions:', ...insight.actions.map(
+            a => `- ${a.label} (impact: ${a.impact}, effort: ${a.effort}, ${a.timeline})`,
+          )]
+        : []),
+    ]
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'))
+      flash('Copied')
+    } catch {
+      flash('Copy failed')
+    }
+  }
+
+  /** Download the raw analysis payload as a JSON file. */
+  function handleExport() {
+    try {
+      const blob = new Blob(
+        [JSON.stringify({ insight, meta, exportedAt: new Date().toISOString() }, null, 2)],
+        { type: 'application/json' },
+      )
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `kairos-analysis-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      flash('Exported')
+    } catch {
+      flash('Export failed')
+    }
+  }
 
   return (
     <motion.div
@@ -761,7 +809,7 @@ function InsightPanel({ insight, meta, onReset }: {
         <Sparkles size={12} style={{ color: '#81d8d0' }} />
         <span
           className="text-[10px] tracking-[0.18em] uppercase"
-          style={{ color: '#81d8d0', fontFamily: "'Archivo', sans-serif" }}
+          style={{ color: '#81d8d0', fontFamily: "var(--font-archivo), sans-serif" }}
         >
           KAIROS Analysis
         </span>
@@ -778,7 +826,7 @@ function InsightPanel({ insight, meta, onReset }: {
         <div>
           <div
             className="text-[9px] tracking-[0.18em] uppercase mb-2 opacity-40"
-            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+            style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
           >
             Market Signals
           </div>
@@ -798,7 +846,7 @@ function InsightPanel({ insight, meta, onReset }: {
         <div>
           <div
             className="text-[9px] tracking-[0.18em] uppercase mb-2 opacity-40"
-            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+            style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
           >
             Priority Actions
           </div>
@@ -821,7 +869,7 @@ function InsightPanel({ insight, meta, onReset }: {
                     style={{
                       color:      'rgba(249,250,251,0.45)',
                       background: 'rgba(255,255,255,0.05)',
-                      fontFamily: "'Archivo', sans-serif",
+                      fontFamily: "var(--font-archivo), sans-serif",
                     }}
                   >
                     {a.timeline}
@@ -838,7 +886,7 @@ function InsightPanel({ insight, meta, onReset }: {
         <div>
           <div
             className="text-[9px] tracking-[0.18em] uppercase mb-2 opacity-40"
-            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+            style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
           >
             Benchmarks
           </div>
@@ -862,7 +910,7 @@ function InsightPanel({ insight, meta, onReset }: {
         <div>
           <div
             className="text-[9px] tracking-[0.18em] uppercase mb-2 opacity-40"
-            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+            style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
           >
             Counter-Signals
           </div>
@@ -882,7 +930,7 @@ function InsightPanel({ insight, meta, onReset }: {
         <div className="flex justify-between mb-1">
           <span
             className="text-[9px] tracking-[0.14em] uppercase opacity-35"
-            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+            style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
           >
             Confidence
           </span>
@@ -899,7 +947,7 @@ function InsightPanel({ insight, meta, onReset }: {
         </div>
         <div
           className="text-[10px] opacity-25 mt-1"
-          style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+          style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
         >
           {meta.sourcesFound} sources · {meta.model}
         </div>
@@ -910,18 +958,24 @@ function InsightPanel({ insight, meta, onReset }: {
         className="flex gap-2 pt-3"
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
-        {['Save', 'Export'].map(action => (
+        {([
+          { label: 'Save',   onClick: handleSave   },
+          { label: 'Export', onClick: handleExport },
+        ] as const).map(action => (
           <button
-            key={action}
-            className="flex-1 py-2 rounded-lg text-[11px] font-medium min-h-[36px]"
+            key={action.label}
+            type="button"
+            onClick={action.onClick}
+            aria-label={`${action.label} KAIROS analysis`}
+            className="flex-1 py-2 rounded-lg text-[11px] font-medium min-h-[36px] transition-colors hover:bg-white/10"
             style={{
               background: 'rgba(255,255,255,0.04)',
               border:     '1px solid rgba(255,255,255,0.08)',
               color:      'rgba(249,250,251,0.55)',
-              fontFamily: "'Archivo', sans-serif",
+              fontFamily: "var(--font-archivo), sans-serif",
             }}
           >
-            {action}
+            {action.label}
           </button>
         ))}
         <button
@@ -931,12 +985,23 @@ function InsightPanel({ insight, meta, onReset }: {
             background: 'rgba(196,154,60,0.08)',
             border:     '1px solid rgba(196,154,60,0.28)',
             color:      '#c49a3c',
-            fontFamily: "'Archivo', sans-serif",
+            fontFamily: "var(--font-archivo), sans-serif",
           }}
         >
           New Query
         </button>
       </div>
+
+      {actionFlash && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="text-[10px] text-center"
+          style={{ color: '#81d8d0', fontFamily: "var(--font-archivo), sans-serif" }}
+        >
+          {actionFlash}
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -1055,7 +1120,7 @@ function StrategyTab() {
               </div>
               <div
                 className="text-[10px] tracking-wide font-medium"
-                style={{ color: active ? m.accent : 'rgba(249,250,251,0.4)', fontFamily: "'Archivo', sans-serif" }}
+                style={{ color: active ? m.accent : 'rgba(249,250,251,0.4)', fontFamily: "var(--font-archivo), sans-serif" }}
               >
                 {m.label}
               </div>
@@ -1087,7 +1152,7 @@ function StrategyTab() {
               background: s === sector ? 'rgba(129,216,208,0.14)' : 'rgba(255,255,255,0.04)',
               border:     `1px solid ${s === sector ? '#81d8d0' : 'rgba(255,255,255,0.08)'}`,
               color:      s === sector ? '#81d8d0' : 'rgba(249,250,251,0.45)',
-              fontFamily: "'Archivo', sans-serif",
+              fontFamily: "var(--font-archivo), sans-serif",
             }}
           >
             {s}
@@ -1121,12 +1186,12 @@ function StrategyTab() {
             className="w-full px-4 pt-4 pb-2 bg-transparent text-[13px] leading-5 resize-none outline-none"
             style={{
               color:      loading ? 'rgba(249,250,251,0.45)' : '#f9fafb',
-              fontFamily: "'Archivo', sans-serif",
+              fontFamily: "var(--font-archivo), sans-serif",
               caretColor: '#81d8d0',
             }}
           />
           <div className="flex items-center justify-between px-3 pb-3">
-            <span className="text-[10px] opacity-25" style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}>
+            <span className="text-[10px] opacity-25" style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}>
               Powered by Groq · 70B · {sector}
             </span>
             <button
@@ -1137,7 +1202,7 @@ function StrategyTab() {
                 background: loading ? 'rgba(129,216,208,0.10)' : 'rgba(196,154,60,0.20)',
                 border:     `1px solid ${loading ? 'rgba(129,216,208,0.40)' : 'rgba(196,154,60,0.40)'}`,
                 color:      loading ? '#81d8d0' : '#c49a3c',
-                fontFamily: "'Archivo', sans-serif",
+                fontFamily: "var(--font-archivo), sans-serif",
                 opacity:    loading ? 0.7 : 1,
               }}
             >
@@ -1238,7 +1303,7 @@ function SettingsTab() {
           <Lock size={12} style={{ color: '#c49a3c' }} />
           <span
             className="text-[10px] tracking-[0.18em] uppercase"
-            style={{ color: '#c49a3c', fontFamily: "'Archivo', sans-serif" }}
+            style={{ color: '#c49a3c', fontFamily: "var(--font-archivo), sans-serif" }}
           >
             Groq API Key (BYOK)
           </span>
@@ -1256,7 +1321,7 @@ function SettingsTab() {
             style={{
               color: '#f9fafb',
               border: '1px solid rgba(255,255,255,0.12)',
-              fontFamily: "'Archivo', sans-serif",
+              fontFamily: "var(--font-archivo), sans-serif",
               caretColor: '#81d8d0',
             }}
           />
@@ -1274,7 +1339,7 @@ function SettingsTab() {
             background: saved ? 'rgba(129, 216, 208, 0.15)' : 'rgba(196, 154, 60, 0.14)',
             border: `1px solid ${saved ? '#81d8d0' : '#c49a3c'}`,
             color: saved ? '#81d8d0' : '#c49a3c',
-            fontFamily: "'Archivo', sans-serif",
+            fontFamily: "var(--font-archivo), sans-serif",
           }}
         >
           {saved ? '✓ Saved locally' : 'Save Key'}
@@ -1323,7 +1388,7 @@ function SettingsTab() {
         variants={fadeUp}
         className="text-center pt-2 pb-4"
       >
-        <div className="text-[10px] opacity-25" style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}>
+        <div className="text-[10px] opacity-25" style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}>
           Sail AI · Version 0.9.2 · Build 2026.06
         </div>
       </motion.div>
@@ -1385,7 +1450,7 @@ function BottomNav({ active, onChange }: { active: Tab; onChange: (t: Tab) => vo
               className="text-[9px] tracking-wide"
               style={{
                 color: isActive ? '#c49a3c' : 'rgba(249,250,251,0.32)',
-                fontFamily: "'Archivo', sans-serif",
+                fontFamily: "var(--font-archivo), sans-serif",
                 letterSpacing: '0.04em',
               }}
             >
@@ -1431,7 +1496,7 @@ function StickyHeader({ tab }: { tab: Tab }) {
             exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.22 }}
             className="text-[13px] font-medium tracking-wide"
-            style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}
+            style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}
           >
             {TITLES[tab]}
           </motion.span>
@@ -1446,7 +1511,7 @@ function StickyHeader({ tab }: { tab: Tab }) {
           animate={{ opacity: [1, 0.3, 1] }}
           transition={{ duration: 2.2, repeat: Infinity }}
         />
-        <span className="text-[10px] opacity-45" style={{ color: '#f9fafb', fontFamily: "'Archivo', sans-serif" }}>
+        <span className="text-[10px] opacity-45" style={{ color: '#f9fafb', fontFamily: "var(--font-archivo), sans-serif" }}>
           Live
         </span>
       </div>
@@ -1461,8 +1526,7 @@ function StickyHeader({ tab }: { tab: Tab }) {
 function FontProvider() {
   return (
     <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Archivo:wght@400;500;600&display=swap');
-    `}</style>
+          `}</style>
   )
 }
 

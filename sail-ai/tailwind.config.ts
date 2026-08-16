@@ -65,10 +65,10 @@ const config: Config = {
 
       // ── Typography ─────────────────────────────────────────────────────────
       fontFamily: {
-        serif:    ['Cormorant Garamond', 'Georgia', 'serif'],
-        playfair: ['Playfair Display', 'Georgia', 'serif'],
-        sans:     ['Inter', 'system-ui', 'sans-serif'],
-        mono:     ['JetBrains Mono', 'Menlo', 'monospace'],
+        serif:    ['var(--font-cormorant)', 'Georgia', 'serif'],
+        playfair: ['var(--font-playfair)', 'Georgia', 'serif'],
+        sans:     ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        mono:     ['var(--font-mono)', 'Menlo', 'monospace'],
       },
 
       fontSize: {

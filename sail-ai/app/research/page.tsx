@@ -87,10 +87,10 @@ function ResearchLoader({ query }: { query: string }) {
         margin:        '0 auto 1.5rem',
       }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: '#9CA3AF', margin: 0 }}>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: '#9CA3AF', margin: 0 }}>
         {t('research.searching')} <strong style={{ color: '#0C0C0E' }}>{query}</strong>
       </p>
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#C4C4CC', marginTop: '0.5rem' }}>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#C4C4CC', marginTop: '0.5rem' }}>
         {t('research.searching2')}
       </p>
     </div>
@@ -113,10 +113,10 @@ function FindingCard({ text, index }: { text: string; index: number }) {
       minWidth:     260,
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-        <span style={{ color, fontSize: '0.65rem', fontWeight: 700, marginTop: 2, flexShrink: 0, fontFamily: 'Inter, sans-serif' }}>
+        <span style={{ color, fontSize: '0.65rem', fontWeight: 700, marginTop: 2, flexShrink: 0, fontFamily: 'var(--font-inter), sans-serif' }}>
           #{index + 1}
         </span>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#1E293B', lineHeight: 1.55, margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.82rem', color: '#1E293B', lineHeight: 1.55, margin: 0 }}>
           {text}
         </p>
       </div>
@@ -134,10 +134,10 @@ function SectionCard({ section }: { section: ReportSection }) {
       borderRadius: '10px',
       padding:      '1.25rem 1.5rem',
     }}>
-      <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.88rem', fontWeight: 700, color: '#0C0C0E', margin: '0 0 0.625rem' }}>
+      <h3 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.88rem', fontWeight: 700, color: '#0C0C0E', margin: '0 0 0.625rem' }}>
         {section.heading}
       </h3>
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#4B5563', lineHeight: 1.65, margin: '0 0 0.875rem' }}>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.82rem', color: '#4B5563', lineHeight: 1.65, margin: '0 0 0.875rem' }}>
         {section.content}
       </p>
       {section.dataPoints?.length > 0 && (
@@ -148,7 +148,7 @@ function SectionCard({ section }: { section: ReportSection }) {
               border:       '1px solid rgba(12,12,14,0.08)',
               borderRadius: '6px',
               padding:      '0.3rem 0.65rem',
-              fontFamily:   'Inter, sans-serif',
+              fontFamily:   'var(--font-inter), sans-serif',
               fontSize:     '0.73rem',
               color:        '#374151',
               fontWeight:   500,
@@ -172,7 +172,7 @@ function ImageGallery({ images, isMobile }: { images: ResearchImage[]; isMobile?
 
   return (
     <div>
-      <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
+      <h3 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
         {t('research.images')}
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 2 : 3}, 1fr)`, gap: '0.5rem' }}>
@@ -192,7 +192,7 @@ function ImageGallery({ images, isMobile }: { images: ResearchImage[]; isMobile?
                 right:      0,
                 background: 'linear-gradient(transparent, rgba(0,0,0,0.6))',
                 padding:    '0.375rem 0.5rem',
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize:   '0.6rem',
                 color:      '#FFF',
                 lineHeight: 1.3,
@@ -227,19 +227,19 @@ function SourceRow({ source, index }: { source: Source; index: number }) {
         transition:     'background 0.1s',
       }}
     >
-      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#C4C4CC', fontWeight: 600, marginTop: 2, flexShrink: 0 }}>
+      <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: '#C4C4CC', fontWeight: 600, marginTop: 2, flexShrink: 0 }}>
         {String(index + 1).padStart(2, '0')}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {source.title}
         </p>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#9CA3AF', margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#9CA3AF', margin: 0 }}>
           {source.domain} {source.publishedDate ? `· ${source.publishedDate}` : ''}
         </p>
       </div>
       <span style={{
-        fontFamily:   'Inter, sans-serif',
+        fontFamily:   'var(--font-inter), sans-serif',
         fontSize:     '0.62rem',
         fontWeight:   700,
         color:        reliColor,
@@ -321,11 +321,11 @@ export default function ResearchPage() {
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
             <span style={{ fontSize: 18 }}>🔍</span>
-            <h1 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#FAFAF8', letterSpacing: '0.06em', margin: 0 }}>
+            <h1 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#FAFAF8', letterSpacing: '0.06em', margin: 0 }}>
               DEEP RESEARCH
             </h1>
             <span style={{
-              fontFamily:   'Inter, sans-serif',
+              fontFamily:   'var(--font-inter), sans-serif',
               fontSize:     '0.55rem',
               fontWeight:   700,
               letterSpacing:'0.06em',
@@ -353,7 +353,7 @@ export default function ResearchPage() {
                   background:     'rgba(255,255,255,0.06)',
                   border:         '1px solid rgba(255,255,255,0.15)',
                   borderRadius:   '10px',
-                  fontFamily:     'Inter, sans-serif',
+                  fontFamily:     'var(--font-inter), sans-serif',
                   fontSize:       '0.9rem',
                   color:          '#FAFAF8',
                   outline:        'none',
@@ -374,7 +374,7 @@ export default function ResearchPage() {
                   border:       'none',
                   borderRadius: '7px',
                   color:        '#0C0C0E',
-                  fontFamily:   'Inter, sans-serif',
+                  fontFamily:   'var(--font-inter), sans-serif',
                   fontSize:     '0.72rem',
                   fontWeight:   700,
                   letterSpacing:'0.07em',
@@ -398,7 +398,7 @@ export default function ResearchPage() {
                 background:   'rgba(255,255,255,0.04)',
                 border:       '1px solid rgba(255,255,255,0.09)',
                 borderRadius: '7px',
-                fontFamily:   'Inter, sans-serif',
+                fontFamily:   'var(--font-inter), sans-serif',
                 fontSize:     '0.78rem',
                 color:        'rgba(250,250,248,0.7)',
                 outline:      'none',
@@ -423,7 +423,7 @@ export default function ResearchPage() {
                   background:   'rgba(255,255,255,0.06)',
                   border:       '1px solid rgba(255,255,255,0.12)',
                   borderRadius: '20px',
-                  fontFamily:   'Inter, sans-serif',
+                  fontFamily:   'var(--font-inter), sans-serif',
                   fontSize:     '0.68rem',
                   color:        'rgba(250,250,248,0.65)',
                   cursor:       'pointer',
@@ -457,7 +457,7 @@ export default function ResearchPage() {
             gap:          '1rem',
             flexWrap:     'wrap',
           }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: '#B91C1C' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: '#B91C1C' }}>
               ⚠️ {error}
             </span>
             <button
@@ -467,7 +467,7 @@ export default function ResearchPage() {
                 background:   '#EF4444',
                 border:       'none',
                 borderRadius: '6px',
-                fontFamily:   'Inter, sans-serif',
+                fontFamily:   'var(--font-inter), sans-serif',
                 fontSize:     '0.72rem',
                 fontWeight:   700,
                 color:        '#FFFFFF',
@@ -484,10 +484,10 @@ export default function ResearchPage() {
         {!loading && !report && !error && (
           <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
             <div style={{ fontSize: 48, marginBottom: '1rem' }}>📊</div>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.5rem' }}>
+            <h2 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.5rem' }}>
               {t('research.title')}
             </h2>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: '#9CA3AF', maxWidth: 480, margin: '0 auto' }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: '#9CA3AF', maxWidth: 480, margin: '0 auto' }}>
               {t('research.subtitle')}
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '2rem', flexWrap: 'wrap' }}>
@@ -499,7 +499,7 @@ export default function ResearchPage() {
               ].map(f => (
                 <div key={f.label} style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 28, marginBottom: '0.25rem' }}>{f.icon}</div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#9CA3AF', margin: 0 }}>{f.label}</p>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#9CA3AF', margin: 0 }}>{f.label}</p>
                 </div>
               ))}
             </div>
@@ -514,7 +514,7 @@ export default function ResearchPage() {
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.875rem', flexDirection: isMobile ? 'column' : 'row' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
-                    <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.6rem', fontWeight: 600, color: '#0C0C0E', margin: 0 }}>
+                    <h2 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.6rem', fontWeight: 600, color: '#0C0C0E', margin: 0 }}>
                       {report.title}
                     </h2>
                     <button
@@ -524,7 +524,7 @@ export default function ResearchPage() {
                         background:   'none',
                         border:       '1px solid rgba(0,0,0,0.15)',
                         borderRadius: '6px',
-                        fontFamily:   'Inter, sans-serif',
+                        fontFamily:   'var(--font-inter), sans-serif',
                         fontSize:     '0.68rem',
                         fontWeight:   600,
                         color:        '#6B7280',
@@ -537,7 +537,7 @@ export default function ResearchPage() {
                       ← {t('research.newSearch')}
                     </button>
                   </div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#9CA3AF', margin: 0 }}>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#9CA3AF', margin: 0 }}>
                     {new Date(report.searchedAt).toLocaleString()} · {report.queriesUsed?.length ?? 0} {t('walk.queryVectors').toLowerCase()} · {report.sources?.length ?? 0} {t('research.sources').toLowerCase()}
                   </p>
                 </div>
@@ -552,11 +552,11 @@ export default function ResearchPage() {
                   padding:      '0.625rem 1rem',
                 }}>
                   <div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', margin: '0 0 2px' }}>
+                    <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', margin: '0 0 2px' }}>
                       {t('research.market')}
                     </p>
                     <span style={{
-                      fontFamily: 'Inter, sans-serif',
+                      fontFamily: 'var(--font-inter), sans-serif',
                       fontSize:   '0.82rem',
                       fontWeight: 700,
                       color:      SENTIMENT_COLOR[sentiment],
@@ -566,10 +566,10 @@ export default function ResearchPage() {
                   </div>
                   <div style={{ width: 1, height: 32, background: 'rgba(0,0,0,0.08)' }} />
                   <div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', margin: '0 0 2px' }}>
+                    <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', margin: '0 0 2px' }}>
                       {t('research.confidence')}
                     </p>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', fontWeight: 700, color: '#0C0C0E' }}>
+                    <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.82rem', fontWeight: 700, color: '#0C0C0E' }}>
                       {confidence}%
                     </span>
                   </div>
@@ -584,7 +584,7 @@ export default function ResearchPage() {
                 borderRadius: '0 8px 8px 0',
                 padding:      '1rem 1.25rem',
               }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.88rem', color: '#1E293B', lineHeight: 1.7, margin: 0 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.88rem', color: '#1E293B', lineHeight: 1.7, margin: 0 }}>
                   {report.summary}
                 </p>
               </div>
@@ -599,7 +599,7 @@ export default function ResearchPage() {
                 {/* Key findings */}
                 {report.keyFindings?.length > 0 && (
                   <div>
-                    <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
+                    <h3 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
                       {t('research.keyFindings')}
                     </h3>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.625rem' }}>
@@ -613,7 +613,7 @@ export default function ResearchPage() {
                 {/* Analysis sections */}
                 {report.sections?.length > 0 && (
                   <div>
-                    <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
+                    <h3 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
                       {t('research.sections')}
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -627,7 +627,7 @@ export default function ResearchPage() {
                 {/* Competitor insights */}
                 {report.competitorInsights?.length > 0 && (
                   <div>
-                    <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
+                    <h3 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
                       {t('research.competitors')}
                     </h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem' }}>
@@ -638,8 +638,8 @@ export default function ResearchPage() {
                           borderRadius: '8px',
                           padding:      '0.75rem 1rem',
                         }}>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: '#0C0C0E', margin: '0 0 0.3rem' }}>{c.name}</p>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#6B7280', margin: 0, lineHeight: 1.5 }}>{c.insight}</p>
+                          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, color: '#0C0C0E', margin: '0 0 0.3rem' }}>{c.name}</p>
+                          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#6B7280', margin: 0, lineHeight: 1.5 }}>{c.insight}</p>
                         </div>
                       ))}
                     </div>
@@ -649,7 +649,7 @@ export default function ResearchPage() {
                 {/* Actionable recommendations */}
                 {report.actionableRecommendations?.length > 0 && (
                   <div>
-                    <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
+                    <h3 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.75rem' }}>
                       {t('research.recommendations')}
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -664,7 +664,7 @@ export default function ResearchPage() {
                           padding:      '0.625rem 0.875rem',
                         }}>
                           <span style={{ fontSize: '0.8rem', flexShrink: 0, marginTop: 1 }}>→</span>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#1E293B', margin: 0, lineHeight: 1.55 }}>{rec}</p>
+                          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.82rem', color: '#1E293B', margin: 0, lineHeight: 1.55 }}>{rec}</p>
                         </div>
                       ))}
                     </div>
@@ -687,7 +687,7 @@ export default function ResearchPage() {
                       textAlign:    'center',
                     }}>
                       <div style={{ fontSize: 28, marginBottom: '0.5rem' }}>🖼️</div>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#9CA3AF', margin: 0 }}>
+                      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#9CA3AF', margin: 0 }}>
                         {t('research.noImages')}
                       </p>
                     </div>
@@ -701,7 +701,7 @@ export default function ResearchPage() {
                   borderRadius: '10px',
                   padding:      '1rem 1.125rem',
                 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.625rem' }}>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.625rem' }}>
                     {t('research.queriesUsed')}
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -713,8 +713,8 @@ export default function ResearchPage() {
                       { label: t('research.timeframe'), value: report.marketSnapshot?.timeframe },
                     ].map(row => (
                       <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#9CA3AF' }}>{row.label}</span>
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E' }}>{row.value}</span>
+                        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#9CA3AF' }}>{row.label}</span>
+                        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#0C0C0E' }}>{row.value}</span>
                       </div>
                     ))}
                   </div>
@@ -728,12 +728,12 @@ export default function ResearchPage() {
                     borderRadius: '10px',
                     padding:      '1rem 1.125rem',
                   }}>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.625rem' }}>
+                    <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '0.625rem' }}>
                       {t('walk.queryVectors')}
                     </p>
                     {report.queriesUsed.map((q, i) => (
                       <p key={i} style={{
-                        fontFamily:   'Inter, sans-serif',
+                        fontFamily:   'var(--font-inter), sans-serif',
                         fontSize:     '0.7rem',
                         color:        '#6B7280',
                         background:   'rgba(0,0,0,0.03)',
@@ -765,7 +765,7 @@ export default function ResearchPage() {
                     borderRadius: '8px',
                     padding:      '0.6rem 1rem',
                     cursor:       'pointer',
-                    fontFamily:   'Inter, sans-serif',
+                    fontFamily:   'var(--font-inter), sans-serif',
                     fontSize:     '0.75rem',
                     fontWeight:   600,
                     color:        '#6B7280',

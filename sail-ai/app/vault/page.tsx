@@ -62,7 +62,7 @@ function VaultSection({
       }}>
         <div>
           <h2 style={{
-            fontFamily:    'Cormorant Garamond, Georgia, serif',
+            fontFamily:    'var(--font-cormorant), Georgia, serif',
             fontSize:      '1.1rem',
             fontWeight:    600,
             color:         '#0C0C0E',
@@ -72,7 +72,7 @@ function VaultSection({
             {title}
           </h2>
           {subtitle && (
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#71717A', margin: '2px 0 0', fontWeight: 300 }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#71717A', margin: '2px 0 0', fontWeight: 300 }}>
               {subtitle}
             </p>
           )}
@@ -123,7 +123,7 @@ function MetricRow({
             onChange={e => setLabel(e.target.value)}
             style={{
               flex:       1,
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.8rem',
               border:     'none',
               borderBottom: '1px solid #C9A96E',
@@ -139,7 +139,7 @@ function MetricRow({
             onChange={e => setValue(e.target.value)}
             style={{
               width:      '120px',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.8rem',
               border:     'none',
               borderBottom: '1px solid #C9A96E',
@@ -160,13 +160,13 @@ function MetricRow({
         </>
       ) : (
         <>
-          <span style={{ flex: 1, fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#0C0C0E' }}>
+          <span style={{ flex: 1, fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#0C0C0E' }}>
             {metric.label}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#0C0C0E' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#0C0C0E' }}>
             {metric.value}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: '#A1A1AA', minWidth: 60, textAlign: 'right' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', color: '#A1A1AA', minWidth: 60, textAlign: 'right' }}>
             {formatDate(metric.addedAt)}
           </span>
           <button
@@ -216,7 +216,7 @@ function SessionRow({ session }: { session: BusinessSession }) {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
-          fontFamily:   'Inter, sans-serif',
+          fontFamily:   'var(--font-inter), sans-serif',
           fontSize:     '0.8rem',
           color:        '#0C0C0E',
           margin:       '0 0 2px',
@@ -226,7 +226,7 @@ function SessionRow({ session }: { session: BusinessSession }) {
         }}>
           {session.summary}
         </p>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#A1A1AA', margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: '#A1A1AA', margin: 0 }}>
           {formatDate(session.createdAt)}
         </p>
       </div>
@@ -263,7 +263,7 @@ function AddMetricForm({ onAdd }: { onAdd: (label: string, value: string) => voi
           border:        '1px dashed rgba(201,169,110,0.4)',
           borderRadius:  '6px',
           cursor:        'pointer',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.72rem',
           color:         '#C9A96E',
           fontWeight:    600,
@@ -280,7 +280,7 @@ function AddMetricForm({ onAdd }: { onAdd: (label: string, value: string) => voi
   return (
     <form onSubmit={submit} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', marginTop: '0.75rem', flexWrap: 'wrap' }}>
       <div style={{ flex: 2, minWidth: 140 }}>
-        <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#71717A', display: 'block', marginBottom: 4, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+        <label style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: '#71717A', display: 'block', marginBottom: 4, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           Metric
         </label>
         <input
@@ -288,25 +288,25 @@ function AddMetricForm({ onAdd }: { onAdd: (label: string, value: string) => voi
           value={label}
           onChange={e => setLabel(e.target.value)}
           placeholder="e.g. Monthly Revenue"
-          style={{ width: '100%', padding: '0.5rem 0', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(12,12,14,0.2)', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: '#0C0C0E', boxSizing: 'border-box' }}
+          style={{ width: '100%', padding: '0.5rem 0', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(12,12,14,0.2)', outline: 'none', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: '#0C0C0E', boxSizing: 'border-box' }}
         />
       </div>
       <div style={{ flex: 1, minWidth: 100 }}>
-        <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#71717A', display: 'block', marginBottom: 4, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+        <label style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: '#71717A', display: 'block', marginBottom: 4, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           Value
         </label>
         <input
           value={value}
           onChange={e => setValue(e.target.value)}
           placeholder="e.g. $42K"
-          style={{ width: '100%', padding: '0.5rem 0', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(12,12,14,0.2)', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: '#0C0C0E', boxSizing: 'border-box' }}
+          style={{ width: '100%', padding: '0.5rem 0', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(12,12,14,0.2)', outline: 'none', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: '#0C0C0E', boxSizing: 'border-box' }}
         />
       </div>
       <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button type="submit" style={{ padding: '0.5rem 1rem', background: '#0C0C0E', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em' }}>
+        <button type="submit" style={{ padding: '0.5rem 1rem', background: '#0C0C0E', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em' }}>
           Save
         </button>
-        <button type="button" onClick={() => setOpen(false)} style={{ padding: '0.5rem 0.75rem', background: 'transparent', color: '#71717A', border: '1px solid rgba(12,12,14,0.15)', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', cursor: 'pointer' }}>
+        <button type="button" onClick={() => setOpen(false)} style={{ padding: '0.5rem 0.75rem', background: 'transparent', color: '#71717A', border: '1px solid rgba(12,12,14,0.15)', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', cursor: 'pointer' }}>
           Cancel
         </button>
       </div>
@@ -321,7 +321,7 @@ export default function VaultPage() {
   const router                    = useRouter()
   const { t }                     = useLanguage()
   const {
-    profile, setSector, addMetric, clearProfile,
+    profile, setSector, addMetric, removeMetric, clearProfile,
   } = useBusinessContext()
 
   const [sectorEdit,    setSectorEdit]    = useState(false)
@@ -347,14 +347,14 @@ export default function VaultPage() {
   }
 
   function handleEditMetric(oldLabel: string, newLabel: string, newValue: string) {
-    // Remove old + add updated (BusinessContext deduplicates by label)
+    // Rename = drop the old key first, then upsert under the new label.
+    if (oldLabel !== newLabel) removeMetric(oldLabel)
     addMetric(newLabel, newValue)
-    if (oldLabel !== newLabel) addMetric(oldLabel, '')  // effectively removes old key
     flashSaved()
   }
 
   function handleDeleteMetric(label: string) {
-    addMetric(label, '\x00DELETE')  // sentinel — we'll filter in display
+    removeMetric(label)
     flashSaved()
   }
 
@@ -371,7 +371,8 @@ export default function VaultPage() {
     setTimeout(() => setSavedFlash(false), 2000)
   }
 
-  const displayMetrics = profile.metrics.filter(m => m.value !== '\x00DELETE')
+  // Legacy rows persisted by the old sentinel-based delete are filtered out on read.
+  const displayMetrics = profile.metrics.filter(m => m.value !== '\x00DELETE' && m.value !== '')
 
   if (status === 'loading') {
     return (
@@ -396,12 +397,12 @@ export default function VaultPage() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '0.875rem' }}>
             <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
               Sovereign Intelligence
             </span>
           </div>
           <h1 style={{
-            fontFamily:    'Cormorant Garamond, Georgia, serif',
+            fontFamily:    'var(--font-cormorant), Georgia, serif',
             fontSize:      'clamp(1.6rem, 3vw, 2.1rem)',
             fontWeight:    600,
             color:         '#0C0C0E',
@@ -410,7 +411,7 @@ export default function VaultPage() {
           }}>
             Data Vault
           </h1>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#71717A', margin: 0, fontWeight: 300, lineHeight: 1.65 }}>
+          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.82rem', color: '#71717A', margin: 0, fontWeight: 300, lineHeight: 1.65 }}>
             Everything Sail AI has stored about your business. Full edit and delete control — your context, your rules.
           </p>
         </motion.div>
@@ -428,7 +429,7 @@ export default function VaultPage() {
                 borderRadius: '8px',
                 padding:      '0.625rem 1rem',
                 marginBottom: '1rem',
-                fontFamily:   'Inter, sans-serif',
+                fontFamily:   'var(--font-inter), sans-serif',
                 fontSize:     '0.75rem',
                 color:        '#10B981',
                 fontWeight:   600,
@@ -452,29 +453,29 @@ export default function VaultPage() {
                 onChange={e => setSectorDraft(e.target.value)}
                 placeholder="e.g. E-Commerce · Shopify · DTC Apparel"
                 onKeyDown={e => e.key === 'Enter' && handleSectorSave()}
-                style={{ flex: 1, padding: '0.5rem 0', background: 'transparent', border: 'none', borderBottom: '1px solid #C9A96E', outline: 'none', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#0C0C0E' }}
+                style={{ flex: 1, padding: '0.5rem 0', background: 'transparent', border: 'none', borderBottom: '1px solid #C9A96E', outline: 'none', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9rem', color: '#0C0C0E' }}
               />
-              <button onClick={handleSectorSave} style={{ padding: '0.5rem 1rem', background: '#0C0C0E', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={handleSectorSave} style={{ padding: '0.5rem 1rem', background: '#0C0C0E', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
                 Save
               </button>
-              <button onClick={() => setSectorEdit(false)} style={{ padding: '0.5rem 0.75rem', background: 'transparent', color: '#71717A', border: '1px solid rgba(12,12,14,0.15)', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', cursor: 'pointer' }}>
+              <button onClick={() => setSectorEdit(false)} style={{ padding: '0.5rem 0.75rem', background: 'transparent', color: '#71717A', border: '1px solid rgba(12,12,14,0.15)', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               {profile.sector ? (
-                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontStyle: 'italic', color: '#0C0C0E', flex: 1 }}>
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.1rem', fontStyle: 'italic', color: '#0C0C0E', flex: 1 }}>
                   {profile.sector}
                 </span>
               ) : (
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: '#A1A1AA', flex: 1, fontStyle: 'italic' }}>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.82rem', color: '#A1A1AA', flex: 1, fontStyle: 'italic' }}>
                   Not set — AI uses generic benchmarks
                 </span>
               )}
               <button
                 onClick={() => { setSectorDraft(profile.sector); setSectorEdit(true) }}
-                style={{ padding: '0.4rem 0.875rem', background: 'transparent', border: '1px solid rgba(201,169,110,0.35)', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: '#C9A96E', cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                style={{ padding: '0.4rem 0.875rem', background: 'transparent', border: '1px solid rgba(201,169,110,0.35)', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', fontWeight: 600, color: '#C9A96E', cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' }}
               >
                 {profile.sector ? 'Edit' : 'Set Sector'}
               </button>
@@ -488,7 +489,7 @@ export default function VaultPage() {
           subtitle={`${displayMetrics.length} metric${displayMetrics.length !== 1 ? 's' : ''} on record — injected into every AI prompt`}
         >
           {displayMetrics.length === 0 ? (
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#A1A1AA', margin: 0, fontStyle: 'italic' }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#A1A1AA', margin: 0, fontStyle: 'italic' }}>
               No metrics stored. Add your key KPIs below — CVR, ROAS, MRR, AOV, etc.
             </p>
           ) : (
@@ -515,7 +516,7 @@ export default function VaultPage() {
               border:       '1px solid rgba(201,169,110,0.15)',
               borderRadius: '8px',
               padding:      '1rem',
-              fontFamily:   'Inter, sans-serif',
+              fontFamily:   'var(--font-inter), sans-serif',
               fontSize:     '0.78rem',
               color:        '#3A3A3C',
               lineHeight:   1.7,
@@ -525,7 +526,7 @@ export default function VaultPage() {
             }}>
               {profile.diagnosticPrompt}
             </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#A1A1AA', margin: '0.75rem 0 0', fontStyle: 'italic' }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: '#A1A1AA', margin: '0.75rem 0 0', fontStyle: 'italic' }}>
               Re-run the onboarding diagnostic to update this profile.
             </p>
           </VaultSection>
@@ -538,14 +539,14 @@ export default function VaultPage() {
           action={
             <Link
               href="/chat"
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', fontWeight: 700, color: '#C9A96E', textDecoration: 'none', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+              style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', fontWeight: 700, color: '#C9A96E', textDecoration: 'none', letterSpacing: '0.08em', textTransform: 'uppercase' }}
             >
               New Analysis →
             </Link>
           }
         >
           {profile.sessions.length === 0 ? (
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#A1A1AA', margin: 0, fontStyle: 'italic' }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#A1A1AA', margin: 0, fontStyle: 'italic' }}>
               No sessions yet. Start a new analysis to build your history.
             </p>
           ) : (
@@ -566,10 +567,10 @@ export default function VaultPage() {
             padding:      '1.5rem 1.75rem',
           }}
         >
-          <h3 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.375rem' }}>
+          <h3 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.375rem' }}>
             Clear All Data
           </h3>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', margin: '0 0 1rem', fontWeight: 300, lineHeight: 1.65 }}>
+          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#71717A', margin: '0 0 1rem', fontWeight: 300, lineHeight: 1.65 }}>
             Permanently removes your sector, stored metrics, and diagnostic profile from both this device and your account. Analysis history remains.
           </p>
 
@@ -579,7 +580,7 @@ export default function VaultPage() {
                 key="trigger"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={() => setClearConfirm(true)}
-                style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#EF4444', cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#EF4444', cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' }}
               >
                 Clear All Stored Data
               </motion.button>
@@ -589,19 +590,19 @@ export default function VaultPage() {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}
               >
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#EF4444', fontWeight: 600 }}>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#EF4444', fontWeight: 600 }}>
                   Are you sure? This cannot be undone.
                 </span>
                 <button
                   onClick={handleClearAll}
                   disabled={clearLoading}
-                  style={{ padding: '0.5rem 1rem', background: '#EF4444', border: 'none', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: '#FFFFFF', cursor: clearLoading ? 'wait' : 'pointer', opacity: clearLoading ? 0.6 : 1 }}
+                  style={{ padding: '0.5rem 1rem', background: '#EF4444', border: 'none', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, color: '#FFFFFF', cursor: clearLoading ? 'wait' : 'pointer', opacity: clearLoading ? 0.6 : 1 }}
                 >
                   {clearLoading ? 'Clearing…' : 'Yes, clear everything'}
                 </button>
                 <button
                   onClick={() => setClearConfirm(false)}
-                  style={{ padding: '0.5rem 0.875rem', background: 'transparent', border: '1px solid rgba(12,12,14,0.15)', borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#71717A', cursor: 'pointer' }}
+                  style={{ padding: '0.5rem 0.875rem', background: 'transparent', border: '1px solid rgba(12,12,14,0.15)', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#71717A', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>

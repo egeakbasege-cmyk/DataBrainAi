@@ -2,12 +2,20 @@
 import withPWA from 'next-pwa'
 
 // ── Mobile build detection ────────────────────────────────────────────────────
-// Set by: MOBILE_BUILD=true npm run build:mobile
-// Critical: next.config.mjs is evaluated at build time, so process.env IS available.
+// The mobile app is a Capacitor *remote-URL shell* that loads the deployed
+// Next.js server (see capacitor.config.ts). It is NOT a static export.
+//
+// `output: 'export'` used to be enabled here and made `npm run build:mobile`
+// fail outright, because static export cannot coexist with NextAuth's
+// /api/auth/[...nextauth] catch-all route or any Node-runtime API route:
+//   Error: Page "/api/auth/[...nextauth]" is missing "generateStaticParams()"
+//
+// MOBILE_BUILD now only disables the service worker (which conflicts with the
+// Capacitor WebView scope); the build otherwise stays a normal server build.
 const isMobileBuild = process.env.MOBILE_BUILD === 'true'
 
 if (isMobileBuild) {
-  console.log('📱 MOBILE BUILD MODE — static export enabled, PWA + server headers disabled')
+  console.log('📱 MOBILE BUILD MODE — PWA service worker disabled (Capacitor shell)')
 }
 
 // ── Base config ───────────────────────────────────────────────────────────────
@@ -49,17 +57,13 @@ const baseConfig = {
   // Required for Capacitor file:// URL resolution
   trailingSlash: true,
 
-  // ── Static Export (mobile only) ─────────────────────────────────────────────
-  // IMPORTANT: output:'export' is INCOMPATIBLE with:
-  //   - headers() / rewrites() / redirects()
-  //   - API routes that use Node.js runtime
-  //   - NextAuth server-side session
-  // These are all bypassed in mobile builds (see MOBILE_BUILD_GUIDE.md)
-  ...(isMobileBuild ? { output: 'export' } : {}),
+  // ── Static Export ───────────────────────────────────────────────────────────
+  // Intentionally NOT enabled. `output: 'export'` breaks NextAuth and every
+  // Node-runtime API route; the mobile app uses a remote-URL Capacitor shell
+  // instead. See capacitor.config.ts and MOBILE_BUILD_GUIDE.md.
 
-  // ── Security headers (web only — headers() is not supported with output:export) ──
-  ...(!isMobileBuild ? {
-    async headers() {
+  // ── Security headers ────────────────────────────────────────────────────────
+  async headers() {
       return [
         {
           source: '/(.*)',
@@ -75,7 +79,6 @@ const baseConfig = {
         },
       ]
     },
-  } : {}),
 }
 
 // ── PWA config ────────────────────────────────────────────────────────────────

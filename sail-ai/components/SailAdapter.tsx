@@ -153,7 +153,7 @@ function CitationBadge({ num }: { num: number }) {
       onTouchStart={() => setOpen(v => !v)}
     >
       <sup style={{
-        fontFamily:    'Inter, sans-serif',
+        fontFamily:    'var(--font-inter), sans-serif',
         fontSize:      '0.6em',
         fontWeight:    700,
         color:         GOLD,
@@ -201,7 +201,7 @@ function CitationBadge({ num }: { num: number }) {
           }} />
           <span style={{
             display:    'block',
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize:   '0.68rem',
             fontWeight: 600,
             color:      GOLD,
@@ -212,7 +212,7 @@ function CitationBadge({ num }: { num: number }) {
           {src.snippet && src.snippet !== src.domain && (
             <span style={{
               display:    'block',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.63rem',
               color:      'rgba(255,255,255,0.65)',
               lineHeight: 1.45,
@@ -293,7 +293,7 @@ function HeadingSegment({ seg, accent }: { seg: Extract<Segment, { type: 'headin
   return (
     <div style={{ marginTop: isH2 ? '1.75rem' : '1.25rem', marginBottom: '0.5rem' }}>
       <span style={{
-        fontFamily:    'Inter, sans-serif',
+        fontFamily:    'var(--font-inter), sans-serif',
         fontSize:      isH2 ? '0.7rem' : '0.65rem',
         fontWeight:    700,
         letterSpacing: '0.1em',
@@ -333,7 +333,7 @@ function BulletSegment({ seg, accent }: { seg: Extract<Segment, { type: 'bullet'
       {seg.items.map((item, i) => (
         <li key={i} style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-start', marginBottom: '0.375rem' }}>
           <span style={{ color: accent, fontSize: '0.5rem', marginTop: '0.45em', flexShrink: 0 }}>◆</span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.5, color: INK }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', lineHeight: 1.5, color: INK }}>
             <InlineText text={item} />
           </span>
         </li>
@@ -348,7 +348,7 @@ function NumberedSegment({ seg, accent }: { seg: Extract<Segment, { type: 'numbe
       {seg.items.map((item, i) => (
         <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
           <span style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.65rem',
             fontWeight:    700,
             color:         accent,
@@ -364,7 +364,7 @@ function NumberedSegment({ seg, accent }: { seg: Extract<Segment, { type: 'numbe
           }}>
             {i + 1}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.55, color: INK }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', lineHeight: 1.55, color: INK }}>
             <InlineText text={item} />
           </span>
         </li>
@@ -387,7 +387,7 @@ function CodeSegment({ seg }: { seg: Extract<Segment, { type: 'code' }> }) {
           padding:       '0.375rem 1rem',
           background:    'rgba(255,255,255,0.04)',
           borderBottom:  '1px solid rgba(255,255,255,0.06)',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.65rem',
           fontWeight:    600,
           letterSpacing: '0.08em',
@@ -420,7 +420,7 @@ function TableSegment({ seg, accent }: { seg: Extract<Segment, { type: 'table' }
       <table style={{
         width:          '100%',
         borderCollapse: 'collapse',
-        fontFamily:     'Inter, sans-serif',
+        fontFamily:     'var(--font-inter), sans-serif',
         fontSize:       '0.82rem',
         lineHeight:     1.5,
       }}>
@@ -475,7 +475,7 @@ function MrrChartSegment() {
     <div style={{ margin: '1.25rem 0' }}>
       <div style={{ marginBottom: '0.5rem' }}>
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.65rem',
           fontWeight:    700,
           letterSpacing: '0.1em',
@@ -488,10 +488,10 @@ function MrrChartSegment() {
       <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-            <XAxis dataKey="name" tick={{ fontFamily: 'Inter', fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontFamily: 'Inter', fontSize: 10, fill: MUTED }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="name" tick={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 10, fill: MUTED }} axisLine={false} tickLine={false} />
             <Tooltip
-              contentStyle={{ fontFamily: 'Inter', fontSize: 12, background: 'rgba(12,14,20,0.95)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, color: '#FFFFFF' }}
+              contentStyle={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 12, background: 'rgba(12,14,20,0.95)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, color: '#FFFFFF' }}
               formatter={(val: number, name: string) => [`${val}%`, name === 'growth' ? 'Growth' : 'Churn']}
             />
             <Bar dataKey="growth" name="growth" radius={[2, 2, 0, 0]}>
@@ -509,7 +509,7 @@ function MrrChartSegment() {
       </div>
       <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.375rem' }}>
         {[{ color: GOLD, label: 'Median Growth %/mo' }, { color: '#EF4444', label: 'Median Churn %/mo' }].map(({ color, label }) => (
-          <span key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontFamily: 'Inter', fontSize: '0.68rem', color: MUTED }}>
+          <span key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: MUTED }}>
             <span style={{ width: 10, height: 10, background: color, borderRadius: 2, opacity: 0.8, flexShrink: 0 }} />
             {label}
           </span>
@@ -654,7 +654,7 @@ function SourcesFooter({ sources, accent }: { sources: ParsedSource[]; accent: s
       borderTop:  `1px solid ${accent}20`,
     }}>
       <p style={{
-        fontFamily:    'Inter, sans-serif',
+        fontFamily:    'var(--font-inter), sans-serif',
         fontSize:      '0.58rem',
         fontWeight:    700,
         letterSpacing: '0.1em',
@@ -669,7 +669,7 @@ function SourcesFooter({ sources, accent }: { sources: ParsedSource[]; accent: s
         {sources.map(src => (
           <li key={src.index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
             <span style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.6rem',
               fontWeight: 700,
               color:      accent,
@@ -679,7 +679,7 @@ function SourcesFooter({ sources, accent }: { sources: ParsedSource[]; accent: s
             }}>
               {src.index}.
             </span>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', lineHeight: 1.5, color: 'rgba(255,255,255,0.55)' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', lineHeight: 1.5, color: 'rgba(255,255,255,0.55)' }}>
               <span style={{ fontWeight: 600, color: 'rgba(255,255,255,0.80)' }}>{src.domain}</span>
               {src.snippet && src.snippet !== src.domain && (
                 <span> — {src.snippet}</span>
@@ -723,7 +723,7 @@ export function SailAdapter({ text, intent, streaming }: Props) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '1rem 0' }}>
         <span style={{ color: accent, fontSize: '0.5rem', animation: 'sail-pulse 1.2s ease-in-out infinite' }}>◆</span>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: MUTED }}>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: MUTED }}>
           SAIL is composing your {INTENT_LABELS[intent].split(' · ')[0].toLowerCase()} analysis…
         </span>
         <style>{`@keyframes sail-pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }`}</style>
@@ -745,7 +745,7 @@ export function SailAdapter({ text, intent, streaming }: Props) {
         }}>
           <span style={{ color: accent, fontSize: '0.45rem' }}>◆</span>
           <span style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.62rem',
             fontWeight:    700,
             letterSpacing: '0.1em',
@@ -757,7 +757,7 @@ export function SailAdapter({ text, intent, streaming }: Props) {
           {streaming && (
             <span style={{
               marginLeft:    'auto',
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.6rem',
               color:         MUTED,
               animation:     'sail-pulse 1.2s ease-in-out infinite',

@@ -113,7 +113,7 @@ export function MicroAnalysis() {
           style={{
             flex:       1,
             padding:    '0.9375rem 1.125rem',
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize:   '0.875rem',
             color:      '#0C0C0E',
             background: 'transparent',
@@ -128,7 +128,7 @@ export function MicroAnalysis() {
             padding:       '0.9375rem 1.25rem',
             background:    input.trim() ? '#0C0C0E' : 'rgba(0,0,0,0.05)',
             color:         input.trim() ? '#FFFFFF' : '#A1A1AA',
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.75rem',
             fontWeight:    600,
             letterSpacing: '0.08em',
@@ -167,7 +167,7 @@ export function MicroAnalysis() {
               <div>
                 <p
                   style={{
-                    fontFamily:   'Cormorant Garamond, Georgia, serif',
+                    fontFamily:   'var(--font-cormorant), Georgia, serif',
                     fontStyle:    'italic',
                     fontSize:     'clamp(1rem, 1.8vw, 1.15rem)',
                     lineHeight:   1.55,
@@ -178,13 +178,13 @@ export function MicroAnalysis() {
                   {t(matched.insightKey)}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#A1A1AA', letterSpacing: '0.06em' }}>
+                  <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: '#A1A1AA', letterSpacing: '0.06em' }}>
                     {t('micro.source')} {matched.source}
                   </span>
                   <Link
                     href={`/chat?q=${encodeURIComponent(input)}`}
                     style={{
-                      fontFamily:     'Inter, sans-serif',
+                      fontFamily:     'var(--font-inter), sans-serif',
                       fontSize:       '0.72rem',
                       fontWeight:     600,
                       letterSpacing:  '0.1em',
@@ -210,7 +210,7 @@ export function MicroAnalysis() {
         <p
           style={{
             marginTop:     '0.625rem',
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.75rem',
             color:         '#A1A1AA',
             letterSpacing: '0.02em',

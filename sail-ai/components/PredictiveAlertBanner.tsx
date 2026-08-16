@@ -97,7 +97,7 @@ export function PredictiveAlertBanner({
 
         {/* Label */}
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.625rem',
           fontWeight:    600,
           letterSpacing: '0.14em',
@@ -113,7 +113,7 @@ export function PredictiveAlertBanner({
 
         {/* Metric name */}
         <span style={{
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'var(--font-inter), sans-serif',
           fontSize:   '0.75rem',
           fontWeight: 500,
           color:      textDim,
@@ -128,7 +128,7 @@ export function PredictiveAlertBanner({
         {/* Deviation value */}
         {!alert.isResolved && (
           <span style={{
-            fontFamily:    'Cormorant Garamond, Georgia, serif',
+            fontFamily:    'var(--font-cormorant), Georgia, serif',
             fontSize:      '1rem',
             fontWeight:    600,
             color:         '#F87171',
@@ -146,7 +146,7 @@ export function PredictiveAlertBanner({
             animate={{ rotate: expanded ? 180 : 0 }}
             transition={{ duration: 0.2 }}
             style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.625rem',
               color:      textGhost,
               flexShrink: 0,
@@ -166,7 +166,7 @@ export function PredictiveAlertBanner({
               border:        'none',
               cursor:        'pointer',
               padding:       '0 2px',
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.75rem',
               color:         textGhost,
               lineHeight:    1,
@@ -198,7 +198,7 @@ export function PredictiveAlertBanner({
               {/* Shadow context */}
               {alert.shadowContext && (
                 <p style={{
-                  fontFamily:   'Inter, sans-serif',
+                  fontFamily:   'var(--font-inter), sans-serif',
                   fontSize:     '0.75rem',
                   color:        textGhost,
                   lineHeight:   1.55,
@@ -218,7 +218,7 @@ export function PredictiveAlertBanner({
               }}>
                 <div style={{ height: 1, flex: 1, background: isDark ? 'rgba(201,169,110,0.12)' : 'rgba(201,169,110,0.2)' }} />
                 <span style={{
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.575rem',
                   fontWeight:    600,
                   letterSpacing: '0.16em',
@@ -250,7 +250,7 @@ export function PredictiveAlertBanner({
                   background:    'none',
                   border:        `1px solid ${isDark ? 'rgba(74,222,128,0.2)' : 'rgba(21,128,61,0.2)'}`,
                   cursor:        'pointer',
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.625rem',
                   fontWeight:    600,
                   letterSpacing: '0.12em',

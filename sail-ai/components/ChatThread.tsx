@@ -73,7 +73,7 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
           borderLeft:    `3px solid ${color}`,
         }}>
           <p style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:       14,
             fontWeight:     400,
             lineHeight:     1.65,
@@ -87,10 +87,10 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
           </p>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginTop: 4 }}>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.8 }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.8 }}>
             {modeLabel}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.02em' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.02em' }}>
             {ts}
           </span>
         </div>
@@ -143,11 +143,11 @@ const AssistantCard = memo(function AssistantCard({
             boxShadow: message.streaming ? `0 0 8px ${meta.color}88` : 'none',
           }}
         />
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: meta.color }}>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: meta.color }}>
           {meta.label}
         </span>
         <span style={{
-          fontFamily: 'Inter, sans-serif', fontSize: 10,
+          fontFamily: 'var(--font-inter), sans-serif', fontSize: 10,
           color: message.streaming ? meta.color : 'rgba(255,255,255,0.35)',
           fontStyle: message.streaming ? 'italic' : 'normal', letterSpacing: '0.02em',
         }}>
@@ -185,7 +185,7 @@ const AssistantCard = memo(function AssistantCard({
           transition={{ delay: 0.45, duration: 0.25 }}
           style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10, paddingLeft: 4, alignItems: 'center' }}
         >
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)' }}>
             Continue →
           </span>
           {chips.slice(0, 2).map((chip, i) => (
@@ -201,7 +201,7 @@ const AssistantCard = memo(function AssistantCard({
                 backdropFilter: 'blur(12px)',
                 border:         `1px solid ${meta.color}40`,
                 borderRadius:    9999,
-                fontFamily:     'Inter, sans-serif',
+                fontFamily:     'var(--font-inter), sans-serif',
                 fontSize:        11,
                 fontWeight:      500,
                 color:           meta.color,
@@ -231,7 +231,7 @@ function renderPayload(message: ChatMessage) {
       return (
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
           <span style={{ color: '#F87171', flexShrink: 0 }}>⚠</span>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(248,113,113,0.88)', margin: 0, lineHeight: 1.55 }}>
+          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 13, color: 'rgba(248,113,113,0.88)', margin: 0, lineHeight: 1.55 }}>
             {payload.message}
           </p>
         </div>

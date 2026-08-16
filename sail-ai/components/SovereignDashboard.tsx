@@ -235,7 +235,7 @@ function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCa
           position:      'absolute',
           top:           '-10px',
           right:         '20px',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.46rem',
           fontWeight:    700,
           letterSpacing: '0.12em',
@@ -255,7 +255,7 @@ function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCa
       {/* Company name */}
       {companyName && (
         <span style={{
-          fontFamily:    '"Cormorant Garamond", Georgia, serif',
+          fontFamily:    'var(--font-cormorant), Georgia, serif',
           fontStyle:     'italic',
           fontSize:      '0.65rem',
           fontWeight:    600,
@@ -271,7 +271,7 @@ function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCa
 
       {/* Mode name */}
       <h2 style={{
-        fontFamily:    'Inter, sans-serif',
+        fontFamily:    'var(--font-inter), sans-serif',
         fontSize:      '0.82rem',
         fontWeight:    800,
         letterSpacing: '0.06em',
@@ -286,7 +286,7 @@ function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCa
 
       {/* Description */}
       <p style={{
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: 'var(--font-inter), sans-serif',
         fontSize:   '0.6rem',
         color:      '#4A6070',
         textAlign:  'center',
@@ -331,7 +331,7 @@ function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCa
               marginTop:    '4px',
             }} />
             <span style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.57rem',
               color:      '#3D5566',
               lineHeight: 1.45,
@@ -345,7 +345,7 @@ function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCa
       {/* Stat */}
       <div style={{ textAlign: 'center', margin: '0.9rem 0 0' }}>
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '1.9rem',
           fontWeight:    800,
           color:         isSynergy ? '#9A6B00' : '#0F2435',
@@ -359,7 +359,7 @@ function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCa
         </span>
         <p style={{
           margin:        '2px 0 0',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.46rem',
           fontWeight:    700,
           letterSpacing: '0.14em',
@@ -385,7 +385,7 @@ function PillCard({ def, label, desc, companyName, direction, onLaunch }: PillCa
             ? 'linear-gradient(135deg, #7A5200, #9A6B00)'
             : '#1A3A4A',
           color:         '#FFFFFF',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.64rem',
           fontWeight:    700,
           letterSpacing: '0.1em',
@@ -577,7 +577,7 @@ export function SovereignDashboard({
         {companyName && (
           <span style={{
             display:       'block',
-            fontFamily:    '"Cormorant Garamond", Georgia, serif',
+            fontFamily:    'var(--font-cormorant), Georgia, serif',
             fontStyle:     'italic',
             fontSize:      '0.72rem',
             fontWeight:    600,
@@ -592,7 +592,7 @@ export function SovereignDashboard({
         )}
 
         <h1 style={{
-          fontFamily:    '"Cormorant Garamond", Georgia, serif',
+          fontFamily:    'var(--font-cormorant), Georgia, serif',
           fontSize:      'clamp(1.7rem, 3vw, 2.4rem)',
           fontWeight:    600,
           color:         '#FFFFFF',
@@ -605,7 +605,7 @@ export function SovereignDashboard({
         </h1>
 
         <p style={{
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'var(--font-inter), sans-serif',
           fontSize:   '0.66rem',
           color:      'rgba(255,255,255,0.55)',
           margin:     '0.4rem 0 0',
@@ -661,7 +661,7 @@ export function SovereignDashboard({
           border:         '1.5px solid rgba(20,184,166,0.60)',
           background:     'linear-gradient(135deg, rgba(20,184,166,0.28) 0%, rgba(8,9,13,0.88) 100%)',
           color:          '#FFFFFF',
-          fontFamily:     'Inter, sans-serif',
+          fontFamily:     'var(--font-inter), sans-serif',
           cursor:         'pointer',
           boxShadow:      '0 0 20px rgba(20,184,166,0.25), 0 6px 24px rgba(0,0,0,0.40)',
           pointerEvents:  'auto',
@@ -719,7 +719,7 @@ export function SovereignDashboard({
         style={{
           position:      'absolute',
           bottom:        '1.75rem',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.52rem',
           fontStyle:     'italic',
           letterSpacing: '0.09em',

@@ -87,15 +87,15 @@ export function FileUpload({ onDataReady }: Props) {
         <AnimatePresence mode="wait">
           {parsing ? (
             <motion.p key="parsing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#C9A96E', margin: 0 }}>
+              style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#C9A96E', margin: 0 }}>
               Parsing data…
             </motion.p>
           ) : fileName ? (
             <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#0C0C0E', margin: 0, fontWeight: 500 }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#0C0C0E', margin: 0, fontWeight: 500 }}>
                 ✓ {fileName}
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#71717A', margin: '0.25rem 0 0' }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#71717A', margin: '0.25rem 0 0' }}>
                 Data will be included in analysis · <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); setFileName(''); onDataReady('') }}>Remove</span>
               </p>
             </motion.div>
@@ -104,10 +104,10 @@ export function FileUpload({ onDataReady }: Props) {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth="1.5" strokeLinecap="round" style={{ margin: '0 auto 0.5rem' }}>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#71717A', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#71717A', margin: 0 }}>
                 Attach data <span style={{ color: '#A1A1AA' }}>· CSV, JSON, TXT, PDF, XLSX</span>
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#A1A1AA', margin: '0.25rem 0 0' }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: '#A1A1AA', margin: '0.25rem 0 0' }}>
                 Your data stays private — used only for this analysis
               </p>
             </motion.div>

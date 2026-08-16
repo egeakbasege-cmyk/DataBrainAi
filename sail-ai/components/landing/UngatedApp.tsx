@@ -140,7 +140,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
       <motion.span
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
         style={{ color: C.tiffany, fontSize: 9.5, letterSpacing: '0.20em', textTransform: 'uppercase',
-                 fontFamily: 'Inter, sans-serif', marginBottom: 12 }}
+                 fontFamily: 'var(--font-inter), sans-serif', marginBottom: 12 }}
       >
         SAIL AI · Business Intelligence
       </motion.span>
@@ -148,7 +148,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
       <motion.h1
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
         style={{
-          color: C.white, fontSize: 21, fontFamily: 'Cormorant Garamond, Georgia, serif',
+          color: C.white, fontSize: 21, fontFamily: 'var(--font-cormorant), Georgia, serif',
           fontWeight: 600, fontStyle: 'italic', textAlign: 'center',
           lineHeight: 1.28, marginBottom: 14,
         }}
@@ -160,7 +160,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.52 }}
         style={{
           color: C.dim, fontSize: 12, textAlign: 'center', lineHeight: 1.7,
-          marginBottom: 30, fontFamily: 'Inter, sans-serif',
+          marginBottom: 30, fontFamily: 'var(--font-inter), sans-serif',
         }}
       >
         No account. No form. Just precision insight, immediately.
@@ -175,7 +175,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
           <span key={s} style={{
             padding: '3px 9px', borderRadius: 100,
             background: `rgba(20,184,166,0.10)`, border: `1px solid ${C.tiffany}30`,
-            color: C.tiffany, fontSize: 9, fontFamily: 'Inter, sans-serif', letterSpacing: '0.03em',
+            color: C.tiffany, fontSize: 9, fontFamily: 'var(--font-inter), sans-serif', letterSpacing: '0.03em',
           }}>
             {s}
           </span>
@@ -189,7 +189,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
         onClick={onStart}
         style={{
           width: '100%', padding: '14px 0', borderRadius: 14, border: 'none',
-          cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 14,
+          cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', fontSize: 14,
           fontWeight: 700, color: C.navy,
           background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldBright} 100%)`,
           boxShadow: `0 8px 24px ${C.gold}45`,
@@ -202,7 +202,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
       <motion.p
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}
         style={{ color: 'rgba(113,113,122,0.55)', fontSize: 9.5, marginTop: 10,
-                 fontFamily: 'Inter, sans-serif' }}
+                 fontFamily: 'var(--font-inter), sans-serif' }}
       >
         Takes 60 seconds · No card · Your data is private
       </motion.p>
@@ -229,11 +229,11 @@ function ScreenSector({ onSelect }: { onSelect: (s: string) => void }) {
       }}
     >
       <span style={{ color: C.gold, fontSize: 9.5, letterSpacing: '0.18em',
-                     textTransform: 'uppercase', fontFamily: 'Inter, sans-serif', marginBottom: 6 }}>
+                     textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif', marginBottom: 6 }}>
         Step 1 of 3
       </span>
       <h2 style={{
-        color: C.white, fontSize: 17, fontFamily: 'Cormorant Garamond, Georgia, serif',
+        color: C.white, fontSize: 17, fontFamily: 'var(--font-cormorant), Georgia, serif',
         fontWeight: 600, fontStyle: 'italic', marginBottom: 18, lineHeight: 1.3,
       }}>
         What kind of business?
@@ -262,7 +262,7 @@ function ScreenSector({ onSelect }: { onSelect: (s: string) => void }) {
             <span style={{ fontSize: 18 }}>{s.icon}</span>
             <span style={{
               color: chosen === s.id ? C.goldBright : 'rgba(250,250,248,0.65)',
-              fontSize: 10, fontFamily: 'Inter, sans-serif', fontWeight: 500,
+              fontSize: 10, fontFamily: 'var(--font-inter), sans-serif', fontWeight: 500,
               textAlign: 'center',
             }}>
               {s.label}
@@ -310,12 +310,12 @@ function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () =>
       }}
     >
       <span style={{ color: C.gold, fontSize: 9.5, letterSpacing: '0.18em',
-                     textTransform: 'uppercase', fontFamily: 'Inter, sans-serif', marginBottom: 6 }}>
+                     textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif', marginBottom: 6 }}>
         Step 2 of 3
       </span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
         <h2 style={{
-          color: C.white, fontSize: 16, fontFamily: 'Cormorant Garamond, Georgia, serif',
+          color: C.white, fontSize: 16, fontFamily: 'var(--font-cormorant), Georgia, serif',
           fontWeight: 600, fontStyle: 'italic', lineHeight: 1.3, flex: 1,
         }}>
           Three numbers reveal everything.
@@ -323,7 +323,7 @@ function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () =>
         <span style={{
           padding: '2px 8px', borderRadius: 6, whiteSpace: 'nowrap',
           background: `rgba(196,154,60,0.12)`, border: `1px solid ${C.gold}30`,
-          color: C.gold, fontSize: 9, fontFamily: 'Inter, sans-serif',
+          color: C.gold, fontSize: 9, fontFamily: 'var(--font-inter), sans-serif',
         }}>
           {sLabel}
         </span>
@@ -335,7 +335,7 @@ function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () =>
             transition={{ delay: i * 0.10 }}>
             <label style={{
               color: C.dim, fontSize: 9.5, display: 'block', marginBottom: 4,
-              fontFamily: 'Inter, sans-serif', letterSpacing: '0.05em',
+              fontFamily: 'var(--font-inter), sans-serif', letterSpacing: '0.05em',
             }}>
               {f.label}
             </label>
@@ -347,7 +347,7 @@ function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () =>
             }}>
               <span style={{
                 color: vals[f.key] ? C.goldBright : 'rgba(113,113,122,0.5)',
-                fontSize: 14, fontFamily: 'JetBrains Mono, Menlo, monospace',
+                fontSize: 14, fontFamily: 'var(--font-mono), Menlo, monospace',
               }}>
                 {vals[f.key] || f.ph}
               </span>
@@ -360,7 +360,7 @@ function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () =>
               )}
             </div>
             <p style={{ color: 'rgba(113,113,122,0.45)', fontSize: 9, marginTop: 3,
-                        fontFamily: 'Inter, sans-serif' }}>
+                        fontFamily: 'var(--font-inter), sans-serif' }}>
               {f.hint}
             </p>
           </motion.div>
@@ -370,7 +370,7 @@ function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () =>
       {phase === 'filling' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 18,
-                   color: C.gold, fontSize: 10.5, fontFamily: 'Inter, sans-serif' }}>
+                   color: C.gold, fontSize: 10.5, fontFamily: 'var(--font-inter), sans-serif' }}>
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.gold,
                         animation: 'drift-pulse 1s ease-in-out infinite' }} />
           Preparing KAIROS analysis…
@@ -427,7 +427,7 @@ function ScreenAnalysis({ sector, onDone }: { sector: string; onDone: () => void
         />
         <span style={{
           color: phase === 'done' ? C.green : C.gold, fontSize: 10,
-          fontFamily: 'Inter, sans-serif', letterSpacing: '0.10em', textTransform: 'uppercase',
+          fontFamily: 'var(--font-inter), sans-serif', letterSpacing: '0.10em', textTransform: 'uppercase',
         }}>
           {phase === 'scanning' ? 'KAIROS ANALYZING…' : phase === 'streaming' ? 'GENERATING STRATEGY…' : 'COMPLETE'}
         </span>
@@ -444,7 +444,7 @@ function ScreenAnalysis({ sector, onDone }: { sector: string; onDone: () => void
             <motion.div key={label} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               transition={{ delay: i * 0.35 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ color: C.dim, fontSize: 9.5, fontFamily: 'Inter, sans-serif' }}>{label}</span>
+                <span style={{ color: C.dim, fontSize: 9.5, fontFamily: 'var(--font-inter), sans-serif' }}>{label}</span>
               </div>
               <div style={{ height: 3, borderRadius: 2, background: `rgba(255,255,255,0.06)`, overflow: 'hidden' }}>
                 <motion.div
@@ -465,7 +465,7 @@ function ScreenAnalysis({ sector, onDone }: { sector: string; onDone: () => void
         <div style={{
           padding: '14px 16px', overflowY: 'auto', flex: 1,
           fontSize: 11, lineHeight: 1.75, color: 'rgba(250,250,248,0.82)',
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'var(--font-inter), sans-serif',
         }}>
           <BoldRenderer text={text} goldColor={C.goldBright} />
           {phase === 'streaming' && (
@@ -526,11 +526,11 @@ function ScreenStrategy() {
           </svg>
         </div>
         <span style={{ color: C.gold, fontSize: 9.5, letterSpacing: '0.18em',
-                       textTransform: 'uppercase', fontFamily: 'Inter, sans-serif', display: 'block', marginBottom: 8 }}>
+                       textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif', display: 'block', marginBottom: 8 }}>
           Harbour Reached
         </span>
         <h2 style={{
-          color: C.white, fontSize: 18, fontFamily: 'Cormorant Garamond, Georgia, serif',
+          color: C.white, fontSize: 18, fontFamily: 'var(--font-cormorant), Georgia, serif',
           fontWeight: 600, fontStyle: 'italic', lineHeight: 1.3,
         }}>
           Your precision strategy is ready to save.
@@ -564,7 +564,7 @@ function ScreenStrategy() {
             <rect x="2" y="7" width="12" height="8" rx="2" stroke={`${C.gold}99`} strokeWidth="1.4"/>
             <path d="M5 7V5a3 3 0 016 0v2" stroke={`${C.gold}99`} strokeWidth="1.4"/>
           </svg>
-          <span style={{ color: `${C.gold}80`, fontSize: 9, fontFamily: 'Inter, sans-serif' }}>
+          <span style={{ color: `${C.gold}80`, fontSize: 9, fontFamily: 'var(--font-inter), sans-serif' }}>
             Create free account to unlock
           </span>
         </div>
@@ -577,11 +577,11 @@ function ScreenStrategy() {
           background: `rgba(74,222,128,0.06)`, border: `1px solid rgba(74,222,128,0.18)`,
         }}
       >
-        <p style={{ color: C.green, fontSize: 11.5, fontFamily: 'Inter, sans-serif',
+        <p style={{ color: C.green, fontSize: 11.5, fontFamily: 'var(--font-inter), sans-serif',
                     fontWeight: 600, marginBottom: 2 }}>
           Projected impact: +£124,000 / year
         </p>
-        <p style={{ color: 'rgba(161,161,170,0.5)', fontSize: 9.5, fontFamily: 'Inter, sans-serif' }}>
+        <p style={{ color: 'rgba(161,161,170,0.5)', fontSize: 9.5, fontFamily: 'var(--font-inter), sans-serif' }}>
           Cross-referenced with 7,400 sector benchmarks
         </p>
       </motion.div>
@@ -595,13 +595,13 @@ function ScreenStrategy() {
           display: 'block', textAlign: 'center', padding: '14px 0',
           borderRadius: 14, textDecoration: 'none',
           background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldBright} 100%)`,
-          color: C.navy, fontSize: 13.5, fontWeight: 700, fontFamily: 'Inter, sans-serif',
+          color: C.navy, fontSize: 13.5, fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif',
           boxShadow: `0 8px 24px ${C.gold}40`,
         }}>
           Save My Strategy →
         </a>
         <p style={{ color: 'rgba(113,113,122,0.5)', fontSize: 9.5, textAlign: 'center',
-                    fontFamily: 'Inter, sans-serif' }}>
+                    fontFamily: 'var(--font-inter), sans-serif' }}>
           Free account · No card · Takes 30 seconds
         </p>
       </motion.div>

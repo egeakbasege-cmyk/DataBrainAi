@@ -71,7 +71,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           justifyContent:  'center',
           padding:         '2rem',
           background:      '#0C0C0E',
-          fontFamily:      'Inter, sans-serif',
+          fontFamily:      'var(--font-inter), sans-serif',
           textAlign:       'center',
           gap:             '1.5rem',
         }}
@@ -91,7 +91,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
             SAIL AI — SYSTEM ALERT
           </p>
           <h1 style={{
-            fontFamily:   'Cormorant Garamond, serif',
+            fontFamily:   'var(--font-cormorant), serif',
             fontStyle:    'italic',
             fontSize:     'clamp(1.5rem, 4vw, 2.25rem)',
             fontWeight:   600,
@@ -139,7 +139,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
               border:       '1.5px solid rgba(201,169,110,0.5)',
               borderRadius: 8,
               color:        '#C9A96E',
-              fontFamily:   'Inter, sans-serif',
+              fontFamily:   'var(--font-inter), sans-serif',
               fontSize:     '0.82rem',
               fontWeight:   600,
               cursor:       'pointer',
@@ -156,7 +156,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
               border:       'none',
               borderRadius: 8,
               color:        '#0C0C0E',
-              fontFamily:   'Inter, sans-serif',
+              fontFamily:   'var(--font-inter), sans-serif',
               fontSize:     '0.82rem',
               fontWeight:   700,
               cursor:       'pointer',

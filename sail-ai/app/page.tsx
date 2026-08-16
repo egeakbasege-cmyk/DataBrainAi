@@ -124,7 +124,7 @@ function MarqueeBand({ dark }: { dark?: boolean }) {
           <span
             key={i}
             style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.67rem',
               fontWeight:    500,
               letterSpacing: '0.1em',
@@ -191,20 +191,20 @@ function ModeCard({
           {icon}
         </div>
         <div>
-          <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.25rem', fontWeight: 700, color, display: 'block', lineHeight: 1.1, textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
+          <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.25rem', fontWeight: 700, color, display: 'block', lineHeight: 1.1, textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
             {name}
           </span>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.85 }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color, opacity: 0.85 }}>
             {badge}
           </span>
         </div>
       </div>
 
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', lineHeight: 1.78, color: '#FFFFFF', fontWeight: 400, marginBottom: '1rem', flex: 1, textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', lineHeight: 1.78, color: '#FFFFFF', fontWeight: 400, marginBottom: '1rem', flex: 1, textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
         {desc}
       </p>
       <div style={{ height: 1, background: border, opacity: 0.6, marginBottom: '0.875rem' }} />
-      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.70)', lineHeight: 1.6, margin: 0, textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.70)', lineHeight: 1.6, margin: 0, textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
         {detail}
       </p>
     </div>
@@ -274,11 +274,11 @@ export default function LandingPage() {
             transition={{ duration: 0.55, ease: EASE }}
             style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.25rem' }}
           >
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
               {t('landing.eyebrow')}
             </span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.4), transparent)' }} />
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>
               {t('landing.est')}
             </span>
           </motion.div>
@@ -289,7 +289,7 @@ export default function LandingPage() {
             initial="hidden"
             animate="show"
             style={{
-              fontFamily:    'Cormorant Garamond, Georgia, serif',
+              fontFamily:    'var(--font-cormorant), Georgia, serif',
               fontSize:      'clamp(3.5rem, 7.5vw, 6.5rem)',
               fontWeight:    600,
               fontStyle:     'italic',
@@ -317,7 +317,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.52, ease: EASE }}
             style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.9375rem',
               lineHeight: 1.78,
               color:      'rgba(255,255,255,0.90)',
@@ -341,7 +341,7 @@ export default function LandingPage() {
               <span
                 key={pill}
                 style={{
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.67rem',
                   fontWeight:    500,
                   letterSpacing: '0.05em',
@@ -385,7 +385,7 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 1.1 }}
-            style={{ marginTop: '0.875rem', fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}
+            style={{ marginTop: '0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}
           >
             {t('landing.freeNote')}
           </motion.p>
@@ -398,7 +398,7 @@ export default function LandingPage() {
             style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
           >
             {TRUST_CUES.map(cue => (
-              <span key={cue} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.06em' }}>
+              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.06em' }}>
                 {cue}
               </span>
             ))}
@@ -464,11 +464,11 @@ export default function LandingPage() {
           >
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1rem' }}>
               <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
                 {t('landing.intelligenceModes')}
               </span>
             </motion.div>
-            <motion.p variants={fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: '#FFFFFF', fontWeight: 400, maxWidth: '52ch', lineHeight: 1.75, textShadow: '0 1px 10px rgba(0,0,0,0.9)' }}>
+            <motion.p variants={fadeUp} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', color: '#FFFFFF', fontWeight: 400, maxWidth: '52ch', lineHeight: 1.75, textShadow: '0 1px 10px rgba(0,0,0,0.9)' }}>
               {t('landing.modesCount')}
             </motion.p>
           </motion.div>
@@ -556,7 +556,7 @@ export default function LandingPage() {
             <Link
               href="/chat"
               style={{
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.75rem',
                 fontWeight:    500,
                 color:         'rgba(201,169,110,0.80)',
@@ -590,11 +590,11 @@ export default function LandingPage() {
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
                 <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
                   {t('landing.indicativeOutputs')}
                 </span>
               </div>
-              <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: 'rgba(255,255,255,0.70)', textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
+              <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: 'rgba(255,255,255,0.70)', textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
                 {t('landing.realisticProjections')}
               </span>
             </motion.div>
@@ -628,14 +628,14 @@ export default function LandingPage() {
                   marginBottom:        '4px',
                 }}
               >
-                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '0.875rem', color: '#14B8A6', fontWeight: 600, paddingLeft: '0.25rem' }}>
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '0.875rem', color: '#14B8A6', fontWeight: 600, paddingLeft: '0.25rem' }}>
                   ◈ {c.n}
                 </span>
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.625rem' }}>
                     <span style={{
-                      fontFamily:    'Inter, sans-serif',
+                      fontFamily:    'var(--font-inter), sans-serif',
                       fontSize:      '0.62rem',
                       fontWeight:    700,
                       letterSpacing: '0.14em',
@@ -648,19 +648,19 @@ export default function LandingPage() {
                       {c.sector}
                     </span>
                   </div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 1.5vw, 1.15rem)', color: '#FFFFFF', lineHeight: 1.4, marginBottom: '0.4rem', textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}>
+                  <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1rem, 1.5vw, 1.15rem)', color: '#FFFFFF', lineHeight: 1.4, marginBottom: '0.4rem', textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}>
                     {c.headline}
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
                     {c.detail}
                   </p>
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.3rem, 2.2vw, 1.75rem)', fontWeight: 700, color: '#C9A96E', lineHeight: 1, display: 'block', letterSpacing: '-0.01em' }}>
+                  <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 'clamp(1.3rem, 2.2vw, 1.75rem)', fontWeight: 700, color: '#C9A96E', lineHeight: 1, display: 'block', letterSpacing: '-0.01em' }}>
                     <AnimatedCounter value={c.outcome} />
                   </span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(232,237,243,0.35)', display: 'block', marginTop: '0.25rem' }}>
+                  <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(232,237,243,0.35)', display: 'block', marginTop: '0.25rem' }}>
                     {t('landing.estOutcome')}
                   </span>
                 </div>
@@ -673,7 +673,7 @@ export default function LandingPage() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.55, delay: 0.4 }}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: 'rgba(232,237,243,0.35)', lineHeight: 1.6, marginTop: '1.5rem', maxWidth: '60ch' }}
+            style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: 'rgba(232,237,243,0.35)', lineHeight: 1.6, marginTop: '1.5rem', maxWidth: '60ch' }}
           >
             {t('landing.disclaimer')}
           </motion.p>
@@ -714,14 +714,14 @@ export default function LandingPage() {
             <div>
               <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
                 <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.5)' }} />
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.7)' }}>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.7)' }}>
                   {t('landing.eyebrow')}
                 </span>
               </motion.div>
-              <motion.h2 variants={fadeUp} style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '1rem' }}>
+              <motion.h2 variants={fadeUp} style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '1rem' }}>
                 {t('landing.ctaHeadline')}
               </motion.h2>
-              <motion.p variants={fadeUp} style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'rgba(255,255,255,0.88)', fontWeight: 300, lineHeight: 1.75, maxWidth: '42ch', textShadow: '0 1px 10px rgba(0,0,0,0.9)' }}>
+              <motion.p variants={fadeUp} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9rem', color: 'rgba(255,255,255,0.88)', fontWeight: 300, lineHeight: 1.75, maxWidth: '42ch', textShadow: '0 1px 10px rgba(0,0,0,0.9)' }}>
                 {t('landing.ctaBody')}
               </motion.p>
             </div>
@@ -729,7 +729,7 @@ export default function LandingPage() {
               <Link href="/welcome" className="btn-primary" style={{ background: '#C9A96E', borderColor: '#C9A96E', color: '#0C0C0E' }}>
                 {t('landing.beginBtn')}
               </Link>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em' }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em' }}>
                 {t('landing.freeNote')}
               </p>
             </motion.div>
@@ -751,11 +751,11 @@ export default function LandingPage() {
             <div>
               <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', marginBottom: '0.75rem' }}>
                 <Logo size={28} />
-                <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 700, color: '#0C0C0E', fontSize: '0.9rem', letterSpacing: '0.1em' }}>
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontWeight: 700, color: '#0C0C0E', fontSize: '0.9rem', letterSpacing: '0.1em' }}>
                   SAIL AI
                 </span>
               </Link>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#A1A1AA', lineHeight: 1.6, maxWidth: '24ch', fontWeight: 300 }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#A1A1AA', lineHeight: 1.6, maxWidth: '24ch', fontWeight: 300 }}>
                 {t('landing.footerTagline')}
               </p>
             </div>
@@ -763,7 +763,7 @@ export default function LandingPage() {
             {/* Nav columns */}
             <div style={{ display: 'flex', gap: '4rem', flexWrap: 'wrap' }}>
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
                   {t('landing.footerProduct')}
                 </p>
                 {[
@@ -772,20 +772,20 @@ export default function LandingPage() {
                   { href: '/data-lab',  label: t('landing.footerDataLab') },
                   { href: '/dashboard', label: t('landing.footerDashboard') },
                 ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
+                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
                     {l.label}
                   </Link>
                 ))}
               </div>
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
                   {t('landing.footerCompany')}
                 </p>
                 {[
                   { href: '/pricing',    label: t('landing.footerPricing') },
                   { href: '/welcome',    label: t('landing.footerGetStarted') },
                 ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
+                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
                     {l.label}
                   </Link>
                 ))}
@@ -794,10 +794,10 @@ export default function LandingPage() {
 
             {/* Copyright + Est. */}
             <div style={{ textAlign: 'right' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: '0.85rem', color: '#C9A96E', marginBottom: '0.25rem' }}>
+              <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: '0.85rem', color: '#C9A96E', marginBottom: '0.25rem' }}>
                 {t('landing.est')}
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#A1A1AA', letterSpacing: '0.04em' }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#A1A1AA', letterSpacing: '0.04em' }}>
                 © {new Date().getFullYear()} Sail AI
               </p>
             </div>

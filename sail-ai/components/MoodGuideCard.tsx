@@ -72,7 +72,7 @@ function RoutingSkeleton() {
           transition={{ duration: 0.9, repeat: Infinity }}
           style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#C9A96E' }}
         />
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.7)' }}>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.7)' }}>
           Routing Query…
         </span>
       </div>
@@ -143,7 +143,7 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
           </AnimatePresence>
           <div>
             <div style={{
-              fontFamily:    '"Cormorant Garamond", Georgia, serif',
+              fontFamily:    'var(--font-cormorant), Georgia, serif',
               fontSize:      '0.78rem',
               fontStyle:     'italic',
               fontWeight:    600,
@@ -156,7 +156,7 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
             }}>
               Aetheris
             </div>
-            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.7)' }}>
+            <div style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.7)' }}>
               {phase === 'routing' ? 'Routing Query…' : data.autoProceeding ? 'Auto-Proceeding…' : 'Route Detected · Select Mode'}
             </div>
           </div>
@@ -169,7 +169,7 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
             borderRadius:  '999px',
             background:    'rgba(201,169,110,0.1)',
             border:        '1px solid rgba(201,169,110,0.3)',
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.5rem',
             fontWeight:    700,
             letterSpacing: '0.08em',
@@ -201,7 +201,7 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
                 borderRadius:  '999px',
                 background:    `${moodMeta.color}18`,
                 border:        `1px solid ${moodMeta.color}44`,
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.55rem',
                 fontWeight:    700,
                 letterSpacing: '0.1em',
@@ -220,7 +220,7 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
                   borderRadius:  '999px',
                   background:    '#CC220018',
                   border:        '1px solid #CC220044',
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.55rem',
                   fontWeight:    700,
                   letterSpacing: '0.1em',
@@ -234,7 +234,7 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
 
             {data.reasoning && (
               <p style={{
-                fontFamily:   'Inter, sans-serif',
+                fontFamily:   'var(--font-inter), sans-serif',
                 fontSize:     '0.82rem',
                 lineHeight:   1.6,
                 color:        '#3D3D4E',
@@ -257,18 +257,18 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: selectedMeta.color, flexShrink: 0, display: 'inline-block' }} />
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: selectedMeta.color }}>
+                  <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: selectedMeta.color }}>
                     {selectedMeta.label}
                   </span>
                 </div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#1A1A2E', margin: 0, lineHeight: 1.4 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#1A1A2E', margin: 0, lineHeight: 1.4 }}>
                   {selectedMeta.description}
                 </p>
                 <span style={{
                   position:      'absolute',
                   top:           6,
                   right:         8,
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.48rem',
                   fontWeight:    700,
                   letterSpacing: '0.08em',
@@ -289,11 +289,11 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: altMeta.color, flexShrink: 0, display: 'inline-block', opacity: 0.7 }} />
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: altMeta.color, opacity: 0.8 }}>
+                  <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: altMeta.color, opacity: 0.8 }}>
                     {altMeta.label}
                   </span>
                 </div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#555566', margin: 0, lineHeight: 1.4 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#555566', margin: 0, lineHeight: 1.4 }}>
                   {altMeta.description}
                 </p>
               </div>
@@ -312,7 +312,7 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
                     background:    selectedMeta.color,
                     border:        'none',
                     cursor:        'pointer',
-                    fontFamily:    'Inter, sans-serif',
+                    fontFamily:    'var(--font-inter), sans-serif',
                     fontSize:      '0.72rem',
                     fontWeight:    700,
                     letterSpacing: '0.06em',
@@ -334,7 +334,7 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
                     background:    'transparent',
                     border:        `1px solid ${altMeta.color}55`,
                     cursor:        'pointer',
-                    fontFamily:    'Inter, sans-serif',
+                    fontFamily:    'var(--font-inter), sans-serif',
                     fontSize:      '0.72rem',
                     fontWeight:    600,
                     letterSpacing: '0.06em',
@@ -354,7 +354,7 @@ export function MoodGuideCard({ data, phase, onProceed, onSwitch }: Props) {
                   transition={{ duration: 0.8, repeat: Infinity }}
                   style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#CC2200' }}
                 />
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: '#CC2200', letterSpacing: '0.04em' }}>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', fontWeight: 600, color: '#CC2200', letterSpacing: '0.04em' }}>
                   High urgency detected — proceeding automatically with {selectedMeta.label}
                 </span>
               </div>

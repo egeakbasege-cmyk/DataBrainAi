@@ -5,6 +5,7 @@ import { AnalysisRequestSchema }       from '@/schema/analysis'
 import { handleApiError, ApiError }    from '@/utils/api-error'
 import { prisma }                      from '@/lib/prisma'
 import { SYSTEM_PROMPT }               from '@/lib/ai-prompt'
+import { consumeQuota, quotaExceededBody } from '@/lib/quota'
 
 const MODEL_CHAIN = [
   'gemini-2.0-flash',
@@ -99,7 +100,14 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'UNAUTHORIZED', 'You must be signed in to run an analysis.')
     }
 
-    // 2. Strict Zod validation
+    // 2. Server-side quota — the localStorage counter is advisory only and can
+    //    be cleared by the user, so the limit must be enforced here too.
+    const quota = await consumeQuota(req)
+    if (!quota.allowed) {
+      return NextResponse.json(quotaExceededBody(quota), { status: 402 })
+    }
+
+    // 3. Strict Zod validation
     const body          = await req.json().catch(() => { throw new ApiError(400, 'INVALID_JSON', 'Request body must be valid JSON.') })
     const validated     = AnalysisRequestSchema.parse(body)
     const { sector, metrics, focusArea, tone, context } = validated

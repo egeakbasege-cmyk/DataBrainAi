@@ -41,7 +41,7 @@ export function LanguageSelector() {
       >
         <span style={{ fontSize: '0.9rem', lineHeight: 1 }}>{current.flag}</span>
         <span style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.65rem',
           fontWeight:    600,
           letterSpacing: '0.08em',
@@ -101,7 +101,7 @@ export function LanguageSelector() {
                 >
                   <span style={{ fontSize: '1rem', lineHeight: 1 }}>{l.flag}</span>
                   <span style={{
-                    fontFamily: 'Inter, sans-serif',
+                    fontFamily: 'var(--font-inter), sans-serif',
                     fontSize:   '0.8rem',
                     fontWeight: active ? 600 : 400,
                     color:      active ? '#C9A96E' : '#0C0C0E',

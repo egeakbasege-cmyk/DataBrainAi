@@ -9,7 +9,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Logo } from './Logo'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
@@ -30,18 +30,32 @@ const FEATURES = [
 export function PaywallModal({ open, onClose }: Props) {
   const { t }     = useLanguage()
   const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState<string | null>(null)
+
+  // Close on Escape — modals must be dismissible from the keyboard.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  // Reset transient state whenever the modal is reopened.
+  useEffect(() => { if (open) { setError(null); setLoading(false) } }, [open])
 
   async function handleUpgrade() {
     setLoading(true)
+    setError(null)
     try {
       const res  = await fetch('/api/checkout', { method: 'POST' })
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
+      if (!res.ok || data.error) throw new Error(data.error ?? 'Checkout failed')
+      if (!data.url) throw new Error('Checkout failed')
       window.location.href = data.url
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Checkout failed'
       console.error('Checkout error:', msg)
-      alert(msg)
+      setError(msg)
       setLoading(false)
     }
   }
@@ -71,6 +85,9 @@ export function PaywallModal({ open, onClose }: Props) {
           {/* ── Panel ─────────────────────────────────────── */}
           <motion.div
             key="paywall-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Upgrade to Sail AI Pro"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1,    y: 0  }}
             exit={{   opacity: 0, scale: 0.96,  y: 12 }}
@@ -108,7 +125,7 @@ export function PaywallModal({ open, onClose }: Props) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
                 <Logo size={26} />
                 <span style={{
-                  fontFamily:    'Cormorant Garamond, Georgia, serif',
+                  fontFamily:    'var(--font-cormorant), Georgia, serif',
                   fontWeight:    700,
                   fontSize:      '0.8rem',
                   letterSpacing: '0.14em',
@@ -121,7 +138,7 @@ export function PaywallModal({ open, onClose }: Props) {
 
               {/* ── Headline ───────────────────────────────── */}
               <h2 style={{
-                fontFamily:    'Cormorant Garamond, Georgia, serif',
+                fontFamily:    'var(--font-cormorant), Georgia, serif',
                 fontStyle:     'italic',
                 fontSize:      'clamp(1.3rem, 4vw, 1.65rem)',
                 fontWeight:    600,
@@ -133,7 +150,7 @@ export function PaywallModal({ open, onClose }: Props) {
                 {t('paywall.title')}
               </h2>
               <p style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize:   '0.875rem',
                 lineHeight: 1.65,
                 color:      'rgba(255,255,255,0.5)',
@@ -149,7 +166,7 @@ export function PaywallModal({ open, onClose }: Props) {
               <div style={{ marginBottom: '1.375rem' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1rem' }}>
                   <span style={{
-                    fontFamily: 'Cormorant Garamond, Georgia, serif',
+                    fontFamily: 'var(--font-cormorant), Georgia, serif',
                     fontWeight: 700,
                     fontSize:   '2.6rem',
                     color:      '#FFFFFF',
@@ -158,7 +175,7 @@ export function PaywallModal({ open, onClose }: Props) {
                     $9.99
                   </span>
                   <span style={{
-                    fontFamily: 'Inter, sans-serif',
+                    fontFamily: 'var(--font-inter), sans-serif',
                     fontSize:   '0.82rem',
                     color:      'rgba(255,255,255,0.35)',
                   }}>
@@ -175,7 +192,7 @@ export function PaywallModal({ open, onClose }: Props) {
                         display:    'flex',
                         alignItems: 'center',
                         gap:        '0.625rem',
-                        fontFamily: 'Inter, sans-serif',
+                        fontFamily: 'var(--font-inter), sans-serif',
                         fontSize:   '0.83rem',
                         color:      'rgba(255,255,255,0.72)',
                         fontWeight: 300,
@@ -200,6 +217,23 @@ export function PaywallModal({ open, onClose }: Props) {
 
               {/* ── CTA buttons ────────────────────────────── */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                {error && (
+                  <div
+                    role="alert"
+                    style={{
+                      padding:      '0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      background:   'rgba(220,80,80,0.10)',
+                      border:       '1px solid rgba(220,80,80,0.32)',
+                      color:        '#F0A5A5',
+                      fontFamily:   'var(--font-inter), sans-serif',
+                      fontSize:     '0.78rem',
+                      lineHeight:   1.5,
+                    }}
+                  >
+                    {error}
+                  </div>
+                )}
                 <button
                   onClick={handleUpgrade}
                   disabled={loading}
@@ -212,7 +246,7 @@ export function PaywallModal({ open, onClose }: Props) {
                     border:        '1px solid rgba(201,169,110,0.4)',
                     borderRadius:  '10px',
                     cursor:        loading ? 'not-allowed' : 'pointer',
-                    fontFamily:    'Inter, sans-serif',
+                    fontFamily:    'var(--font-inter), sans-serif',
                     fontSize:      '0.875rem',
                     fontWeight:    600,
                     letterSpacing: '0.04em',
@@ -234,7 +268,7 @@ export function PaywallModal({ open, onClose }: Props) {
                     background:    'none',
                     border:        'none',
                     cursor:        'pointer',
-                    fontFamily:    'Inter, sans-serif',
+                    fontFamily:    'var(--font-inter), sans-serif',
                     fontSize:      '0.78rem',
                     color:         'rgba(255,255,255,0.3)',
                     letterSpacing: '0.04em',
@@ -250,14 +284,14 @@ export function PaywallModal({ open, onClose }: Props) {
 
               {/* Fine print */}
               <p style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize:   '0.65rem',
                 color:      'rgba(255,255,255,0.2)',
                 textAlign:  'center',
                 marginTop:  '0.75rem',
                 lineHeight: 1.6,
               }}>
-                Cancel anytime · Secure payment via Stripe
+                Cancel anytime · Secure checkout
               </p>
             </div>
           </motion.div>

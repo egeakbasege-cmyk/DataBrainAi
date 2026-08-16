@@ -204,7 +204,7 @@ function SynergySubSelector({
       }}>
         {/* Instruction */}
         <p style={{
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'var(--font-inter), sans-serif',
           fontSize: '0.6rem',
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
@@ -255,7 +255,7 @@ function SynergySubSelector({
                   )}
                 </span>
                 <span style={{
-                  fontFamily: 'Inter, sans-serif',
+                  fontFamily: 'var(--font-inter), sans-serif',
                   fontSize: '0.55rem',
                   fontWeight: 700,
                   letterSpacing: '0.06em',
@@ -279,7 +279,7 @@ function SynergySubSelector({
                 borderRadius: '999px',
                 background: `${MODE_COLOR[id]}33`,
                 border: `1px solid ${MODE_COLOR[id]}66`,
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize: '0.55rem',
                 fontWeight: 700,
                 letterSpacing: '0.06em',
@@ -291,7 +291,7 @@ function SynergySubSelector({
             ))}
             <span style={{
               padding: '2px 8px',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize: '0.55rem',
               color: 'rgba(201,169,110,0.5)',
               letterSpacing: '0.05em',
@@ -345,7 +345,7 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
                 position:      'absolute',
                 top:           '-7px',
                 right:         '10px',
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.5rem',
                 fontWeight:    700,
                 letterSpacing: '0.08em',
@@ -365,7 +365,7 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
               <ModeIcon id={id} color={active ? color : '#9CA3AF'} />
               <span style={{
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.68rem',
                 fontWeight:    700,
                 letterSpacing: '0.07em',
@@ -377,7 +377,7 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
             </div>
 
             <p style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.68rem',
               lineHeight: 1.45,
               color:      active ? color : '#6B6B8A',
@@ -432,7 +432,7 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
           position:      'absolute',
           top:           '-7px',
           right:         '10px',
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.5rem',
           fontWeight:    700,
           letterSpacing: '0.1em',
@@ -470,7 +470,7 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
               </span>
             ) : null}
             <span style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.68rem',
               fontWeight:    700,
               letterSpacing: '0.07em',
@@ -483,7 +483,7 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
         </div>
 
         <p style={{
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'var(--font-inter), sans-serif',
           fontSize:   '0.68rem',
           lineHeight: 1.45,
           color:      synActive ? 'rgba(201,169,110,0.8)' : '#6B6B8A',
@@ -536,7 +536,7 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
                 position:      'absolute',
                 top:           '-7px',
                 right:         '10px',
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.5rem',
                 fontWeight:    700,
                 letterSpacing: '0.08em',
@@ -553,7 +553,7 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
               <ModeIcon id={id} color={active ? color : '#9CA3AF'} />
               <span style={{
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.68rem',
                 fontWeight:    700,
                 letterSpacing: '0.07em',
@@ -568,7 +568,7 @@ export function ModeSelector({ mode, onChange, synergyModes = [], onSynergyChang
             <div style={{ width: '1px', height: '28px', background: active ? `${color}44` : 'rgba(255,255,255,0.07)', flexShrink: 0 }} />
             {/* Description spans remaining width */}
             <p style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.68rem',
               lineHeight: 1.45,
               color:      active ? color : '#6B6B8A',

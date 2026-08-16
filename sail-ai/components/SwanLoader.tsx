@@ -249,7 +249,7 @@ export function SwanLoader({ label = 'Synthesising intelligence…' }: SwanLoade
         animate={{ opacity: phase === 'fading' ? 0 : 0.7 }}
         transition={{ duration: 0.6, delay: phase === 'building' ? 1.2 : 0 }}
         style={{
-          fontFamily:    'Inter, sans-serif',
+          fontFamily:    'var(--font-inter), sans-serif',
           fontSize:      '0.72rem',
           fontWeight:    500,
           letterSpacing: '0.18em',

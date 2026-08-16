@@ -219,7 +219,9 @@ export const useAetherisStore = create<AetherisStore>()(
     dominantMicroPivot: () => {
       const alerts = get().activeAlerts()
       if (!alerts.length) return null
-      const topAlert = alerts.sort(
+      // `.slice()` first — sorting the array returned by activeAlerts() in place
+      // would mutate the underlying store state and break Zustand change detection.
+      const topAlert = alerts.slice().sort(
         (a, b) => b.forecastedDeviation - a.forecastedDeviation,
       )[0]
       return topAlert?.autonomousMicroPivot ?? null

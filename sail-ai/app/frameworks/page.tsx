@@ -98,7 +98,7 @@ export default function FrameworksPage() {
         {/* Header */}
         <div style={{ marginBottom: 40 }}>
           <p style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.6rem',
             fontWeight:    700,
             letterSpacing: '0.18em',
@@ -109,7 +109,7 @@ export default function FrameworksPage() {
             Strategic Frameworks
           </p>
           <h1 style={{
-            fontFamily:    'Cormorant Garamond, Georgia, serif',
+            fontFamily:    'var(--font-cormorant), Georgia, serif',
             fontSize:      'clamp(1.6rem, 4vw, 2.4rem)',
             fontWeight:    600,
             color:         '#0C0C0E',
@@ -119,7 +119,7 @@ export default function FrameworksPage() {
             Visual Framework Analysis
           </h1>
           <p style={{
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize:   '0.9rem',
             color:      '#71717A',
             lineHeight: 1.6,
@@ -147,7 +147,7 @@ export default function FrameworksPage() {
           }} />
 
           <label style={{
-            fontFamily:    'Inter, sans-serif',
+            fontFamily:    'var(--font-inter), sans-serif',
             fontSize:      '0.7rem',
             fontWeight:    600,
             letterSpacing: '0.12em',
@@ -166,7 +166,7 @@ export default function FrameworksPage() {
             rows={4}
             style={{
               width:      '100%',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.88rem',
               color:      '#0C0C0E',
               background: 'rgba(0,0,0,0.02)',
@@ -181,13 +181,13 @@ export default function FrameworksPage() {
 
           {/* Example prompts */}
           <div style={{ marginTop: 12 }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#A1A1AA', marginBottom: 8 }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: '#A1A1AA', marginBottom: 8 }}>
               Try an example:
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {EXAMPLES.map((ex, i) => (
                 <button key={i} onClick={() => setDescription(ex)} style={{
-                  fontFamily:    'Inter, sans-serif',
+                  fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.68rem',
                   color:         '#71717A',
                   background:    'rgba(0,0,0,0.03)',
@@ -208,7 +208,7 @@ export default function FrameworksPage() {
           {/* Vault context note */}
           {(profile.sector || profile.metrics.length > 0) && (
             <p style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.7rem',
               color:      '#14B8A6',
               marginTop:  12,
@@ -228,7 +228,7 @@ export default function FrameworksPage() {
                 padding:       '10px 28px',
                 background:    loading || !description.trim() ? 'rgba(0,0,0,0.06)' : '#0C0C0E',
                 color:         loading || !description.trim() ? '#A1A1AA' : '#FFFFFF',
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.75rem',
                 fontWeight:    600,
                 letterSpacing: '0.1em',
@@ -243,7 +243,7 @@ export default function FrameworksPage() {
 
             {result && !loading && (
               <button onClick={() => { setResult(null); setDescription('') }} style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize:   '0.72rem',
                 color:      '#A1A1AA',
                 background: 'none',
@@ -257,7 +257,7 @@ export default function FrameworksPage() {
           </div>
 
           {error && (
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: '#DC2626', marginTop: 12, marginBottom: 0 }}>
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#DC2626', marginTop: 12, marginBottom: 0 }}>
               ⚠ {error}
             </p>
           )}
@@ -317,13 +317,13 @@ export default function FrameworksPage() {
                   border:     '1px solid rgba(0,0,0,0.07)',
                   borderLeft: `3px solid ${card.accent}`,
                 }}>
-                  <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.05rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px' }}>
+                  <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.05rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px' }}>
                     {card.title}
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: card.accent, letterSpacing: '0.08em', margin: '0 0 12px', textTransform: 'uppercase', fontWeight: 600 }}>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: card.accent, letterSpacing: '0.08em', margin: '0 0 12px', textTransform: 'uppercase', fontWeight: 600 }}>
                     {card.subtitle}
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: '#71717A', lineHeight: 1.65, margin: 0 }}>
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#71717A', lineHeight: 1.65, margin: 0 }}>
                     {card.desc}
                   </p>
                 </div>

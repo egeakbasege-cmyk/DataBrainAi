@@ -98,7 +98,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
 
   if (isLoading) {
     return (
-      <div style={{ padding: '1.5rem', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ padding: '1.5rem', fontFamily: 'var(--font-inter), sans-serif' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
           <motion.span
             animate={{ opacity: [1, 0.3, 1] }}
@@ -127,7 +127,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
   const phases = response.phases ?? []
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ fontFamily: 'var(--font-inter), sans-serif' }}>
       {/* Header */}
       <div style={{ marginBottom: response.diagnostic ? '1rem' : '1.25rem' }}>
         <p style={{
@@ -137,7 +137,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
           TRIM · Strategic Timeline
         </p>
         <h3 style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontFamily: 'var(--font-cormorant), Georgia, serif',
           fontStyle: 'italic', fontWeight: 600,
           fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
           color: '#FFFFFF', lineHeight: 1.2, margin: 0,
@@ -310,7 +310,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
             background: 'transparent',
             border: '1px solid rgba(201,169,110,0.4)',
             borderRadius: 5, cursor: 'pointer',
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-inter), sans-serif',
             fontSize: '0.68rem', fontWeight: 600,
             letterSpacing: '0.06em', textTransform: 'uppercase',
             color: '#C9A96E', transition: 'all 0.15s',
@@ -345,7 +345,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
             <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <p style={{ fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C9A96E', margin: '0 0 2px' }}>TRIM · Strategic Timeline</p>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 600, fontSize: '1.15rem', color: '#FFFFFF', margin: 0 }}>
+                <h2 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontWeight: 600, fontSize: '1.15rem', color: '#FFFFFF', margin: 0 }}>
                   {response.trimTitle}
                 </h2>
               </div>
@@ -440,7 +440,7 @@ export function TrimTimelineCard({ response, isLoading, query }: Props) {
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 padding: '5px 11px',
-                fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', fontWeight: 500,
+                fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', fontWeight: 500,
                 color:      state === 'done' ? '#14B8A6' : state === 'error' ? '#DC2626' : 'rgba(255,255,255,0.50)',
                 background: 'rgba(255,255,255,0.04)',
                 border:     '1px solid rgba(255,255,255,0.10)',

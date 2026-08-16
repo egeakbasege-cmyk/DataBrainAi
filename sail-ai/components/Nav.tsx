@@ -81,7 +81,7 @@ export function Nav() {
           <Logo size={26} />
           <span style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
             <span style={{
-              fontFamily:    'Cormorant Garamond, Georgia, serif',
+              fontFamily:    'var(--font-cormorant), Georgia, serif',
               fontSize:      '1rem',
               fontWeight:    600,
               color:         navBrandColor,
@@ -91,7 +91,7 @@ export function Nav() {
               SAIL
             </span>
             <span style={{
-              fontFamily:    'Inter, sans-serif',
+              fontFamily:    'var(--font-inter), sans-serif',
               fontSize:      '0.55rem',
               fontWeight:    700,
               letterSpacing: '0.06em',
@@ -117,7 +117,7 @@ export function Nav() {
             <Link
               href="/research"
               style={{
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.6875rem',
                 fontWeight:    600,
                 letterSpacing: '0.12em',
@@ -134,7 +134,7 @@ export function Nav() {
             <Link
               href="/data-lab"
               style={{
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.6875rem',
                 fontWeight:    600,
                 letterSpacing: '0.12em',
@@ -149,7 +149,7 @@ export function Nav() {
             <Link
               href="/pricing"
               style={{
-                fontFamily:    'Inter, sans-serif',
+                fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.6875rem',
                 fontWeight:    600,
                 letterSpacing: '0.12em',
@@ -177,7 +177,7 @@ export function Nav() {
                   display:        'flex',
                   alignItems:     'center',
                   justifyContent: 'center',
-                  fontFamily:     'Inter, sans-serif',
+                  fontFamily:     'var(--font-inter), sans-serif',
                   fontSize:       '0.75rem',
                   fontWeight:     600,
                   color:          session.user.isPro ? '#C9A96E' : '#0C0C0E',
@@ -218,11 +218,11 @@ export function Nav() {
                       padding:      '0.625rem 1rem',
                       borderBottom: '1px solid rgba(12,12,14,0.07)',
                     }}>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', fontWeight: 500, color: '#0C0C0E', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', fontWeight: 500, color: '#0C0C0E', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {session.user.name ?? session.user.email}
                       </p>
                       {session.user.isPro && (
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.65rem', color: '#C9A96E', letterSpacing: '0.07em', textTransform: 'uppercase', marginTop: '2px' }}>
+                        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: '#C9A96E', letterSpacing: '0.07em', textTransform: 'uppercase', marginTop: '2px' }}>
                           {t('nav.professional')}
                         </p>
                       )}
@@ -244,7 +244,7 @@ export function Nav() {
                           width:         '100%',
                           textAlign:     'left',
                           padding:       '0.5rem 1rem',
-                          fontFamily:    'Inter, sans-serif',
+                          fontFamily:    'var(--font-inter), sans-serif',
                           fontSize:      '0.8rem',
                           color:         '#C9A96E',
                           background:    'none',
@@ -262,7 +262,7 @@ export function Nav() {
                         margin:     '0 1rem 0.4rem',
                         fontSize:   '0.72rem',
                         color:      '#DC2626',
-                        fontFamily: 'Inter, sans-serif',
+                        fontFamily: 'var(--font-inter), sans-serif',
                         lineHeight: 1.35,
                       }}>
                         {portalError}
@@ -277,7 +277,7 @@ export function Nav() {
                         width:         '100%',
                         textAlign:     'left',
                         padding:       '0.5rem 1rem',
-                        fontFamily:    'Inter, sans-serif',
+                        fontFamily:    'var(--font-inter), sans-serif',
                         fontSize:      '0.8rem',
                         color:         '#71717A',
                         background:    'none',
@@ -312,7 +312,7 @@ function MenuItem({ href, label, onClick }: { href: string; label: string; onCli
       style={{
         display:        'block',
         padding:        '0.5rem 1rem',
-        fontFamily:     'Inter, sans-serif',
+        fontFamily:     'var(--font-inter), sans-serif',
         fontSize:       '0.8rem',
         color:          '#0C0C0E',
         textDecoration: 'none',

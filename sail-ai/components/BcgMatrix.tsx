@@ -200,7 +200,7 @@ export function BcgMatrix({ data, loading = false, compact = false }: BcgMatrixP
   const qMeta = data ? BCG_QUADRANTS.find(q => q.id === data.quadrant) : null
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ fontFamily: 'var(--font-inter), sans-serif' }}>
       {/* Header */}
       {!compact && (
         <div style={{ marginBottom: 16, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -208,7 +208,7 @@ export function BcgMatrix({ data, loading = false, compact = false }: BcgMatrixP
             <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', margin: '0 0 4px' }}>
               Strategic Framework
             </p>
-            <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '1.1rem', fontWeight: 600, color: '#0C0C0E', margin: 0, lineHeight: 1.3 }}>
+            <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.1rem', fontWeight: 600, color: '#0C0C0E', margin: 0, lineHeight: 1.3 }}>
               BCG Growth-Share Matrix
             </p>
           </div>
@@ -217,7 +217,7 @@ export function BcgMatrix({ data, loading = false, compact = false }: BcgMatrixP
             {(['chart', 'grid'] as const).map(t => (
               <button key={t} onClick={() => setTab(t)} style={{
                 padding:    '4px 10px',
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-inter), sans-serif',
                 fontSize:   '0.65rem',
                 fontWeight: 600,
                 color:      tab === t ? '#0C0C0E' : '#A1A1AA',
