@@ -117,17 +117,17 @@ function DockItem({
           height:     '3rem',
           borderRadius: '50%',
           background: active
-            ? 'rgba(0,51,160,0.10)'
+            ? 'rgba(10,126,121,0.10)'
             : hovered
             ? 'rgba(12,12,14,0.06)'
             : 'transparent',
-          boxShadow:  active ? '0 0 0 1px rgba(0,51,160,0.35)' : 'none',
+          boxShadow:  active ? '0 0 0 1px rgba(10,126,121,0.35)' : 'none',
           transform:  hovered ? 'scale(1.2) translateY(-6px)' : 'scale(1)',
           transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), background 0.15s, box-shadow 0.15s',
           cursor:     'pointer',
         }}
       >
-        <span style={{ color: active ? '#0033A0' : hovered ? '#0C0C0E' : '#A1A1AA' }}>
+        <span style={{ color: active ? '#0A7E79' : hovered ? '#0C0C0E' : '#A1A1AA' }}>
           {icon}
         </span>
 
@@ -139,8 +139,8 @@ function DockItem({
             width:        '5px',
             height:       '5px',
             borderRadius: '50%',
-            background:   '#0033A0',
-            boxShadow:    '0 0 6px rgba(0,51,160,0.6)',
+            background:   '#0A7E79',
+            boxShadow:    '0 0 6px rgba(10,126,121,0.6)',
           }} />
         )}
 

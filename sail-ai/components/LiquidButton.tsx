@@ -44,7 +44,7 @@ const SIZES: Record<Size, { padding: string; font: string; height: string }> = {
 const SILVER_SURFACE =
   'linear-gradient(105deg,#ffffff 0%,#e8edf3 18%,#b6c1cf 34%,#f6f9fc 50%,#adb8c7 66%,#dce3eb 82%,#ffffff 100%)'
 const COBALT_SURFACE =
-  'linear-gradient(105deg,#052a5e 0%,#0c4da2 22%,#3a97f5 42%,#0a4796 58%,#1778dc 78%,#052a5e 100%)'
+  'linear-gradient(105deg,#052a5e 0%,#0c4da2 22%,#3a97f5 42%,#0a4796 58%,#0ABAB5 78%,#052a5e 100%)'
 
 export function LiquidButton({
   children,
@@ -76,11 +76,11 @@ export function LiquidButton({
 
   const surface = isGhost ? 'transparent' : isCobalt ? COBALT_SURFACE : SILVER_SURFACE
   const textColor = isGhost
-    ? 'var(--azx-cobalt, #0033A0)'
+    ? 'var(--azx-cobalt, #0A7E79)'
     : isCobalt
-    ? '#EAF2FF'
-    : '#002B49'
-  const rippleColor = isGhost || isCobalt ? 'rgba(255,255,255,0.55)' : 'rgba(0,43,73,0.32)'
+    ? '#E2F6F4'
+    : '#0A3B38'
+  const rippleColor = isGhost || isCobalt ? 'rgba(255,255,255,0.55)' : 'rgba(10,59,56,0.32)'
 
   const baseStyle: React.CSSProperties = {
     position: 'relative',
@@ -99,7 +99,7 @@ export function LiquidButton({
     color: textColor,
     textDecoration: 'none',
     cursor: disabled ? 'not-allowed' : 'pointer',
-    border: isGhost ? '1.5px solid rgba(0,51,160,0.32)' : '1px solid rgba(255,255,255,0.55)',
+    border: isGhost ? '1.5px solid rgba(10,126,121,0.32)' : '1px solid rgba(255,255,255,0.55)',
     borderRadius: 999,
     overflow: 'hidden',
     isolation: 'isolate',
@@ -111,7 +111,7 @@ export function LiquidButton({
     boxShadow: isGhost
       ? 'none'
       : isCobalt
-      ? 'inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -3px 6px rgba(0,18,50,0.5), 0 12px 26px -12px rgba(0,51,160,0.65)'
+      ? 'inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -3px 6px rgba(0,18,50,0.5), 0 12px 26px -12px rgba(10,126,121,0.65)'
       : 'inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -3px 6px rgba(100,116,139,0.5), 0 12px 26px -14px rgba(15,23,42,0.55)',
     WebkitTapHighlightColor: 'transparent',
   }

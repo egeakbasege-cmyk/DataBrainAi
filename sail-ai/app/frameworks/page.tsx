@@ -104,7 +104,7 @@ export default function FrameworksPage() {
             fontWeight:    700,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            color:         '#0033A0',
+            color:         '#0A7E79',
             margin:        '0 0 8px',
           }}>
             Strategic Frameworks
@@ -143,7 +143,7 @@ export default function FrameworksPage() {
           {/* Gold hairline */}
           <div style={{
             height:     2,
-            background: 'linear-gradient(90deg, transparent, #0033A0, transparent)',
+            background: 'linear-gradient(90deg, transparent, #0A7E79, transparent)',
             margin:     '-28px -32px 24px',
           }} />
 
@@ -211,7 +211,7 @@ export default function FrameworksPage() {
             <p style={{
               fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.7rem',
-              color:      '#1778DC',
+              color:      '#0ABAB5',
               marginTop:  12,
               marginBottom: 0,
             }}>
@@ -227,9 +227,9 @@ export default function FrameworksPage() {
               disabled={!description.trim() || loading}
               style={{
                 padding:       '10px 28px',
-                background:    loading || !description.trim() ? 'rgba(0,51,160,0.10)' : '#0033A0',
+                background:    loading || !description.trim() ? 'rgba(10,126,121,0.10)' : '#0A7E79',
                 color:         loading || !description.trim() ? '#7f9abd' : '#FFFFFF',
-                boxShadow:     loading || !description.trim() ? 'none' : '0 8px 22px -10px rgba(0,51,160,0.6)',
+                boxShadow:     loading || !description.trim() ? 'none' : '0 8px 22px -10px rgba(10,126,121,0.6)',
                 fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.75rem',
                 fontWeight:    600,
@@ -278,13 +278,13 @@ export default function FrameworksPage() {
             >
               {/* Ansoff */}
               <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', padding: '24px 28px' }}>
-                <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #1778DC, transparent)', margin: '-24px -28px 24px' }} />
+                <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #0ABAB5, transparent)', margin: '-24px -28px 24px' }} />
                 <AnsoffMatrix data={result?.ansoff ?? null} loading={loading} />
               </div>
 
               {/* BCG */}
               <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', padding: '24px 28px' }}>
-                <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #0033A0, transparent)', margin: '-24px -28px 24px' }} />
+                <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #0A7E79, transparent)', margin: '-24px -28px 24px' }} />
                 <BcgMatrix data={result?.bcg ?? null} loading={loading} />
               </div>
             </motion.div>
@@ -304,13 +304,13 @@ export default function FrameworksPage() {
                   title:    'Ansoff Growth Matrix',
                   subtitle: 'Igor Ansoff, 1957',
                   desc:     'Maps your growth strategy across two axes: existing vs. new products, and existing vs. new markets. Determines whether you should penetrate deeper, develop new markets, develop new products, or diversify.',
-                  accent:   '#1778DC',
+                  accent:   '#0ABAB5',
                 },
                 {
                   title:    'BCG Growth-Share Matrix',
                   subtitle: 'Boston Consulting Group, 1970',
                   desc:     'Positions your business unit on market growth rate versus relative market share. Classifies as Star, Cash Cow, Question Mark, or Dog — each with distinct investment and strategy implications.',
-                  accent:   '#0033A0',
+                  accent:   '#0A7E79',
                 },
               ].map(card => (
                 <div key={card.title} style={{

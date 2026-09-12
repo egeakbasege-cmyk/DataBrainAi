@@ -28,10 +28,10 @@ const translations = {
     // ── Landing ──────────────────────────────────────────
     'landing.eyebrow':         'AI Business Advisory',
     'landing.headline':        'Eight specialist minds. One precise answer.',
-    'landing.subheadline':     'Sail AI delivers benchmarked business strategy for independent operators. Each analysis draws on verified industry data — not heuristics — and is calibrated to your specific numbers.',
+    'landing.subheadline':     'Sail AI delivers benchmarked business strategy for independent operators. Every analysis is grounded in verified industry data — not guesswork — and calibrated to your own numbers to surface measurable ways to grow revenue and product value.',
     'landing.cta':             'Begin analysis →',
     'landing.viewPlans':       'View plans',
-    'landing.freeNote':        '5 analyses included at no cost · Unbiased, Data-Driven Strategy.',
+    'landing.freeNote':        '5 analyses included at no cost · unbiased, data-driven strategy',
     'landing.previewLabel':    'Preview — instant insight',
     'landing.indicativeOutputs': 'Indicative outputs',
     'landing.realisticProjections': 'Realistic projections, qualified by source data',
@@ -51,7 +51,7 @@ const translations = {
     'mode.upwind':     'Against the Wind',
     'mode.upwindDesc': 'High-conviction mitigation models for adverse market headwinds.',
     'mode.downwind':   'With the Wind',
-    'mode.downwindDesc': 'Socratic coaching that excavates your optimal commercial path through structured dialogue.',
+    'mode.downwindDesc': 'Socratic coaching that uncovers your best commercial path through structured dialogue.',
     'mode.sail':       'SAIL',
     'mode.sailDesc':   'Adaptive intelligence — detects intent, calibrates depth, synthesises strategy on demand.',
     'mode.trim':       'TRIM',
@@ -405,7 +405,7 @@ const translations = {
     'nav.research':          'Research',
 
     // ── WelcomeBanner (chat page) ─────────────────────────
-    'chat.welcomeTitle':     'Welcome to SAIL AI — here\'s how to get started',
+    'chat.welcomeTitle':     'Welcome to Sail AI — here\'s how to get started',
     'chat.welcomeStep1':     'Describe your business situation in plain language',
     'chat.welcomeStep2':     'Choose an analysis mode (Upwind = fast plan, SAIL = adaptive)',
     'chat.welcomeStep3':     'Get a benchmark-grounded strategy with live web data',
@@ -415,7 +415,7 @@ const translations = {
     // ── ProductWalkthrough UI ─────────────────────────────
     'walk.slide1Chapter':    'Describe your situation',
     'walk.slide2Chapter':    'Select analysis mode',
-    'walk.slide3Chapter':    'SAIL AI analyzes',
+    'walk.slide3Chapter':    'Sail AI analyzes',
     'walk.slide4Chapter':    'Real AI response',
     'walk.slide5Chapter':    'Deep Research + Images',
     'walk.slide6Chapter':    'Get started free',
@@ -440,7 +440,7 @@ const translations = {
     'walk.viewWelcome':      'See full walkthrough →',
     'walk.ctaHeadline':      'Ready to start?',
     'walk.ctaSub':           'Try 5 free analyses — no card required.',
-    'walk.ctaBtn':           'Try SAIL AI Free →',
+    'walk.ctaBtn':           'Try Sail AI Free →',
     'walk.viewPlans':        'View plans',
     'walk.feat1':            '5 analyses/day',
     'walk.feat2':            'All modes',
@@ -458,7 +458,7 @@ const translations = {
     'welcome.signIn':        'Sign in',
     'welcome.tryCta':        'Try for Free →',
     'welcome.heroTitle':     'Strategy grounded in evidence.',
-    'welcome.heroSub':       'See what SAIL AI delivers — then start for free.',
+    'welcome.heroSub':       'See what Sail AI delivers — then start for free.',
     'welcome.currentCvr':   'Current CVR',
     'welcome.sectorMedian':  'Sector median',
     'welcome.signup.title':  'Start for free today',
@@ -1251,7 +1251,7 @@ const translations = {
     'welcome.currentCvr':    'Mevcut CVR',
     'welcome.sectorMedian':  'Sektör medyanı',
     'welcome.signup.title':  'Bugün ücretsiz başlayın',
-    'welcome.signup.sub':    '5 tam analiz / gün · Kredi kartı yok · İstediğiniz zaman iptal edin',
+    'welcome.signup.sub':    '5 tam analiz / g��n · Kredi kartı yok · İstediğiniz zaman iptal edin',
     'welcome.signup.google': 'Google ile Devam Et',
     'welcome.signup.emailMode': 'E-posta ile Devam Et',
     'welcome.signup.nameLabel': 'Ad',
@@ -4328,7 +4328,7 @@ const translations = {
     
     'home.preset.agency.label': '代理管道',
     'home.preset.agency.problem': '收入集中在2–3个客户身上，造成严重的管道风险。',
-    'home.preset.agency.insight': '有结构的季度业务评审可将非自愿流失率降低18–22%。对于6个客户的组合，每年可挽回1–2个长期客户。',
+    'home.preset.agency.insight': '有结构的季度业务评审可将非自愿流失率降低18–22%。对于6个客户的组合，每年��挽回1–2个长期客户。',
 
     // ── 品牌设置 ─────────────────────────────────────────
     'brand.setup.title':    '个性化您的AI',
@@ -4350,7 +4350,7 @@ const translations = {
     // ── 导航额外 ─────────────────────────────────────────
     'nav.research':          '研究',
 
-    // ── 欢迎横幅 ─────────────────────────────────────────
+    // ── 欢迎横幅 ───────────────────────────────────��─────
     'chat.welcomeTitle':     '欢迎使用 SAIL AI — 快速入门指南',
     'chat.welcomeStep1':     '用简单的语言描述您的业务状况',
     'chat.welcomeStep2':     '选择分析模式（迎风 = 快速计划，SAIL = 自适应）',
@@ -4551,7 +4551,7 @@ const translations = {
     'pricing.advisory.f1':      '专业版的一切功能',
     'pricing.advisory.f2':      '最多5个团队席位',
     'pricing.advisory.f3':      'REST API访问',
-    'pricing.advisory.f4':      '自定义基准数据上传',
+    'pricing.advisory.f4':      '自定义基准���据上传',
     'pricing.advisory.f5':      '白标输出格式化',
     'pricing.advisory.f6':      '专属支持渠道',
     'pricing.advisory.f7':      '定制化入职培训',
@@ -4678,7 +4678,7 @@ const translations = {
     'trim.footer': 'Sail AI提供数据驱动的战略分析。',
     'datalab.analysisPlaceholder': '询问有关您数据的任何问题…',
     'datalab.analyzeButton': '分析 →',
-    'datalab.analysisHeading': '提问，开始分析',
+    'datalab.analysisHeading': '提问，���始分析',
     'datalab.benchmarkHeading': '提问以进行基准比较',
     'datalab.instructions': '在上方输入或选择预设查询之一。',
     'datalab.priceScoutPlaceholder': '输入产品或服务…（例如 iPhone 15 Pro）',

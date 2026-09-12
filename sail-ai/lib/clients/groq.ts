@@ -280,36 +280,39 @@ export async function speculativeFetch(
   const abortSimple  = new AbortController()
   const abortComplex = new AbortController()
 
-  // eslint-disable-next-line prefer-const -- mutated inside .then() callbacks
-  let resolvedWith: string = 'complex'
+  // Tag each resolved value with its origin so the winner is identified
+  // reliably from the raced value itself — never from shared mutable state,
+  // which a late-settling loser callback could otherwise overwrite.
+  type Raced = { which: 'simple' | 'complex'; res: Response | null }
 
-  const simpleP = fetch(GROQ_URL, {
+  const simpleP: Promise<Raced> = fetch(GROQ_URL, {
     method: 'POST', headers,
     body:   JSON.stringify(opts.simpleRequest),
     signal: abortSimple.signal,
   })
     .catch(() => null)
-    .then(r => { resolvedWith = 'simple'; return r })
+    .then(res => ({ which: 'simple', res }))
 
-  const complexP = fetch(GROQ_URL, {
+  const complexP: Promise<Raced> = fetch(GROQ_URL, {
     method: 'POST', headers,
     body:   JSON.stringify(opts.complexRequest),
     signal: abortComplex.signal,
   })
     .catch(() => null)
-    .then(r => { resolvedWith = 'complex'; return r })
+    .then(res => ({ which: 'complex', res }))
 
   const winner = await Promise.race([simpleP, complexP])
 
-  // Abort the slower request to reclaim Groq TPM
-  if (resolvedWith === 'simple') abortComplex.abort()
-  else                           abortSimple.abort()
+  if (winner.res?.ok) {
+    // Winner is healthy — abort the slower request to reclaim Groq TPM
+    if (winner.which === 'simple') abortComplex.abort()
+    else                           abortSimple.abort()
+    return winner.res
+  }
 
-  if (winner?.ok) return winner
-
-  // Winner request failed — fall back to the other (already in-flight)
-  const fallback = resolvedWith === 'simple' ? await complexP : await simpleP
-  if (fallback?.ok) return fallback
+  // Winner failed — keep the other request in-flight (do NOT abort it) and use it
+  const other = await (winner.which === 'simple' ? complexP : simpleP)
+  if (other.res?.ok) return other.res
 
   // Both failed — full retry with key rotation
   return groqFetch(opts.complexRequest, byokKey)

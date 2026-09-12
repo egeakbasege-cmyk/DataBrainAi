@@ -49,7 +49,7 @@ export function LegalPage({ title, subtitle, children }: LegalPageProps) {
         minHeight: '100vh',
         background: '#FAFAFA',
         backgroundImage:
-          'linear-gradient(rgba(0,51,160,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,51,160,0.05) 1px, transparent 1px)',
+          'linear-gradient(rgba(10,126,121,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(10,126,121,0.05) 1px, transparent 1px)',
         backgroundSize: '34px 34px',
       }}
     >
@@ -57,7 +57,7 @@ export function LegalPage({ title, subtitle, children }: LegalPageProps) {
         style={{
           background: 'rgba(250,250,250,0.9)',
           backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(0,51,160,0.14)',
+          borderBottom: '1px solid rgba(10,126,121,0.14)',
           padding: '1.125rem 1.5rem',
         }}
       >
@@ -90,7 +90,7 @@ export function LegalPage({ title, subtitle, children }: LegalPageProps) {
             fontWeight: 600,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: '#0033A0',
+            color: '#0A7E79',
             marginBottom: '1rem',
           }}
         >
