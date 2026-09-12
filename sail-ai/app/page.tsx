@@ -221,7 +221,12 @@ export default function LandingPage() {
   const sailboatY = useTransform(scrollY, [0, 500], [0, -70])
   const heroImgOp = useTransform(scrollY, [0, 350], [0.3, 0.08])
 
-  const STAT_PILLS  = [t('landing.stat1'), t('landing.stat2'), t('landing.stat3')]
+  const FEATURE_BADGES = [
+    { label: t('landing.stat1'),       locked: false },
+    { label: t('landing.stat2'),       locked: false },
+    { label: t('landing.stat3'),       locked: false },
+    { label: t('landing.badgeLocked'), locked: true  },
+  ]
   const TRUST_CUES  = [t('landing.trust1'), t('landing.trust2'), t('landing.trust3')]
   const headlineWords = t('landing.headline').split(' ')
 
@@ -240,7 +245,7 @@ export default function LandingPage() {
           Dark full-bleed. Word-by-word headline stagger.
           Sailboat has parallax drift on scroll.
       ══════════════════════════════════════════════ */}
-      <section className="azx-tilesheen" style={{ paddingBottom: 0, position: 'relative', overflow: 'hidden', background: 'transparent', color: 'var(--azx-ink)' }}>
+      <section className="azx-tilesheen" style={{ paddingBottom: 0, position: 'relative', zIndex: 1, overflow: 'hidden', background: '#FAFAF8', color: 'var(--azx-ink)' }}>
         <div
           aria-hidden
           style={{
@@ -261,11 +266,11 @@ export default function LandingPage() {
             className="azx-reveal"
             style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.25rem' }}
           >
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#0ABAB5' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#0A7E79' }}>
               {t('landing.eyebrow')}
             </span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(10,186,181,0.4), transparent)' }} />
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A3B8' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#64748B' }}>
               {t('landing.est')}
             </span>
           </div>
@@ -279,7 +284,7 @@ export default function LandingPage() {
               fontStyle:     'italic',
               lineHeight:    1.05,
               letterSpacing: '-0.02em',
-              color:         '#0A7E79',
+              color:         '#0F172A',
               maxWidth:      '15ch',
               margin:        0,
             }}
@@ -303,7 +308,7 @@ export default function LandingPage() {
               fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   'clamp(1rem, 1.1vw, 1.125rem)',
               lineHeight: 1.7,
-              color:      '#334155',
+              color:      '#1E293B',
               maxWidth:   '46ch',
               marginTop:  '1.75rem',
               fontWeight: 400,
@@ -312,29 +317,42 @@ export default function LandingPage() {
             {t('landing.subheadline')}
           </p>
 
-          {/* Stat pills */}
+          {/* Feature badges */}
           <div
             className="azx-reveal"
             style={{ ['--azx-delay' as string]: '0.62s', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '2rem' }}
           >
-            {STAT_PILLS.map(pill => (
+            {FEATURE_BADGES.map(badge => (
               <span
-                key={pill}
+                key={badge.label}
                 style={{
+                  display:       'inline-flex',
+                  alignItems:    'center',
+                  gap:           '0.4rem',
                   fontFamily:    'var(--font-inter), sans-serif',
-                  fontSize:      '0.67rem',
+                  fontSize:      '0.8125rem',
                   fontWeight:    600,
-                  letterSpacing: '0.05em',
-                  color:         '#0A7E79',
-                  background:    '#FFFFFF',
-                  border:        '1px solid rgba(10,126,121,0.16)',
+                  letterSpacing: '0.01em',
+                  color:         badge.locked ? '#8A6D3B' : '#0A6E6A',
+                  background:    badge.locked ? '#FBF6EC' : '#FFFFFF',
+                  border:        `1px solid ${badge.locked ? 'rgba(201,169,110,0.45)' : 'rgba(10,126,121,0.22)'}`,
                   borderRadius:  '999px',
-                  padding:       '0.3rem 0.8rem',
+                  padding:       '0.42rem 0.95rem',
                   whiteSpace:    'nowrap',
-                  boxShadow:     '0 2px 8px -4px rgba(10,126,121,0.25)',
+                  boxShadow:     '0 2px 10px -5px rgba(10,126,121,0.3)',
                 }}
               >
-                {pill}
+                {badge.locked ? (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0A9E98" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
+                {badge.label}
               </span>
             ))}
           </div>
@@ -351,16 +369,16 @@ export default function LandingPage() {
               variant="ghost"
               size="lg"
               onClick={() =>
-                document.getElementById('tutorial')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                document.getElementById('hero-plan')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
               }
             >
-              {t('landing.watchHow')}
+              {t('landing.exploreProPlans')}
             </LiquidButton>
           </div>
 
           <p
             className="azx-reveal"
-            style={{ ['--azx-delay' as string]: '0.9s', marginTop: '0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#94A3B8', letterSpacing: '0.05em' }}
+            style={{ ['--azx-delay' as string]: '0.9s', marginTop: '0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#64748B', letterSpacing: '0.02em' }}
           >
             {t('landing.freeNote')}
           </p>
@@ -371,7 +389,7 @@ export default function LandingPage() {
             style={{ ['--azx-delay' as string]: '1s', marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
           >
             {TRUST_CUES.map(cue => (
-              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: '#94A3B8', letterSpacing: '0.06em' }}>
+              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.03em' }}>
                 {cue}
               </span>
             ))}
@@ -421,6 +439,76 @@ export default function LandingPage() {
                   borderRadius: '3px', pointerEvents: 'none', overflow: 'hidden',
                 }}
               />
+            </div>
+
+            {/* ── Floating Professional plan card ── */}
+            <div
+              id="hero-plan"
+              style={{
+                position:     'relative',
+                marginTop:    '1.5rem',
+                background:   'linear-gradient(160deg, #08807B 0%, #0A9E98 55%, #0ABAB5 100%)',
+                borderRadius: '18px',
+                padding:      '1.6rem 1.65rem',
+                color:        '#FFFFFF',
+                boxShadow:    '0 28px 60px -30px rgba(8,128,123,0.7), inset 0 0 0 1px rgba(255,255,255,0.14)',
+                overflow:     'hidden',
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  position: 'absolute', top: -40, right: -40, width: 150, height: 150,
+                  borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%)',
+                  pointerEvents: 'none',
+                }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.35rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
+                  {t('landing.proTitle')}
+                </span>
+                <span style={{
+                  fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.625rem', fontWeight: 700,
+                  letterSpacing: '0.12em', textTransform: 'uppercase',
+                  color: '#08403D', background: '#FFFFFF', borderRadius: '999px', padding: '0.28rem 0.6rem',
+                }}>
+                  {t('landing.proBadge')}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginTop: '0.85rem' }}>
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.85rem', fontWeight: 700, lineHeight: 1 }}>
+                  $9.99
+                </span>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', opacity: 0.85 }}>
+                  {t('landing.proPer')}
+                </span>
+              </div>
+
+              <ul style={{ listStyle: 'none', padding: 0, margin: '1.15rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {[t('landing.proFeat1'), t('landing.proFeat2'), t('landing.proFeat3'), t('landing.proFeat4')].map(feat => (
+                  <li key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', lineHeight: 1.45, color: 'rgba(255,255,255,0.94)' }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }} aria-hidden>
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    {feat}
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href="/login?mode=register"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginTop: '1.4rem', padding: '0.85rem', width: '100%',
+                  background: '#FFFFFF', color: '#08403D',
+                  fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', fontWeight: 700,
+                  letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none',
+                  borderRadius: '10px', boxShadow: '0 10px 24px -12px rgba(0,0,0,0.4)',
+                }}
+              >
+                {t('landing.proCta')}
+              </a>
             </div>
           </div>
          </div>{/* end hero grid */}
@@ -680,7 +768,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           SECTION 6 — CTA DARK
           Premium dark banner. Fade-up text + button.
-      ══════════════════════════════════════════════ */}
+      ══════════════════════════════════════════���═══ */}
       <section style={{ background: 'rgba(8,9,13,0.94)', position: 'relative', overflow: 'hidden' }}>
         <TopoBackground />
         <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none', zIndex: 2 }} />
@@ -752,7 +840,7 @@ export default function LandingPage() {
                   SAIL AI
                 </span>
               </Link>
-              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#A1A1AA', lineHeight: 1.6, maxWidth: '24ch', fontWeight: 300 }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#52525B', lineHeight: 1.6, maxWidth: '24ch', fontWeight: 400 }}>
                 {t('landing.footerTagline')}
               </p>
             </div>
@@ -769,7 +857,7 @@ export default function LandingPage() {
                   { href: '/data-lab',  label: t('landing.footerDataLab') },
                   { href: '/dashboard', label: t('landing.footerDashboard') },
                 ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
+                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#52525B', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
                     {l.label}
                   </Link>
                 ))}
@@ -782,7 +870,7 @@ export default function LandingPage() {
                   { href: '/pricing',    label: t('landing.footerPricing') },
                   { href: '/login?mode=register',    label: t('landing.footerGetStarted') },
                 ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
+                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#52525B', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
                     {l.label}
                   </Link>
                 ))}
@@ -799,7 +887,7 @@ export default function LandingPage() {
                   { href: '/refund',  label: 'Refund Policy' },
                   { href: '/contact', label: 'Contact' },
                 ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
+                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#52525B', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
                     {l.label}
                   </Link>
                 ))}
@@ -811,7 +899,7 @@ export default function LandingPage() {
               <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: '0.85rem', color: '#0ABAB5', marginBottom: '0.25rem' }}>
                 {t('landing.est')}
               </p>
-              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#A1A1AA', letterSpacing: '0.04em' }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#71717A', letterSpacing: '0.04em' }}>
                 © {new Date().getFullYear()} Sail AI
               </p>
             </div>
