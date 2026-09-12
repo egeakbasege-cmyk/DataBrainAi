@@ -7,11 +7,15 @@
  */
 
 import { NextRequest }   from 'next/server'
-import { auth }          from '@/lib/auth'
+import NextAuth          from 'next-auth'
+import { authConfig }    from '@/auth.config'
 import { buildKeyPool }  from '@/lib/clients/groq'
 import { COHERE_CHAT_URL, COHERE_MODELS } from '@/lib/clients/cohere'
 
 export const runtime = 'edge'
+
+// Edge-safe auth (JWT sessions, no DB adapter) — avoids pulling Prisma into edge.
+const { auth } = NextAuth(authConfig)
 
 const GROQ_URL = COHERE_CHAT_URL
 

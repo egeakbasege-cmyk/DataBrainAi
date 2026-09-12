@@ -6,9 +6,14 @@
  */
 
 import { type NextRequest } from 'next/server'
-import { auth } from '@/auth'
+import NextAuth from 'next-auth'
+import { authConfig } from '@/auth.config'
 
 export const runtime = 'edge'
+
+// Edge-safe auth (JWT sessions, no DB adapter). Importing the full `@/auth`
+// here would pull PrismaClient/bcryptjs into the Edge Runtime bundle.
+const { auth } = NextAuth(authConfig)
 
 interface EventPayload {
   type: string
