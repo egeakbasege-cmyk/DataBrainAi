@@ -17,6 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
 
 // ── Shared SourceSummary type (mirrors frontend) ──────────────────────────────
 
@@ -289,11 +290,11 @@ async function connectCsv(url: string): Promise<
 // Groq helper — used by connectApi for AI extraction from HTML/text
 // ─────────────────────────────────────────────────────────────────────────────
 
-const GROQ_URL_CONNECT   = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL_CONNECT = 'llama-3.3-70b-versatile'
+const GROQ_URL_CONNECT   = COHERE_CHAT_URL
+const GROQ_MODEL_CONNECT = COHERE_MODELS.PRIMARY
 
 function getGroqKeyConnect(): string | undefined {
-  return process.env.GROQ_API_KEY ?? process.env.GROQ_API_KEY_2
+  return cohereKeys()[0]
 }
 
 // Known marketplace domains — revenue figures are meaningless for these
@@ -365,9 +366,9 @@ Return ONLY valid JSON (no markdown, no explanation):
       }),
       signal: AbortSignal.timeout(15_000),
     })
-    if (!r.ok) throw new Error(`Groq ${r.status}`)
+    if (!r.ok) throw new Error(`Cohere ${r.status}`)
     const groqData  = await r.json()
-    const rawText   = groqData.choices?.[0]?.message?.content ?? ''
+    const rawText   = extractCohereText(groqData)
     const txt       = rawText.replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim()
     const ex        = JSON.parse(txt)
 
@@ -468,9 +469,9 @@ Return ONLY valid JSON (no markdown):
       }),
       signal: AbortSignal.timeout(15_000),
     })
-    if (!r.ok) throw new Error(`Groq ${r.status}`)
+    if (!r.ok) throw new Error(`Cohere ${r.status}`)
     const groqData  = await r.json()
-    const rawText   = groqData.choices?.[0]?.message?.content ?? ''
+    const rawText   = extractCohereText(groqData)
     const txt       = rawText.replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim()
     const ex        = JSON.parse(txt)
 

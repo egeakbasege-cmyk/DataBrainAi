@@ -23,7 +23,7 @@ const stagger = {
 const MARQUEE_ITEMS = [
   'Cancel any time',
   'No hidden fees',
-  'Groq 70B included',
+  'Rocket-speed AI included',
   'Live web research',
   'Swiss precision AI',
   'Enterprise-grade output',

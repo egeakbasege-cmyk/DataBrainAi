@@ -12,12 +12,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
 
-const GROQ_URL   = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
+const GROQ_URL   = COHERE_CHAT_URL
+const GROQ_MODEL = COHERE_MODELS.PRIMARY
 const TAVILY_URL = 'https://api.tavily.com/search'
 
-function getGroqKey()   { return process.env.GROQ_API_KEY ?? process.env.GROQ_API_KEY_2 }
+function getGroqKey()   { return cohereKeys()[0] }
 function getTavilyKey() { return process.env.TAVILY_API_KEY ?? process.env.TAVILY_API_KEY_2 }
 
 export interface PriceResult {
@@ -118,7 +119,7 @@ Rules:
     })
     if (!r.ok) return []
     const data    = await r.json()
-    const rawText = data.choices?.[0]?.message?.content ?? '[]'
+    const rawText = extractCohereText(data) || '[]'
     const cleaned = rawText.replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim()
     const parsed  = JSON.parse(cleaned)
     return Array.isArray(parsed) ? parsed : []
@@ -166,7 +167,7 @@ Be specific, concise, and actionable. No fluff.`
     })
     if (!r.ok) return ''
     const data = await r.json()
-    return data.choices?.[0]?.message?.content?.trim() ?? ''
+    return extractCohereText(data)
   } catch {
     return ''
   }

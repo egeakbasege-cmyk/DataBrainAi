@@ -45,6 +45,7 @@ import {
   extractGroqContent,
 } from '@/lib/clients/groq'
 import type { GroqMessage, GroqRequest }           from '@/lib/clients/groq'
+import { cohereStreamDelta }                        from '@/lib/clients/cohere'
 
 // ── Multi-Mission Orchestrator ────────────────────────────────────────────────
 import {
@@ -816,8 +817,7 @@ SCOPE RULES — NON-NEGOTIABLE:
               const payload = line.slice(6).trim()
               if (payload === '[DONE]') continue
               try {
-                const token = (JSON.parse(payload) as { choices?: Array<{ delta?: { content?: string } }> })
-                  .choices?.[0]?.delta?.content
+                const token = cohereStreamDelta(payload)
                 if (token) ctrl.enqueue(missionSse('chunk', { text: token }))
               } catch { /* skip */ }
             }
@@ -825,7 +825,7 @@ SCOPE RULES — NON-NEGOTIABLE:
           ctrl.enqueue(missionSse('done', {
             missionCount:   results.length,
             complexity:     plan.complexity,
-            modelsUsed:     ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile',
+            modelsUsed:     ['command-r7b-12-2024', 'command-a-03-2025',
                              ...(results.some(r => r.type === 'SEARCH')  ? ['tavily']          : []),
                              ...(results.some(r => r.type === 'RECALL')  ? ['pinecone+cohere'] : []),
                              ...(results.some(r => r.type === 'ANALYZE') ? ['gemini-2.0-flash'] : [])],
@@ -927,8 +927,7 @@ SCOPE RULES — NON-NEGOTIABLE:
               const raw = line.slice(6).trim()
               if (raw === '[DONE]') continue
               try {
-                const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
-                  .choices?.[0]?.delta?.content ?? ''
+                const delta = cohereStreamDelta(raw) ?? ''
                 if (delta) {
                   const clean = stripper.push(delta)
                   if (clean) ctrl.enqueue(encoder.encode(clean))
@@ -1007,8 +1006,7 @@ SCOPE RULES — NON-NEGOTIABLE:
               const raw = line.slice(6).trim()
               if (raw === '[DONE]') continue
               try {
-                const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
-                  .choices?.[0]?.delta?.content ?? ''
+                const delta = cohereStreamDelta(raw) ?? ''
                 if (!delta) continue
 
                 if (!intentEmitted) {
@@ -1114,8 +1112,7 @@ SCOPE RULES — NON-NEGOTIABLE:
               const raw = line.slice(6).trim()
               if (raw === '[DONE]') continue
               try {
-                const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
-                  .choices?.[0]?.delta?.content ?? ''
+                const delta = cohereStreamDelta(raw) ?? ''
                 if (delta) {
                   const clean = stripper.push(delta)
                   if (clean) ctrl.enqueue(encoder.encode(clean))
@@ -1186,8 +1183,7 @@ SCOPE RULES — NON-NEGOTIABLE:
               const raw = line.slice(6).trim()
               if (raw === '[DONE]') continue
               try {
-                const delta = (JSON.parse(raw) as { choices?: Array<{ delta?: { content?: string } }> })
-                  .choices?.[0]?.delta?.content ?? ''
+                const delta = cohereStreamDelta(raw) ?? ''
                 if (delta) {
                   const clean = stripper.push(delta)
                   if (clean) ctrl.enqueue(encoder.encode(clean))

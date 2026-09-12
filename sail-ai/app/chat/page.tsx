@@ -877,7 +877,7 @@ export default function ChatPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                 <div>
                   <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#C9A96E', margin: '0 0 5px', fontWeight: 700 }}>
-                    🔑 Groq API Key Required
+                    🔑 Cohere API Key Required
                   </p>
                   <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 18, fontWeight: 400, color: '#E8EDF3', margin: 0, lineHeight: 1.2 }}>
                     Connect your AI engine
@@ -893,7 +893,7 @@ export default function ChatPage() {
 
               {/* Steps */}
               <ol style={{ margin: '0 0 16px', padding: '0 0 0 16px', fontFamily: 'var(--font-inter), sans-serif', fontSize: 11, color: 'rgba(232,237,243,0.55)', lineHeight: 1.7 }}>
-                <li>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E', textDecoration: 'none', fontWeight: 600 }}>console.groq.com/keys</a></li>
+                <li>Go to <a href="https://dashboard.cohere.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#C9A96E', textDecoration: 'none', fontWeight: 600 }}>dashboard.cohere.com/api-keys</a></li>
                 <li>Create a free account and generate a key</li>
                 <li>Paste it below — stored locally, never sent to our servers</li>
               </ol>
@@ -905,7 +905,7 @@ export default function ChatPage() {
                   value={apiKeyInput}
                   onChange={e => setApiKeyInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && saveApiKey()}
-                  placeholder="gsk_…"
+                  placeholder="Cohere API key…"
                   autoFocus
                   style={{
                     flex: 1, padding: '9px 12px',

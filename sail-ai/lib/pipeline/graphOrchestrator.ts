@@ -25,10 +25,11 @@ import type {
   ValidatedOutput,
 } from './types'
 import { routeAndOptimize }   from './semanticRouter'
+import { COHERE_CHAT_URL, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
-const GROQ_URL        = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_PRIMARY    = 'llama-3.3-70b-versatile'
-const GROQ_FALLBACK   = 'llama-3.1-8b-instant'
+const GROQ_URL        = COHERE_CHAT_URL
+const GROQ_PRIMARY    = COHERE_MODELS.PRIMARY
+const GROQ_FALLBACK   = COHERE_MODELS.FAST
 const MAX_RETRIES     = 3
 const MAX_REPAIR_ITER = 2
 const ANALYSIS_TOKENS = 1800  // balanced: quality output within on_demand TPM budget
@@ -114,9 +115,8 @@ async function groqComplete(
 }
 
 function extractContent(json: unknown): string {
-  const j = json as { choices?: Array<{ message?: { content?: string } }> }
-  const content = j.choices?.[0]?.message?.content?.trim()
-  if (!content) throw new Error('Groq returned empty content')
+  const content = extractCohereText(json)
+  if (!content) throw new Error('Cohere returned empty content')
   return content
 }
 

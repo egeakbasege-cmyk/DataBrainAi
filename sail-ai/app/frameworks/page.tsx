@@ -4,7 +4,7 @@
  * /frameworks — Strategic Framework Visualisations
  * ─────────────────────────────────────────────────────────────────────────────
  * AI-powered Ansoff Matrix and BCG Growth-Share Matrix analysis.
- * Users describe their business; Groq 70B places them in the correct quadrant
+ * Users describe their business; rocket-speed AI places them in the correct quadrant
  * and renders interactive visual frameworks with recommendations.
  */
 

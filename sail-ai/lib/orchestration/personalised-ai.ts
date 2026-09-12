@@ -25,7 +25,7 @@
  *             8B runs on its own 500K TPD pool → 70B TPM unchanged.
  */
 
-import { groqFetch, JSON_SCHEMAS, GROQ_MODELS }     from '@/lib/clients/groq'
+import { groqFetch, JSON_SCHEMAS, GROQ_MODELS, extractGroqContent } from '@/lib/clients/groq'
 import type { GroqMessage }                          from '@/lib/clients/groq'
 import { buildLanguageAnchor, DEEP_RESEARCH_DIRECTIVE } from '@/lib/prompts/enhanced-modes'
 import { PROACTIVE_ENGAGEMENT_CONSTRAINT }           from '@/lib/prompts/enhanced-modes'
@@ -186,8 +186,7 @@ async function runPersonalisedAIAgent(
 
     if (!res.ok) return null
 
-    const data    = await res.json().catch(() => null) as { choices?: Array<{ message?: { content?: string } }> } | null
-    const content = data?.choices?.[0]?.message?.content ?? ''
+    const content = await extractGroqContent(res)
     if (!content) return null
 
     return JSON.parse(content) as SpecialistDraft

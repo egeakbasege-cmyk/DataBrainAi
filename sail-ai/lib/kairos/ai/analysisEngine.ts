@@ -1,25 +1,20 @@
 import { z } from 'zod'
 import type { ShopifyRawData, AmazonRawData, KairosAIAnalysis, KairosPlatform, SupplierEstimate } from '../types'
 import { estimateSupplierCosts } from '../workers/shopifyWorker'
+import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
 
-const GROQ_URL   = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
+const GROQ_URL   = COHERE_CHAT_URL
+const GROQ_MODEL = COHERE_MODELS.PRIMARY
 
-// ── Groq fetch with key rotation (mirrors Sail AI pattern) ───────────────────
+// ── Cohere fetch with key rotation (mirrors Sail AI pattern) ─────────────────
 
 function getGroqKeys(): string[] {
-  return [
-    process.env.GROQ_API_KEY,
-    process.env.GROQ_API_KEY_2,
-    process.env.GROQ_API_KEY_3,
-    process.env.GROQ_API_KEY_4,
-    process.env.GROQ_API_KEY_5,
-  ].filter(Boolean) as string[]
+  return cohereKeys()
 }
 
 async function groqComplete(systemPrompt: string, userPrompt: string): Promise<string> {
   const keys = getGroqKeys()
-  if (keys.length === 0) throw new Error('No GROQ_API_KEY configured')
+  if (keys.length === 0) throw new Error('No COHERE_API_KEY configured')
 
   const body = JSON.stringify({
     model:       GROQ_MODEL,
@@ -41,12 +36,12 @@ async function groqComplete(systemPrompt: string, userPrompt: string): Promise<s
     if (res.status === 429) { lastError = '429'; continue }
     if (!res.ok) {
       const err = await res.text()
-      throw new Error(`Groq error ${res.status}: ${err.slice(0, 200)}`)
+      throw new Error(`Cohere error ${res.status}: ${err.slice(0, 200)}`)
     }
-    const data = await res.json() as any
-    return data.choices?.[0]?.message?.content ?? ''
+    const data = await res.json()
+    return extractCohereText(data)
   }
-  throw new Error(`All Groq keys rate-limited: ${lastError}`)
+  throw new Error(`All Cohere keys rate-limited: ${lastError}`)
 }
 
 // ── Zod validation schema ─────────────────────────────────────────────────────

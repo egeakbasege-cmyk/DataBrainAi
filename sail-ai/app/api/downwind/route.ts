@@ -6,9 +6,9 @@ import { handleApiError, ApiError }    from '@/utils/api-error'
 import type { ConvMessage }            from '@/hooks/useSailState'
 
 const MODEL_CHAIN = [
-  'llama-3.3-70b-versatile',
-  'llama-3.1-8b-instant',
-  'mixtral-8x7b-32768',
+  'command-a-03-2025',
+  'command-r7b-12-2024',
+  'command-r-08-2024',
 ]
 
 // Sector benchmarks data

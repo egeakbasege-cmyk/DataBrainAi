@@ -1,20 +1,15 @@
 import { NextRequest } from 'next/server'
 import { prisma }       from '@/lib/prisma'
+import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, cohereStreamDelta } from '@/lib/clients/cohere'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 60
 
-const GROQ_URL   = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
+const GROQ_URL   = COHERE_CHAT_URL
+const GROQ_MODEL = COHERE_MODELS.PRIMARY
 
 function getGroqKeys(): string[] {
-  return [
-    process.env.GROQ_API_KEY,
-    process.env.GROQ_API_KEY_2,
-    process.env.GROQ_API_KEY_3,
-    process.env.GROQ_API_KEY_4,
-    process.env.GROQ_API_KEY_5,
-  ].filter(Boolean) as string[]
+  return cohereKeys()
 }
 
 export async function POST(req: NextRequest) {
@@ -30,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     const keys = getGroqKeys()
-    if (keys.length === 0) return new Response('No GROQ_API_KEY configured', { status: 500 })
+    if (keys.length === 0) return new Response('No COHERE_API_KEY configured', { status: 500 })
 
     const record = await prisma.kairosAnalysis.findUnique({ where: { id: analysisId } })
     if (!record) return new Response('Analysis not found', { status: 404 })
@@ -82,7 +77,7 @@ Answer directly, concisely, and tactically. Use bullet points for lists. Be spec
       if (res.status === 429) { lastStatus = 429; continue }
       if (!res.ok) {
         const err = await res.text()
-        return new Response(JSON.stringify({ error: `Groq error ${res.status}: ${err.slice(0, 200)}` }), { status: 500 })
+        return new Response(JSON.stringify({ error: `Cohere error ${res.status}: ${err.slice(0, 200)}` }), { status: 500 })
       }
 
       // Stream SSE → plain text chunks to client
@@ -101,11 +96,8 @@ Answer directly, concisely, and tactically. Use bullet points for lists. Be spec
                 if (!line.startsWith('data: ')) continue
                 const payload = line.slice(6).trim()
                 if (payload === '[DONE]') break
-                try {
-                  const json  = JSON.parse(payload)
-                  const token = json.choices?.[0]?.delta?.content
-                  if (token) controller.enqueue(encoder.encode(token))
-                } catch { /* skip malformed chunks */ }
+                const token = cohereStreamDelta(payload)
+                if (token) controller.enqueue(encoder.encode(token))
               }
             }
           } finally {

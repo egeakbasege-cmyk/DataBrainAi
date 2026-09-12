@@ -31,7 +31,7 @@
  * Edge Runtime safe — zero Node.js APIs.
  */
 
-import { groqFetch, GROQ_MODELS, GROQ_URL, buildKeyPool }   from '@/lib/clients/groq'
+import { groqFetch, GROQ_MODELS, GROQ_URL, buildKeyPool, extractGroqContent }   from '@/lib/clients/groq'
 import type { GroqMessage }                                  from '@/lib/clients/groq'
 import { executeDeepSearch, decomposeToSearchQueries,
          encodeResearchContext }                             from '@/lib/tools/search'
@@ -157,8 +157,7 @@ export async function planMissions(
 
     if (!res.ok) return fallback
 
-    const raw = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
-    const txt = raw.choices?.[0]?.message?.content ?? ''
+    const txt = await extractGroqContent(res)
     const plan = JSON.parse(txt) as OrchestrationPlan
 
     // Sanitize
@@ -280,8 +279,7 @@ async function runSpecialistMission(
 
     if (!res.ok) throw new Error(`groq ${res.status}`)
 
-    const raw  = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
-    const txt  = raw.choices?.[0]?.message?.content ?? '{}'
+    const txt  = (await extractGroqContent(res)) || '{}'
     const data = JSON.parse(txt) as {
       insight?: string; criticalFigure?: string; recommendation?: string; confidence?: number
     }
@@ -337,8 +335,7 @@ Use numbers, comparisons, and specific examples. Declarative tone.` },
 
     if (!res.ok) throw new Error(`groq ${res.status}`)
 
-    const raw     = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
-    const content = raw.choices?.[0]?.message?.content ?? ''
+    const content = await extractGroqContent(res)
 
     return {
       missionId:  mission.id,
@@ -357,7 +354,7 @@ Use numbers, comparisons, and specific examples. Declarative tone.` },
   }
 }
 
-// ── 2e. ANALYZE mission (Gemini structured data analysis) ─────────────────────
+// ── 2e. ANALYZE mission (Gemini structured data analysis) ────────────────────��
 
 async function runAnalyzeMission(
   mission:    Mission,
