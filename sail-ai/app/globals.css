@@ -9,6 +9,20 @@
    All tokens live here; dark-context tokens in .aetheris block below.
    ═══════════════════════════════════════════════════════════════ */
 :root {
+  /* ── Azulejo ceramic surface ────────────────── */
+  --azx-ceramic: #F7F9FB;
+  --azx-ink:     #0A1F44;
+  --azx-grout:   rgba(10,31,68,0.055);
+  --azx-cobalt:  #0033A0;
+
+  /* ── Liquid silver / mercury palette ────────── */
+  --azx-silver-0: #ffffff;
+  --azx-silver-1: #eef2f6;
+  --azx-silver-2: #d7dee6;
+  --azx-silver-3: #b9c4cf;
+  --azx-silver-4: #cfd8e2;
+  --azx-silver-hi:#ffffff;
+
   /* ── Light surface palette ──────────────────── */
   --ink:        #0C0C0E;
   --charcoal:   #1C1C1E;
@@ -179,7 +193,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background:              var(--canvas);
+  background:              var(--azx-silver-0);
   color:                   var(--ink);
   font-family:             var(--font-inter), system-ui, sans-serif;
   font-weight:             400;
@@ -189,7 +203,67 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Scrollbar ─────────────────────���───────────────── */
+/* ══════════════════════════════════════════════════════════════
+   LIQUID SILVER BACKDROP
+   Fixed, full-viewport animated mercury behind the whole app.
+   Shows through any transparent / empty area. Two layers:
+   ::before = drifting metallic blobs, ::after = rotating chrome sheen.
+   ══════════════════════════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -20vmax;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(38vmax 32vmax at 20% 25%, var(--azx-silver-hi) 0%, transparent 55%),
+    radial-gradient(34vmax 40vmax at 78% 20%, var(--azx-silver-2) 0%, transparent 58%),
+    radial-gradient(46vmax 38vmax at 70% 82%, var(--azx-silver-3) 0%, transparent 60%),
+    radial-gradient(40vmax 44vmax at 15% 78%, var(--azx-silver-4) 0%, transparent 62%),
+    linear-gradient(120deg, var(--azx-silver-1) 0%, var(--azx-silver-0) 45%, var(--azx-silver-1) 100%);
+  background-size: 200% 200%, 220% 220%, 240% 240%, 210% 210%, 160% 160%;
+  filter: blur(28px) saturate(1.04);
+  animation: azx-liquid-drift 26s ease-in-out infinite alternate;
+  will-change: background-position;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: -40vmax;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    conic-gradient(from 0deg at 50% 50%,
+      transparent 0deg,
+      rgba(255,255,255,0.55) 42deg,
+      rgba(185,196,207,0.30) 90deg,
+      transparent 150deg,
+      rgba(255,255,255,0.45) 220deg,
+      rgba(207,216,226,0.28) 285deg,
+      transparent 340deg);
+  mix-blend-mode: soft-light;
+  filter: blur(40px);
+  opacity: 0.9;
+  animation: azx-liquid-spin 40s linear infinite;
+  will-change: transform;
+}
+
+@keyframes azx-liquid-drift {
+  0% {
+    background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 50%;
+  }
+  50% {
+    background-position: 60% 40%, 30% 60%, 40% 30%, 70% 50%, 100% 50%;
+  }
+  100% {
+    background-position: 100% 100%, 0% 100%, 0% 0%, 100% 0%, 0% 50%;
+  }
+}
+@keyframes azx-liquid-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Scrollbar ─────────────────────�����───────────────── */
 ::-webkit-scrollbar       { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--silver); }
@@ -426,7 +500,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   box-shadow: inset 0 1px 0 rgba(201,169,110,0.2);
 }
 
-/* ══════════��═════════════════════════════════════════════
+/* ════════��═��═════════════════════════════════════════════
    AETHERIS TERMINAL — Component Primitives
    Applied inside .aetheris / [data-theme="aetheris"]
    ════════════════════════════════════════════════════════ */
@@ -656,7 +730,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   font-family: var(--font-playfair), var(--font-cormorant), Georgia, serif;
 }
 
-/* ── Gold gradient text ───────────────────────��───────────── */
+/* ── Gold gradient text ────────────────────��──��───────────── */
 .text-gold-grad {
   background:              var(--gold-grad);
   -webkit-background-clip: text;
@@ -838,7 +912,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   opacity:    0.55;
 }
 
-/* ── Brand gradient hairline ─────────���────────────────────────── */
+/* ── Brand gradient hairline ─────���───���────────────────────────── */
 .sv-brand-rule {
   height:     1px;
   background: linear-gradient(90deg,
@@ -1312,6 +1386,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
     filter: none;
   }
   .azx-mural-sheen::before { animation: none; opacity: 0; }
+  body::before, body::after { animation: none; }
 }
 
 /* ============================================================

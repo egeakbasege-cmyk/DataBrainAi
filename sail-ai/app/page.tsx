@@ -240,12 +240,12 @@ export default function LandingPage() {
           Dark full-bleed. Word-by-word headline stagger.
           Sailboat has parallax drift on scroll.
       ══════════════════════════════════════════════ */}
-      <section className="azx-tilesheen" style={{ paddingBottom: 0, position: 'relative', overflow: 'hidden', background: 'var(--azx-ceramic)', color: 'var(--azx-ink)' }}>
+      <section className="azx-tilesheen" style={{ paddingBottom: 0, position: 'relative', overflow: 'hidden', background: 'transparent', color: 'var(--azx-ink)' }}>
         <div
           aria-hidden
           style={{
             position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
-            backgroundColor: 'var(--azx-ceramic)',
+            backgroundColor: 'transparent',
             backgroundImage:
               'linear-gradient(var(--azx-grout) 1px, transparent 1px), linear-gradient(90deg, var(--azx-grout) 1px, transparent 1px), radial-gradient(120% 80% at 12% -10%, rgba(23,120,220,0.10) 0%, transparent 55%), radial-gradient(110% 90% at 108% 8%, rgba(0,51,160,0.08) 0%, transparent 52%)',
             backgroundSize: '34px 34px, 34px 34px, 100% 100%, 100% 100%',
