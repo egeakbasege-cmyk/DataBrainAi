@@ -11,8 +11,6 @@
 import { NextResponse }   from 'next/server'
 import { auth }           from '@/auth'
 import { providerStatus } from '@/lib/payments'
-import { lsRequest }      from '@/lib/lemonsqueezy'
-
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
@@ -25,7 +23,7 @@ export async function GET() {
   const issues: string[] = []
 
   if (!status.active) {
-    issues.push('No payment provider is configured. Set DODO_PAYMENTS_API_KEY + DODO_PRODUCT_ID, or STRIPE_SECRET_KEY + STRIPE_PRICE_ID, or the LEMONSQUEEZY_* variables.')
+    issues.push('Dodo Payments is not configured. Set DODO_PAYMENTS_API_KEY and DODO_PRODUCT_ID.')
   }
 
   if (status.active === 'dodo') {
@@ -37,34 +35,8 @@ export async function GET() {
     }
   }
 
-  if (status.active === 'stripe') {
-    if (!status.stripe.liveMode) {
-      issues.push('Stripe is using a TEST key (sk_test_…). Real payments require a live key.')
-    }
-    if (!process.env.STRIPE_WEBHOOK_SECRET) {
-      issues.push('STRIPE_WEBHOOK_SECRET is missing — Pro status will not be granted after payment.')
-    }
-  }
-
-  let lemonTestMode: boolean | null = null
-  if (status.lemonsqueezy.configured) {
-    try {
-      const me = await lsRequest<{ meta?: { test_mode?: boolean } }>('/users/me')
-      lemonTestMode = me.meta?.test_mode ?? null
-      if (lemonTestMode) {
-        issues.push('Lemon Squeezy API key is in TEST MODE. Checkouts will not charge real cards. Activate the store and issue a live API key.')
-      }
-    } catch {
-      issues.push('Lemon Squeezy API key was rejected by the API.')
-    }
-    if (!process.env.LEMONSQUEEZY_WEBHOOK_SECRET) {
-      issues.push('LEMONSQUEEZY_WEBHOOK_SECRET is missing — Pro status will not be granted after payment.')
-    }
-  }
-
   return NextResponse.json({
     ...status,
-    lemonsqueezy: { ...status.lemonsqueezy, liveMode: lemonTestMode === null ? null : !lemonTestMode },
     healthy: issues.length === 0,
     issues,
   })

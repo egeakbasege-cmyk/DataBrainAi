@@ -70,9 +70,6 @@ export async function createCheckoutUrl(opts: CheckoutOptions): Promise<string> 
     return_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     metadata: { user_id: opts.userId },
-    // Cards must always be offered as a fallback; if every listed method is
-    // unavailable for the buyer's region the session fails outright.
-    allowed_payment_method_types: ['credit', 'debit'],
   })
 
   if (!session.checkout_url) {
