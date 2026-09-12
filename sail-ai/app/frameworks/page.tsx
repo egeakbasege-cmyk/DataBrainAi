@@ -92,8 +92,9 @@ export default function FrameworksPage() {
   if (status === 'loading' || status === 'unauthenticated') return null
 
   return (
-    <main style={{ minHeight: '100vh', background: '#F9F9F7', padding: '40px 20px 80px' }}>
-      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+    <main className="azx-page" style={{ padding: '40px 20px 80px' }}>
+      <div className="azx-bg" />
+      <div style={{ maxWidth: 900, margin: '0 auto', position: 'relative', zIndex: 1 }}>
 
         {/* Header */}
         <div style={{ marginBottom: 40 }}>
@@ -103,13 +104,13 @@ export default function FrameworksPage() {
             fontWeight:    700,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            color:         '#C9A96E',
+            color:         '#0033A0',
             margin:        '0 0 8px',
           }}>
             Strategic Frameworks
           </p>
           <h1 style={{
-            fontFamily:    'var(--font-cormorant), Georgia, serif',
+            fontFamily:    'var(--font-playfair), Georgia, serif',
             fontSize:      'clamp(1.6rem, 4vw, 2.4rem)',
             fontWeight:    600,
             color:         '#0C0C0E',
@@ -142,7 +143,7 @@ export default function FrameworksPage() {
           {/* Gold hairline */}
           <div style={{
             height:     2,
-            background: 'linear-gradient(90deg, transparent, #C9A96E, transparent)',
+            background: 'linear-gradient(90deg, transparent, #0033A0, transparent)',
             margin:     '-28px -32px 24px',
           }} />
 
@@ -210,7 +211,7 @@ export default function FrameworksPage() {
             <p style={{
               fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.7rem',
-              color:      '#14B8A6',
+              color:      '#1778DC',
               marginTop:  12,
               marginBottom: 0,
             }}>
@@ -226,8 +227,9 @@ export default function FrameworksPage() {
               disabled={!description.trim() || loading}
               style={{
                 padding:       '10px 28px',
-                background:    loading || !description.trim() ? 'rgba(0,0,0,0.06)' : '#0C0C0E',
-                color:         loading || !description.trim() ? '#A1A1AA' : '#FFFFFF',
+                background:    loading || !description.trim() ? 'rgba(0,51,160,0.10)' : '#0033A0',
+                color:         loading || !description.trim() ? '#7f9abd' : '#FFFFFF',
+                boxShadow:     loading || !description.trim() ? 'none' : '0 8px 22px -10px rgba(0,51,160,0.6)',
                 fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.75rem',
                 fontWeight:    600,
@@ -276,13 +278,13 @@ export default function FrameworksPage() {
             >
               {/* Ansoff */}
               <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', padding: '24px 28px' }}>
-                <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #14B8A6, transparent)', margin: '-24px -28px 24px' }} />
+                <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #1778DC, transparent)', margin: '-24px -28px 24px' }} />
                 <AnsoffMatrix data={result?.ansoff ?? null} loading={loading} />
               </div>
 
               {/* BCG */}
               <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', padding: '24px 28px' }}>
-                <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #C9A96E, transparent)', margin: '-24px -28px 24px' }} />
+                <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #0033A0, transparent)', margin: '-24px -28px 24px' }} />
                 <BcgMatrix data={result?.bcg ?? null} loading={loading} />
               </div>
             </motion.div>
@@ -302,13 +304,13 @@ export default function FrameworksPage() {
                   title:    'Ansoff Growth Matrix',
                   subtitle: 'Igor Ansoff, 1957',
                   desc:     'Maps your growth strategy across two axes: existing vs. new products, and existing vs. new markets. Determines whether you should penetrate deeper, develop new markets, develop new products, or diversify.',
-                  accent:   '#14B8A6',
+                  accent:   '#1778DC',
                 },
                 {
                   title:    'BCG Growth-Share Matrix',
                   subtitle: 'Boston Consulting Group, 1970',
                   desc:     'Positions your business unit on market growth rate versus relative market share. Classifies as Star, Cash Cow, Question Mark, or Dog — each with distinct investment and strategy implications.',
-                  accent:   '#C9A96E',
+                  accent:   '#0033A0',
                 },
               ].map(card => (
                 <div key={card.title} style={{
@@ -317,7 +319,7 @@ export default function FrameworksPage() {
                   border:     '1px solid rgba(0,0,0,0.07)',
                   borderLeft: `3px solid ${card.accent}`,
                 }}>
-                  <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.05rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px' }}>
+                  <p style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '1.05rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 4px' }}>
                     {card.title}
                   </p>
                   <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: card.accent, letterSpacing: '0.08em', margin: '0 0 12px', textTransform: 'uppercase', fontWeight: 600 }}>

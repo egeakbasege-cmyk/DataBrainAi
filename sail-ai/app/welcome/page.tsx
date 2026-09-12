@@ -54,8 +54,8 @@ function StepBar({ active }: { active: number }) {
                 width:          36,
                 height:         36,
                 borderRadius:   '50%',
-                background:     done ? '#C9A96E' : curr ? 'rgba(201,169,110,0.15)' : 'rgba(12,12,14,0.06)',
-                border:         `2px solid ${done ? '#C9A96E' : curr ? '#C9A96E' : 'rgba(12,12,14,0.12)'}`,
+                background:     done ? '#1778DC' : curr ? 'rgba(23,120,220,0.15)' : 'rgba(12,12,14,0.06)',
+                border:         `2px solid ${done ? '#1778DC' : curr ? '#1778DC' : 'rgba(12,12,14,0.12)'}`,
                 display:        'flex',
                 alignItems:     'center',
                 justifyContent: 'center',
@@ -69,7 +69,7 @@ function StepBar({ active }: { active: number }) {
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div style={{ flex: 1, height: 2, background: done ? '#C9A96E' : 'rgba(12,12,14,0.1)', margin: '0 0.25rem', marginBottom: '1.1rem', transition: 'background 0.3s' }} />
+              <div style={{ flex: 1, height: 2, background: done ? '#1778DC' : 'rgba(12,12,14,0.1)', margin: '0 0.25rem', marginBottom: '1.1rem', transition: 'background 0.3s' }} />
             )}
           </div>
         )
@@ -83,13 +83,13 @@ function ExampleCard() {
   return (
     <div style={{
       background:   '#0C0C0E',
-      border:       '1px solid rgba(201,169,110,0.2)',
+      border:       '1px solid rgba(23,120,220,0.2)',
       borderRadius: '12px',
       overflow:     'hidden',
     }}>
       {/* Query pill */}
       <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#C9A96E', flexShrink: 0 }} />
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#1778DC', flexShrink: 0 }} />
         <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', margin: 0, fontStyle: 'italic' }}>
           &ldquo;{t('walk.demoQuery')}&rdquo;
         </p>
@@ -97,7 +97,7 @@ function ExampleCard() {
 
       <div style={{ padding: '1rem' }}>
         {/* Insight */}
-        <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.65, marginBottom: '0.875rem' }}>
+        <p style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.65, marginBottom: '0.875rem' }}>
           {t('walk.demoInsight')}
         </p>
 
@@ -120,7 +120,7 @@ function ExampleCard() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.875rem' }}>
           {[t('walk.demoAction1'), t('walk.demoAction2'), t('walk.demoAction3')].map((a, i) => (
             <div key={i} style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: '#C9A96E', fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: '#1778DC', fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
               <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.45 }}>{a}</p>
             </div>
           ))}
@@ -183,7 +183,7 @@ function SignupSection({ onSignedUp }: { onSignedUp: () => void }) {
     return (
       <div style={{ textAlign: 'center', padding: '2rem' }}>
         <div style={{ fontSize: 40, marginBottom: '0.75rem' }}>🎉</div>
-        <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.2rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.25rem' }}>
+        <p style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '1.2rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.25rem' }}>
           {t('welcome.signup.success')}
         </p>
         <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#71717A' }}>{t('welcome.signup.successSub')}</p>
@@ -275,7 +275,7 @@ function SignupSection({ onSignedUp }: { onSignedUp: () => void }) {
           <input type="email" placeholder={t('welcome.signup.emailLabel')} value={email} onChange={e => setEmail(e.target.value)} required style={inp} />
           <input type="password" placeholder={t('welcome.signup.passwordLabel')} value={password} onChange={e => setPassword(e.target.value)} required style={inp} />
           {error && <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#991B1B', background: 'rgba(153,27,27,0.05)', border: '1px solid rgba(153,27,27,0.15)', padding: '0.5rem 0.75rem', borderRadius: '4px', margin: 0 }}>{error}</p>}
-          <button type="submit" disabled={loading} style={{ padding: '0.8rem', background: loading ? '#3A3A3C' : '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', cursor: loading ? 'wait' : 'pointer' }}>
+          <button type="submit" disabled={loading} style={{ padding: '0.8rem', background: loading ? '#4B5C78' : '#0033A0', color: '#FAFAFA', border: 'none', borderRadius: '3px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', cursor: loading ? 'wait' : 'pointer', boxShadow: loading ? 'none' : '0 8px 22px -10px rgba(0,51,160,0.6)' }}>
             {loading ? t('welcome.signup.creating') : t('welcome.signup.createBtn')}
           </button>
         </form>
@@ -289,7 +289,7 @@ function SignupSection({ onSignedUp }: { onSignedUp: () => void }) {
       </p>
 
       <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: '#71717A', textAlign: 'center', margin: 0 }}>
-        <Link href="/login" style={{ color: '#C9A96E', textDecoration: 'none', fontWeight: 600 }}>{t('login.signIn')}</Link>
+        <Link href="/login" style={{ color: '#1778DC', textDecoration: 'none', fontWeight: 600 }}>{t('login.signIn')}</Link>
       </p>
     </div>
   )
@@ -343,13 +343,13 @@ function PricingSection({ onUpgrade }: { onUpgrade: () => void }) {
           onClick={() => setYearly(v => !v)}
           style={{
             position: 'relative', width: 36, height: 18, borderRadius: 999,
-            background: yearly ? '#C9A96E' : '#D1D5DB', border: 'none', cursor: 'pointer', padding: 0,
+            background: yearly ? '#1778DC' : '#D1D5DB', border: 'none', cursor: 'pointer', padding: 0,
           }}
         >
           <span style={{ position: 'absolute', top: 2, left: yearly ? 18 : 2, width: 14, height: 14, borderRadius: '50%', background: '#FFF', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s', display: 'block' }} />
         </button>
         <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: yearly ? '#0C0C0E' : '#A1A1AA', fontWeight: yearly ? 600 : 400, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          {t('welcome.pricing.yearly').split('(')[0].trim()} {yearly && <span style={{ fontSize: '0.58rem', background: 'rgba(201,169,110,0.15)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.3)', borderRadius: '4px', padding: '1px 5px', fontWeight: 700 }}>–20%</span>}
+          {t('welcome.pricing.yearly').split('(')[0].trim()} {yearly && <span style={{ fontSize: '0.58rem', background: 'rgba(23,120,220,0.15)', color: '#1778DC', border: '1px solid rgba(23,120,220,0.3)', borderRadius: '4px', padding: '1px 5px', fontWeight: 700 }}>–20%</span>}
         </span>
       </div>
 
@@ -361,14 +361,14 @@ function PricingSection({ onUpgrade }: { onUpgrade: () => void }) {
           <div>
             <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#71717A' }}>Starter</span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginTop: '0.4rem' }}>
-              <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.2rem', fontWeight: 700, color: '#0C0C0E', lineHeight: 1 }}>$0</span>
+              <span style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '2.2rem', fontWeight: 700, color: '#0C0C0E', lineHeight: 1 }}>$0</span>
               <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#A1A1AA' }}>/{t('pricing.noCharge')}</span>
             </div>
           </div>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
             {FREE_FEATURES.map(f => (
               <li key={f} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#3A3A3C', lineHeight: 1.4, display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                <span style={{ color: '#C9A96E', fontSize: '0.55rem', flexShrink: 0, marginTop: '0.3rem' }}>◆</span>
+                <span style={{ color: '#1778DC', fontSize: '0.55rem', flexShrink: 0, marginTop: '0.3rem' }}>◆</span>
                 {f}
               </li>
             ))}
@@ -382,25 +382,25 @@ function PricingSection({ onUpgrade }: { onUpgrade: () => void }) {
         </div>
 
         {/* Pro */}
-        <div style={{ background: '#0C0C0E', border: '2px solid rgba(201,169,110,0.4)', borderRadius: '10px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.875rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: '#0C0C0E', border: '2px solid rgba(23,120,220,0.4)', borderRadius: '10px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.875rem', position: 'relative', overflow: 'hidden' }}>
           {/* Gold top line */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #0C0C0E, #C9A96E, #0C0C0E)' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #0C0C0E, #1778DC, #0C0C0E)' }} />
           {proBadge && (
-            <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.55rem', fontWeight: 700, color: '#0C0C0E', background: '#C9A96E', padding: '2px 7px', borderRadius: '10px' }}>
+            <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.55rem', fontWeight: 700, color: '#0C0C0E', background: '#1778DC', padding: '2px 7px', borderRadius: '10px' }}>
               {proBadge}
             </div>
           )}
           <div>
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C9A96E' }}>Professional</span>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#1778DC' }}>Professional</span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginTop: '0.4rem' }}>
-              <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.2rem', fontWeight: 700, color: '#FFFFFF', lineHeight: 1 }}>{proPrice}</span>
+              <span style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '2.2rem', fontWeight: 700, color: '#FFFFFF', lineHeight: 1 }}>{proPrice}</span>
               <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{proPeriod}</span>
             </div>
           </div>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
             {PRO_FEATURES.map(f => (
               <li key={f} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.4, display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                <span style={{ color: '#C9A96E', fontSize: '0.55rem', flexShrink: 0, marginTop: '0.3rem' }}>◆</span>
+                <span style={{ color: '#1778DC', fontSize: '0.55rem', flexShrink: 0, marginTop: '0.3rem' }}>◆</span>
                 {f}
               </li>
             ))}
@@ -408,7 +408,7 @@ function PricingSection({ onUpgrade }: { onUpgrade: () => void }) {
           <button
             onClick={handleStripe}
             disabled={loading}
-            style={{ padding: '0.7rem', background: '#C9A96E', border: 'none', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#0C0C0E', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}
+            style={{ padding: '0.7rem', background: '#1778DC', border: 'none', borderRadius: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#0C0C0E', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}
           >
             {loading ? t('pricing.redirecting') : t('welcome.pricing.upgradePro')}
           </button>
@@ -420,7 +420,7 @@ function PricingSection({ onUpgrade }: { onUpgrade: () => void }) {
 
       {/* Skip to free */}
       <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#A1A1AA', textAlign: 'center', margin: 0 }}>
-        <Link href="/chat" style={{ color: '#C9A96E', textDecoration: 'none', fontWeight: 600 }}>{t('welcome.pricing.skip')}</Link>
+        <Link href="/chat" style={{ color: '#1778DC', textDecoration: 'none', fontWeight: 600 }}>{t('welcome.pricing.skip')}</Link>
       </p>
     </div>
   )
@@ -437,7 +437,7 @@ function FAQSection() {
   ]
   return (
     <div>
-      <h3 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.2rem', fontWeight: 600, color: '#0C0C0E', marginBottom: '1.25rem' }}>
+      <h3 style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '1.2rem', fontWeight: 600, color: '#0C0C0E', marginBottom: '1.25rem' }}>
         {t('welcome.faq.title')}
       </h3>
       {faqItems.map((faq, i) => (
@@ -446,8 +446,8 @@ function FAQSection() {
             onClick={() => setOpen(open === i ? null : i)}
             style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', gap: '1rem' }}
           >
-            <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#0C0C0E', lineHeight: 1.3 }}>{faq.q}</span>
-            <span style={{ color: '#C9A96E', fontSize: '1rem', flexShrink: 0, transition: 'transform 0.2s', transform: open === i ? 'rotate(45deg)' : 'none' }}>+</span>
+            <span style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '1rem', fontWeight: 600, color: '#0C0C0E', lineHeight: 1.3 }}>{faq.q}</span>
+            <span style={{ color: '#1778DC', fontSize: '1rem', flexShrink: 0, transition: 'transform 0.2s', transform: open === i ? 'rotate(45deg)' : 'none' }}>+</span>
           </button>
           {open === i && (
             <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: '#71717A', lineHeight: 1.7, paddingBottom: '1rem', margin: 0, fontWeight: 300 }}>
@@ -474,11 +474,11 @@ export default function WelcomePage() {
       <header style={{ position: 'sticky', top: 0, zIndex: 30, background: 'rgba(250,250,248,0.95)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(0,0,0,0.07)', padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}>
           <Logo size={24} />
-          <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '0.95rem', fontWeight: 600, letterSpacing: '0.07em', color: '#0C0C0E' }}>SAIL AI</span>
+          <span style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '0.95rem', fontWeight: 600, letterSpacing: '0.07em', color: '#0C0C0E' }}>SAIL AI</span>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link href="/login" style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#71717A', textDecoration: 'none', letterSpacing: '0.05em' }}>{t('welcome.signIn')}</Link>
-          <Link href="/chat" style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, color: '#0C0C0E', background: 'rgba(201,169,110,0.15)', border: '1px solid rgba(201,169,110,0.3)', borderRadius: '5px', padding: '0.35rem 0.875rem', textDecoration: 'none', letterSpacing: '0.06em' }}>
+          <Link href="/chat" style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, color: '#0C0C0E', background: 'rgba(23,120,220,0.15)', border: '1px solid rgba(23,120,220,0.3)', borderRadius: '5px', padding: '0.35rem 0.875rem', textDecoration: 'none', letterSpacing: '0.06em' }}>
             {t('welcome.tryCta')}
           </Link>
         </div>
@@ -494,13 +494,13 @@ export default function WelcomePage() {
             style={{ textAlign: 'center', marginBottom: '2rem' }}
           >
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
-              <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.55)' }} />
-              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>SAIL AI</span>
-              <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.55)' }} />
+              <div style={{ width: 28, height: 1, background: 'rgba(23,120,220,0.55)' }} />
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1778DC' }}>SAIL AI</span>
+              <div style={{ width: 28, height: 1, background: 'rgba(23,120,220,0.55)' }} />
             </motion.div>
             <motion.h1
               variants={fadeUp}
-              style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', fontWeight: 600, color: '#FFFFFF', margin: '0 0 0.75rem', lineHeight: 1.15 }}
+              style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', fontWeight: 600, color: '#FFFFFF', margin: '0 0 0.75rem', lineHeight: 1.15 }}
             >
               {t('welcome.heroTitle')}
             </motion.h1>
@@ -533,12 +533,12 @@ export default function WelcomePage() {
           >
             <motion.div variants={fadeUp}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
-                <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
-                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+                <div style={{ width: 28, height: 1, background: '#1778DC', opacity: 0.6 }} />
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1778DC' }}>
                   {t('walk.insight')}
                 </span>
               </div>
-              <h2 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 'clamp(1.4rem, 2.5vw, 1.75rem)', fontWeight: 600, color: '#0C0C0E', lineHeight: 1.25, margin: '0 0 1rem' }}>
+              <h2 style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: 'clamp(1.4rem, 2.5vw, 1.75rem)', fontWeight: 600, color: '#0C0C0E', lineHeight: 1.25, margin: '0 0 1rem' }}>
                 {t('welcome.heroTitle')}
               </h2>
               <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', color: '#71717A', lineHeight: 1.78, fontWeight: 300, margin: '0 0 1.75rem' }}>
@@ -577,7 +577,7 @@ export default function WelcomePage() {
             transition={{ duration: 0.65, ease: EASE }}
             style={{ background: '#FAFAF8', border: '1px solid rgba(0,0,0,0.09)', borderRadius: '14px', padding: '2.25rem 2.5rem', marginBottom: '1.5rem' }}
           >
-            <h2 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.5rem' }}>
+            <h2 style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.5rem' }}>
               {t('welcome.signup.title')}
             </h2>
             <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#71717A', margin: '0 0 1.75rem', fontWeight: 300, lineHeight: 1.7 }}>
@@ -594,7 +594,7 @@ export default function WelcomePage() {
             transition={{ duration: 0.65, delay: 0.1, ease: EASE }}
             style={{ background: '#FAFAF8', border: '1px solid rgba(0,0,0,0.09)', borderRadius: '14px', padding: '2.25rem 2.5rem', marginBottom: '1.5rem' }}
           >
-            <h2 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.375rem' }}>
+            <h2 style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '1.4rem', fontWeight: 600, color: '#0C0C0E', margin: '0 0 0.375rem' }}>
               {t('welcome.pricing.title')}
             </h2>
             <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: '#71717A', margin: '0 0 1.75rem', fontWeight: 300, lineHeight: 1.7 }}>
@@ -617,8 +617,8 @@ export default function WelcomePage() {
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────────── */}
-      <footer style={{ background: '#0C0C0E', padding: '2rem 1.5rem', textAlign: 'center', borderTop: '1px solid rgba(201,169,110,0.1)' }}>
-        <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.4), rgba(20,184,166,0.3), transparent)', marginBottom: '1.25rem' }} />
+      <footer style={{ background: '#0C0C0E', padding: '2rem 1.5rem', textAlign: 'center', borderTop: '1px solid rgba(23,120,220,0.1)' }}>
+        <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(23,120,220,0.4), rgba(23,120,220,0.3), transparent)', marginBottom: '1.25rem' }} />
         <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', margin: 0 }}>
           © {new Date().getFullYear()} SAIL AI · <Link href="/pricing" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>{t('nav.pricing')}</Link> · <Link href="/chat" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>{t('nav.chartCourse')}</Link>
         </p>

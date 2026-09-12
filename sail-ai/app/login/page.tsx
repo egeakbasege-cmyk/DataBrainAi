@@ -107,9 +107,9 @@ function LoginForm() {
   return (
     <main style={{
       minHeight:       '100vh',
-      background:      'var(--sv-mint-bg)',
-      backgroundImage: 'linear-gradient(rgba(45,212,191,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(45,212,191,0.05) 1px, transparent 1px)',
-      backgroundSize:  '60px 60px',
+      background:      '#FAFAFA',
+      backgroundImage: 'linear-gradient(rgba(0,51,160,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,51,160,0.05) 1px, transparent 1px), radial-gradient(120% 80% at 15% -10%, rgba(23,120,220,0.10) 0%, transparent 55%)',
+      backgroundSize:  '34px 34px, 34px 34px, 100% 100%',
       display:         'flex',
       flexDirection:   'column',
       alignItems:      'center',
@@ -121,9 +121,9 @@ function LoginForm() {
         width:              '100%',
         maxWidth:           '400px',
         background:         'rgba(255,255,255,0.92)',
-        border:             '1px solid rgba(12,12,14,0.09)',
-        borderRadius:       '8px',
-        boxShadow:          '0 8px 48px rgba(20,184,166,0.10), 0 2px 12px rgba(0,0,0,0.06)',
+        border:             '1px solid rgba(0,51,160,0.14)',
+        borderRadius:       '3px',
+        boxShadow:          '0 8px 48px rgba(0,51,160,0.12), 0 2px 12px rgba(0,0,0,0.06)',
         padding:            '3rem 2.5rem',
         backdropFilter:     'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
@@ -132,7 +132,7 @@ function LoginForm() {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2.5rem', justifyContent: 'center' }}>
           <Logo size={42} />
-          <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.1rem', fontWeight: 600, letterSpacing: '0.08em', color: '#0C0C0E' }}>
+          <span style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.08em', color: '#002147' }}>
             SAIL AI
           </span>
         </div>
@@ -146,10 +146,10 @@ function LoginForm() {
                 padding: '0.625rem', fontFamily: 'var(--font-inter), sans-serif',
                 fontSize: '0.72rem', fontWeight: mode === m ? 600 : 400,
                 letterSpacing: '0.07em', textTransform: 'uppercase',
-                background: mode === m ? '#0C0C0E' : 'transparent',
-                color: mode === m ? '#FAFAF8' : '#71717A',
+                background: mode === m ? '#0033A0' : 'transparent',
+                color: mode === m ? '#FAFAFA' : '#5B6B8C',
                 border: 'none',
-                borderBottom: mode === m ? '2px solid #14B8A6' : undefined,
+                borderBottom: mode === m ? '2px solid #1778DC' : undefined,
                 cursor: 'pointer', transition: 'all 0.15s',
               }}
             >
@@ -239,7 +239,7 @@ function LoginForm() {
 
           <button
             type="submit" disabled={isLoading}
-            style={{ width: '100%', padding: '0.8125rem', background: isLoading ? '#3A3A3C' : '#0C0C0E', color: '#FAFAF8', border: 'none', borderRadius: '4px', cursor: isLoading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', transition: 'background 0.15s' }}
+            style={{ width: '100%', padding: '0.8125rem', background: isLoading ? '#4B5C78' : '#0033A0', color: '#FAFAFA', border: 'none', borderRadius: '3px', cursor: isLoading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', transition: 'background 0.15s', boxShadow: isLoading ? 'none' : '0 8px 22px -10px rgba(0,51,160,0.6)' }}
           >
             {loading
               ? (mode === 'register' ? t('login.creating') : t('login.signingIn'))
@@ -265,7 +265,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <main style={{ minHeight: '100vh', background: '#FAFAF8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <main style={{ minHeight: '100vh', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <SpinIcon size={28} />
       </main>
     }>

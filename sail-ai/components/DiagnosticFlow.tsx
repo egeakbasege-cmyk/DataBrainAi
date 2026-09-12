@@ -44,12 +44,12 @@ const T = {
     fontSize:      '0.65rem',
     letterSpacing: '0.1em',
     textTransform: 'uppercase' as const,
-    color:         '#C9A96E',
+    color:         '#1778DC',
     marginBottom:  '0.5rem',
     display:       'block',
   },
   heading: {
-    fontFamily:    'var(--font-cormorant), Georgia, serif',
+    fontFamily:    'var(--font-playfair), Georgia, serif',
     fontStyle:     'italic' as const,
     fontWeight:    600,
     fontSize:      'clamp(1.5rem, 4vw, 2rem)',
@@ -83,8 +83,8 @@ function Tile({ label, selected, onClick, wide }: {
       style={{
         padding:    wide ? '0.75rem 1.25rem' : '0.875rem 1rem',
         textAlign:  'left',
-        border:     `1px solid ${selected ? 'rgba(201,169,110,0.65)' : 'rgba(12,12,14,0.1)'}`,
-        background: selected ? 'rgba(201,169,110,0.07)' : '#FFFFFF',
+        border:     `1px solid ${selected ? 'rgba(23,120,220,0.65)' : 'rgba(12,12,14,0.1)'}`,
+        background: selected ? 'rgba(23,120,220,0.07)' : '#FFFFFF',
         cursor:     'pointer',
         transition: 'all 0.14s',
         fontFamily: 'var(--font-inter), sans-serif',
@@ -111,7 +111,7 @@ function RangeSlider({ value, min, max, onChange, formatLabel, hint }: {
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1.5rem' }}>
         <span style={{
-          fontFamily:    'var(--font-cormorant), Georgia, serif',
+          fontFamily:    'var(--font-playfair), Georgia, serif',
           fontSize:      'clamp(2rem, 7vw, 3rem)',
           fontWeight:    600,
           color:         '#0C0C0E',
@@ -129,7 +129,7 @@ function RangeSlider({ value, min, max, onChange, formatLabel, hint }: {
           height: '2px', background: 'rgba(12,12,14,0.08)',
           transform: 'translateY(-50%)',
         }}>
-          <div style={{ height: '100%', background: '#C9A96E', width: `${pct}%`, transition: 'width 0.05s' }} />
+          <div style={{ height: '100%', background: '#1778DC', width: `${pct}%`, transition: 'width 0.05s' }} />
         </div>
         <input
           type="range" min={min} max={max} value={value}
@@ -151,7 +151,7 @@ function RangeSlider({ value, min, max, onChange, formatLabel, hint }: {
           box-shadow: 0 1px 4px rgba(0,0,0,0.12); cursor: pointer;
         }
         input[type=range]:active::-webkit-slider-thumb {
-          border-color: #C9A96E; box-shadow: 0 0 0 5px rgba(201,169,110,0.14);
+          border-color: #1778DC; box-shadow: 0 0 0 5px rgba(23,120,220,0.14);
         }
         input[type=range]::-moz-range-thumb {
           width: 20px; height: 20px; border-radius: 50%;
@@ -190,7 +190,7 @@ function StepIndustry({ data, update, tFn }: { data: DiagnosticInput; update: (k
             fontSize:    '0.875rem',
             color:       '#0C0C0E',
             background:  '#FFFFFF',
-            border:      '1px solid rgba(201,169,110,0.5)',
+            border:      '1px solid rgba(23,120,220,0.5)',
             outline:     'none',
           }}
           autoFocus
@@ -244,7 +244,7 @@ function StepFinancials({ data, update, tFn }: { data: DiagnosticInput; update: 
           formatLabel={v => v >= 50 ? '50%+' : `${v}%`}
         />
         {data.industry && (
-          <p style={{ ...T.small, marginTop: '0.5rem', color: '#C9A96E' }}>
+          <p style={{ ...T.small, marginTop: '0.5rem', color: '#1778DC' }}>
             {(() => {
               const b = INDUSTRY_BENCHMARKS[data.industry]
               return `${data.industry} benchmark: ${b.low}–${b.high}%`
@@ -263,7 +263,7 @@ function StepCashReserves({ data, update, tFn }: { data: DiagnosticInput; update
     months < 3  ? { label: tFn('diag.vulnerable'),  color: '#B45309' } :
     months < 6  ? { label: tFn('diag.moderate'),    color: '#0C0C0E' } :
     months < 9  ? { label: tFn('diag.healthy'),     color: '#1A5276' } :
-                  { label: tFn('diag.strong'),       color: '#C9A96E' }
+                  { label: tFn('diag.strong'),       color: '#1778DC' }
 
   return (
     <div>
@@ -367,7 +367,7 @@ function ResultScreen({ result, onConfirm, tFn }: { result: DiagnosticResult; on
             alignItems: 'center', justifyContent: 'center',
           }}>
             <span style={{
-              fontFamily:    'var(--font-cormorant), Georgia, serif',
+              fontFamily:    'var(--font-playfair), Georgia, serif',
               fontSize:      '1.75rem',
               fontWeight:    600,
               color:         '#0C0C0E',
@@ -450,7 +450,7 @@ function InsightBox({ icon, text }: { icon: 'margin' | 'cash'; text: string }) {
       gap:        '0.75rem',
       alignItems: 'flex-start',
     }}>
-      <span style={{ color: '#C9A96E', flexShrink: 0, marginTop: '1px', lineHeight: 1 }}>
+      <span style={{ color: '#1778DC', flexShrink: 0, marginTop: '1px', lineHeight: 1 }}>
         {icon === 'margin' ? (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="12" y1="1" x2="12" y2="23" />
@@ -530,7 +530,7 @@ export function DiagnosticFlow() {
       {/* Progress bar */}
       <div style={{ height: 2, background: 'rgba(12,12,14,0.07)', flexShrink: 0 }}>
         <motion.div
-          style={{ height: '100%', background: '#C9A96E' }}
+          style={{ height: '100%', background: '#1778DC' }}
           animate={{ width: `${progress * 100}%` }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         />
@@ -551,7 +551,7 @@ export function DiagnosticFlow() {
               style={{
                 width:     i === screen ? 20 : 6,
                 height:    6,
-                background: i <= screen ? '#C9A96E' : 'rgba(12,12,14,0.12)',
+                background: i <= screen ? '#1778DC' : 'rgba(12,12,14,0.12)',
                 transition: 'all 0.3s',
               }}
             />

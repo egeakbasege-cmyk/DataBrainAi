@@ -44,11 +44,20 @@ interface LegalPageProps {
 
 export function LegalPage({ title, subtitle, children }: LegalPageProps) {
   return (
-    <main style={{ minHeight: '100vh', background: '#FAFAF8' }}>
+    <main
+      style={{
+        minHeight: '100vh',
+        background: '#FAFAFA',
+        backgroundImage:
+          'linear-gradient(rgba(0,51,160,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,51,160,0.05) 1px, transparent 1px)',
+        backgroundSize: '34px 34px',
+      }}
+    >
       <header
         style={{
-          background: '#FFFFFF',
-          borderBottom: '1px solid rgba(12,12,14,0.08)',
+          background: 'rgba(250,250,250,0.9)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid rgba(0,51,160,0.14)',
           padding: '1.125rem 1.5rem',
         }}
       >
@@ -60,11 +69,11 @@ export function LegalPage({ title, subtitle, children }: LegalPageProps) {
             <Logo size={26} />
             <span
               style={{
-                fontFamily: 'var(--font-cormorant), Georgia, serif',
+                fontFamily: 'var(--font-playfair), Georgia, serif',
                 fontWeight: 700,
                 fontSize: '0.9rem',
                 letterSpacing: '0.1em',
-                color: '#0C0C0E',
+                color: '#002147',
               }}
             >
               SAIL AI
@@ -81,7 +90,7 @@ export function LegalPage({ title, subtitle, children }: LegalPageProps) {
             fontWeight: 600,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: '#8A6D3B',
+            color: '#0033A0',
             marginBottom: '1rem',
           }}
         >
@@ -90,12 +99,12 @@ export function LegalPage({ title, subtitle, children }: LegalPageProps) {
 
         <h1
           style={{
-            fontFamily: 'var(--font-cormorant), Georgia, serif',
+            fontFamily: 'var(--font-playfair), Georgia, serif',
             fontStyle: 'italic',
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: 'clamp(2rem, 5vw, 2.75rem)',
             lineHeight: 1.15,
-            color: '#0C0C0E',
+            color: '#002147',
             marginBottom: '0.875rem',
           }}
         >
