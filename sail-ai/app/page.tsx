@@ -22,8 +22,9 @@
  *   • Teal: #94A3B8 · Slate: #71717A · Silver: #A1A1AA
  */
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import { motion, useScroll, useTransform, useInView, animate } from 'framer-motion'
 import { Nav } from '@/components/Nav'
 import { Logo } from '@/components/Logo'
@@ -216,7 +217,35 @@ function ModeCard({
 // ── Main page ───────────────────────────────────────────────────
 export default function LandingPage() {
   const { t } = useLanguage()
+  const { data: session } = useSession()
   const { scrollY } = useScroll()
+
+  const [proLoading, setProLoading] = useState(false)
+
+  // Pro plan CTA: signed-out → register, Pro member → app, otherwise start checkout.
+  async function handleProUpgrade() {
+    if (proLoading) return
+    if (!session?.user) {
+      window.location.href = '/login?mode=register&next=/pricing'
+      return
+    }
+    if ((session.user as { isPro?: boolean }).isPro) {
+      window.location.href = '/home'
+      return
+    }
+    setProLoading(true)
+    try {
+      const res  = await fetch('/api/checkout', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok || data.error || !data.url) throw new Error(data.error ?? 'Could not start checkout.')
+      window.location.href = data.url
+    } catch (err) {
+      console.error('Checkout error:', err instanceof Error ? err.message : 'unknown')
+      window.location.href = '/pricing'
+    } finally {
+      setProLoading(false)
+    }
+  }
 
   // Parallax transforms for hero sailboat
   const sailboatY = useTransform(scrollY, [0, 500], [0, -70])
@@ -512,20 +541,23 @@ export default function LandingPage() {
                 ))}
               </ul>
 
-              <a
-                href="/login?mode=register"
+              <button
+                type="button"
+                onClick={handleProUpgrade}
+                disabled={proLoading}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginTop: '1.75rem', minHeight: '56px', width: '100%',
+                  marginTop: '1.75rem', minHeight: '56px', width: '100%', border: 'none',
                   background: 'linear-gradient(105deg, #B8860B 0%, #D4AF37 30%, #F9E29D 50%, #D4AF37 70%, #B8860B 100%)',
                   color: '#1A102F',
                   fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(0.9rem, 3.6vw, 1rem)', fontWeight: 700,
                   letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none',
                   borderRadius: '12px', boxShadow: '0 14px 30px -12px rgba(212,175,55,0.55)',
+                  cursor: proLoading ? 'wait' : 'pointer', opacity: proLoading ? 0.75 : 1,
                 }}
               >
-                {t('landing.proCta')}
-              </a>
+                {proLoading ? t('pricing.redirecting') : t('landing.proCta')}
+              </button>
             </div>
           </div>
          </div>{/* end hero grid */}
@@ -839,7 +871,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════
+      {/* ═════════════════════════════════════════════���
           SECTION 7 — FOOTER
           Clean. Swiss. Brand mark + nav links.
       ══════════════════════════════════════════════ */}
