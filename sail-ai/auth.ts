@@ -87,8 +87,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   secret:   process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
 
-  // Only attach the Prisma adapter when the database is actually reachable
-  ...(hasValidDb() ? { adapter: PrismaAdapter(prisma) } : {}),
+  // Only attach the Prisma adapter when the database is actually reachable.
+  // `prisma` is wrapped in a retry extension, so its type differs from the bare
+  // PrismaClient the adapter expects, but the delegates it uses are identical.
+  ...(hasValidDb() ? { adapter: PrismaAdapter(prisma as never) } : {}),
 
   session:   { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 }, // 30 days
   providers: buildProviders(),
