@@ -16,7 +16,8 @@ function LoginForm() {
   const errorCode   = params.get('error')
   const { t } = useLanguage()
 
-  const [mode,          setMode]          = useState<Mode>('signin')
+  // Landing CTAs deep-link straight into the register tab via ?mode=register
+  const [mode,          setMode]          = useState<Mode>(params.get('mode') === 'register' ? 'register' : 'signin')
   const [name,          setName]          = useState('')
   const [email,         setEmail]         = useState('')
   const [password,      setPassword]      = useState('')

@@ -604,9 +604,11 @@ export function ChatComposer({
           display:        'flex',
           alignItems:     'center',
           justifyContent: 'space-between',
+          flexWrap:       'wrap',
           padding:        '8px 16px 13px',
           borderTop:      `1px solid ${T.divider}`,
           gap:             8,
+          rowGap:          10,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
 
@@ -683,7 +685,11 @@ export function ChatComposer({
             </AnimatePresence>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* marginLeft:auto keeps this cluster right-aligned; it wraps internally
+              (justify flex-end + wrap) so on narrow mobile the send button drops
+              below the mode pill instead of being clipped by the card's
+              overflow:hidden. Both controls stay fully visible. */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 8, rowGap: 8, marginLeft: 'auto', minWidth: 0 }}>
             <InChatModeSwitcher mode={mode} onChange={onModeChange} disabled={isActive} />
             <HelmButton state={sailState} onClick={onSubmit} disabled={isActive || !input.trim()} />
           </div>
