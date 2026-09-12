@@ -412,6 +412,38 @@ export default function LandingPage() {
 
           {/* ── Royal amethyst Professional plan card — hero centerpiece ── */}
           <div className="azx-reveal-mural relative mx-auto w-full max-w-[440px] lg:max-w-none">
+            {/* Hand-painted azulejo sailboat mural — marine heritage */}
+            <div
+              role="img"
+              aria-label="Hand-painted Portuguese azulejo sailboat mural"
+              style={{
+                position:            'relative',
+                aspectRatio:         '16 / 9',
+                borderRadius:        '18px',
+                overflow:            'hidden',
+                marginBottom:        '1.25rem',
+                border:              '1px solid rgba(201,169,110,0.45)',
+                boxShadow:           '0 26px 60px -30px rgba(24,21,40,0.55), inset 0 1px 0 rgba(255,255,255,0.4)',
+                backgroundImage:     'url(/azulejo/hero-sailboat.png)',
+                backgroundSize:      'cover',
+                backgroundPosition:  'center',
+              }}
+            >
+              <span
+                aria-hidden
+                style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 52%, rgba(22,12,40,0.5) 100%)' }}
+              />
+              <span
+                style={{
+                  position: 'absolute', left: '1.1rem', bottom: '0.85rem',
+                  fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic',
+                  fontSize: '1rem', color: '#F4E9C8', letterSpacing: '0.02em',
+                  textShadow: '0 1px 8px rgba(0,0,0,0.6)',
+                }}
+              >
+                {t('landing.est')}
+              </span>
+            </div>
             <div
               id="hero-plan"
               style={{

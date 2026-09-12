@@ -4,16 +4,17 @@
  * FineLineBackground
  * ─────────────────────────────────────────────────────────────────────────────
  * Metallic-silver hero backdrop inspired by the Mercedes-AMG "one star" livery:
- * a polished silver field scattered with three-pointed tri-stars that disperse
- * (dense → sparse) across the panel, plus a few minimal line "tattoos" — a
- * marine sail, a money coin, and a business growth arrow — etched in faint gold.
+ * a polished silver field scattered with mid-size three-pointed tri-stars that
+ * disperse (dense → sparse) across the panel, plus a few minimal line "tattoos"
+ * — a marine sailboat, a money coin, and a business growth chart — etched in
+ * faint gold within the mobile-visible band so they read on phones and desktop.
  *
  * Pure inline SVG + CSS: crisp at any DPR, tiny payload, zero layout shift.
  * Fixed and aria-hidden so it never intercepts pointer or a11y focus.
  */
 
-// Mercedes-style tri-star centred at (0,0): tip radius ~18, pinched valleys.
-const TRISTAR = 'M0,-18 L3.1,-1.8 L15.6,9 L0,3.6 L-15.6,9 L-3.1,-1.8 Z'
+// Mercedes-style tri-star centred at (0,0): mid size, tip radius ~11.
+const TRISTAR = 'M0,-11 L1.9,-1.1 L9.5,5.5 L0,2.2 L-9.5,5.5 L-1.9,-1.1 Z'
 
 export function FineLineBackground() {
   return (
@@ -40,13 +41,13 @@ export function FineLineBackground() {
             <path d={TRISTAR} />
           </g>
 
-          {/* Scattered tri-star tile */}
-          <pattern id="tri-scatter" width="150" height="150" patternUnits="userSpaceOnUse">
-            <use href="#tri-unit" transform="translate(32,34) rotate(12)" />
-            <use href="#tri-unit" transform="translate(104,26) rotate(-24) scale(0.72)" />
-            <use href="#tri-unit" transform="translate(126,104) rotate(40) scale(0.9)" />
-            <use href="#tri-unit" transform="translate(58,118) rotate(-8) scale(0.62)" />
-            <use href="#tri-unit" transform="translate(10,92) rotate(52) scale(0.5)" />
+          {/* Scattered tri-star tile — mid size, denser spread */}
+          <pattern id="tri-scatter" width="108" height="108" patternUnits="userSpaceOnUse">
+            <use href="#tri-unit" transform="translate(24,26) rotate(12)" />
+            <use href="#tri-unit" transform="translate(76,20) rotate(-24) scale(0.74)" />
+            <use href="#tri-unit" transform="translate(90,76) rotate(40) scale(0.9)" />
+            <use href="#tri-unit" transform="translate(44,86) rotate(-8) scale(0.64)" />
+            <use href="#tri-unit" transform="translate(8,66) rotate(52) scale(0.52)" />
           </pattern>
 
           {/* Dispersion: opaque toward top-right, fading toward lower-left */}
@@ -68,7 +69,7 @@ export function FineLineBackground() {
           fill="url(#tri-scatter)"
           mask="url(#tri-mask)"
           style={{ color: '#868C98' }}
-          opacity="0.55"
+          opacity="0.5"
         />
         {/* Brighter accents catching the "light" in the dense zone */}
         <rect
@@ -77,32 +78,37 @@ export function FineLineBackground() {
           fill="url(#tri-scatter)"
           mask="url(#tri-mask)"
           style={{ color: '#FFFFFF' }}
-          opacity="0.35"
-          transform="translate(6,7)"
+          opacity="0.32"
+          transform="translate(4,5)"
         />
 
-        {/* ── Minimal gold line tattoos ─────────────────────────── */}
-        <g fill="none" stroke="#B08D4F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.18">
-          {/* Marine sail — single-line sailboat, lower-left */}
-          <g transform="translate(196,712)">
-            <path d="M0,40 L0,-74" />
-            <path d="M6,-70 L6,34 L58,34 Z" />
-            <path d="M-6,-40 L-6,34 L-46,34 Z" />
-            <path d="M-64,42 Q0,64 64,42" />
-            <path d="M-80,52 L80,52" opacity="0.7" />
+        {/* ── Minimal gold line tattoos — placed in the mobile-visible band ── */}
+        <g fill="none" stroke="#A9852F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.22">
+          {/* Marine — a clean sailboat: mast, mainsail, jib, hull, waterline */}
+          <g transform="translate(505,700)">
+            <path d="M0,-84 L0,42" />
+            <path d="M8,-78 C46,-44 52,4 46,38 L8,38 Z" />
+            <path d="M-8,-50 C-38,-32 -44,8 -38,36 L-8,36 Z" />
+            <path d="M-62,42 L62,42 L48,64 L-48,64 Z" />
+            <path d="M-84,74 Q0,90 84,74" opacity="0.65" />
           </g>
 
-          {/* Money — coin with dollar mark, upper-right */}
-          <g transform="translate(1276,152)">
-            <circle cx="0" cy="0" r="34" />
-            <path d="M0,-27 L0,27" />
-            <path d="M13,-15 C13,-23 -13,-23 -13,-12 C-13,-4 13,-2 13,7 C13,17 -13,17 -13,9" />
+          {/* Money — coin with dollar mark and orbit ring, upper-right */}
+          <g transform="translate(968,168)">
+            <circle cx="0" cy="0" r="40" />
+            <circle cx="0" cy="0" r="30" opacity="0.55" />
+            <path d="M0,-30 L0,30" />
+            <path d="M15,-16 C15,-25 -15,-25 -15,-13 C-15,-4 15,-2 15,8 C15,18 -15,18 -15,10" />
           </g>
 
-          {/* Business — upward growth arrow, upper-left */}
-          <g transform="translate(150,150)">
-            <path d="M-52,32 L-18,-4 L8,20 L52,-34" />
-            <path d="M34,-34 L52,-34 L52,-16" />
+          {/* Business — bar chart with a rising trend arrow, upper-left */}
+          <g transform="translate(540,150)">
+            <path d="M-56,44 L60,44" />
+            <path d="M-46,44 L-46,22" />
+            <path d="M-22,44 L-22,8" />
+            <path d="M2,44 L2,-8" />
+            <path d="M-52,26 L-20,4 L6,-14 L52,-46" opacity="0.85" />
+            <path d="M34,-46 L52,-46 L52,-28" opacity="0.85" />
           </g>
         </g>
       </svg>
