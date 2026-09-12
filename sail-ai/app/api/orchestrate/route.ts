@@ -27,8 +27,7 @@ import {
 }                           from '@/lib/orchestration/missionOrchestrator'
 import type { MissionResult } from '@/lib/orchestration/missionOrchestrator'
 import { checkRateLimit }   from '@/lib/cache/rateLimiter'
-import { buildKeyPool }     from '@/lib/clients/groq'
-import { cohereStreamDelta } from '@/lib/clients/cohere'
+import { cohereStreamDelta, resolveChatTransport } from '@/lib/clients/cohere'
 import { scrubPII }         from '@/lib/skills/piiScrubber'
 
 const { auth }    = NextAuth(authConfig)
@@ -71,7 +70,7 @@ export async function POST(req: NextRequest) {
 
   // ── Key availability ───────────────────────────────────────────────────────
   const byokKey = body.apiKey?.trim() || undefined
-  if (buildKeyPool(byokKey).length === 0) {
+  if (resolveChatTransport(byokKey).keys.length === 0) {
     return Response.json({ error: 'AI provider not configured.' }, { status: 503 })
   }
 

@@ -17,7 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
+import { resolveChatTransport, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
 // ── Shared SourceSummary type (mirrors frontend) ──────────────────────────────
 
@@ -290,11 +290,12 @@ async function connectCsv(url: string): Promise<
 // Groq helper — used by connectApi for AI extraction from HTML/text
 // ─────────────────────────────────────────────────────────────────────────────
 
-const GROQ_URL_CONNECT   = COHERE_CHAT_URL
-const GROQ_MODEL_CONNECT = COHERE_MODELS.PRIMARY
+const _transportConnect  = resolveChatTransport()
+const GROQ_URL_CONNECT    = _transportConnect.url
+const GROQ_MODEL_CONNECT  = _transportConnect.model(COHERE_MODELS.PRIMARY)
 
 function getGroqKeyConnect(): string | undefined {
-  return cohereKeys()[0]
+  return _transportConnect.keys[0]
 }
 
 // Known marketplace domains — revenue figures are meaningless for these
@@ -737,7 +738,7 @@ async function connectKlaviyo(apiKey: string): Promise<
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ��────────────────────────────────────────────────────────────────────────────
 // Stripe connector  (restricted key → balance + recent charges)
 // ─────────────────────────────────────────────────────────────────────────────
 

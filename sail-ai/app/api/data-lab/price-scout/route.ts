@@ -12,13 +12,16 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
+import { resolveChatTransport, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
-const GROQ_URL   = COHERE_CHAT_URL
-const GROQ_MODEL = COHERE_MODELS.PRIMARY
+// Gateway-aware transport: falls back to Vercel AI Gateway when no direct
+// COHERE_API_KEY is provisioned, so this route works in every environment.
+const _transport = resolveChatTransport()
+const GROQ_URL   = _transport.url
+const GROQ_MODEL = _transport.model(COHERE_MODELS.PRIMARY)
 const TAVILY_URL = 'https://api.tavily.com/search'
 
-function getGroqKey()   { return cohereKeys()[0] }
+function getGroqKey()   { return _transport.keys[0] }
 function getTavilyKey() { return process.env.TAVILY_API_KEY ?? process.env.TAVILY_API_KEY_2 }
 
 export interface PriceResult {

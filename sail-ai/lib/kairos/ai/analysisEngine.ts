@@ -1,15 +1,18 @@
 import { z } from 'zod'
 import type { ShopifyRawData, AmazonRawData, KairosAIAnalysis, KairosPlatform, SupplierEstimate } from '../types'
 import { estimateSupplierCosts } from '../workers/shopifyWorker'
-import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
+import { resolveChatTransport, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
-const GROQ_URL   = COHERE_CHAT_URL
-const GROQ_MODEL = COHERE_MODELS.PRIMARY
+// Gateway-aware transport: falls back to Vercel AI Gateway when no direct
+// COHERE_API_KEY is provisioned, so this engine works in every environment.
+const _transport = resolveChatTransport()
+const GROQ_URL   = _transport.url
+const GROQ_MODEL = _transport.model(COHERE_MODELS.PRIMARY)
 
 // ── Cohere fetch with key rotation (mirrors Sail AI pattern) ─────────────────
 
 function getGroqKeys(): string[] {
-  return cohereKeys()
+  return _transport.keys
 }
 
 async function groqComplete(systemPrompt: string, userPrompt: string): Promise<string> {

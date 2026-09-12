@@ -1,15 +1,18 @@
 import { NextRequest } from 'next/server'
 import { prisma }       from '@/lib/prisma'
-import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, cohereStreamDelta } from '@/lib/clients/cohere'
+import { resolveChatTransport, COHERE_MODELS, cohereStreamDelta } from '@/lib/clients/cohere'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 60
 
-const GROQ_URL   = COHERE_CHAT_URL
-const GROQ_MODEL = COHERE_MODELS.PRIMARY
+// Gateway-aware transport: falls back to Vercel AI Gateway when no direct
+// COHERE_API_KEY is provisioned, so this route works in every environment.
+const _transport = resolveChatTransport()
+const GROQ_URL   = _transport.url
+const GROQ_MODEL = _transport.model(COHERE_MODELS.PRIMARY)
 
 function getGroqKeys(): string[] {
-  return cohereKeys()
+  return _transport.keys
 }
 
 export async function POST(req: NextRequest) {
