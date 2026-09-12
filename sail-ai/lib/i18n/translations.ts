@@ -24,14 +24,113 @@ const translations = {
     'nav.manageSubscription':  'Manage Subscription',
     'nav.professional':        'Professional',
     'nav.loading':             'Loading…',
+    'nav.beginFree':           'Begin Free →',
 
     // ── Landing ──────────────────────────────────────────
     'landing.eyebrow':         'AI Business Advisory',
     'landing.headline':        'Eight specialist minds. One precise answer.',
-    'landing.subheadline':     'Sail AI delivers benchmarked business strategy for independent operators. Every analysis is grounded in verified industry data — not guesswork — and calibrated to your own numbers to surface measurable ways to grow revenue and product value.',
+    'landing.subheadline':     'Get a benchmarked strategy for your business in 60 seconds.',
+    'landing.heroSupport':     'SAIL analyzes your business, market signals, benchmarks and key numbers to identify the highest-leverage actions you can take next.',
+    'landing.seeHowItWorks':   'See How It Works',
+
+    // ── Interactive demo (PortofinoWalkthrough + UngatedApp) ──
+    'demo.eyebrow':            'See SAIL Think',
+    'demo.tapHint':            'No account needed — tap the screen to begin',
+    'demo.headingPre':         'Three steps. ',
+    'demo.headingEmph':        'One sovereign',
+    'demo.headingPost':        ' intelligence layer.',
+    'demo.headingBody':        'Each analysis draws on verified industry benchmarks — calibrated to your specific numbers.',
+    'demo.ctaBegin':           'Begin Free Diagnosis',
+    'demo.brandTag':           'SAIL AI · Business Intelligence',
+    'demo.introTitle':         'Your strategy, distilled in 60 seconds.',
+    'demo.introSub':           'No account. No form. Just precision insight, immediately.',
+    'demo.chip1':              'Benchmark-grounded',
+    'demo.chip2':              'Sector-calibrated',
+    'demo.chip3':              'No account needed',
+    'demo.introCta':           'Begin Free Diagnosis →',
+    'demo.introFoot':          'Takes 60 seconds · No card · Your data is private',
+    'demo.step1of3':           'Step 1 of 3',
+    'demo.step2of3':           'Step 2 of 3',
+    'demo.sectorQ':            'What kind of business?',
+    'demo.sec.ecommerce':      'E-Commerce',
+    'demo.sec.saas':           'B2B SaaS',
+    'demo.sec.retail':         'Retail',
+    'demo.sec.services':       'Pro Services',
+    'demo.sec.hospitality':    'Hospitality',
+    'demo.sec.realestate':     'Real Estate',
+    'demo.sec.wellness':       'Wellness',
+    'demo.sec.agency':         'Agency',
+    'demo.metricsTitle':       'Three numbers reveal everything.',
+    'demo.field.revenue':      'Monthly Revenue',
+    'demo.field.churn':        'Churn Rate',
+    'demo.field.growth':       'MoM Growth Rate',
+    'demo.hint.revenue':       'MRR or monthly avg',
+    'demo.hint.churn':         'Monthly customer loss %',
+    'demo.hint.growth':        '3-month average',
+    'demo.ph.revenue':         'e.g. £42,000',
+    'demo.ph.churn':           'e.g. 8.2%',
+    'demo.ph.growth':          'e.g. +12%',
+    'demo.preparing':          'Preparing KAIROS analysis…',
+    'demo.statusScanning':     'KAIROS ANALYZING…',
+    'demo.statusStreaming':    'GENERATING STRATEGY…',
+    'demo.statusComplete':     'COMPLETE',
+    'demo.scan1':              'Benchmarking against sector data…',
+    'demo.scan2':              'Cross-referencing industry sources…',
+    'demo.scan3':              'Structuring strategic priorities…',
+    'demo.harbourReached':     'Harbour Reached',
+    'demo.strategyReady':      'Your precision strategy is ready to save.',
+    'demo.prio1':              'Priority 1: Retention Audit',
+    'demo.prio1sub':           '↑ +18% MRR in 30 days',
+    'demo.prio2':              'Priority 2: Expansion Revenue',
+    'demo.prio2sub':           '↑ NRR 98% → 118%',
+    'demo.prio3':              'Priority 3: Churn Firewall',
+    'demo.unlock':             'Create free account to unlock',
+    'demo.projImpact':         'Projected impact: +£124,000 / year',
+    'demo.projSub':            'Cross-referenced with verified sector benchmarks',
+    'demo.saveCta':            'Save My Strategy →',
+    'demo.saveFoot':           'Free account · No card · Takes 30 seconds',
+    'demo.analysis.ecommerce': `Your checkout abandonment rate is your primary lever.
+
+Industry median: **70.2%** abandonment (Baymard 2024). At your scale, recovering 8pp generates £1 in £7 of lost revenue — with zero new traffic spend.
+
+**Three precision moves:**
+
+1. **Single-page checkout audit** — reduce form fields from the industry average of 11 to 6 or fewer. Recovers 12–18% of abandonments alone.
+
+2. **72-hour recovery sequence** — one email at 1h, one SMS at 24h, one retargeting impression at 72h. Average recovery rate: 10–14% of abandoned carts.
+
+3. **Trust signal placement** — SSL badge + returns policy above the fold at checkout. Tested to increase completion by 8–11% in the £30–£150 basket range.
+
+Projected annual impact: **+£68,000** assuming £240k current abandonment value.`,
+    'demo.analysis.saas': `Your churn rate is compounding against you silently.
+
+At Month-1 churn of 8.2%, you refill 100% of your customer base every 13 months — paying acquisition cost twice per customer lifetime. The fix is not a feature; it's a timing intervention.
+
+**Three precision moves:**
+
+1. **Value-moment identification** — find the single product action that correlates with 90-day retention. Drive every new user there within 72 hours of signup. Average retention improvement: +22pp.
+
+2. **Onboarding call trigger** — automatically flag any user who hasn't hit the value-moment by Day 5. One proactive outreach call converts 35–40% of these users to active.
+
+3. **Expansion revenue engine** — at your NRR baseline, adding one upgrade trigger (usage-based or feature-based) within the product adds £18–28k ARR without a single new customer.
+
+Projected net impact: **+£124,000** ARR from retention improvement alone.`,
+    'demo.analysis.default': `Your highest-leverage constraint is hiding in your unit economics.
+
+Most businesses optimise for revenue. The businesses that compound optimise for **margin × retention** — a fundamentally different equation.
+
+**Three precision moves:**
+
+1. **Margin archaeology** — identify your top 20% of customers by gross margin contribution (not revenue). This cohort almost always deserves a different retention and pricing strategy.
+
+2. **Pricing architecture** — adding a premium tier priced 25–30% above your current ceiling captures 10–15% of existing customers willing to pay more. No new acquisition required.
+
+3. **Referral velocity** — structured referral programs in your sector generate 18–22% of new business from existing customers, with a payback period under 45 days.
+
+Projected annual impact: **+£85,000** from pricing + referral combined.`,
     'landing.cta':             'Begin analysis →',
     'landing.viewPlans':       'View plans',
-    'landing.freeNote':        '5 analyses included at no cost · unbiased, data-driven strategy',
+    'landing.freeNote':        '5 free analyses · No credit card required',
     'landing.previewLabel':    'Preview — instant insight',
     'landing.indicativeOutputs': 'Indicative outputs',
     'landing.realisticProjections': 'Realistic projections, qualified by source data',
@@ -406,7 +505,7 @@ const translations = {
     'scenario.simulate':    'Run simulation →',
     'scenario.result':      'Simulation complete',
 
-    // ── Nav extras ───────────────────────────────────────
+    // ── Nav extras ──────────────────��────────────────────
     'nav.research':          'Research',
 
     // ── WelcomeBanner (chat page) ─────────────────────────
@@ -548,16 +647,16 @@ const translations = {
     'landing.intelligenceModes': 'Intelligence Modes',
     'landing.modesCount':    'Eight specialist engines. Three of the most common starting points are shown below.',
     'landing.exploreAllModes': 'Explore all 8 modes →',
-    'landing.beginFree':     'Begin free →',
+    'landing.beginFree':     'Begin Free Diagnosis →',
     'landing.watchHow':      'Watch how it works',
-    'landing.ctaHeadline':   'Your first five analyses are complimentary.',
-    'landing.ctaBody':       'Zero friction. No payment details. Professional-grade strategy, validated by data.',
-    'landing.beginBtn':      'Begin →',
+    'landing.ctaHeadline':   'Your next decision deserves more than a generic AI answer.',
+    'landing.ctaBody':       'Give SAIL the problem. Get a structured diagnosis, strategic priorities and clear next actions.',
+    'landing.beginBtn':      'Begin Your Free Diagnosis →',
     'landing.startNow':      'Start now →',
     'landing.stat1':         '< 60s analysis',
     'landing.stat2':         'Live web data',
     'landing.stat3':         '5 free analyses',
-    'landing.badgeLocked':   'Advanced Market Intelligence 🔒',
+    'landing.badgeLocked':   'Advanced Market Intelligence',
     'landing.exploreProPlans':'Explore Pro plans →',
     'landing.proBadge':      'Most Chosen',
     'landing.proTitle':      'Professional',
@@ -853,13 +952,112 @@ const translations = {
     'nav.manageSubscription':  'Aboneliği Yönet',
     'nav.professional':        'Profesyonel',
     'nav.loading':             'Yükleniyor…',
+    'nav.beginFree':           'Ücretsiz Başla →',
 
     'landing.eyebrow':         'AI İş Danışmanlığı',
     'landing.headline':        'Sekiz uzman zeka. Tek kesin cevap.',
-    'landing.subheadline':     'Sail AI, bağımsız girişimciler için sektör kıyaslamalı iş stratejisi sunar. Her analiz, sezgilere değil; doğrulanmış endüstri verilerine dayanır ve sizin spesifik rakamlarınıza göre kalibre edilir.',
+    'landing.subheadline':     '60 saniyede işletmeniz için kıyaslamalı bir strateji alın.',
+ 'landing.heroSupport':     'SAIL; işletmenizi, pazar sinyallerini, kıyaslamaları ve temel rakamları analiz ederek atabileceğiniz en yüksek kaldıraçlı adımları belirler.',
+ 'landing.seeHowItWorks':   'Nasıl Çalışır',
+
+    // ── Etkileşimli demo ──
+    'demo.eyebrow':            'SAIL Nasıl Düşünür',
+    'demo.tapHint':            'Hesap gerekmez — başlamak için ekrana dokunun',
+    'demo.headingPre':         'Üç adım. ',
+    'demo.headingEmph':        'Tek bir egemen',
+    'demo.headingPost':        ' zeka katmanı.',
+    'demo.headingBody':        'Her analiz, doğrulanmış sektör kıyaslamalarına dayanır — sizin özel rakamlarınıza göre ayarlanır.',
+    'demo.ctaBegin':           'Ücretsiz Teşhise Başla',
+    'demo.brandTag':           'SAIL AI · İş Zekası',
+    'demo.introTitle':         'Stratejiniz, 60 saniyede damıtıldı.',
+    'demo.introSub':           'Hesap yok. Form yok. Anında, hassas içgörü.',
+    'demo.chip1':              'Kıyaslama temelli',
+    'demo.chip2':              'Sektöre göre ayarlı',
+    'demo.chip3':              'Hesap gerekmez',
+    'demo.introCta':           'Ücretsiz Teşhise Başla →',
+    'demo.introFoot':          '60 saniye sürer · Kart yok · Verileriniz gizli',
+    'demo.step1of3':           '3 adımdan 1.',
+    'demo.step2of3':           '3 adımdan 2.',
+    'demo.sectorQ':            'Ne tür bir işletme?',
+    'demo.sec.ecommerce':      'E-Ticaret',
+    'demo.sec.saas':           'B2B SaaS',
+    'demo.sec.retail':         'Perakende',
+    'demo.sec.services':       'Profesyonel Hizmetler',
+    'demo.sec.hospitality':    'Konaklama',
+    'demo.sec.realestate':     'Gayrimenkul',
+    'demo.sec.wellness':       'Sağlıklı Yaşam',
+    'demo.sec.agency':         'Ajans',
+    'demo.metricsTitle':       'Üç sayı her şeyi açığa çıkarır.',
+    'demo.field.revenue':      'Aylık Gelir',
+    'demo.field.churn':        'Kayıp Oranı',
+    'demo.field.growth':       'Aylık Büyüme Oranı',
+    'demo.hint.revenue':       'MRR veya aylık ortalama',
+    'demo.hint.churn':         'Aylık müşteri kaybı %',
+    'demo.hint.growth':        '3 aylık ortalama',
+    'demo.ph.revenue':         'örn. £42.000',
+    'demo.ph.churn':           'örn. %8,2',
+    'demo.ph.growth':          'örn. +%12',
+    'demo.preparing':          'KAIROS analizi hazırlanıyor…',
+    'demo.statusScanning':     'KAIROS ANALİZ EDİYOR…',
+    'demo.statusStreaming':    'STRATEJİ OLUŞTURULUYOR…',
+    'demo.statusComplete':     'TAMAMLANDI',
+    'demo.scan1':              'Sektör verileriyle kıyaslanıyor…',
+    'demo.scan2':              'Endüstri kaynakları çapraz kontrol ediliyor…',
+    'demo.scan3':              'Stratejik öncelikler yapılandırılıyor…',
+    'demo.harbourReached':     'Limana Ulaşıldı',
+    'demo.strategyReady':      'Hassas stratejiniz kaydedilmeye hazır.',
+    'demo.prio1':              'Öncelik 1: Elde Tutma Denetimi',
+    'demo.prio1sub':           '↑ 30 günde +%18 MRR',
+    'demo.prio2':              'Öncelik 2: Genişleme Geliri',
+    'demo.prio2sub':           '↑ NRR %98 → %118',
+    'demo.prio3':              'Öncelik 3: Kayıp Bariyeri',
+    'demo.unlock':             'Kilidi açmak için ücretsiz hesap oluşturun',
+    'demo.projImpact':         'Öngörülen etki: +£124.000 / yıl',
+    'demo.projSub':            'Doğrulanmış sektör kıyaslamalarıyla karşılaştırıldı',
+    'demo.saveCta':            'Stratejimi Kaydet →',
+    'demo.saveFoot':           'Ücretsiz hesap · Kart yok · 30 saniye sürer',
+    'demo.analysis.ecommerce': `Birincil kaldıracınız ödeme adımını terk etme oranınızdır.
+
+Sektör ortancası: **%70,2** terk (Baymard 2024). Sizin ölçeğinizde 8 puanlık geri kazanım, kaybedilen her 7 lirada 1 lira getirir — sıfır yeni trafik harcamasıyla.
+
+**Üç hassas hamle:**
+
+1. **Tek sayfalık ödeme denetimi** — form alanlarını sektör ortalaması olan 11'den 6 veya altına indirin. Tek başına terklerin %12–18'ini geri kazandırır.
+
+2. **72 saatlik geri kazanım dizisi** — 1. saatte bir e-posta, 24. saatte bir SMS, 72. saatte bir yeniden hedefleme gösterimi. Ortalama geri kazanım oranı: terk edilen sepetlerin %10–14'ü.
+
+3. **Güven sinyali yerleşimi** — ödeme adımında SSL rozeti + iade politikası ekranın üst kısmında. £30–£150 sepet aralığında tamamlamayı %8–11 artırdığı test edildi.
+
+Öngörülen yıllık etki: mevcut £240k terk değeri varsayımıyla **+£68.000**.`,
+    'demo.analysis.saas': `Kayıp oranınız sessizce aleyhinize birikiyor.
+
+%8,2'lik 1. ay kaybıyla müşteri tabanınızı her 13 ayda bir %100 yeniliyorsunuz — her müşteri yaşam döngüsünde edinme maliyetini iki kez ödüyorsunuz. Çözüm bir özellik değil; bir zamanlama müdahalesidir.
+
+**Üç hassas hamle:**
+
+1. **Değer-anı belirleme** — 90 günlük elde tutmayla ilişkili tek ürün eylemini bulun. Her yeni kullanıcıyı kayıttan sonraki 72 saat içinde oraya yönlendirin. Ortalama elde tutma iyileşmesi: +22 puan.
+
+2. **Onboarding arama tetikleyicisi** — 5. güne kadar değer-anına ulaşmayan her kullanıcıyı otomatik işaretleyin. Bir proaktif arama bu kullanıcıların %35–40'ını aktife dönüştürür.
+
+3. **Genişleme geliri motoru** — NRR temelinizde, ürün içine bir yükseltme tetikleyicisi (kullanıma veya özelliğe dayalı) eklemek tek bir yeni müşteri olmadan £18–28k ARR ekler.
+
+Öngörülen net etki: yalnızca elde tutma iyileşmesinden **+£124.000** ARR.`,
+    'demo.analysis.default': `En yüksek kaldıraçlı kısıtınız birim ekonominizde saklı.
+
+Çoğu işletme gelir için optimize eder. Bileşik büyüyen işletmeler **marj × elde tutma** için optimize eder — temelde farklı bir denklem.
+
+**Üç hassas hamle:**
+
+1. **Marj arkeolojisi** — en yüksek %20 müşterinizi gelire göre değil, brüt marj katkısına göre belirleyin. Bu grup neredeyse her zaman farklı bir elde tutma ve fiyatlandırma stratejisini hak eder.
+
+2. **Fiyatlandırma mimarisi** — mevcut tavanınızın %25–30 üzerinde fiyatlanan bir premium katman eklemek, daha fazla ödemeye istekli mevcut müşterilerin %10–15'ini yakalar. Yeni edinim gerekmez.
+
+3. **Tavsiye hızı** — sektörünüzdeki yapılandırılmış tavsiye programları, mevcut müşterilerden yeni işlerin %18–22'sini üretir ve geri ödeme süresi 45 günün altındadır.
+
+Öngörülen yıllık etki: fiyatlandırma + tavsiye birlikte **+£85.000**.`,
     'landing.cta':             'Analizi başlat →',
     'landing.viewPlans':       'Planları incele',
-    'landing.freeNote':        '5 ücretsiz analiz · Tarafsız, Veriye Dayalı Strateji.',
+    'landing.freeNote':        '5 ücretsiz analiz · Kredi kartı gerekmez',
     'landing.previewLabel':    'Önizleme — anında içgörü',
     'landing.indicativeOutputs': 'Örnek çıktılar',
     'landing.realisticProjections': 'Kaynak verilerle desteklenen gerçekçi projeksiyonlar',
@@ -1352,16 +1550,16 @@ const translations = {
     'landing.intelligenceModes': 'Zeka Modları',
     'landing.modesCount':    'Sekiz uzman motor. En yaygın üç başlangıç noktası aşağıda gösterilmektedir.',
     'landing.exploreAllModes': '8 modun tamamını keşfet →',
-    'landing.beginFree':     'Ücretsiz başla →',
+    'landing.beginFree':     'Ücretsiz Teşhise Başla →',
     'landing.watchHow':      'Nasıl çalıştığını izle',
-    'landing.ctaHeadline':   'İlk beş analiziniz ücretsizdir.',
-    'landing.ctaBody':       'Sürtünme yok. Ödeme bilgisi yok. Veriyle doğrulanmış profesyonel strateji.',
-    'landing.beginBtn':      'Başla →',
+ 'landing.ctaHeadline':   'Bir sonraki kararınız sıradan bir yapay zeka cevabından fazlasını hak ediyor.',
+ 'landing.ctaBody':       'Sorunu SAIL’e verin. Yapılandırılmış bir teşhis, stratejik öncelikler ve net sonraki adımlar alın.',
+ 'landing.beginBtn':      'Ücretsiz Teşhisinize Başlayın →',
     'landing.startNow':      'Hemen başla →',
     'landing.stat1':         '< 60 sn analiz',
     'landing.stat2':         'Canlı web verisi',
     'landing.stat3':         '5 ücretsiz analiz',
-    'landing.badgeLocked':   'Gelişmiş Pazar Analizi 🔒',
+    'landing.badgeLocked':   'Gelişmiş Pazar Analizi',
     'landing.exploreProPlans':'Planları İncele →',
     'landing.proBadge':      'En Çok Tercih Edilen',
     'landing.proTitle':      'Profesyonel Plan',
@@ -1445,12 +1643,12 @@ const translations = {
     'dash.headToChatLink': 'Sohbet →',
     'dash.toGetStarted':   'başlamak için.',
     'dash.clearHistory':   'Geçmişi temizle',
-    // ── Research example queries ──────────────────────────
+    // ── Research example queries ─────────────────────────���
     'research.exampleQ1':  'Amazon FBA karlılık analizi 2026',
     'research.exampleQ2':  'TikTok Shop Türkiye fiyatlandırma',
     'research.exampleQ3':  'Shopify vs Etsy komisyon karşılaştırması',
     'research.exampleQ4':  "eBay'de en çok satan ürünler",
-    // ── Walkthrough demo content ───────────���──────────────
+    // ── Walkthrough demo content ���──────────���──────────────
     'walk.demoQuery':      'Shopify mağazam var. Aylık satış 85K TL, ama dönüşüm oranım %1.3. Sektörün nerede olduğunu ve ne yapabileceğimi analiz et.',
     'walk.demoTag1':       'E-Ticaret · Shopify',
     'walk.demoTag2':       '85K TL/ay',
@@ -1586,7 +1784,7 @@ const translations = {
     'datalab.group.advertising.name':    'Reklam & Büyüme',
     'datalab.group.advertising.desc':    'Reklam performansı, ROAS analizi ve büyüme optimizasyonu',
     'datalab.group.hospitality.name':    'Konaklama & Seyahat',
-    'datalab.group.hospitality.desc':    'Otel, kiralık mülk, tatil evi ve seyahat acentaları',
+    'datalab.group.hospitality.desc':    'Otel, kiralık mülk, tatil evi ve seyahat acentalar��',
     'datalab.group.services.name':       'Hizmet & SaaS',
     'datalab.group.services.desc':       'Freelance, ajans, SaaS ve abonelik işletmeleri',
     'datalab.group.analytics.name':      'Veri & Analitik',
@@ -1683,7 +1881,7 @@ const translations = {
     'mode.downwind':   'Sotavento',
     'mode.downwindDesc': 'Coaching guiado — construye estrategia mediante el diálogo',
     'mode.sail':       'SAIL',
-    'mode.sailDesc':   'Intención automática — adapta la profundidad y el formato a tu consulta',
+    'mode.sailDesc':   'Intenci��n automática — adapta la profundidad y el formato a tu consulta',
     'mode.trim':       'TRIM',
     'mode.trimDesc':   'Cronograma estratégico — hitos por fases con objetivos medibles',
     'mode.catamaran':  'CATAMARÁN',
@@ -2951,7 +3149,7 @@ const translations = {
     'landing.case1outcome':  '+0,8pp CVR',
     'landing.case2sector':   'B2B SaaS',
     'landing.case2headline': 'Onboarding-Redesign zur Reduzierung der Churn-Rate im 1. Monat von 12% auf unter 8%',
-    'landing.case2detail':   'OpenView-Benchmark für ARR < $2M: 7–9% monatlicher Churn · 60-tägige Umsetzung',
+    'landing.case2detail':   'OpenView-Benchmark für ARR < $2M: 7�����9% monatlicher Churn · 60-tägige Umsetzung',
     'landing.case2outcome':  '−4pp Churn',
     'landing.case3sector':   'Professionelle Dienstleistungen',
     'landing.case3headline': 'Empfehlungsprogramm zur Gewinnung von 20% neuer Kunden aus dem Bestandsstamm',
@@ -4090,7 +4288,7 @@ const translations = {
     'export.error':       '失败',
 
     'landing.twoModes':         '两种模式',
-    'landing.estOutcome':       '预估结果',
+    'landing.estOutcome':       '预估��果',
     'landing.disclaimer':       '预测数据仅供参考，基于已发布的行业基准。实际结果取决于执行质量和市场状况。',
     'answer.strategy':       '战略',
     'answer.threeStepPlan':  '您的3步计划',
@@ -4115,7 +4313,7 @@ const translations = {
     'dash.recentAnalyses':    '近期分析',
     'dash.allTime':           '历史合计',
     'dash.last7Days':         '近7天',
-    'dash.rollingAvg':        '滚动均值',
+    'dash.rollingAvg':        '滚动均���',
     'dash.noDataYet':         '暂无数据，请先运行一次分析。',
     'dash.headToChat':        '制定航线',
     'dash.toStart':           '开始使用。',
@@ -4282,7 +4480,7 @@ const translations = {
     'micro.fullAnalysis':   '完整分析 →',
     'micro.source':         '来源：',
     'micro.insight.ecommerce':  'Baymard Institute数据显示，电商平均购物车放弃率为70.2%。通过简化结账流程和一封精准邮件将这一差距缩小10个百分点，对大多数运营者而言是90天内可实现的现实目标。',
-    'micro.insight.saas':       'OpenView Partners的SaaS基准研究表明，将第一个月激活率提高15%通常比同等广告支出更具价值——留存的复利效应使其成为ARR低于50万美元的企业最高杠杆行动。',
+    'micro.insight.saas':       'OpenView Partners的SaaS基准研究表明，将第一个月激活率提高15%通常比同等广告支出更具价值——留存的复利效应使其成为ARR低于50万美元的企业最高杠杆���动。',
     'micro.insight.agency':     '代理行业基准显示，有结构的季度业务评审（QBR）可将非自愿流失率降低18–22%。对于6客户的业务组合，实施一套QBR模板通常每年可挽回1–2个高风险长期客户。',
     'micro.insight.coaching':   '健身平台转化数据显示，在开放性课时之外提供固定期限套餐（如8节课块），可将平均交易额提升30–40%，而成交率无显著变化。',
     'micro.insight.restaurant': '对于餐饮企业，将每服务时段的翻台率从1.8×提升到2.2×，可在不增加座位或员工的情况下为晚餐时段增加约20%的收入。',
@@ -4475,7 +4673,7 @@ const translations = {
     'welcome.pro.f6':           '优先响应速度',
     'welcome.pro.f7':           '数据仪表板',
     'welcome.faq.title':        '常见问题',
-    'welcome.faq.q1':           '免费方案包含什么？',
+    'welcome.faq.q1':           '���费方案包含什么？',
     'welcome.faq.a1':           '每天5次完整分析，所有模式，Deep Research含实时网络数据。无需信用卡，无时间限制。',
     'welcome.faq.q2':           'AI是否使用实时网络数据？',
     'welcome.faq.a2':           '是的。每次查询都通过Tavily + Serper API进行实时搜索。Groq 70B合成今天的数据，而非训练数据。',
@@ -4484,7 +4682,7 @@ const translations = {
     'welcome.faq.q4':           '可以取消吗？',
     'welcome.faq.a4':           '是的。通过Stripe一键取消，随时可以，无需提前通知。',
 
-    // ── 研究页面 ─────────────────────────────────────────
+    // ── 研究页面 ───────────���─────────────────────────────
     'research.title':           '深度研究工作室',
     'research.subtitle':        '通过 Tavily + Serper 实时网络检索，由 Groq 70B 在查询时合成',
     'research.placeholder':     '您想研究什么？（例如：亚马逊FBA盈利能力2026）',
@@ -4603,7 +4801,7 @@ const translations = {
     'research.exampleQ2':  'TikTok Shop定价策略',
     'research.exampleQ3':  'Shopify与Etsy佣金对比',
     'research.exampleQ4':  'eBay上最畅销的产品',
-    'walk.demoQuery':      '我有一家Shopify店铺。月收入85万元，但我的转化率是1.3%。分析行业状况以及我能做什么。',
+    'walk.demoQuery':      '我有一家Shopify店铺。月���入85万元，但我的转化率是1.3%。分析行业状况以及我能做什么。',
     'walk.demoTag1':       '电商 · Shopify',
     'walk.demoTag2':       '85万元/月',
     'walk.demoTag3':       '中国',
@@ -4618,7 +4816,7 @@ const translations = {
     'walk.demoInsight':    '您的转化率1.3%低于电商行业中位数2.3%整整1个百分点。最大杠杆：将结账从5步减少到3步，并设置购物车遗弃邮件序列。根据行业数据，这两个行动在90天内可带来0.6–1.0个百分点的提升。',
     'walk.demoAction1':    '将结账步骤从5步减至3步——Baymard数据：每增加一步使放弃率增加10%',
     'walk.demoAction2':    '设置���物车遗弃序列：第1小时/第24小时/第72小时（Klaviyo基准：12–15%恢复率）',
-    'walk.demoAction3':    '在产品页面添加社会证明：目标≥50条评论，优先整合TrustPilot',
+    'walk.demoAction3':    '在产品页面添加社会证明：目标≥50条评论，���先整合TrustPilot',
     'walk.demoFinding1':   '电商行业中位数：2.3% CVR（2026年Q1，Statista）',
     'walk.demoFinding2':   '移动端结账放弃率：72%（Baymard Institute）',
     'walk.demoFinding3':   '邮件恢复率：12–15%（Klaviyo 2026基准报告）',
@@ -4646,7 +4844,7 @@ const translations = {
     'conn.whichPlatforms': '— 分析哪些平台？',
     'conn.enableAll':      '全部启用',
     'conn.disableAll':     '全部禁用',
-    'conn.addData':        '+ 添加数据',
+    'conn.addData':        '+ ���加数据',
     'conn.comingSoon':     '即将推出',
     'conn.demoMode':       '演示模式',
     'conn.statusNote':     '实时同步和OAuth连接即将推出。所有连接器目前使用演示数据运行。',
@@ -4732,7 +4930,7 @@ const translations = {
     'datalab.group.advertising.desc':    '广告效果、ROAS分析与增长优化',
     'datalab.group.hospitality.name':    '酒店与旅游',
     'datalab.group.hospitality.desc':    '酒店、租赁房产、度假屋及旅行社',
-    'datalab.group.services.name':       '服务与SaaS',
+    'datalab.group.services.name':       '���务与SaaS',
     'datalab.group.services.desc':       '自由职业、代理、SaaS及订阅业务',
     'datalab.group.analytics.name':      '数据与分析',
     'datalab.group.analytics.desc':      '网络分析、流量、转化率与队列分析',
@@ -4750,7 +4948,7 @@ const translations = {
     'datalab.conn.amazonppc.desc':       '赞助商品、品牌、展示广告ACOS分析',
     'datalab.conn.tiktokads.desc':       'TikTok for Business广告系列及素材分析',
     'datalab.conn.klaviyo.desc':         '邮件及SMS营销收入分析',
-    'datalab.conn.customad.desc':        '任意广告平台API',
+    'datalab.conn.customad.desc':        '任意广告��台API',
     'datalab.conn.booking.desc':         '通过房产页面或URL进行入住率和定价分析',
     'datalab.conn.airbnb.desc':          '通过房源URL进行定价、入住率和评价分析',
     'datalab.conn.expedia.desc':         'Expedia集团平台定价与竞争分析',

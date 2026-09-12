@@ -228,7 +228,7 @@ export default function LandingPage() {
     { label: t('landing.stat3'),       locked: false },
     { label: t('landing.badgeLocked'), locked: true  },
   ]
-  const TRUST_CUES  = [t('landing.trust1'), t('landing.trust2'), t('landing.trust3')]
+  const TRUST_CUES  = [t('landing.trust1')]
   const headlineWords = t('landing.headline').split(' ')
 
   const CASES = [
@@ -254,11 +254,6 @@ export default function LandingPage() {
               '@type': 'Offer',
               price: '9.99',
               priceCurrency: 'USD',
-            },
-            aggregateRating: {
-              '@type': 'AggregateRating',
-              ratingValue: '4.9',
-              ratingCount: '1280',
             },
           }),
         }}
@@ -294,7 +289,7 @@ export default function LandingPage() {
           <h1
             style={{
               fontFamily:    'var(--font-playfair), Georgia, serif',
-              fontSize:      'clamp(2.375rem, 6vw, 3.75rem)',
+              fontSize:      'clamp(2rem, 5vw, 3.125rem)',
               fontWeight:    700,
               fontStyle:     'normal',
               lineHeight:    1.08,
@@ -322,8 +317,8 @@ export default function LandingPage() {
             style={{
               ['--azx-delay' as string]: '0.5s',
               fontFamily: 'var(--font-inter), sans-serif',
-              fontSize:   'clamp(1.125rem, 1.2vw, 1.25rem)',
-              lineHeight: 1.7,
+              fontSize:   'clamp(1.0625rem, 1.1vw, 1.15rem)',
+              lineHeight: 1.65,
               color:      '#3C3A4A',
               maxWidth:   '46ch',
               marginTop:  '1.75rem',
@@ -331,6 +326,23 @@ export default function LandingPage() {
             }}
           >
             {t('landing.subheadline')}
+          </p>
+
+          {/* Supporting text — what SAIL actually does */}
+          <p
+            className="azx-reveal"
+            style={{
+              ['--azx-delay' as string]: '0.58s',
+              fontFamily: 'var(--font-inter), sans-serif',
+              fontSize:   'clamp(0.9375rem, 1vw, 1rem)',
+              lineHeight: 1.7,
+              color:      '#5A5768',
+              maxWidth:   '48ch',
+              marginTop:  '0.875rem',
+              fontWeight: 400,
+            }}
+          >
+            {t('landing.heroSupport')}
           </p>
 
           {/* Feature badges */}
@@ -382,10 +394,10 @@ export default function LandingPage() {
               variant="silver"
               size="lg"
               onClick={() =>
-                document.getElementById('hero-plan')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                document.getElementById('tutorial')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
             >
-              {t('landing.exploreProPlans')}
+              {t('landing.seeHowItWorks')}
             </LiquidButton>
           </div>
 
@@ -537,7 +549,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           SECTION 4 — INTELLIGENCE MODES
           Dark — glassmorphism cards over topo texture.
-      ══════════════════════════════════════════════ */}
+      ═══════════════��══════════════════════════════ */}
       <section style={{ background: 'rgba(8,9,13,0.94)', position: 'relative', overflow: 'hidden' }}>
         <TopoBackground />
         <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none', zIndex: 1 }} />

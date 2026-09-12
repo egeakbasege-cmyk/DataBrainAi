@@ -276,7 +276,7 @@ export function PortofinoWalkthrough() {
           >
             <div style={{ width: 28, height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.55))' }} />
             <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#C9A96E', textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
-              Live Demo
+              {t('demo.eyebrow')}
             </span>
             <div style={{ width: 28, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.55), transparent)' }} />
           </motion.div>
@@ -300,7 +300,7 @@ export function PortofinoWalkthrough() {
             transition={{ duration: 0.5, delay: 0.4 }}
             style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)', textAlign: 'center', maxWidth: 220, textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}
           >
-            No account needed — tap the screen to begin
+            {t('demo.tapHint')}
           </motion.p>
         </div>
 
@@ -326,9 +326,9 @@ export function PortofinoWalkthrough() {
               letterSpacing: '-0.02em',
               textShadow:    '0 2px 20px rgba(0,0,0,0.95), 0 4px 40px rgba(0,0,0,0.7)',
             }}>
-              Three steps.{' '}
-              <span style={{ color: '#F0D080', textShadow: '0 2px 20px rgba(0,0,0,0.95), 0 4px 40px rgba(0,0,0,0.7)' }}>One sovereign</span>
-              {' '}intelligence layer.
+              {t('demo.headingPre')}
+              <span style={{ color: '#F0D080', textShadow: '0 2px 20px rgba(0,0,0,0.95), 0 4px 40px rgba(0,0,0,0.7)' }}>{t('demo.headingEmph')}</span>
+              {t('demo.headingPost')}
             </h2>
             <p style={{
               fontFamily: 'var(--font-inter), sans-serif',
@@ -339,7 +339,7 @@ export function PortofinoWalkthrough() {
               margin:      0,
               textShadow: '0 1px 12px rgba(0,0,0,0.95)',
             }}>
-              Each analysis draws on verified industry benchmarks — calibrated to your specific numbers.
+              {t('demo.headingBody')}
             </p>
           </motion.div>
 
@@ -380,7 +380,7 @@ export function PortofinoWalkthrough() {
               onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(201,169,110,0.22)'; el.style.borderColor = 'rgba(201,169,110,0.60)' }}
               onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(201,169,110,0.12)'; el.style.borderColor = 'rgba(201,169,110,0.38)' }}
             >
-              Begin your analysis
+              {t('demo.ctaBegin')}
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>

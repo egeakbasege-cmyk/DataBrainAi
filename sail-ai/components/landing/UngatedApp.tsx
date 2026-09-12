@@ -18,6 +18,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence }                   from 'framer-motion'
 import { useNarrative }                              from './narrativeStore'
+import { useLanguage }                               from '@/lib/i18n/LanguageContext'
+import type { TranslationKey }                       from '@/lib/i18n/translations'
 
 // ── Colour tokens (matches page palette exactly) ──────────────────────────────
 
@@ -50,65 +52,23 @@ const RISE = {
 // ── Sectors ───────────────────────────────────────────────────────────────────
 
 const SECTORS = [
-  { id: 'ecommerce',   label: 'E-Commerce',   icon: '🛍️' },
-  { id: 'saas',        label: 'B2B SaaS',     icon: '⚡' },
-  { id: 'retail',      label: 'Retail',       icon: '🏪' },
-  { id: 'services',    label: 'Pro Services', icon: '💼' },
-  { id: 'hospitality', label: 'Hospitality',  icon: '🍽️' },
-  { id: 'realestate',  label: 'Real Estate',  icon: '🏢' },
-  { id: 'wellness',    label: 'Wellness',     icon: '🧘' },
-  { id: 'agency',      label: 'Agency',       icon: '📊' },
+  { id: 'ecommerce',   icon: '🛍️' },
+  { id: 'saas',        icon: '⚡' },
+  { id: 'retail',      icon: '🏪' },
+  { id: 'services',    icon: '💼' },
+  { id: 'hospitality', icon: '🍽️' },
+  { id: 'realestate',  icon: '🏢' },
+  { id: 'wellness',    icon: '🧘' },
+  { id: 'agency',      icon: '📊' },
 ]
 
-// ── Streaming analysis text (sector-personalised, shows real insight quality) ─
-
-const ANALYSIS: Record<string, string> = {
-  ecommerce: `Your checkout abandonment rate is your primary lever.
-
-Industry median: **70.2%** abandonment (Baymard 2024). At your scale, recovering 8pp generates £1 in £7 of lost revenue — with zero new traffic spend.
-
-**Three precision moves:**
-
-1. **Single-page checkout audit** — reduce form fields from the industry average of 11 to 6 or fewer. Recovers 12–18% of abandonments alone.
-
-2. **72-hour recovery sequence** — one email at 1h, one SMS at 24h, one retargeting impression at 72h. Average recovery rate: 10–14% of abandoned carts.
-
-3. **Trust signal placement** — SSL badge + returns policy above the fold at checkout. Tested to increase completion by 8–11% in the £30–£150 basket range.
-
-Projected annual impact: **+£68,000** assuming £240k current abandonment value.`,
-
-  saas: `Your churn rate is compounding against you silently.
-
-At Month-1 churn of 8.2%, you refill 100% of your customer base every 13 months — paying acquisition cost twice per customer lifetime. The fix is not a feature; it's a timing intervention.
-
-**Three precision moves:**
-
-1. **Value-moment identification** — find the single product action that correlates with 90-day retention. Drive every new user there within 72 hours of signup. Average retention improvement: +22pp.
-
-2. **Onboarding call trigger** — automatically flag any user who hasn't hit the value-moment by Day 5. One proactive outreach call converts 35–40% of these users to active.
-
-3. **Expansion revenue engine** — at your NRR baseline, adding one upgrade trigger (usage-based or feature-based) within the product adds £18–28k ARR without a single new customer.
-
-Projected net impact: **+£124,000** ARR from retention improvement alone.`,
-
-  default: `Your highest-leverage constraint is hiding in your unit economics.
-
-Most businesses optimise for revenue. The businesses that compound optimise for **margin × retention** — a fundamentally different equation.
-
-**Three precision moves:**
-
-1. **Margin archaeology** — identify your top 20% of customers by gross margin contribution (not revenue). This cohort almost always deserves a different retention and pricing strategy.
-
-2. **Pricing architecture** — adding a premium tier priced 25–30% above your current ceiling captures 10–15% of existing customers willing to pay more. No new acquisition required.
-
-3. **Referral velocity** — structured referral programs in your sector generate 18–22% of new business from existing customers, with a payback period under 45 days.
-
-Projected annual impact: **+£85,000** from pricing + referral combined.`,
-}
+// Localised sector label lookup
+const secKey = (id: string) => (`demo.sec.${id}`) as TranslationKey
 
 // ── Screen 1: Intro ───────────────────────────────────────────────────────────
 
 function ScreenIntro({ onStart }: { onStart: () => void }) {
+  const { t } = useLanguage()
   return (
     <motion.div {...RISE} key="intro"
       style={{
@@ -142,7 +102,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
         style={{ color: C.tiffany, fontSize: 9.5, letterSpacing: '0.20em', textTransform: 'uppercase',
                  fontFamily: 'var(--font-inter), sans-serif', marginBottom: 12 }}
       >
-        SAIL AI · Business Intelligence
+        {t('demo.brandTag')}
       </motion.span>
 
       <motion.h1
@@ -153,7 +113,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
           lineHeight: 1.28, marginBottom: 14,
         }}
       >
-        Your strategy, distilled in 60 seconds.
+        {t('demo.introTitle')}
       </motion.h1>
 
       <motion.p
@@ -163,7 +123,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
           marginBottom: 30, fontFamily: 'var(--font-inter), sans-serif',
         }}
       >
-        No account. No form. Just precision insight, immediately.
+        {t('demo.introSub')}
       </motion.p>
 
       {/* Social proof */}
@@ -171,7 +131,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }}
         style={{ display: 'flex', gap: 6, marginBottom: 28, flexWrap: 'wrap', justifyContent: 'center' }}
       >
-        {['7,400+ diagnosed', 'Avg +34% revenue', 'Used in 38 countries'].map(s => (
+        {[t('demo.chip1'), t('demo.chip2'), t('demo.chip3')].map(s => (
           <span key={s} style={{
             padding: '3px 9px', borderRadius: 100,
             background: `rgba(20,184,166,0.10)`, border: `1px solid ${C.tiffany}30`,
@@ -196,7 +156,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
           letterSpacing: '0.02em',
         }}
       >
-        Begin Free Diagnosis →
+        {t('demo.introCta')}
       </motion.button>
 
       <motion.p
@@ -204,7 +164,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
         style={{ color: 'rgba(113,113,122,0.55)', fontSize: 9.5, marginTop: 10,
                  fontFamily: 'var(--font-inter), sans-serif' }}
       >
-        Takes 60 seconds · No card · Your data is private
+        {t('demo.introFoot')}
       </motion.p>
     </motion.div>
   )
@@ -213,6 +173,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
 // ── Screen 2: Sector ──────────────────────────────────────────────────────────
 
 function ScreenSector({ onSelect }: { onSelect: (s: string) => void }) {
+  const { t } = useLanguage()
   const [chosen, setChosen] = useState<string | null>(null)
 
   function pick(id: string) {
@@ -230,13 +191,13 @@ function ScreenSector({ onSelect }: { onSelect: (s: string) => void }) {
     >
       <span style={{ color: C.gold, fontSize: 9.5, letterSpacing: '0.18em',
                      textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif', marginBottom: 6 }}>
-        Step 1 of 3
+        {t('demo.step1of3')}
       </span>
       <h2 style={{
         color: C.white, fontSize: 17, fontFamily: 'var(--font-cormorant), Georgia, serif',
         fontWeight: 600, fontStyle: 'italic', marginBottom: 18, lineHeight: 1.3,
       }}>
-        What kind of business?
+        {t('demo.sectorQ')}
       </h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, flex: 1 }}>
@@ -265,7 +226,7 @@ function ScreenSector({ onSelect }: { onSelect: (s: string) => void }) {
               fontSize: 10, fontFamily: 'var(--font-inter), sans-serif', fontWeight: 500,
               textAlign: 'center',
             }}>
-              {s.label}
+              {t(secKey(s.id))}
             </span>
           </motion.button>
         ))}
@@ -279,10 +240,11 @@ function ScreenSector({ onSelect }: { onSelect: (s: string) => void }) {
 const DEMO_METRICS = { revenue: '£42,000', churn: '8.2%', growth: '+12%' }
 
 function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () => void }) {
+  const { t } = useLanguage()
   const [vals,  setVals]  = useState({ revenue: '', churn: '', growth: '' })
   const [phase, setPhase] = useState<'idle' | 'filling' | 'ready'>('idle')
 
-  const sLabel = SECTORS.find(s => s.id === sector)?.label ?? sector
+  const sLabel = SECTORS.some(s => s.id === sector) ? t(secKey(sector)) : sector
 
   // Demo autofill — shows capability without requiring user input
   useEffect(() => {
@@ -296,9 +258,9 @@ function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () =>
   }, [onAnalyze])
 
   const FIELDS = [
-    { key: 'revenue' as const, label: 'Monthly Revenue',  ph: 'e.g. £42,000', hint: 'MRR or monthly avg' },
-    { key: 'churn'   as const, label: 'Churn Rate',       ph: 'e.g. 8.2%',    hint: 'Monthly customer loss %' },
-    { key: 'growth'  as const, label: 'MoM Growth Rate',  ph: 'e.g. +12%',    hint: '3-month average' },
+    { key: 'revenue' as const, label: t('demo.field.revenue'), ph: t('demo.ph.revenue'), hint: t('demo.hint.revenue') },
+    { key: 'churn'   as const, label: t('demo.field.churn'),   ph: t('demo.ph.churn'),   hint: t('demo.hint.churn') },
+    { key: 'growth'  as const, label: t('demo.field.growth'),  ph: t('demo.ph.growth'),  hint: t('demo.hint.growth') },
   ]
 
   return (
@@ -311,14 +273,14 @@ function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () =>
     >
       <span style={{ color: C.gold, fontSize: 9.5, letterSpacing: '0.18em',
                      textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif', marginBottom: 6 }}>
-        Step 2 of 3
+        {t('demo.step2of3')}
       </span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
         <h2 style={{
           color: C.white, fontSize: 16, fontFamily: 'var(--font-cormorant), Georgia, serif',
           fontWeight: 600, fontStyle: 'italic', lineHeight: 1.3, flex: 1,
         }}>
-          Three numbers reveal everything.
+          {t('demo.metricsTitle')}
         </h2>
         <span style={{
           padding: '2px 8px', borderRadius: 6, whiteSpace: 'nowrap',
@@ -373,7 +335,7 @@ function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () =>
                    color: C.gold, fontSize: 10.5, fontFamily: 'var(--font-inter), sans-serif' }}>
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.gold,
                         animation: 'drift-pulse 1s ease-in-out infinite' }} />
-          Preparing KAIROS analysis…
+          {t('demo.preparing')}
         </motion.div>
       )}
     </motion.div>
@@ -383,9 +345,13 @@ function ScreenMetrics({ sector, onAnalyze }: { sector: string; onAnalyze: () =>
 // ── Screen 4: Analysis (streaming) ───────────────────────────────────────────
 
 function ScreenAnalysis({ sector, onDone }: { sector: string; onDone: () => void }) {
+  const { t } = useLanguage()
   const [text,    setText]    = useState('')
   const [phase,   setPhase]   = useState<'scanning' | 'streaming' | 'done'>('scanning')
-  const rawText = ANALYSIS[sector] ?? ANALYSIS.default
+  const analysisKey = (sector === 'ecommerce' || sector === 'saas')
+    ? (`demo.analysis.${sector}`) as TranslationKey
+    : 'demo.analysis.default'
+  const rawText = t(analysisKey)
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('streaming'), 1600)
@@ -429,7 +395,7 @@ function ScreenAnalysis({ sector, onDone }: { sector: string; onDone: () => void
           color: phase === 'done' ? C.green : C.gold, fontSize: 10,
           fontFamily: 'var(--font-inter), sans-serif', letterSpacing: '0.10em', textTransform: 'uppercase',
         }}>
-          {phase === 'scanning' ? 'KAIROS ANALYZING…' : phase === 'streaming' ? 'GENERATING STRATEGY…' : 'COMPLETE'}
+          {phase === 'scanning' ? t('demo.statusScanning') : phase === 'streaming' ? t('demo.statusStreaming') : t('demo.statusComplete')}
         </span>
       </div>
 
@@ -437,9 +403,9 @@ function ScreenAnalysis({ sector, onDone }: { sector: string; onDone: () => void
       {phase === 'scanning' && (
         <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
-            'Benchmarking across 7,400 profiles…',
-            'Cross-referencing sector data…',
-            'Calculating ROI projections…',
+            t('demo.scan1'),
+            t('demo.scan2'),
+            t('demo.scan3'),
           ].map((label, i) => (
             <motion.div key={label} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               transition={{ delay: i * 0.35 }}>
@@ -501,6 +467,7 @@ function BoldRenderer({ text, goldColor }: { text: string; goldColor: string }) 
 // ── Screen 5: Strategy / Convert ─────────────────────────────────────────────
 
 function ScreenStrategy() {
+  const { t } = useLanguage()
   return (
     <motion.div {...RISE} key="strategy"
       style={{
@@ -527,13 +494,13 @@ function ScreenStrategy() {
         </div>
         <span style={{ color: C.gold, fontSize: 9.5, letterSpacing: '0.18em',
                        textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif', display: 'block', marginBottom: 8 }}>
-          Harbour Reached
+          {t('demo.harbourReached')}
         </span>
         <h2 style={{
           color: C.white, fontSize: 18, fontFamily: 'var(--font-cormorant), Georgia, serif',
           fontWeight: 600, fontStyle: 'italic', lineHeight: 1.3,
         }}>
-          Your precision strategy is ready to save.
+          {t('demo.strategyReady')}
         </h2>
       </motion.div>
 
@@ -546,9 +513,9 @@ function ScreenStrategy() {
           filter: 'blur(3px)', userSelect: 'none', position: 'relative', overflow: 'hidden',
         }}
       >
-        {['Priority 1: Retention Audit', '↑ +18% MRR in 30 days',
-          'Priority 2: Expansion Revenue', '↑ NRR 98% → 118%',
-          'Priority 3: Churn Firewall'].map((l, i) => (
+        {[t('demo.prio1'), t('demo.prio1sub'),
+          t('demo.prio2'), t('demo.prio2sub'),
+          t('demo.prio3')].map((l, i) => (
           <div key={i} style={{
             height: 7, borderRadius: 4, marginBottom: 9,
             background: i % 2 === 0 ? `rgba(196,154,60,0.32)` : `rgba(161,161,170,0.14)`,
@@ -565,7 +532,7 @@ function ScreenStrategy() {
             <path d="M5 7V5a3 3 0 016 0v2" stroke={`${C.gold}99`} strokeWidth="1.4"/>
           </svg>
           <span style={{ color: `${C.gold}80`, fontSize: 9, fontFamily: 'var(--font-inter), sans-serif' }}>
-            Create free account to unlock
+            {t('demo.unlock')}
           </span>
         </div>
       </motion.div>
@@ -579,10 +546,10 @@ function ScreenStrategy() {
       >
         <p style={{ color: C.green, fontSize: 11.5, fontFamily: 'var(--font-inter), sans-serif',
                     fontWeight: 600, marginBottom: 2 }}>
-          Projected impact: +£124,000 / year
+          {t('demo.projImpact')}
         </p>
         <p style={{ color: 'rgba(161,161,170,0.5)', fontSize: 9.5, fontFamily: 'var(--font-inter), sans-serif' }}>
-          Cross-referenced with 7,400 sector benchmarks
+          {t('demo.projSub')}
         </p>
       </motion.div>
 
@@ -598,11 +565,11 @@ function ScreenStrategy() {
           color: C.navy, fontSize: 13.5, fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif',
           boxShadow: `0 8px 24px ${C.gold}40`,
         }}>
-          Save My Strategy →
+          {t('demo.saveCta')}
         </a>
         <p style={{ color: 'rgba(113,113,122,0.5)', fontSize: 9.5, textAlign: 'center',
                     fontFamily: 'var(--font-inter), sans-serif' }}>
-          Free account · No card · Takes 30 seconds
+          {t('demo.saveFoot')}
         </p>
       </motion.div>
     </motion.div>
