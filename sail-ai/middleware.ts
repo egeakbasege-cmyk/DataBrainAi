@@ -165,7 +165,7 @@ export default auth(async (req: NextRequest & { auth?: { user?: { email?: string
     "img-src 'self' blob: data: https://*.googleusercontent.com https://images.unsplash.com",
     [
       "connect-src 'self'",
-      "https://api.groq.com",
+      "https://api.cohere.com",
       "https://api.cohere.ai",
       "https://api.tavily.com",
       "https://google.serper.dev",

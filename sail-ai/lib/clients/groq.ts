@@ -1,7 +1,7 @@
 /**
- * lib/clients/groq.ts — Aetheris Groq API Client
+ * lib/clients/groq.ts — Aetheris Cohere API Client
  * ─────────────────────────────────────────────────────────────────────────────
- * Dedicated, strictly-typed Groq API client for Vercel Edge Runtime.
+ * Dedicated, strictly-typed Cohere API client for Vercel Edge Runtime.
  *
  * Capabilities:
  *   • Per-key circuit breakers  — fail-fast on quota/error storms
@@ -18,11 +18,11 @@
 
 // ── Groq endpoint + model identifiers ────────────────────────────────────────
 
-export const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+export const GROQ_URL = 'https://api.cohere.com/v2/chat'
 
 export const GROQ_MODELS = {
-  PRIMARY: 'llama-3.3-70b-versatile' as const, // 12 K TPM on_demand
-  FAST:    'llama-3.1-8b-instant'    as const, // 500 K TPD — 5× daily headroom
+  PRIMARY: 'command-a-03-2025' as const,
+  FAST:    'command-r7b-12-2024' as const,
 }
 export type GroqModel = typeof GROQ_MODELS[keyof typeof GROQ_MODELS]
 
@@ -109,10 +109,10 @@ function _failure(key: string): void {
  */
 export function buildKeyPool(byokKey?: string): string[] {
   const keys: string[] = []
-  const base = process.env.GROQ_API_KEY
+  const base = process.env.COHERE_API_KEY
   if (base) keys.push(base)
   for (let i = 1; i <= 5; i++) {
-    const k = process.env[`GROQ_API_KEY_${i}`]
+    const k = process.env[`COHERE_API_KEY_${i}`]
     if (k && !keys.includes(k)) keys.push(k)
   }
   if (byokKey && !keys.includes(byokKey)) keys.push(byokKey)
