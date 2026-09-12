@@ -292,8 +292,16 @@ export default function PricingPage() {
                         onClick={handleStripe}
                         disabled={loading}
                         aria-busy={loading}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.95rem', background: '#FFFFFF', color: COBALT_DEEP, fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', borderRadius: 2, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s, transform 0.2s', boxShadow: '0 6px 18px rgba(0,0,0,0.2)' }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.95rem', background: '#FFFFFF', color: COBALT_DEEP, fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', borderRadius: 2, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s, transform 0.2s', boxShadow: '0 6px 18px rgba(0,0,0,0.2)' }}
                       >
+                        {loading && (
+                          <motion.span
+                            aria-hidden
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 0.7, ease: 'linear', repeat: Infinity }}
+                            style={{ width: 13, height: 13, borderRadius: '50%', border: `2px solid ${COBALT_DEEP}33`, borderTopColor: COBALT_DEEP, display: 'inline-block' }}
+                          />
+                        )}
                         {loading ? t('pricing.redirecting') : tier.cta.label}
                       </button>
                       {checkoutError && (

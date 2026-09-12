@@ -24,7 +24,7 @@ export async function POST(_req: NextRequest) {
     const url = await createCheckout({
       email:      session.user.email,
       userId:     (session.user as { id?: string }).id ?? session.user.email,
-      successUrl: `${APP_BASE_URL}/chat?pro=1`,
+      successUrl: `${APP_BASE_URL}/success`,
       cancelUrl:  `${APP_BASE_URL}/pricing`,
     })
     return NextResponse.json({ url })
