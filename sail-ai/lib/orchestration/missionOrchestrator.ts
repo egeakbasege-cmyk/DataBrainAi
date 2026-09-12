@@ -31,7 +31,8 @@
  * Edge Runtime safe — zero Node.js APIs.
  */
 
-import { groqFetch, GROQ_MODELS, GROQ_URL, buildKeyPool, extractGroqContent }   from '@/lib/clients/groq'
+import { groqFetch, GROQ_MODELS, extractGroqContent }   from '@/lib/clients/groq'
+import { resolveChatTransport }                         from '@/lib/clients/cohere'
 import type { GroqMessage }                                  from '@/lib/clients/groq'
 import { executeDeepSearch, decomposeToSearchQueries,
          encodeResearchContext }                             from '@/lib/tools/search'
@@ -119,7 +120,7 @@ export async function planMissions(
   hasData?:   boolean,
   byokKey?:   string,
 ): Promise<OrchestrationPlan> {
-  const keys = buildKeyPool(byokKey)
+  const keys = resolveChatTransport(byokKey).keys
 
   // Fallback plan for when planner fails or no keys available
   const fallback: OrchestrationPlan = {
@@ -541,27 +542,21 @@ export async function streamSynthesis(
   context?:       string,
   byokKey?:       string,
 ): Promise<Response> {
-  const keys = buildKeyPool(byokKey)
   const msgs = buildSynthesisPrompt(query, missionResults, context)
 
-  // Try each key until one works
-  for (const key of keys) {
-    const res = await fetch(GROQ_URL, {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${key}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({
-        model:       GROQ_MODELS.PRIMARY,
-        messages:    msgs,
-        max_tokens:  MAX_SYNTHESIS_TOKENS,
-        temperature: 0.28,
-        stream:      true,
-      }),
-    })
-    if (res.ok) return res
-  }
+  // groqFetch handles key rotation, circuit breaking, and — when no direct
+  // Cohere key is present — the AI Gateway fallback.
+  const res = await groqFetch(
+    {
+      model:       GROQ_MODELS.PRIMARY,
+      messages:    msgs,
+      max_tokens:  MAX_SYNTHESIS_TOKENS,
+      temperature: 0.28,
+      stream:      true,
+    },
+    byokKey,
+  )
+  if (res.ok) return res
 
   // Fallback — return a short non-streaming answer
   return new Response(

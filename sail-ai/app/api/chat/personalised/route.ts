@@ -32,19 +32,17 @@ import type { PersonalisedRequestBody }                  from '@/lib/personalise
 import { resolveModsFromIds, ANALYSIS_MODE_TO_MOD_ID }  from '@/lib/personalised/mod-registry'
 import { generatePersonalisedPrompt }                    from '@/lib/personalised/prompt-synthesiser'
 import { runGuardrails, validateMarketData }             from '@/lib/personalised/guardrails'
-import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText, cohereStreamDelta } from '@/lib/clients/cohere'
+import { COHERE_MODELS, extractCohereText, cohereStreamDelta, resolveChatTransport, type ChatTransport } from '@/lib/clients/cohere'
 
 export const runtime = 'edge'
 
 const { auth } = NextAuth(authConfig)
 
-const GROQ_URL   = COHERE_CHAT_URL
-const GROQ_MODEL = COHERE_MODELS.PRIMARY
-
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
-function getGroqKey(req: NextRequest, body: PersonalisedRequestBody): string | null {
-  return cohereKeys(body.apiKey)[0] ?? null
+// Resolves the chat provider: Cohere direct when a key exists, else AI Gateway.
+function getTransport(body: PersonalisedRequestBody): ChatTransport {
+  return resolveChatTransport(body.apiKey)
 }
 
 /**
@@ -94,16 +92,16 @@ HARD RULES:
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function executeMarketDataGeneration(
-  groqKey:      string,
+  tx:           ChatTransport,
   systemPrompt: string,
   userMessage:  string,
   attempt = 1,
 ): Promise<Response> {
-  const res = await fetch(GROQ_URL, {
+  const res = await fetch(tx.url, {
     method:  'POST',
-    headers: { Authorization: `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${tx.keys[0]}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model:           GROQ_MODEL,
+      model:           tx.model(COHERE_MODELS.PRIMARY),
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user',   content: userMessage  },
@@ -148,7 +146,7 @@ async function executeMarketDataGeneration(
       systemPrompt +
       `\n\nCORRECTION REQUIRED — the following schema violations were detected:\n${fixes}\n` +
       `Fix these issues and re-emit the corrected JSON object only.`
-    return executeMarketDataGeneration(groqKey, correctedSystem, userMessage, 2)
+    return executeMarketDataGeneration(tx, correctedSystem, userMessage, 2)
   }
 
   // Both attempts failed — return typed validation error
@@ -168,18 +166,18 @@ async function executeMarketDataGeneration(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function executePersonalisedStream(
-  groqKey:      string,
+  tx:           ChatTransport,
   systemPrompt: string,
   userMessage:  string,
   metaHeader:   string,
   baseLanguage: 'tr-TR' | 'en-US',
   userQuery:    string,
 ): Promise<Response> {
-  const streamRes = await fetch(GROQ_URL, {
+  const streamRes = await fetch(tx.url, {
     method:  'POST',
-    headers: { Authorization: `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${tx.keys[0]}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model:       GROQ_MODEL,
+      model:       tx.model(COHERE_MODELS.PRIMARY),
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user',   content: userMessage  },
@@ -312,11 +310,11 @@ export async function POST(req: NextRequest): Promise<Response> {
   const hybridName   = body.config.hybridName ?? `${session.user.name ?? 'Your'} Personalised AI`
   const now          = new Date()
 
-  // 4. API key
-  const groqKey = getGroqKey(req, body)
-  if (!groqKey) {
+  // 4. Provider transport (Cohere direct, or AI Gateway fallback)
+  const tx = getTransport(body)
+  if (!tx.keys.length) {
     return Response.json(
-      { error: 'AI provider not configured. Add COHERE_API_KEY or pass apiKey in request.' },
+      { error: 'AI provider not configured. Add COHERE_API_KEY / AI_GATEWAY_API_KEY or pass apiKey in request.' },
       { status: 503 },
     )
   }
@@ -326,7 +324,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // ── PATH B: Market Data (generateObject + Zod) ─────────────────────────────
   if (body.marketDataQuery) {
     const systemPrompt = buildMarketDataSystemPrompt(hybridName, now.getFullYear())
-    return executeMarketDataGeneration(groqKey, systemPrompt, userMessage)
+    return executeMarketDataGeneration(tx, systemPrompt, userMessage)
   }
 
   // ── PATH A: Streaming personalised response ────────────────────────────────
@@ -356,7 +354,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   })
 
   return executePersonalisedStream(
-    groqKey,
+    tx,
     systemPrompt,
     userMessage,
     metaHeader,
