@@ -107,6 +107,7 @@ export function LiquidButton({
     fontWeight: 700,
     letterSpacing: '0.14em',
     textTransform: 'uppercase',
+    whiteSpace: 'nowrap',
     color: textColor,
     textDecoration: 'none',
     cursor: disabled ? 'not-allowed' : 'pointer',
