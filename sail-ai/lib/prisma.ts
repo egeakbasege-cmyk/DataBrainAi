@@ -26,4 +26,6 @@ function createPrismaClient(): PrismaClient {
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+// Reuse a single client across warm serverless invocations (production included)
+// so each sign-in doesn't pay to spin up a fresh client and open a new connection.
+globalForPrisma.prisma = prisma
