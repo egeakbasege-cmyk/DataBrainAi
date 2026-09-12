@@ -32,9 +32,12 @@ function LoginForm() {
       setError(t('login.errCredentials'))
     if (errorCode === 'OAuthAccountNotLinked')
       setError(t('login.errLinked'))
-    if (errorCode === 'OAuthSignin' || errorCode === 'OAuthCallback')
+    // Generic OAuth / config failures are almost always a transient cold-start
+    // DB hiccup in production (the env var IS set), so point users to retry
+    // rather than showing a misleading "set DATABASE_URL" message.
+    if (errorCode === 'OAuthSignin' || errorCode === 'OAuthCallback' || errorCode === 'Configuration')
       setError(t('login.errGoogle'))
-    if (errorCode === 'Configuration' || errorCode === 'DATABASE_NOT_CONFIGURED')
+    if (errorCode === 'DATABASE_NOT_CONFIGURED')
       setError('Veritabanı bağlantısı yapılandırılmamış. Lütfen DATABASE_URL ortam değişkenini ayarlayın.')
     if (errorCode === 'DATABASE_CONNECTION_ERROR')
       setError(t('login.errConnection'))
