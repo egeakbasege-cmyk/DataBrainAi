@@ -442,7 +442,7 @@ function NavDots({
           onClick={() => onSelect(i)}
           animate={{
             width:      i === active ? 20 : 6,
-            background: i === active ? '#14B8A6' : 'rgba(20,184,166,0.35)',
+            background: i === active ? '#1778DC' : 'rgba(226,232,240,0.45)',
           }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           style={{
@@ -511,7 +511,7 @@ export function SovereignDashboard({
         justifyContent: 'center',
         minHeight:      '100vh',
         width:          '100%',
-        background:     'rgba(8,9,13,0.62)',
+        background:     'linear-gradient(160deg, rgba(4,16,38,0.78) 0%, rgba(0,43,73,0.72) 100%)',
         overflow:       'hidden',
         cursor:         'pointer',   // clicking bg rotates
         userSelect:     'none',
@@ -569,9 +569,9 @@ export function SovereignDashboard({
         <div style={{
           width:        '80px',
           height:       '1px',
-          background:   'linear-gradient(90deg, transparent 0%, #14B8A6 40%, #C9A96E 60%, transparent 100%)',
+          background:   'linear-gradient(90deg, transparent 0%, #1778DC 40%, #E2E8F0 60%, transparent 100%)',
           margin:       '0 auto 1rem',
-          opacity:      0.6,
+          opacity:      0.7,
         }} />
 
         {companyName && (
@@ -658,12 +658,12 @@ export function SovereignDashboard({
           marginTop:      '2rem',
           padding:        '0.75rem 2.25rem',
           borderRadius:   '999px',
-          border:         '1.5px solid rgba(20,184,166,0.60)',
-          background:     'linear-gradient(135deg, rgba(20,184,166,0.28) 0%, rgba(8,9,13,0.88) 100%)',
-          color:          '#FFFFFF',
+          border:         '1.5px solid rgba(0,51,160,0.45)',
+          background:     'linear-gradient(145deg, #FFFFFF 0%, #F1F5F9 34%, #E2E8F0 55%, #B8C2D0 78%, #94A3B8 100%)',
+          color:          '#0A1F44',
           fontFamily:     'var(--font-inter), sans-serif',
           cursor:         'pointer',
-          boxShadow:      '0 0 20px rgba(20,184,166,0.25), 0 6px 24px rgba(0,0,0,0.40)',
+          boxShadow:      'inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -2px 4px rgba(100,116,139,0.45), 0 8px 24px -8px rgba(0,51,160,0.55)',
           pointerEvents:  'auto',
           display:        'flex',
           flexDirection:  'column',
@@ -690,10 +690,10 @@ export function SovereignDashboard({
             </motion.span>
           </AnimatePresence>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M5 12h14M14 6l6 6-6 6" stroke="#14B8A6" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M5 12h14M14 6l6 6-6 6" stroke="#0033A0" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <span style={{ fontSize: '0.55rem', letterSpacing: '0.08em', color: 'rgba(20,184,166,0.75)', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: '0.55rem', letterSpacing: '0.08em', color: 'rgba(0,51,160,0.80)', textTransform: 'uppercase' }}>
           {t('sovereign.goToChat')}
         </span>
       </motion.button>

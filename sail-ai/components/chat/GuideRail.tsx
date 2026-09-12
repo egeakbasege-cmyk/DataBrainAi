@@ -14,6 +14,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import type { AnalysisMode }       from '@/components/ModeSelector'
 import { DailyCounter }            from '@/components/DailyCounter'
+import { useIsMobile }             from '@/hooks/useMediaQuery'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -75,14 +76,15 @@ export function GuideRail({
   hasApiKey = true, onAddKey,
 }: GuideRailProps) {
   const activeMeta = MODE_META[mode]
+  const isMobile   = useIsMobile()
 
   return (
     <div style={{
-      height:              76,
+      height:              isMobile ? 60 : 76,
       flexShrink:          0,
       display:             'flex',
       alignItems:          'center',
-      padding:             '0 28px',
+      padding:             isMobile ? '0 14px' : '0 28px',
       background:          T.bg,
       backdropFilter:      'blur(40px)',
       WebkitBackdropFilter:'blur(40px)',
@@ -103,11 +105,11 @@ export function GuideRail({
       }} />
 
       {/* ── LEFT: Wordmark + active mode indicator ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 9 : 16, flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span style={{
             fontFamily:    'var(--font-cormorant), Georgia, serif',
-            fontSize:       20,
+            fontSize:       isMobile ? 17 : 20,
             fontWeight:     400,
             letterSpacing: '-0.02em',
             color:          T.textPrimary,
@@ -120,17 +122,19 @@ export function GuideRail({
               fontStyle:  'italic',
             }}>AI</span>
           </span>
-          <span style={{
-            fontFamily:    'var(--font-inter), sans-serif',
-            fontSize:       7,
-            fontWeight:     700,
-            letterSpacing: '0.22em',
-            textTransform: 'uppercase',
-            color:          T.textFaint,
-            lineHeight:     1,
-          }}>
-            Sovereign Intelligence
-          </span>
+          {!isMobile && (
+            <span style={{
+              fontFamily:    'var(--font-inter), sans-serif',
+              fontSize:       7,
+              fontWeight:     700,
+              letterSpacing: '0.22em',
+              textTransform: 'uppercase',
+              color:          T.textFaint,
+              lineHeight:     1,
+            }}>
+              Sovereign Intelligence
+            </span>
+          )}
         </div>
 
         <div style={{ width: 1, height: 28, background: T.border }} />
@@ -182,7 +186,7 @@ export function GuideRail({
           </AnimatePresence>
         </div>
 
-        {contextLabel && (
+        {contextLabel && !isMobile && (
           <>
             <div style={{ width: 1, height: 20, background: T.border }} />
             <span style={{
@@ -205,8 +209,9 @@ export function GuideRail({
       <div style={{
         display:        'flex',
         alignItems:     'center',
-        gap:             8,
+        gap:             isMobile ? 5 : 8,
         justifyContent: 'flex-end',
+        flexShrink:      0,
       }}>
 
         <ControlPill active={useProfileCtx} activeColor={T.teal} onClick={onToggleCtx}
@@ -217,21 +222,25 @@ export function GuideRail({
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             <polyline points="9 12 11 14 15 10"/>
           </svg>
-          <span style={{
-            fontSize: 9, fontWeight: 700, letterSpacing: '0.10em',
-            color: useProfileCtx ? T.teal : T.textMuted,
-          }}>CTX</span>
+          {!isMobile && (
+            <span style={{
+              fontSize: 9, fontWeight: 700, letterSpacing: '0.10em',
+              color: useProfileCtx ? T.teal : T.textMuted,
+            }}>CTX</span>
+          )}
         </ControlPill>
 
         <ControlPill active={businessMode} activeColor={T.teal} onClick={onToggleBusiness}
           title={businessMode ? 'Business mode' : 'Chat mode'}>
           <span style={{ fontSize: 9, lineHeight: 1 }}>{businessMode ? '💼' : '💬'}</span>
-          <span style={{
-            fontSize: 9, fontWeight: 700, letterSpacing: '0.10em',
-            color: businessMode ? T.teal : T.textMuted,
-          }}>
-            {businessMode ? 'BIZ' : 'CHAT'}
-          </span>
+          {!isMobile && (
+            <span style={{
+              fontSize: 9, fontWeight: 700, letterSpacing: '0.10em',
+              color: businessMode ? T.teal : T.textMuted,
+            }}>
+              {businessMode ? 'BIZ' : 'CHAT'}
+            </span>
+          )}
         </ControlPill>
 
         <div style={{ width: 1, height: 22, background: T.border }} />

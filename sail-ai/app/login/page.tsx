@@ -107,7 +107,7 @@ function LoginForm() {
   return (
     <main style={{
       minHeight:       '100vh',
-      background:      '#FAFAFA',
+      background:      'transparent',
       backgroundImage: 'linear-gradient(rgba(0,51,160,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,51,160,0.05) 1px, transparent 1px), radial-gradient(120% 80% at 15% -10%, rgba(23,120,220,0.10) 0%, transparent 55%)',
       backgroundSize:  '34px 34px, 34px 34px, 100% 100%',
       display:         'flex',
@@ -265,7 +265,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <main style={{ minHeight: '100vh', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <main style={{ minHeight: '100vh', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <SpinIcon size={28} />
       </main>
     }>

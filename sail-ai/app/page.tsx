@@ -445,7 +445,7 @@ export default function LandingPage() {
           SECTION 4 — INTELLIGENCE MODES
           Dark — glassmorphism cards over topo texture.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: 'rgba(8,9,13,0.18)', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'rgba(8,9,13,0.94)', position: 'relative', overflow: 'hidden' }}>
         <TopoBackground />
         <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none', zIndex: 1 }} />
 
@@ -573,7 +573,7 @@ export default function LandingPage() {
           SECTION 5 — SAMPLE OUTCOMES
           Dark — stagger rows with light text.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: 'rgba(8,9,13,0.18)', borderTop: '1px solid rgba(255,255,255,0.08)', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'rgba(8,9,13,0.94)', borderTop: '1px solid rgba(255,255,255,0.08)', position: 'relative', overflow: 'hidden' }}>
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-24" style={{ position: 'relative', zIndex: 1 }}>
 
           {/* Header */}
@@ -681,7 +681,7 @@ export default function LandingPage() {
           SECTION 6 — CTA DARK
           Premium dark banner. Fade-up text + button.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: 'rgba(8,9,13,0.18)', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'rgba(8,9,13,0.94)', position: 'relative', overflow: 'hidden' }}>
         <TopoBackground />
         <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none', zIndex: 2 }} />
 
