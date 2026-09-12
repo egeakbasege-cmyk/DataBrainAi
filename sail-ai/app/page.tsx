@@ -29,6 +29,7 @@ import { Nav } from '@/components/Nav'
 import { Logo } from '@/components/Logo'
 import { CompassRose, EngravedSailboat } from '@/components/Ornaments'
 import { TopoBackground } from '@/components/TopoBackground'
+import { FineLineBackground } from '@/components/FineLineBackground'
 import { PortofinoWalkthrough } from '@/components/PortofinoWalkthrough'
 import { SectionDivider, ChampagneRule } from '@/components/SectionDivider'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
@@ -237,7 +238,32 @@ export default function LandingPage() {
   ]
 
   return (
-    <main style={{ background: 'transparent', paddingBottom: '0' }}>
+    <main style={{ background: '#0C0C0E', paddingBottom: '0', position: 'relative' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Sail AI+',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            description:
+              'AI-powered market analysis, revenue optimization, and verified business advisory strategies for independent operators and founders.',
+            offers: {
+              '@type': 'Offer',
+              price: '9.99',
+              priceCurrency: 'USD',
+            },
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: '4.9',
+              ratingCount: '1280',
+            },
+          }),
+        }}
+      />
+      <FineLineBackground />
       <Nav />
 
       {/* ══════════════════════════════════════════════
@@ -245,18 +271,7 @@ export default function LandingPage() {
           Dark full-bleed. Word-by-word headline stagger.
           Sailboat has parallax drift on scroll.
       ══════════════════════════════════════════════ */}
-      <section className="azx-tilesheen" style={{ paddingBottom: 0, position: 'relative', zIndex: 1, overflow: 'hidden', background: '#FAFAF8', color: 'var(--azx-ink)' }}>
-        <div
-          aria-hidden
-          style={{
-            position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
-            backgroundColor: 'transparent',
-            backgroundImage:
-              'linear-gradient(var(--azx-grout) 1px, transparent 1px), linear-gradient(90deg, var(--azx-grout) 1px, transparent 1px), radial-gradient(120% 80% at 12% -10%, rgba(10,186,181,0.10) 0%, transparent 55%), radial-gradient(110% 90% at 108% 8%, rgba(10,126,121,0.08) 0%, transparent 52%)',
-            backgroundSize: '34px 34px, 34px 34px, 100% 100%, 100% 100%',
-          }}
-        />
-
+      <section style={{ paddingBottom: 0, position: 'relative', zIndex: 1, overflow: 'hidden', background: 'transparent', color: '#FFFFFF' }}>
         <div className="max-w-6xl mx-auto px-6 md:px-10 pt-24 md:pt-32 pb-20 md:pb-28" style={{ position: 'relative', zIndex: 10 }}>
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div>
@@ -266,11 +281,11 @@ export default function LandingPage() {
             className="azx-reveal"
             style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.25rem' }}
           >
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#0A7E79' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#D4AF37' }}>
               {t('landing.eyebrow')}
             </span>
-            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(10,186,181,0.4), transparent)' }} />
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#64748B' }}>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.5), transparent)' }} />
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A78BFA' }}>
               {t('landing.est')}
             </span>
           </div>
@@ -279,14 +294,15 @@ export default function LandingPage() {
           <h1
             style={{
               fontFamily:    'var(--font-playfair), Georgia, serif',
-              fontSize:      'clamp(3rem, 6vw, 5.25rem)',
+              fontSize:      'clamp(2.375rem, 6vw, 3.75rem)',
               fontWeight:    700,
-              fontStyle:     'italic',
-              lineHeight:    1.05,
+              fontStyle:     'normal',
+              lineHeight:    1.08,
               letterSpacing: '-0.02em',
-              color:         '#0F172A',
+              color:         '#D4AF37',
               maxWidth:      '15ch',
               margin:        0,
+              textShadow:    '0 2px 30px rgba(212,175,55,0.25)',
             }}
           >
             {headlineWords.map((word, i) => (
@@ -306,9 +322,9 @@ export default function LandingPage() {
             style={{
               ['--azx-delay' as string]: '0.5s',
               fontFamily: 'var(--font-inter), sans-serif',
-              fontSize:   'clamp(1rem, 1.1vw, 1.125rem)',
+              fontSize:   'clamp(1.125rem, 1.2vw, 1.25rem)',
               lineHeight: 1.7,
-              color:      '#1E293B',
+              color:      '#CBD5E1',
               maxWidth:   '46ch',
               marginTop:  '1.75rem',
               fontWeight: 400,
@@ -333,17 +349,19 @@ export default function LandingPage() {
                   fontSize:      '0.9375rem',
                   fontWeight:    600,
                   letterSpacing: '0.01em',
-                  color:         badge.locked ? '#8A6D3B' : '#0A6E6A',
-                  background:    badge.locked ? '#FBF6EC' : '#FFFFFF',
-                  border:        `1px solid ${badge.locked ? 'rgba(201,169,110,0.45)' : 'rgba(10,126,121,0.22)'}`,
+                  color:         badge.locked ? '#E7CE93' : '#E2E8F0',
+                  background:    badge.locked ? 'rgba(201,169,110,0.12)' : 'rgba(31,19,53,0.55)',
+                  backdropFilter:'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border:        `1px solid ${badge.locked ? 'rgba(201,169,110,0.55)' : 'rgba(255,255,255,0.14)'}`,
                   borderRadius:  '999px',
                   padding:       '0.5rem 1.05rem',
                   whiteSpace:    'nowrap',
-                  boxShadow:     '0 2px 10px -5px rgba(10,126,121,0.3)',
+                  boxShadow:     '0 2px 14px -6px rgba(0,0,0,0.6)',
                 }}
               >
                 {!badge.locked && (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A9E98" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 )}
@@ -357,30 +375,23 @@ export default function LandingPage() {
             className="azx-reveal"
             style={{ ['--azx-delay' as string]: '0.74s', marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
           >
-            <LiquidButton href="/login?mode=register" variant="silver" size="lg">
+            <LiquidButton href="/login?mode=register" variant="gold" size="lg">
               {t('landing.beginFree')}
             </LiquidButton>
-            <button
-              type="button"
+            <LiquidButton
+              variant="glass"
+              size="lg"
               onClick={() =>
                 document.getElementById('hero-plan')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
               }
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                minHeight: '52px', padding: '0 1.5rem',
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                fontFamily: 'var(--font-inter), sans-serif',
-                fontSize: '1.0625rem', fontWeight: 700, letterSpacing: '0.1em',
-                textTransform: 'uppercase', color: '#B08D4F',
-              }}
             >
               {t('landing.exploreProPlans')}
-            </button>
+            </LiquidButton>
           </div>
 
           <p
             className="azx-reveal"
-            style={{ ['--azx-delay' as string]: '0.9s', marginTop: '1rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#475569', letterSpacing: '0.01em', lineHeight: 1.6 }}
+            style={{ ['--azx-delay' as string]: '0.9s', marginTop: '1rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#94A3B8', letterSpacing: '0.01em', lineHeight: 1.6 }}
           >
             {t('landing.freeNote')}
           </p>
@@ -391,7 +402,7 @@ export default function LandingPage() {
             style={{ ['--azx-delay' as string]: '1s', marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
           >
             {TRUST_CUES.map(cue => (
-              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#475569', letterSpacing: '0.01em' }}>
+              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#94A3B8', letterSpacing: '0.01em' }}>
                 {cue}
               </span>
             ))}
@@ -399,100 +410,59 @@ export default function LandingPage() {
 
           </div>{/* end hero left column */}
 
-          {/* ── Framed azulejo mural — the hero centerpiece ── */}
-          <div className="azx-reveal-mural relative mx-auto w-full max-w-[420px] lg:max-w-none">
-            <div
-              style={{
-                position:     'relative',
-                padding:      '10px',
-                background:   'linear-gradient(135deg, #0ABAB5 0%, #0a4da2 45%, #052a5e 100%)',
-                borderRadius: '8px',
-                boxShadow:    '0 40px 90px -34px rgba(10,59,56,0.65), inset 0 0 0 1px rgba(255,255,255,0.35)',
-              }}
-            >
-              {/* screw-head hardware in each corner */}
-              {['tl','tr','bl','br'].map(pos => (
-                <span
-                  key={pos}
-                  aria-hidden
-                  style={{
-                    position: 'absolute', width: 9, height: 9, borderRadius: '50%',
-                    background: 'radial-gradient(circle at 35% 30%, #ffffff, #94a3b8 60%, #475569)',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                    top:    pos[0] === 't' ? 6 : undefined,
-                    bottom: pos[0] === 'b' ? 6 : undefined,
-                    left:   pos[1] === 'l' ? 6 : undefined,
-                    right:  pos[1] === 'r' ? 6 : undefined,
-                    zIndex: 3,
-                  }}
-                />
-              ))}
-              <img
-                src="/azulejo/hero-sailboat.png"
-                alt="Hand-painted Portuguese azulejo tile mural of the Santa Maria tall ship at sea, framed by nautical tile ornament of dolphins, anchors and rope-knots"
-                style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '3px' }}
-              />
-              {/* travelling ceramic glaze sheen (CSS) */}
-              <div
-                aria-hidden
-                className="azx-mural-sheen"
-                style={{
-                  position: 'absolute', top: 10, bottom: 10, left: 10, right: 10,
-                  borderRadius: '3px', pointerEvents: 'none', overflow: 'hidden',
-                }}
-              />
-            </div>
-
-            {/* ── Floating Professional plan card ── */}
+          {/* ── Royal amethyst Professional plan card — hero centerpiece ── */}
+          <div className="azx-reveal-mural relative mx-auto w-full max-w-[440px] lg:max-w-none">
             <div
               id="hero-plan"
               style={{
                 position:     'relative',
-                marginTop:    '1.5rem',
-                background:   'linear-gradient(165deg, #0D4E48 0%, #0A3F3A 100%)',
-                borderRadius: '18px',
-                padding:      '1.9rem 1.8rem',
+                background:   'linear-gradient(165deg, #241640 0%, #1F1335 55%, #160C28 100%)',
+                borderRadius: '22px',
+                padding:      '2.25rem 2rem',
                 color:        '#FFFFFF',
-                boxShadow:    '0 28px 60px -30px rgba(8,60,55,0.8), inset 0 0 0 1px rgba(201,169,110,0.22)',
+                border:       '1px solid rgba(201,169,110,0.45)',
+                boxShadow:    '0 40px 90px -34px rgba(0,0,0,0.8), inset 0 1px 0 rgba(201,169,110,0.22)',
                 overflow:     'hidden',
               }}
             >
               <span
                 aria-hidden
                 style={{
-                  position: 'absolute', top: -40, right: -40, width: 150, height: 150,
-                  borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%)',
+                  position: 'absolute', top: -50, right: -50, width: 180, height: 180,
+                  borderRadius: '50%', background: 'radial-gradient(circle, rgba(212,175,55,0.20), transparent 70%)',
                   pointerEvents: 'none',
                 }}
               />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '0.02em', textTransform: 'uppercase', color: '#D9BA84' }}>
-                  {t('landing.proTitle')}
-                </span>
-                <span style={{
-                  fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', fontWeight: 700,
-                  letterSpacing: '0.08em', textTransform: 'uppercase',
-                  color: '#0A3F3A', background: '#C9A96E', borderRadius: '999px', padding: '0.32rem 0.7rem',
-                }}>
-                  ◆ {t('landing.proBadge')}
-                </span>
-              </div>
+              {/* Most-chosen badge */}
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', fontWeight: 700,
+                letterSpacing: '0.1em', textTransform: 'uppercase', color: '#D4AF37',
+                border: '1px solid rgba(201,169,110,0.5)', background: 'rgba(201,169,110,0.1)',
+                borderRadius: '999px', padding: '0.35rem 0.85rem',
+              }}>
+                ◆ {t('landing.proBadge')}
+              </span>
 
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '1rem' }}>
-                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.75rem', fontWeight: 700, lineHeight: 1, color: '#FFFFFF' }}>
+              <h3 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.75rem', fontWeight: 700, letterSpacing: '0.03em', textTransform: 'uppercase', color: '#F4E9C8', margin: '1.15rem 0 0' }}>
+                {t('landing.proTitle')}
+              </h3>
+
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.6rem' }}>
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.75rem', fontWeight: 700, lineHeight: 1, color: '#D4AF37' }}>
                   $9.99
                 </span>
-                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '1rem', opacity: 0.85 }}>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '1.0625rem', color: '#CBD5E1' }}>
                   {t('landing.proPer')}
                 </span>
               </div>
 
-              <ul style={{ listStyle: 'none', padding: 0, margin: '1.4rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ height: 1, background: 'rgba(201,169,110,0.22)', margin: '1.5rem 0' }} />
+
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {[t('landing.proFeat1'), t('landing.proFeat2'), t('landing.proFeat3'), t('landing.proFeat4')].map(feat => (
-                  <li key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '1rem', lineHeight: 1.5, color: 'rgba(255,255,255,0.95)' }}>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 3 }} aria-hidden>
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
+                  <li key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '1.0625rem', lineHeight: 1.5, color: '#E8ECF3' }}>
+                    <span aria-hidden style={{ color: '#D4AF37', fontSize: '0.8rem', lineHeight: 1.7, flexShrink: 0 }}>◆</span>
                     {feat}
                   </li>
                 ))}
@@ -502,11 +472,12 @@ export default function LandingPage() {
                 href="/login?mode=register"
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginTop: '1.6rem', minHeight: '56px', width: '100%',
-                  background: '#FFFFFF', color: '#0D4E48',
+                  marginTop: '1.75rem', minHeight: '56px', width: '100%',
+                  background: 'linear-gradient(105deg, #B8860B 0%, #D4AF37 30%, #F9E29D 50%, #D4AF37 70%, #B8860B 100%)',
+                  color: '#1A102F',
                   fontFamily: 'var(--font-inter), sans-serif', fontSize: '1.0625rem', fontWeight: 700,
                   letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none',
-                  borderRadius: '12px', boxShadow: '0 12px 28px -12px rgba(0,0,0,0.45)',
+                  borderRadius: '12px', boxShadow: '0 14px 30px -12px rgba(212,175,55,0.55)',
                 }}
               >
                 {t('landing.proCta')}
@@ -517,11 +488,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Diagonal divider: ceramic hero → white ─────── */}
-      <SectionDivider from="#FAFAFA" to="#FFFFFF" direction="down-right" height={52} />
+      {/* ── Diagonal divider: amethyst hero → obsidian ─── */}
+      <SectionDivider from="transparent" to="#08090D" direction="down-right" height={52} />
 
       {/* ── Marquee Band 1 ───────────────────────────── */}
-      <MarqueeBand />
+      <MarqueeBand dark />
 
       {/* ══════════════════════════════════════════════
           SECTION 2 — HOW IT WORKS (PortofinoWalkthrough)

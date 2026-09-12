@@ -14,7 +14,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCallback, useRef, useState, type ReactNode } from 'react'
 
-type Variant = 'silver' | 'cobalt' | 'ghost'
+type Variant = 'silver' | 'cobalt' | 'ghost' | 'gold' | 'glass'
 type Size = 'sm' | 'md' | 'lg'
 
 interface LiquidButtonProps {
@@ -45,6 +45,8 @@ const SILVER_SURFACE =
   'linear-gradient(105deg,#ffffff 0%,#e8edf3 18%,#b6c1cf 34%,#f6f9fc 50%,#adb8c7 66%,#dce3eb 82%,#ffffff 100%)'
 const COBALT_SURFACE =
   'linear-gradient(105deg,#052a5e 0%,#0c4da2 22%,#3a97f5 42%,#0a4796 58%,#0ABAB5 78%,#052a5e 100%)'
+const GOLD_SURFACE =
+  'linear-gradient(105deg,#B8860B 0%,#D4AF37 22%,#F9E29D 44%,#D4AF37 60%,#C9A96E 80%,#B8860B 100%)'
 
 export function LiquidButton({
   children,
@@ -71,16 +73,25 @@ export function LiquidButton({
   }, [])
 
   const isGhost  = variant === 'ghost'
+  const isGlass  = variant === 'glass'
   const isCobalt = variant === 'cobalt'
+  const isGold   = variant === 'gold'
+  const isFlat   = isGhost || isGlass
   const dims     = SIZES[size]
 
-  const surface = isGhost ? 'transparent' : isCobalt ? COBALT_SURFACE : SILVER_SURFACE
-  const textColor = isGhost
+  const surface = isFlat
+    ? 'transparent'
+    : isCobalt ? COBALT_SURFACE : isGold ? GOLD_SURFACE : SILVER_SURFACE
+  const textColor = isGlass
+    ? '#F4E9C8'
+    : isGhost
     ? 'var(--azx-cobalt, #0A7E79)'
     : isCobalt
     ? '#E2F6F4'
+    : isGold
+    ? '#1A102F'
     : '#0A3B38'
-  const rippleColor = isGhost || isCobalt ? 'rgba(255,255,255,0.55)' : 'rgba(10,59,56,0.32)'
+  const rippleColor = isGold ? 'rgba(26,16,47,0.28)' : isFlat || isCobalt ? 'rgba(255,255,255,0.55)' : 'rgba(10,59,56,0.32)'
 
   const baseStyle: React.CSSProperties = {
     position: 'relative',
@@ -99,19 +110,26 @@ export function LiquidButton({
     color: textColor,
     textDecoration: 'none',
     cursor: disabled ? 'not-allowed' : 'pointer',
-    border: isGhost ? '1.5px solid rgba(10,126,121,0.32)' : '1px solid rgba(255,255,255,0.55)',
+    border: isGlass
+      ? '1px solid rgba(201,169,110,0.42)'
+      : isGhost ? '1.5px solid rgba(10,126,121,0.32)'
+      : isGold ? '1px solid rgba(249,226,157,0.7)'
+      : '1px solid rgba(255,255,255,0.55)',
     borderRadius: 999,
     overflow: 'hidden',
     isolation: 'isolate',
     background: surface,
-    backgroundSize: isGhost ? 'auto' : '220% 100%',
-    backgroundColor: isGhost ? 'rgba(255,255,255,0.6)' : undefined,
-    backdropFilter: isGhost ? 'blur(4px)' : undefined,
+    backgroundSize: isFlat ? 'auto' : '220% 100%',
+    backgroundColor: isGlass ? 'rgba(31,19,53,0.55)' : isGhost ? 'rgba(255,255,255,0.6)' : undefined,
+    backdropFilter: isFlat ? 'blur(10px)' : undefined,
+    WebkitBackdropFilter: isFlat ? 'blur(10px)' : undefined,
     opacity: disabled ? 0.45 : 1,
-    boxShadow: isGhost
+    boxShadow: isFlat
       ? 'none'
       : isCobalt
       ? 'inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -3px 6px rgba(0,18,50,0.5), 0 12px 26px -12px rgba(10,126,121,0.65)'
+      : isGold
+      ? 'inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -3px 6px rgba(138,109,59,0.55), 0 14px 30px -12px rgba(212,175,55,0.55)'
       : 'inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -3px 6px rgba(100,116,139,0.5), 0 12px 26px -14px rgba(15,23,42,0.55)',
     WebkitTapHighlightColor: 'transparent',
   }
@@ -119,7 +137,7 @@ export function LiquidButton({
   const inner = (
     <>
       {/* travelling chrome highlight */}
-      {!isGhost && (
+      {!isFlat && (
         <motion.span
           aria-hidden
           style={{
