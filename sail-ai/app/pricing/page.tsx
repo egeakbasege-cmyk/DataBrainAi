@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Nav } from '@/components/Nav'
+import { FineLineBackground } from '@/components/FineLineBackground'
 import { FREE_LIMIT } from '@/lib/stripe'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
@@ -162,7 +163,8 @@ export default function PricingPage() {
   )
 
   return (
-    <main style={{ background: CERAMIC, minHeight: '100vh' }}>
+    <main style={{ background: CERAMIC, minHeight: '100vh', position: 'relative', overflowX: 'clip' }}>
+      <FineLineBackground />
       <Nav />
 
       {/* ── Hero header ──────────────────────────────────────────── */}
