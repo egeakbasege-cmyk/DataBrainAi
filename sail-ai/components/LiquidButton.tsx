@@ -35,9 +35,9 @@ interface LiquidButtonProps {
 interface RippleT { id: number; x: number; y: number }
 
 const SIZES: Record<Size, { padding: string; font: string; height: string }> = {
-  sm: { padding: '0 1.15rem', font: '0.66rem', height: '2.25rem' },
-  md: { padding: '0 1.6rem',  font: '0.72rem', height: '2.75rem' },
-  lg: { padding: '0 2.25rem', font: '1rem', height: '3.5rem'  },
+  sm: { padding: '0 1.1rem',  font: '0.66rem',  height: '2.25rem' },
+  md: { padding: '0 1.5rem',  font: '0.72rem',  height: '2.6rem'  },
+  lg: { padding: '0 1.9rem',  font: '0.8125rem', height: '3.05rem' },
 }
 
 /* Living chrome surfaces — animated by sliding background-position. */

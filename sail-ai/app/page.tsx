@@ -289,7 +289,7 @@ export default function LandingPage() {
           <h1
             style={{
               fontFamily:    'var(--font-playfair), Georgia, serif',
-              fontSize:      'clamp(2.375rem, 6vw, 3.75rem)',
+              fontSize:      'clamp(2rem, 5vw, 3.125rem)',
               fontWeight:    700,
               fontStyle:     'normal',
               lineHeight:    1.08,
@@ -317,8 +317,8 @@ export default function LandingPage() {
             style={{
               ['--azx-delay' as string]: '0.5s',
               fontFamily: 'var(--font-inter), sans-serif',
-              fontSize:   'clamp(1.125rem, 1.2vw, 1.25rem)',
-              lineHeight: 1.7,
+              fontSize:   'clamp(1.0625rem, 1.1vw, 1.15rem)',
+              lineHeight: 1.65,
               color:      '#3C3A4A',
               maxWidth:   '46ch',
               marginTop:  '1.75rem',
