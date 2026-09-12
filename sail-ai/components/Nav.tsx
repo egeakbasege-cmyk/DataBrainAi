@@ -119,9 +119,9 @@ export function Nav() {
               href="/research"
               style={{
                 fontFamily:    'var(--font-inter), sans-serif',
-                fontSize:      '0.6875rem',
+                fontSize:      '0.8125rem',
                 fontWeight:    600,
-                letterSpacing: '0.12em',
+                letterSpacing: '0.1em',
                 textTransform: 'uppercase',
                 color:         navResearchColor,
                 textDecoration:'none',
@@ -136,9 +136,9 @@ export function Nav() {
               href="/data-lab"
               style={{
                 fontFamily:    'var(--font-inter), sans-serif',
-                fontSize:      '0.6875rem',
+                fontSize:      '0.8125rem',
                 fontWeight:    600,
-                letterSpacing: '0.12em',
+                letterSpacing: '0.1em',
                 textTransform: 'uppercase',
                 color:         navLinkColor,
                 textDecoration:'none',
@@ -151,9 +151,9 @@ export function Nav() {
               href="/pricing"
               style={{
                 fontFamily:    'var(--font-inter), sans-serif',
-                fontSize:      '0.6875rem',
+                fontSize:      '0.8125rem',
                 fontWeight:    600,
-                letterSpacing: '0.12em',
+                letterSpacing: '0.1em',
                 textTransform: 'uppercase',
                 color:         navLinkColor,
                 textDecoration:'none',
@@ -299,9 +299,9 @@ export function Nav() {
                 href="/login"
                 style={{
                   fontFamily:     'var(--font-inter), sans-serif',
-                  fontSize:       '0.6875rem',
+                  fontSize:       '0.8125rem',
                   fontWeight:     600,
-                  letterSpacing:  '0.12em',
+                  letterSpacing:  '0.1em',
                   textTransform:  'uppercase',
                   color:          navLinkColor,
                   textDecoration: 'none',
