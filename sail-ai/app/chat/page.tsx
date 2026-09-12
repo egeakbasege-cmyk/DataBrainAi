@@ -953,10 +953,12 @@ export default function ChatPage() {
         )}
       </AnimatePresence>
 
-      {/* Feedback FAB */}
+      {/* Feedback FAB — hidden on mobile so it can't cover the composer's send button */}
+      <style>{`@media (max-width: 768px) { .sail-feedback-fab { display: none !important; } }`}</style>
       <button
         onClick={() => setShowFeedback(true)}
         aria-label="Send feedback"
+        className="sail-feedback-fab"
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 50,
           width: 40, height: 40, borderRadius: '50%',

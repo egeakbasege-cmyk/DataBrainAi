@@ -344,7 +344,7 @@ export default function LandingPage() {
             className="azx-reveal"
             style={{ ['--azx-delay' as string]: '0.74s', marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
           >
-            <LiquidButton href="/welcome" variant="silver" size="lg">
+            <LiquidButton href="/login?mode=register" variant="silver" size="lg">
               {t('landing.beginFree')}
             </LiquidButton>
             <LiquidButton
@@ -723,7 +723,7 @@ export default function LandingPage() {
               </motion.p>
             </div>
             <motion.div variants={fadeUp} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.875rem', alignItems: 'flex-start' }}>
-              <LiquidButton href="/welcome" variant="silver" size="lg">
+              <LiquidButton href="/login?mode=register" variant="silver" size="lg">
                 {t('landing.beginBtn')}
               </LiquidButton>
               <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em' }}>
@@ -780,7 +780,7 @@ export default function LandingPage() {
                 </p>
                 {[
                   { href: '/pricing',    label: t('landing.footerPricing') },
-                  { href: '/welcome',    label: t('landing.footerGetStarted') },
+                  { href: '/login?mode=register',    label: t('landing.footerGetStarted') },
                 ].map(l => (
                   <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.78rem', color: '#71717A', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
                     {l.label}

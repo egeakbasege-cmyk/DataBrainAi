@@ -293,9 +293,28 @@ export function Nav() {
               )}
             </div>
           ) : (
-            <LiquidButton href="/onboarding" variant="cobalt" size="sm">
-              {t('nav.launch')}
-            </LiquidButton>
+            /* Logged-out: two clear paths — sign in, or create an account */
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+              <Link
+                href="/login"
+                style={{
+                  fontFamily:     'var(--font-inter), sans-serif',
+                  fontSize:       '0.6875rem',
+                  fontWeight:     600,
+                  letterSpacing:  '0.12em',
+                  textTransform:  'uppercase',
+                  color:          navLinkColor,
+                  textDecoration: 'none',
+                  whiteSpace:     'nowrap',
+                  transition:     'color 0.4s',
+                }}
+              >
+                {t('login.signIn')}
+              </Link>
+              <LiquidButton href="/login?mode=register" variant="cobalt" size="sm">
+                {t('landing.beginFree')}
+              </LiquidButton>
+            </div>
           )}
         </nav>
       </div>

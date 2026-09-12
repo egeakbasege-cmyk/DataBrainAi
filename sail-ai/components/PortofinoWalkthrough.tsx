@@ -356,7 +356,7 @@ export function PortofinoWalkthrough() {
             style={{ marginTop: 32 }}
           >
             <a
-              href="/chat"
+              href="/login?mode=register"
               style={{
                 display:       'inline-flex',
                 alignItems:    'center',
