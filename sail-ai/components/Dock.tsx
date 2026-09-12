@@ -196,7 +196,7 @@ export function Dock() {
     href === '/' ? pathname === '/' : pathname.startsWith(href)
 
   const onChat = pathname.startsWith('/chat')
-  const dark   = pathname === '/'
+  const dark   = false
 
   return (
     <>

@@ -238,7 +238,7 @@ export default function LandingPage() {
   ]
 
   return (
-    <main style={{ background: '#0C0C0E', paddingBottom: '0', position: 'relative' }}>
+    <main style={{ background: '#E3E6EB', paddingBottom: '0', position: 'relative' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -271,7 +271,7 @@ export default function LandingPage() {
           Dark full-bleed. Word-by-word headline stagger.
           Sailboat has parallax drift on scroll.
       ══════════════════════════════════════════════ */}
-      <section style={{ paddingBottom: 0, position: 'relative', zIndex: 1, overflow: 'hidden', background: 'transparent', color: '#FFFFFF' }}>
+      <section style={{ paddingBottom: 0, position: 'relative', zIndex: 1, overflow: 'hidden', background: 'transparent', color: '#1A1725' }}>
         <div className="max-w-6xl mx-auto px-6 md:px-10 pt-24 md:pt-32 pb-20 md:pb-28" style={{ position: 'relative', zIndex: 10 }}>
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div>
@@ -281,11 +281,11 @@ export default function LandingPage() {
             className="azx-reveal"
             style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.25rem' }}
           >
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#D4AF37' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#96731E' }}>
               {t('landing.eyebrow')}
             </span>
-            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.5), transparent)' }} />
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A78BFA' }}>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(150,115,30,0.45), transparent)' }} />
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4C3A6E' }}>
               {t('landing.est')}
             </span>
           </div>
@@ -299,10 +299,10 @@ export default function LandingPage() {
               fontStyle:     'normal',
               lineHeight:    1.08,
               letterSpacing: '-0.02em',
-              color:         '#D4AF37',
+              color:         '#181528',
               maxWidth:      '15ch',
               margin:        0,
-              textShadow:    '0 2px 30px rgba(212,175,55,0.25)',
+              textShadow:    '0 1px 0 rgba(255,255,255,0.5)',
             }}
           >
             {headlineWords.map((word, i) => (
@@ -324,7 +324,7 @@ export default function LandingPage() {
               fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   'clamp(1.125rem, 1.2vw, 1.25rem)',
               lineHeight: 1.7,
-              color:      '#CBD5E1',
+              color:      '#3C3A4A',
               maxWidth:   '46ch',
               marginTop:  '1.75rem',
               fontWeight: 400,
@@ -349,19 +349,19 @@ export default function LandingPage() {
                   fontSize:      '0.9375rem',
                   fontWeight:    600,
                   letterSpacing: '0.01em',
-                  color:         badge.locked ? '#E7CE93' : '#E2E8F0',
-                  background:    badge.locked ? 'rgba(201,169,110,0.12)' : 'rgba(31,19,53,0.55)',
+                  color:         badge.locked ? '#8A6D1F' : '#33303F',
+                  background:    badge.locked ? 'rgba(201,169,110,0.16)' : 'rgba(255,255,255,0.7)',
                   backdropFilter:'blur(10px)',
                   WebkitBackdropFilter: 'blur(10px)',
-                  border:        `1px solid ${badge.locked ? 'rgba(201,169,110,0.55)' : 'rgba(255,255,255,0.14)'}`,
+                  border:        `1px solid ${badge.locked ? 'rgba(150,115,30,0.4)' : 'rgba(24,21,40,0.12)'}`,
                   borderRadius:  '999px',
                   padding:       '0.5rem 1.05rem',
                   whiteSpace:    'nowrap',
-                  boxShadow:     '0 2px 14px -6px rgba(0,0,0,0.6)',
+                  boxShadow:     '0 4px 14px -8px rgba(24,21,40,0.35)',
                 }}
               >
                 {!badge.locked && (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#96731E" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 )}
@@ -379,7 +379,7 @@ export default function LandingPage() {
               {t('landing.beginFree')}
             </LiquidButton>
             <LiquidButton
-              variant="glass"
+              variant="silver"
               size="lg"
               onClick={() =>
                 document.getElementById('hero-plan')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -391,7 +391,7 @@ export default function LandingPage() {
 
           <p
             className="azx-reveal"
-            style={{ ['--azx-delay' as string]: '0.9s', marginTop: '1rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#94A3B8', letterSpacing: '0.01em', lineHeight: 1.6 }}
+            style={{ ['--azx-delay' as string]: '0.9s', marginTop: '1rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#5A5768', letterSpacing: '0.01em', lineHeight: 1.6 }}
           >
             {t('landing.freeNote')}
           </p>
@@ -402,7 +402,7 @@ export default function LandingPage() {
             style={{ ['--azx-delay' as string]: '1s', marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
           >
             {TRUST_CUES.map(cue => (
-              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#94A3B8', letterSpacing: '0.01em' }}>
+              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#5A5768', letterSpacing: '0.01em' }}>
                 {cue}
               </span>
             ))}
@@ -489,7 +489,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Diagonal divider: amethyst hero → obsidian ─── */}
-      <SectionDivider from="transparent" to="#08090D" direction="down-right" height={52} />
+      <SectionDivider from="#E3E6EB" to="#08090D" direction="down-right" height={52} />
 
       {/* ── Marquee Band 1 ───────────────────────────── */}
       <MarqueeBand dark />

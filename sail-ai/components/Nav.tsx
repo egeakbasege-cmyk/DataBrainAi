@@ -49,17 +49,17 @@ export function Nav() {
     }
   }
 
-  // On landing (dark theme): transparent until scrolled, then frosted obsidian.
-  // Everywhere else: frosted light.
+  // Landing is a metallic-silver theme: transparent until scrolled, then a
+  // frosted silver bar. Everywhere else: frosted light.
   const navBg = isLanding
-    ? (scrolled ? 'rgba(12,12,14,0.92)' : 'transparent')
+    ? (scrolled ? 'rgba(231,233,237,0.9)' : 'transparent')
     : 'rgba(250,250,248,0.96)'
   const navBlur = (isLanding && !scrolled) ? 'none' : 'blur(20px)'
-  // The landing page is dark end-to-end, so nav text stays light on it.
-  const isDark = isLanding
-  const navLinkColor = isDark ? 'rgba(232,237,243,0.72)' : '#4B5C78'
-  const navResearchColor = isDark ? '#E7CE93' : '#0A7E79'
-  const navBrandColor = isDark ? '#F4E9C8' : '#0A7E79'
+  // Silver landing → dark text with gold accents.
+  const isDark = false
+  const navLinkColor = isLanding ? '#4B4858' : '#4B5C78'
+  const navResearchColor = isLanding ? '#96731E' : '#0A7E79'
+  const navBrandColor = isLanding ? '#181528' : '#0A7E79'
 
   return (
     <header
@@ -126,7 +126,7 @@ export function Nav() {
                 textTransform: 'uppercase',
                 color:         navResearchColor,
                 textDecoration:'none',
-                borderBottom:  isDark ? '1px solid rgba(201,169,110,0.5)' : '1px solid rgba(10,126,121,0.4)',
+                borderBottom:  isLanding ? '1px solid rgba(150,115,30,0.45)' : '1px solid rgba(10,126,121,0.4)',
                 paddingBottom: '1px',
                 transition:    'color 0.4s',
               }}
@@ -312,7 +312,7 @@ export function Nav() {
               >
                 {t('login.signIn')}
               </Link>
-              <LiquidButton href="/login?mode=register" variant={isDark ? 'gold' : 'cobalt'} size="sm">
+              <LiquidButton href="/login?mode=register" variant={isLanding ? 'gold' : 'cobalt'} size="sm">
                 {t('landing.beginFree')}
               </LiquidButton>
             </div>
@@ -320,7 +320,7 @@ export function Nav() {
         </nav>
       </div>
       {/* Gradient bottom border */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: isDark ? 'linear-gradient(90deg, transparent 0%, rgba(201,169,110,0.32) 30%, rgba(167,139,250,0.32) 70%, transparent 100%)' : 'linear-gradient(90deg, transparent 0%, rgba(10,126,121,0.28) 30%, rgba(148,163,184,0.4) 70%, transparent 100%)' }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: isLanding ? 'linear-gradient(90deg, transparent 0%, rgba(150,115,30,0.3) 30%, rgba(120,120,135,0.35) 70%, transparent 100%)' : 'linear-gradient(90deg, transparent 0%, rgba(10,126,121,0.28) 30%, rgba(148,163,184,0.4) 70%, transparent 100%)' }} />
     </header>
   )
 }
