@@ -280,7 +280,22 @@ export function PaywallModal({ open, onClose }: Props) {
                   onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
                 >
-                  {loading ? t('paywall.redirecting') : t('paywall.upgrade')}
+                  {loading ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                      <motion.span
+                        aria-hidden
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 0.7, ease: 'linear', repeat: Infinity }}
+                        style={{
+                          width: 14, height: 14, borderRadius: '50%',
+                          border: '2px solid rgba(12,12,14,0.3)',
+                          borderTopColor: '#0C0C0E',
+                          display: 'inline-block',
+                        }}
+                      />
+                      {t('paywall.redirecting')}
+                    </span>
+                  ) : t('paywall.upgrade')}
                 </button>
 
                 <button

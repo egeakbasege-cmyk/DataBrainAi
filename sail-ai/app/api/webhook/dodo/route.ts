@@ -84,7 +84,10 @@ export async function POST(req: NextRequest) {
 
   switch (event.type) {
     // Grant on first activation, on each renewal, and when an account that was
-    // paused or dunning-suspended comes back.
+    // paused or dunning-suspended comes back. `payment.succeeded` covers the
+    // initial capture (and any one-time purchase) so entitlement lands the
+    // moment money is taken, without waiting for the subscription event.
+    case 'payment.succeeded':
     case 'subscription.active':
     case 'subscription.renewed':
     case 'subscription.unpaused':
