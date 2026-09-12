@@ -16,6 +16,8 @@
  *   HALF-OPEN — probe window after 30 s; one test request allowed
  */
 
+import { resolveChatTransport, extractCohereText } from './cohere'
+
 // ── Groq endpoint + model identifiers ────────────────────────────────────────
 
 export const GROQ_URL = 'https://api.cohere.com/v2/chat'
@@ -134,9 +136,9 @@ export async function groqFetch(
   request:  GroqRequest,
   byokKey?: string,
 ): Promise<Response> {
-  const keys     = buildKeyPool(byokKey)
-  const body     = JSON.stringify(request)
-  const fastBody = JSON.stringify({ ...request, model: GROQ_MODELS.FAST })
+  const { url, keys, model: mapModel } = resolveChatTransport(byokKey)
+  const body     = JSON.stringify({ ...request, model: mapModel(request.model) })
+  const fastBody = JSON.stringify({ ...request, model: mapModel(GROQ_MODELS.FAST) })
 
   const authHeaders = (key: string): Record<string, string> => ({
     'Content-Type':  'application/json',
@@ -148,7 +150,7 @@ export async function groqFetch(
   for (const key of keys) {
     if (_isOpen(key)) continue
 
-    const res = await fetch(GROQ_URL, {
+    const res = await fetch(url, {
       method:  'POST',
       headers: authHeaders(key),
       body,
@@ -167,7 +169,7 @@ export async function groqFetch(
       res.status === 413
     ) {
       _failure(key)
-      const fallback = await fetch(GROQ_URL, {
+      const fallback = await fetch(url, {
         method:  'POST',
         headers: authHeaders(key),
         body:    fastBody,
@@ -190,7 +192,7 @@ export async function groqFetch(
   // Phase 2 — all keys 429'd on primary → retry all with FAST model
   for (const key of keys) {
     if (_isOpen(key)) continue
-    const res = await fetch(GROQ_URL, {
+    const res = await fetch(url, {
       method:  'POST',
       headers: authHeaders(key),
       body:    fastBody,
@@ -208,10 +210,9 @@ export async function groqFetch(
 // ── JSON content extractor ────────────────────────────────────────────────────
 
 export async function extractGroqContent(res: Response): Promise<string> {
-  const data = await res.json().catch(() => ({}) as GroqApiResponse) as GroqApiResponse
-  const blocks = data.message?.content
-  if (!Array.isArray(blocks)) return ''
-  return blocks.map(b => (b?.text ?? '')).join('').trim()
+  const data = await res.json().catch(() => ({}))
+  // Shared dual-format parser handles both Cohere-native and AI Gateway shapes.
+  return extractCohereText(data)
 }
 
 // ── Structured Output JSON Schemas ────────────────────────────────────────────
@@ -269,7 +270,8 @@ export async function speculativeFetch(
   if (opts.clarityScore <  0.35) return groqFetch(opts.simpleRequest,  byokKey)
 
   // Mid-range zone: race both requests
-  const key = buildKeyPool(byokKey)[0]
+  const { url, keys, model: mapModel } = resolveChatTransport(byokKey)
+  const key = keys[0]
   if (!key) return groqFetch(opts.complexRequest, byokKey)
 
   const headers = {
@@ -285,17 +287,17 @@ export async function speculativeFetch(
   // which a late-settling loser callback could otherwise overwrite.
   type Raced = { which: 'simple' | 'complex'; res: Response | null }
 
-  const simpleP: Promise<Raced> = fetch(GROQ_URL, {
+  const simpleP: Promise<Raced> = fetch(url, {
     method: 'POST', headers,
-    body:   JSON.stringify(opts.simpleRequest),
+    body:   JSON.stringify({ ...opts.simpleRequest, model: mapModel(opts.simpleRequest.model) }),
     signal: abortSimple.signal,
   })
     .catch(() => null)
     .then(res => ({ which: 'simple', res }))
 
-  const complexP: Promise<Raced> = fetch(GROQ_URL, {
+  const complexP: Promise<Raced> = fetch(url, {
     method: 'POST', headers,
-    body:   JSON.stringify(opts.complexRequest),
+    body:   JSON.stringify({ ...opts.complexRequest, model: mapModel(opts.complexRequest.model) }),
     signal: abortComplex.signal,
   })
     .catch(() => null)

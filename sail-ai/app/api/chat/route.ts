@@ -38,14 +38,13 @@ import { consumeQuota, quotaExceededBody }        from '@/lib/quota'
 // ── Groq client (key pool, circuit breaker, schemas, speculative fetch) ───────
 import {
   groqFetch,
-  buildKeyPool,
   JSON_SCHEMAS,
   GROQ_MODELS,
   speculativeFetch,
   extractGroqContent,
 } from '@/lib/clients/groq'
 import type { GroqMessage, GroqRequest }           from '@/lib/clients/groq'
-import { cohereStreamDelta }                        from '@/lib/clients/cohere'
+import { cohereStreamDelta, resolveChatTransport } from '@/lib/clients/cohere'
 
 // ── Multi-Mission Orchestrator ────────────────────────────────────────────────
 import {
@@ -407,7 +406,7 @@ async function runGatewayRouter(
   context?: string,
   byokKey?: string,
 ): Promise<RouterResult | null> {
-  const keys = buildKeyPool(byokKey)
+  const keys = resolveChatTransport(byokKey).keys
   if (!keys.length) return null
 
   const abort = new AbortController()
@@ -504,7 +503,7 @@ export async function POST(req: NextRequest) {
   const analysisMode: AnalysisMode = body.analysisMode ?? 'upwind'
 
   // ── 3. Key availability ────────────────────────────────────────────────────
-  if (buildKeyPool(body.apiKey).length === 0) {
+  if (resolveChatTransport(body.apiKey).keys.length === 0) {
     return Response.json(
       { error: 'AI provider not configured. Add a Groq API key in settings.' },
       { status: 503 },
