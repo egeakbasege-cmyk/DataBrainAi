@@ -376,14 +376,14 @@ export default function VaultPage() {
 
   if (status === 'loading') {
     return (
-      <div style={{ minHeight: '100vh', background: '#FAFAF8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(201,169,110,0.3)', borderTopColor: '#C9A96E', animation: 'spin 0.8s linear infinite' }} />
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FAFAF8' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent' }}>
       <Nav />
 
       <main style={{ maxWidth: 760, margin: '0 auto', padding: '3rem 1.5rem 6rem' }}>

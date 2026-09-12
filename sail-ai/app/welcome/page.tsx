@@ -468,7 +468,7 @@ export default function WelcomePage() {
   const [activeStep, setActiveStep] = useState(1)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FAFAF8' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent' }}>
 
       {/* Minimal nav for welcome flow */}
       <header style={{ position: 'sticky', top: 0, zIndex: 30, background: 'rgba(250,250,248,0.95)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(0,0,0,0.07)', padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -522,7 +522,7 @@ export default function WelcomePage() {
       <ChampagneRule />
 
       {/* ── SECTION 2: Real AI Example ─────────────────────── */}
-      <section style={{ background: '#FAFAF8' }}>
+      <section style={{ background: 'transparent' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', padding: '5rem 1.5rem' }}>
           <motion.div
             variants={stagger}
@@ -564,7 +564,7 @@ export default function WelcomePage() {
       <ChampagneRule />
 
       {/* ── SECTION 3: Signup + Pricing ────────────────────────────── */}
-      <section id="signup" style={{ background: '#FFFFFF' }}>
+      <section id="signup" style={{ background: 'transparent' }}>
         <div style={{ maxWidth: 700, margin: '0 auto', padding: '5rem 1.5rem' }}>
 
           <StepBar active={activeStep} />

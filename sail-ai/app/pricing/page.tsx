@@ -11,8 +11,8 @@ import { useLanguage } from '@/lib/i18n/LanguageContext'
 const COBALT      = '#0033A0'   // primary brand cobalt
 const COBALT_DEEP = '#002147'   // imperial navy — headings
 const COBALT_MID  = '#0F4C81'   // secondary cobalt
-const CERAMIC     = '#FAFAFA'   // glazed ceramic white
-const CERAMIC_DIM = '#F1F4FA'   // recessed tile
+const CERAMIC     = 'transparent'            // reveal liquid-silver backdrop
+const CERAMIC_DIM = 'rgba(241,244,250,0.45)' // recessed tile, translucent over liquid
 const INK         = '#0A1A3F'   // primary text
 const MUTED       = '#5B6B8C'   // secondary text
 const GROUT       = 'rgba(0,51,160,0.10)'
