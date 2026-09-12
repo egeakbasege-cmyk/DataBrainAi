@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse }  from 'next/server'
 import { auth }                        from '@/auth'
-import Groq                            from 'groq-sdk'
+import { groqFetch, extractGroqContent } from '@/lib/clients/groq'
 import { DOWNWIND_SYSTEM_PROMPT, buildUserMessage } from '@/lib/ai-prompt'
 import { handleApiError, ApiError }    from '@/utils/api-error'
 import type { ConvMessage }            from '@/hooks/useSailState'
@@ -116,15 +116,14 @@ export async function POST(req: NextRequest) {
       content: m.content,
     }))
 
-    const groq = new Groq({ apiKey: apiKey ?? process.env.GROQ_API_KEY })
     let lastErr: unknown = null
 
     for (const modelName of MODEL_CHAIN) {
       try {
-        const chatCompletion = await groq.chat.completions.create({
+        const response = await groqFetch({
           messages: [
-            { 
-              role: 'system', 
+            {
+              role: 'system',
               content: DOWNWIND_SYSTEM_PROMPT + `
 
 [DATA-DRIVEN RESPONSE GUIDELINES]
@@ -132,7 +131,7 @@ export async function POST(req: NextRequest) {
 - Compare user metrics to sector medians where possible
 - Provide specific, measurable recommendations
 - Cite data sources when using benchmark information
-- Format numbers clearly (percentages, currency, ratios)` 
+- Format numbers clearly (percentages, currency, ratios)`,
             },
             ...history,
             { role: 'user', content: userMessage },
@@ -141,16 +140,24 @@ export async function POST(req: NextRequest) {
           temperature: 0.4,
           max_tokens: 1200,
           response_format: { type: 'json_object' },
-        })
+        }, apiKey)
 
-        const text = chatCompletion.choices[0]?.message?.content || ''
+        if (response.ok) {
+          const text = await extractGroqContent(response)
+          return new NextResponse(text, {
+            headers: { 'Content-Type': 'application/json' },
+          })
+        }
 
-        return new NextResponse(text, {
-          headers: { 'Content-Type': 'application/json' },
-        })
+        const errorBody = await response.text().catch(() => '')
+        const error = new Error(errorBody || `AI provider returned ${response.status}`)
+        if (response.status === 401 || response.status === 403) {
+          throw error
+        }
+        lastErr = error
       } catch (err: any) {
         const raw: string = err?.message ?? ''
-        if (raw.includes('API_KEY') || raw.includes('auth')) {
+        if (raw.includes('API_KEY') || raw.includes('auth') || raw.includes('401') || raw.includes('403')) {
           throw new ApiError(
             502,
             'AI_KEY_INVALID',
@@ -169,7 +176,7 @@ export async function POST(req: NextRequest) {
       503,
       isQuota ? 'AI_QUOTA_EXHAUSTED' : 'AI_UNAVAILABLE',
       isQuota
-        ? 'AI quota exhausted. Add your own Groq key in Settings.'
+        ? 'AI quota exhausted. Please wait a moment and try again.'
         : 'AI models are temporarily unavailable. Please try again shortly.',
     )
   } catch (error) {
