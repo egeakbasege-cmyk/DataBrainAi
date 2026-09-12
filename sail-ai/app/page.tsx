@@ -521,9 +521,9 @@ export default function LandingPage() {
             style={{ marginBottom: '3.5rem' }}
           >
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1rem' }}>
-              <div style={{ width: 28, height: 1, background: 'rgba(10,186,181,0.6)' }} />
-              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#0ABAB5' }}>
-                {t('landing.intelligenceModes')}
+              <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#D4AF37' }}>
+                  {t('landing.intelligenceModes')}
               </span>
             </motion.div>
             <motion.p variants={fadeUp} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', color: '#FFFFFF', fontWeight: 400, maxWidth: '52ch', lineHeight: 1.75, textShadow: '0 1px 10px rgba(0,0,0,0.9)' }}>
@@ -617,9 +617,9 @@ export default function LandingPage() {
                 fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.75rem',
                 fontWeight:    500,
-                color:         'rgba(10,186,181,0.80)',
+                color:         '#D4AF37',
                 textDecoration:'none',
-                borderBottom:  '1px solid rgba(10,186,181,0.30)',
+                borderBottom:  '1px solid rgba(201,169,110,0.4)',
                 paddingBottom: '2px',
                 letterSpacing: '0.06em',
               }}
@@ -647,8 +647,8 @@ export default function LandingPage() {
           >
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                <div style={{ width: 28, height: 1, background: 'rgba(10,186,181,0.6)' }} />
-                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#0ABAB5' }}>
+                <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#D4AF37' }}>
                   {t('landing.indicativeOutputs')}
                 </span>
               </div>
@@ -715,7 +715,7 @@ export default function LandingPage() {
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 'clamp(1.3rem, 2.2vw, 1.75rem)', fontWeight: 700, color: '#0ABAB5', lineHeight: 1, display: 'block', letterSpacing: '-0.01em' }}>
+                  <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 'clamp(1.3rem, 2.2vw, 1.75rem)', fontWeight: 700, color: '#D4AF37', lineHeight: 1, display: 'block', letterSpacing: '-0.01em' }}>
                     <AnimatedCounter value={c.outcome} />
                   </span>
                   <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(232,237,243,0.35)', display: 'block', marginTop: '0.25rem' }}>
@@ -771,23 +771,23 @@ export default function LandingPage() {
           >
             <div>
               <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
-                <div style={{ width: 28, height: 1, background: 'rgba(10,186,181,0.5)' }} />
-                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(10,186,181,0.7)' }}>
+                <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#D4AF37' }}>
                   {t('landing.eyebrow')}
                 </span>
               </motion.div>
-              <motion.h2 variants={fadeUp} style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '1rem' }}>
+              <motion.h2 variants={fadeUp} style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'normal', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', color: '#F4E9C8', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '1rem' }}>
                 {t('landing.ctaHeadline')}
               </motion.h2>
-              <motion.p variants={fadeUp} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9rem', color: 'rgba(255,255,255,0.88)', fontWeight: 300, lineHeight: 1.75, maxWidth: '42ch', textShadow: '0 1px 10px rgba(0,0,0,0.9)' }}>
+              <motion.p variants={fadeUp} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#CBD5E1', fontWeight: 400, lineHeight: 1.75, maxWidth: '42ch' }}>
                 {t('landing.ctaBody')}
               </motion.p>
             </div>
             <motion.div variants={fadeUp} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.875rem', alignItems: 'flex-start' }}>
-              <LiquidButton href="/login?mode=register" variant="silver" size="lg">
+              <LiquidButton href="/login?mode=register" variant="gold" size="lg">
                 {t('landing.beginBtn')}
               </LiquidButton>
-              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em' }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#94A3B8', letterSpacing: '0.02em' }}>
                 {t('landing.freeNote')}
               </p>
             </motion.div>
@@ -799,7 +799,7 @@ export default function LandingPage() {
           SECTION 7 — FOOTER
           Clean. Swiss. Brand mark + nav links.
       ══════════════════════════════════════════════ */}
-      <footer style={{ background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.09)' }}>
+      <footer style={{ background: '#08090D', borderTop: '1px solid rgba(201,169,110,0.16)' }}>
         <div className="champagne-rule" />
 
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-10">
@@ -809,11 +809,11 @@ export default function LandingPage() {
             <div>
               <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', marginBottom: '0.75rem' }}>
                 <Logo size={28} />
-                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontWeight: 700, color: '#0C0C0E', fontSize: '0.9rem', letterSpacing: '0.1em' }}>
-                  SAIL AI
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontWeight: 700, color: '#F4E9C8', fontSize: '1rem', letterSpacing: '0.1em' }}>
+                  SAIL AI+
                 </span>
               </Link>
-              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#52525B', lineHeight: 1.6, maxWidth: '24ch', fontWeight: 400 }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#94A3B8', lineHeight: 1.6, maxWidth: '24ch', fontWeight: 400 }}>
                 {t('landing.footerTagline')}
               </p>
             </div>
@@ -821,7 +821,7 @@ export default function LandingPage() {
             {/* Nav columns */}
             <div style={{ display: 'flex', gap: '4rem', flexWrap: 'wrap' }}>
               <div>
-                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#D4AF37', marginBottom: '0.875rem' }}>
                   {t('landing.footerProduct')}
                 </p>
                 {[
@@ -830,20 +830,20 @@ export default function LandingPage() {
                   { href: '/data-lab',  label: t('landing.footerDataLab') },
                   { href: '/dashboard', label: t('landing.footerDashboard') },
                 ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#52525B', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
+                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#B4BCCB', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
                     {l.label}
                   </Link>
                 ))}
               </div>
               <div>
-                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#D4AF37', marginBottom: '0.875rem' }}>
                   {t('landing.footerCompany')}
                 </p>
                 {[
                   { href: '/pricing',    label: t('landing.footerPricing') },
                   { href: '/login?mode=register',    label: t('landing.footerGetStarted') },
                 ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#52525B', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
+                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#B4BCCB', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
                     {l.label}
                   </Link>
                 ))}
@@ -851,7 +851,7 @@ export default function LandingPage() {
               {/* Legal — required for payment-provider verification; the review
                   team checks these are reachable from the public site. */}
               <div>
-                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '0.875rem' }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#D4AF37', marginBottom: '0.875rem' }}>
                   Legal
                 </p>
                 {[
@@ -860,7 +860,7 @@ export default function LandingPage() {
                   { href: '/refund',  label: 'Refund Policy' },
                   { href: '/contact', label: 'Contact' },
                 ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#52525B', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
+                  <Link key={l.href} href={l.href} style={{ display: 'block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#B4BCCB', textDecoration: 'none', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
                     {l.label}
                   </Link>
                 ))}
@@ -869,11 +869,11 @@ export default function LandingPage() {
 
             {/* Copyright + Est. */}
             <div style={{ textAlign: 'right' }}>
-              <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: '0.85rem', color: '#0ABAB5', marginBottom: '0.25rem' }}>
+              <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: '0.9rem', color: '#D4AF37', marginBottom: '0.25rem' }}>
                 {t('landing.est')}
               </p>
-              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#71717A', letterSpacing: '0.04em' }}>
-                © {new Date().getFullYear()} Sail AI
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#8A93A6', letterSpacing: '0.04em' }}>
+                © {new Date().getFullYear()} Sail AI+
               </p>
             </div>
           </div>

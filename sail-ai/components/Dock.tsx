@@ -90,7 +90,7 @@ function PricingIcon() {
 // ── Dock item ─────────────────────────────────────────────────
 
 function DockItem({
-  id, href, label, icon, active, hovered,
+  id, href, label, icon, active, hovered, dark,
   onMouseEnter, onMouseLeave,
 }: {
   id:           string
@@ -99,9 +99,15 @@ function DockItem({
   icon:         React.ReactNode
   active:       boolean
   hovered:      boolean
+  dark?:        boolean
   onMouseEnter: () => void
   onMouseLeave: () => void
 }) {
+  const accent   = dark ? '#D4AF37' : '#0A7E79'
+  const accentBg = dark ? 'rgba(212,175,55,0.14)' : 'rgba(10,126,121,0.10)'
+  const hoverBg  = dark ? 'rgba(255,255,255,0.08)' : 'rgba(12,12,14,0.06)'
+  const idleCol  = dark ? 'rgba(232,237,243,0.6)' : '#A1A1AA'
+  const hoverCol = dark ? '#F4E9C8' : '#0C0C0E'
   return (
     <Link href={href} aria-label={label}>
       <div
@@ -117,17 +123,17 @@ function DockItem({
           height:     '3rem',
           borderRadius: '50%',
           background: active
-            ? 'rgba(10,126,121,0.10)'
+            ? accentBg
             : hovered
-            ? 'rgba(12,12,14,0.06)'
+            ? hoverBg
             : 'transparent',
-          boxShadow:  active ? '0 0 0 1px rgba(10,126,121,0.35)' : 'none',
+          boxShadow:  active ? `0 0 0 1px ${dark ? 'rgba(212,175,55,0.4)' : 'rgba(10,126,121,0.35)'}` : 'none',
           transform:  hovered ? 'scale(1.2) translateY(-6px)' : 'scale(1)',
           transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), background 0.15s, box-shadow 0.15s',
           cursor:     'pointer',
         }}
       >
-        <span style={{ color: active ? '#0A7E79' : hovered ? '#0C0C0E' : '#A1A1AA' }}>
+        <span style={{ color: active ? accent : hovered ? hoverCol : idleCol }}>
           {icon}
         </span>
 
@@ -139,8 +145,8 @@ function DockItem({
             width:        '5px',
             height:       '5px',
             borderRadius: '50%',
-            background:   '#0A7E79',
-            boxShadow:    '0 0 6px rgba(10,126,121,0.6)',
+            background:   accent,
+            boxShadow:    `0 0 6px ${dark ? 'rgba(212,175,55,0.6)' : 'rgba(10,126,121,0.6)'}`,
           }} />
         )}
 
@@ -190,6 +196,7 @@ export function Dock() {
     href === '/' ? pathname === '/' : pathname.startsWith(href)
 
   const onChat = pathname.startsWith('/chat')
+  const dark   = pathname === '/'
 
   return (
     <>
@@ -256,12 +263,14 @@ export function Dock() {
             alignItems:           'center',
             gap:                  '0.25rem',
             padding:              '0.5rem 0.75rem',
-            background:           'rgba(250,250,248,0.82)',
+            background:           dark ? 'rgba(18,12,34,0.82)' : 'rgba(250,250,248,0.82)',
             backdropFilter:       'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            border:               '1px solid rgba(12,12,14,0.1)',
+            border:               dark ? '1px solid rgba(201,169,110,0.28)' : '1px solid rgba(12,12,14,0.1)',
             borderRadius:         '999px',
-            boxShadow:            '0 8px 32px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)',
+            boxShadow:            dark
+              ? '0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(201,169,110,0.18)'
+              : '0 8px 32px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)',
           }}
           aria-label="Main navigation"
         >
@@ -274,6 +283,7 @@ export function Dock() {
               icon={item.icon}
               active={isActive(item.href)}
               hovered={hovered === item.id}
+              dark={dark}
               onMouseEnter={() => setHovered(item.id)}
               onMouseLeave={() => setHovered(null)}
             />

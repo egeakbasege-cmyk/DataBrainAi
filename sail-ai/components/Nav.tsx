@@ -49,16 +49,17 @@ export function Nav() {
     }
   }
 
-  // On landing: transparent until scrolled. Everywhere else: frosted light.
-  const navBg = isLanding && !scrolled
-    ? 'transparent'
+  // On landing (dark theme): transparent until scrolled, then frosted obsidian.
+  // Everywhere else: frosted light.
+  const navBg = isLanding
+    ? (scrolled ? 'rgba(12,12,14,0.92)' : 'transparent')
     : 'rgba(250,250,248,0.96)'
   const navBlur = (isLanding && !scrolled) ? 'none' : 'blur(20px)'
-  // Text colours: white on hero (landing before scroll), charcoal otherwise
-  const isDark = isLanding && !scrolled
-  const navLinkColor = isDark ? 'rgba(232,237,243,0.62)' : '#4B5C78'
-  const navResearchColor = isDark ? '#BDEBE8' : '#0A7E79'
-  const navBrandColor = isDark ? '#E8EDF3' : '#0A7E79'
+  // The landing page is dark end-to-end, so nav text stays light on it.
+  const isDark = isLanding
+  const navLinkColor = isDark ? 'rgba(232,237,243,0.72)' : '#4B5C78'
+  const navResearchColor = isDark ? '#E7CE93' : '#0A7E79'
+  const navBrandColor = isDark ? '#F4E9C8' : '#0A7E79'
 
   return (
     <header
@@ -125,7 +126,7 @@ export function Nav() {
                 textTransform: 'uppercase',
                 color:         navResearchColor,
                 textDecoration:'none',
-                borderBottom:  '1px solid rgba(10,126,121,0.4)',
+                borderBottom:  isDark ? '1px solid rgba(201,169,110,0.5)' : '1px solid rgba(10,126,121,0.4)',
                 paddingBottom: '1px',
                 transition:    'color 0.4s',
               }}
@@ -311,7 +312,7 @@ export function Nav() {
               >
                 {t('login.signIn')}
               </Link>
-              <LiquidButton href="/login?mode=register" variant="cobalt" size="sm">
+              <LiquidButton href="/login?mode=register" variant={isDark ? 'gold' : 'cobalt'} size="sm">
                 {t('landing.beginFree')}
               </LiquidButton>
             </div>
@@ -319,7 +320,7 @@ export function Nav() {
         </nav>
       </div>
       {/* Gradient bottom border */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(10,126,121,0.28) 30%, rgba(148,163,184,0.4) 70%, transparent 100%)' }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: isDark ? 'linear-gradient(90deg, transparent 0%, rgba(201,169,110,0.32) 30%, rgba(167,139,250,0.32) 70%, transparent 100%)' : 'linear-gradient(90deg, transparent 0%, rgba(10,126,121,0.28) 30%, rgba(148,163,184,0.4) 70%, transparent 100%)' }} />
     </header>
   )
 }

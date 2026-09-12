@@ -17,7 +17,6 @@
 
 import { useEffect, useRef } from 'react'
 import { motion }            from 'framer-motion'
-import { PortofinoScene }    from '@/components/landing/PortofinoScene'
 import { IPhoneFrame }       from '@/components/landing/IPhoneFrame'
 import { UngatedApp }        from '@/components/landing/UngatedApp'
 import { useLanguage }       from '@/lib/i18n/LanguageContext'
@@ -218,10 +217,14 @@ export function PortofinoWalkthrough() {
         scrollMarginTop: 72,
       }}
     >
-      {/* ── Layer 0: Portofino 3D scene ── */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-        <PortofinoScene />
-      </div>
+      {/* ── Layer 0: amethyst depth backdrop ── */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+        background:
+          'radial-gradient(120% 90% at 18% 8%, rgba(76,42,140,0.35) 0%, transparent 55%),' +
+          'radial-gradient(110% 90% at 88% 92%, rgba(36,22,64,0.6) 0%, transparent 55%),' +
+          'linear-gradient(180deg, #0C0A16 0%, #08090D 100%)',
+      }} />
 
       {/* ── Layer 1: ASCII rain ── */}
       <AsciiCanvas />
@@ -315,9 +318,9 @@ export function PortofinoWalkthrough() {
             <h2 style={{
               fontFamily:    'var(--font-cormorant), Georgia, serif',
               fontSize:      'clamp(1.8rem, 3.5vw, 3rem)',
-              fontWeight:     600,
-              fontStyle:     'italic',
-              color:         '#FFFFFF',
+              fontWeight:     700,
+              fontStyle:     'normal',
+              color:         '#F4E9C8',
               lineHeight:     1.14,
               margin:        '0 0 14px',
               letterSpacing: '-0.02em',
