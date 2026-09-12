@@ -57,8 +57,8 @@ export function Nav() {
   // Text colours: white on hero (landing before scroll), charcoal otherwise
   const isDark = isLanding && !scrolled
   const navLinkColor = isDark ? 'rgba(232,237,243,0.62)' : '#4B5C78'
-  const navResearchColor = isDark ? '#BFE0FF' : '#0033A0'
-  const navBrandColor = isDark ? '#E8EDF3' : '#0A1F44'
+  const navResearchColor = isDark ? '#BDEBE8' : '#0A7E79'
+  const navBrandColor = isDark ? '#E8EDF3' : '#0A7E79'
 
   return (
     <header
@@ -96,7 +96,7 @@ export function Nav() {
               fontSize:      '0.55rem',
               fontWeight:    800,
               letterSpacing: '0.06em',
-              color:         '#002B49',
+              color:         '#0A3B38',
               background:    'var(--azx-silver-surface)',
               boxShadow:     'var(--azx-silver-shadow)',
               padding:       '1px 5px',
@@ -125,7 +125,7 @@ export function Nav() {
                 textTransform: 'uppercase',
                 color:         navResearchColor,
                 textDecoration:'none',
-                borderBottom:  '1px solid rgba(0,51,160,0.4)',
+                borderBottom:  '1px solid rgba(10,126,121,0.4)',
                 paddingBottom: '1px',
                 transition:    'color 0.4s',
               }}
@@ -173,15 +173,15 @@ export function Nav() {
                   width:          '2rem',
                   height:         '2rem',
                   borderRadius:   '50%',
-                  background:     session.user.isPro ? 'rgba(0,51,160,0.12)' : 'rgba(12,12,14,0.08)',
-                  border:         session.user.isPro ? '1.5px solid rgba(0,51,160,0.5)' : '1.5px solid rgba(12,12,14,0.15)',
+                  background:     session.user.isPro ? 'rgba(10,126,121,0.12)' : 'rgba(12,12,14,0.08)',
+                  border:         session.user.isPro ? '1.5px solid rgba(10,126,121,0.5)' : '1.5px solid rgba(12,12,14,0.15)',
                   display:        'flex',
                   alignItems:     'center',
                   justifyContent: 'center',
                   fontFamily:     'var(--font-inter), sans-serif',
                   fontSize:       '0.75rem',
                   fontWeight:     600,
-                  color:          session.user.isPro ? '#0033A0' : '#0C0C0E',
+                  color:          session.user.isPro ? '#0A7E79' : '#0C0C0E',
                   cursor:         'pointer',
                   overflow:       'hidden',
                   padding:        0,
@@ -223,7 +223,7 @@ export function Nav() {
                         {session.user.name ?? session.user.email}
                       </p>
                       {session.user.isPro && (
-                        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: '#0033A0', letterSpacing: '0.07em', textTransform: 'uppercase', marginTop: '2px' }}>
+                        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.65rem', color: '#0A7E79', letterSpacing: '0.07em', textTransform: 'uppercase', marginTop: '2px' }}>
                           {t('nav.professional')}
                         </p>
                       )}
@@ -247,7 +247,7 @@ export function Nav() {
                           padding:       '0.5rem 1rem',
                           fontFamily:    'var(--font-inter), sans-serif',
                           fontSize:      '0.8rem',
-                          color:         '#0033A0',
+                          color:         '#0A7E79',
                           background:    'none',
                           border:        'none',
                           cursor:        portalLoading ? 'wait' : 'pointer',
@@ -300,7 +300,7 @@ export function Nav() {
         </nav>
       </div>
       {/* Gradient bottom border */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(0,51,160,0.28) 30%, rgba(148,163,184,0.4) 70%, transparent 100%)' }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(10,126,121,0.28) 30%, rgba(148,163,184,0.4) 70%, transparent 100%)' }} />
     </header>
   )
 }

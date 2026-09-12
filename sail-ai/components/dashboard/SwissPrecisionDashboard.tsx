@@ -42,7 +42,7 @@ function AzulejoHero() {
       <div className="relative z-10 max-w-[510px]">
         <div className="az-kicker"><span className="az-dot" /> SAIL AI · INTELLIGENCE CHARTER</div>
         <h1 className="az-display mt-4">Chart the waters<br /><em>before they shift.</em></h1>
-        <p className="mt-4 max-w-md text-sm leading-6 text-[#d9e8ff]">A calm, precise view of the signals moving your revenue engine. Your next decision, marked clearly.</p>
+        <p className="mt-4 max-w-md text-sm leading-6 text-[#DCF2F0]">A calm, precise view of the signals moving your revenue engine. Your next decision, marked clearly.</p>
         <div className="mt-6 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#b9d5ff]"><span className="az-stamp">LIVE TIDE</span><span className="az-stamp">5 ROUTES OPEN</span></div>
       </div>
       <div className="az-hero-wave" aria-hidden />

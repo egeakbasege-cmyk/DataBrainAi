@@ -8,14 +8,14 @@ import { FREE_LIMIT } from '@/lib/stripe'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 // ── Modern Azulejo palette ──────────────────────────────────────
-const COBALT      = '#0033A0'   // primary brand cobalt
+const COBALT      = '#0A7E79'   // primary brand cobalt
 const COBALT_DEEP = '#002147'   // imperial navy — headings
 const COBALT_MID  = '#0F4C81'   // secondary cobalt
 const CERAMIC     = 'transparent'            // reveal liquid-silver backdrop
 const CERAMIC_DIM = 'rgba(241,244,250,0.45)' // recessed tile, translucent over liquid
 const INK         = '#0A1A3F'   // primary text
 const MUTED       = '#5B6B8C'   // secondary text
-const GROUT       = 'rgba(0,51,160,0.10)'
+const GROUT       = 'rgba(10,126,121,0.10)'
 
 // Subtle cobalt grout grid — mimics the ceramic tile joints
 const GROUT_GRID = {
@@ -234,13 +234,13 @@ export default function PricingPage() {
                     position:     'relative',
                     padding:      '2.5rem 2rem',
                     background:   isAccent ? `linear-gradient(165deg, ${COBALT} 0%, ${COBALT_DEEP} 100%)` : '#FFFFFF',
-                    border:       `1px solid ${isAccent ? COBALT_DEEP : 'rgba(0,51,160,0.22)'}`,
+                    border:       `1px solid ${isAccent ? COBALT_DEEP : 'rgba(10,126,121,0.22)'}`,
                     borderRadius: 3,
                     overflow:     'hidden',
                     // Glazed ceramic: soft top-inset highlight + deep drop
                     boxShadow: isAccent
-                      ? `inset 0 2px 4px rgba(255,255,255,0.12), 0 30px 60px -22px rgba(0,51,160,0.55)`
-                      : `inset 0 2px 4px rgba(0,0,0,0.04), 0 12px 32px -18px rgba(0,51,160,0.25)`,
+                      ? `inset 0 2px 4px rgba(255,255,255,0.12), 0 30px 60px -22px rgba(10,126,121,0.55)`
+                      : `inset 0 2px 4px rgba(0,0,0,0.04), 0 12px 32px -18px rgba(10,126,121,0.25)`,
                     marginTop: isAccent ? -12 : 0,
                   }}
                 >
@@ -312,7 +312,7 @@ export default function PricingPage() {
                   ) : (
                     <Link
                       href={tier.cta.href!}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.95rem', background: COBALT, color: '#FFFFFF', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: `1px solid ${COBALT}`, borderRadius: 2, textDecoration: 'none', textAlign: 'center', boxShadow: '0 8px 22px -10px rgba(0,51,160,0.6)' }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.95rem', background: COBALT, color: '#FFFFFF', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: `1px solid ${COBALT}`, borderRadius: 2, textDecoration: 'none', textAlign: 'center', boxShadow: '0 8px 22px -10px rgba(10,126,121,0.6)' }}
                     >
                       {tier.cta.label}
                     </Link>
