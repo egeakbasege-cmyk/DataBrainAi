@@ -6,44 +6,64 @@ import { motion } from 'framer-motion'
 import { Nav } from '@/components/Nav'
 import { FREE_LIMIT } from '@/lib/stripe'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
-import { ChampagneRule } from '@/components/SectionDivider'
+
+// ── Modern Azulejo palette ──────────────────────────────────────
+const COBALT      = '#0033A0'   // primary brand cobalt
+const COBALT_DEEP = '#002147'   // imperial navy — headings
+const COBALT_MID  = '#0F4C81'   // secondary cobalt
+const CERAMIC     = '#FAFAFA'   // glazed ceramic white
+const CERAMIC_DIM = '#F1F4FA'   // recessed tile
+const INK         = '#0A1A3F'   // primary text
+const MUTED       = '#5B6B8C'   // secondary text
+const GROUT       = 'rgba(0,51,160,0.10)'
+
+// Subtle cobalt grout grid — mimics the ceramic tile joints
+const GROUT_GRID = {
+  backgroundImage: `linear-gradient(${GROUT} 1px, transparent 1px), linear-gradient(90deg, ${GROUT} 1px, transparent 1px)`,
+  backgroundSize:  '48px 48px',
+} as const
 
 // ── Animation constants ─────────────────────────────────────────
 const EASE = [0.22, 1, 0.36, 1] as const
-const fadeUp = {
-  hidden: { opacity: 0, y: 22 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } },
-}
-const stagger = {
-  hidden: {},
-  show:   { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
-}
 
-// ── Marquee items ───────────────────────────────────────────────
-const MARQUEE_ITEMS = [
-  'Cancel any time',
-  'No hidden fees',
-  'Rocket-speed AI included',
-  'Live web research',
-  'Swiss precision AI',
-  'Enterprise-grade output',
-  'Free tier forever',
-  'Stripe-secured checkout',
-]
-
-function MarqueeBand() {
-  const doubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS]
+// ── Baroque line-art: compass rose ──────────────────────────────
+function CompassRose({ size = 220, opacity = 0.07 }: { size?: number; opacity?: number }) {
   return (
-    <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)', borderBottom: '1px solid rgba(0,0,0,0.07)', background: '#F4F4F2', padding: '0.875rem 0', overflow: 'hidden' }}>
-      <div className="sv-marquee-track">
-        {doubled.map((item, i) => (
-          <span key={i} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.67rem', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', padding: '0 2.75rem', display: 'inline-flex', alignItems: 'center', gap: '2.75rem' }}>
-            {item}
-            <span style={{ display: 'inline-block', width: 3, height: 3, borderRadius: '50%', background: '#C9A96E', flexShrink: 0 }} />
-          </span>
-        ))}
-      </div>
-    </div>
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" stroke={COBALT} strokeWidth="0.5" style={{ opacity }} aria-hidden="true">
+      <circle cx="50" cy="50" r="47" />
+      <circle cx="50" cy="50" r="35" />
+      <circle cx="50" cy="50" r="7" />
+      <path d="M50 3 L55 45 L50 50 L45 45 Z" />
+      <path d="M97 50 L55 55 L50 50 L55 45 Z" />
+      <path d="M50 97 L45 55 L50 50 L55 55 Z" />
+      <path d="M3 50 L45 45 L50 50 L45 55 Z" />
+      <line x1="22" y1="22" x2="36" y2="36" />
+      <line x1="78" y1="22" x2="64" y2="36" />
+      <line x1="78" y1="78" x2="64" y2="64" />
+      <line x1="22" y1="78" x2="36" y2="64" />
+    </svg>
+  )
+}
+
+// ── Baroque line-art: maritime waves ────────────────────────────
+function WaveMotif({ width = 260, opacity = 0.14, animate = false }: { width?: number; opacity?: number; animate?: boolean }) {
+  const d1 = 'M0 22 Q 16 6 32 22 T 64 22 T 96 22 T 128 22 T 160 22 T 192 22 T 224 22 T 256 22'
+  const d2 = 'M0 32 Q 16 16 32 32 T 64 32 T 96 32 T 128 32 T 160 32 T 192 32 T 224 32 T 256 32'
+  return (
+    <svg width={width} height="42" viewBox="0 0 260 42" fill="none" stroke={COBALT} strokeWidth="1" style={{ opacity }} aria-hidden="true">
+      {animate ? (
+        <motion.path
+          d={d1}
+          strokeDasharray="6 8"
+          initial={{ strokeDashoffset: 0 }}
+          animate={{ strokeDashoffset: -140 }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+        />
+      ) : (
+        <path d={d1} />
+      )}
+      <path d={d2} opacity={0.6} />
+    </svg>
   )
 }
 
@@ -131,217 +151,213 @@ export default function PricingPage() {
     }
   }
 
+  const eyebrow = (label: string) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+      <span style={{ width: 8, height: 8, background: COBALT, transform: 'rotate(45deg)', flexShrink: 0 }} />
+      <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: COBALT }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: 1, background: GROUT }} />
+    </div>
+  )
+
   return (
-    <main style={{ background: '#FAFAF8', minHeight: '100vh' }}>
+    <main style={{ background: CERAMIC, minHeight: '100vh' }}>
       <Nav />
 
       {/* ── Hero header ──────────────────────────────────────────── */}
-      <section style={{ background: '#0C0C0E', borderBottom: 'none', position: 'relative', overflow: 'hidden' }}>
-        {/* Grid overlay */}
-        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.4, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '60vw', height: '40vh', background: 'radial-gradient(ellipse, rgba(201,169,110,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <section style={{ background: CERAMIC, position: 'relative', overflow: 'hidden', borderBottom: `1px solid ${GROUT}` }}>
+        <div style={{ position: 'absolute', inset: 0, ...GROUT_GRID, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: -40, right: -40, pointerEvents: 'none' }}>
+          <CompassRose size={280} opacity={0.06} />
+        </div>
 
-        <div className="max-w-5xl mx-auto px-6 md:px-10 pt-20 pb-24" style={{ position: 'relative', zIndex: 10 }}>
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate="show"
-          >
-            <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.5rem' }}>
-              <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
-              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
-                {t('pricing.membership')}
-              </span>
+        <div className="max-w-5xl mx-auto px-6 md:px-10 pt-20 pb-20" style={{ position: 'relative', zIndex: 10 }}>
+          <div style={{ maxWidth: '52ch' }}>
+            <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
+              {eyebrow(t('pricing.membership'))}
             </motion.div>
 
             <motion.h1
-              variants={fadeUp}
+              initial={{ opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.1, ease: EASE }}
               style={{
-                fontFamily:    'var(--font-cormorant), Georgia, serif',
+                fontFamily:    'var(--font-playfair), Georgia, serif',
                 fontStyle:     'italic',
-                fontSize:      'clamp(2.25rem, 5vw, 3.5rem)',
-                fontWeight:    600,
-                color:         '#FFFFFF',
-                letterSpacing: '-0.025em',
-                lineHeight:    1.08,
-                marginBottom:  '1.25rem',
+                fontSize:      'clamp(2.5rem, 5.5vw, 4rem)',
+                fontWeight:    700,
+                color:         COBALT_DEEP,
+                letterSpacing: '-0.02em',
+                lineHeight:    1.06,
+                marginBottom:  '1.5rem',
+                textWrap:      'balance',
               }}
             >
               {t('pricing.headline')}
             </motion.h1>
 
             <motion.p
-              variants={fadeUp}
-              style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: 'rgba(255,255,255,0.42)', maxWidth: '44ch', fontWeight: 300, lineHeight: 1.78 }}
+              initial={{ opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.2, ease: EASE }}
+              style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '1rem', color: MUTED, maxWidth: '46ch', fontWeight: 400, lineHeight: 1.75 }}
             >
               {t('pricing.subheadline')}
             </motion.p>
-          </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, delay: 0.3, ease: EASE }} style={{ marginTop: '2rem' }}>
+              <WaveMotif width={260} opacity={0.2} animate />
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Marquee between hero and tiers */}
-      <MarqueeBand />
-
-      {/* ── Tier cards ───────────────────────────────────────────── */}
-      <section style={{ background: '#FFFFFF' }}>
-        <div className="max-w-5xl mx-auto px-6 md:px-10 py-20">
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-60px' }}
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 0 }}
+      {/* ── Tier cards — ceramic bento mosaic ────────────────────── */}
+      <section style={{ background: CERAMIC_DIM, position: 'relative' }}>
+        <div style={{ position: 'absolute', inset: 0, ...GROUT_GRID, pointerEvents: 'none', opacity: 0.5 }} />
+        <div className="max-w-5xl mx-auto px-6 md:px-10 py-20" style={{ position: 'relative', zIndex: 10 }}>
+          <div
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(268px, 1fr))', gap: '1.25rem', alignItems: 'start' }}
           >
-            {TIERS.map((tier, i) => (
-              <motion.div
-                key={tier.key}
-                variants={fadeUp}
-                style={{
-                  padding:    '2.5rem',
-                  background: tier.accent
-                    ? '#0C0C0E'
-                    : tier.key === 'advisory'
-                      ? 'linear-gradient(160deg, #FFFFFF 0%, #f8fffe 100%)'
-                      : '#FFFFFF',
-                  border:    '1px solid rgba(0,0,0,0.1)',
-                  borderLeft: i === 0 ? '1px solid rgba(0,0,0,0.1)' : 'none',
-                  position:  'relative',
-                  boxShadow: tier.accent
-                    ? '0 0 0 1px rgba(20,184,166,0.15), 0 24px 64px rgba(0,0,0,0.3)'
-                    : tier.key === 'advisory'
-                      ? '0 4px 24px rgba(20,184,166,0.06)'
-                      : undefined,
-                  transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s',
-                }}
-                whileHover={{
-                  y: tier.accent ? -6 : -4,
-                  boxShadow: tier.accent
-                    ? '0 0 0 1px rgba(20,184,166,0.2), 0 32px 80px rgba(0,0,0,0.4)'
-                    : '0 16px 48px rgba(0,0,0,0.1)',
-                }}
-              >
-                {tier.accent && (
-                  <>
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #0C0C0E, #C9A96E, #0C0C0E)' }} />
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/sail-square.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.1, pointerEvents: 'none', borderRadius: 'inherit' }} />
-                  </>
-                )}
+            {TIERS.map((tier, i) => {
+              const isAccent = tier.accent
+              return (
+                <motion.div
+                  key={tier.key}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.15 }}
+                  whileHover={{ y: -6 }}
+                  transition={{ duration: 0.6, delay: i * 0.1, ease: EASE }}
+                  style={{
+                    position:     'relative',
+                    padding:      '2.5rem 2rem',
+                    background:   isAccent ? `linear-gradient(165deg, ${COBALT} 0%, ${COBALT_DEEP} 100%)` : '#FFFFFF',
+                    border:       `1px solid ${isAccent ? COBALT_DEEP : 'rgba(0,51,160,0.22)'}`,
+                    borderRadius: 3,
+                    overflow:     'hidden',
+                    // Glazed ceramic: soft top-inset highlight + deep drop
+                    boxShadow: isAccent
+                      ? `inset 0 2px 4px rgba(255,255,255,0.12), 0 30px 60px -22px rgba(0,51,160,0.55)`
+                      : `inset 0 2px 4px rgba(0,0,0,0.04), 0 12px 32px -18px rgba(0,51,160,0.25)`,
+                    marginTop: isAccent ? -12 : 0,
+                  }}
+                >
+                  {/* Corner line-art flourish */}
+                  <div style={{ position: 'absolute', top: -30, right: -30, pointerEvents: 'none' }}>
+                    <CompassRose size={130} opacity={isAccent ? 0.16 : 0.07} />
+                  </div>
 
-                <span className={tier.accent ? 'label-gold' : 'label-caps'} style={{ display: 'block', marginBottom: '1.25rem' }}>
-                  {tier.name}
-                </span>
+                  {isAccent && (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.1rem', padding: '0.3rem 0.7rem', background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 2 }}>
+                      <span style={{ width: 5, height: 5, background: '#FFFFFF', transform: 'rotate(45deg)' }} />
+                      <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#FFFFFF' }}>
+                        Most chosen
+                      </span>
+                    </div>
+                  )}
 
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.5rem' }}>
-                  <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '3rem', fontWeight: 700, color: tier.accent ? '#FFFFFF' : '#0C0C0E', lineHeight: 1, letterSpacing: '-0.02em' }}>
-                    {tier.price}
+                  <span style={{ display: 'block', marginBottom: '1.1rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: isAccent ? 'rgba(255,255,255,0.8)' : COBALT }}>
+                    {tier.name}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: tier.accent ? 'rgba(255,255,255,0.35)' : '#A1A1AA', fontWeight: 300 }}>
-                    {tier.period}
-                  </span>
-                </div>
 
-                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.45)' : '#71717A', lineHeight: 1.7, marginBottom: '2rem', fontWeight: 300 }}>
-                  {tier.summary}
-                </p>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                    <span style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '3.25rem', fontWeight: 700, color: isAccent ? '#FFFFFF' : COBALT_DEEP, lineHeight: 1, letterSpacing: '-0.02em' }}>
+                      {tier.price}
+                    </span>
+                    <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8rem', color: isAccent ? 'rgba(255,255,255,0.5)' : MUTED, fontWeight: 400 }}>
+                      {tier.period}
+                    </span>
+                  </div>
 
-                <div style={{ height: 1, background: tier.accent ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', marginBottom: '1.75rem' }} />
+                  <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: isAccent ? 'rgba(255,255,255,0.6)' : MUTED, lineHeight: 1.7, marginBottom: '1.75rem', fontWeight: 400 }}>
+                    {tier.summary}
+                  </p>
 
-                <ul style={{ listStyle: 'none', marginBottom: '2.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {tier.features.map(f => (
-                    <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: tier.accent ? 'rgba(255,255,255,0.65)' : '#3A3A3C', lineHeight: 1.5 }}>
-                      <span style={{ color: tier.accent ? '#C9A96E' : 'var(--sv-teal)', fontSize: '0.5rem', flexShrink: 0, marginTop: '0.4rem' }}>◆</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
+                  <div style={{ height: 1, background: isAccent ? 'rgba(255,255,255,0.16)' : GROUT, marginBottom: '1.6rem' }} />
 
-                {tier.cta.action === 'stripe' ? (
-                  <>
-                    <button
-                      onClick={handleStripe}
-                      disabled={loading}
-                      aria-busy={loading}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.9rem', background: 'linear-gradient(135deg, #B8882A, #C9A96E)', color: '#0C0C0E', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s', boxShadow: '0 4px 16px rgba(201,169,110,0.4)' }}
-                    >
-                      {loading ? t('pricing.redirecting') : tier.cta.label}
-                    </button>
-                    {checkoutError && (
-                      <p
-                        role="alert"
-                        style={{ marginTop: '0.6rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', lineHeight: 1.5, color: '#B4302B' }}
+                  <ul style={{ listStyle: 'none', margin: 0, padding: 0, marginBottom: '2.25rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    {tier.features.map(f => (
+                      <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.85rem', color: isAccent ? 'rgba(255,255,255,0.82)' : INK, lineHeight: 1.5 }}>
+                        <span style={{ width: 6, height: 6, background: isAccent ? '#FFFFFF' : COBALT, transform: 'rotate(45deg)', flexShrink: 0, marginTop: '0.35rem' }} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {tier.cta.action === 'stripe' ? (
+                    <>
+                      <button
+                        onClick={handleStripe}
+                        disabled={loading}
+                        aria-busy={loading}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.95rem', background: '#FFFFFF', color: COBALT_DEEP, fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', borderRadius: 2, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s, transform 0.2s', boxShadow: '0 6px 18px rgba(0,0,0,0.2)' }}
                       >
-                        {checkoutError}
-                      </p>
-                    )}
-                  </>
-                ) : tier.cta.href?.startsWith('mailto') ? (
-                  <a
-                    href={tier.cta.href}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.9rem', background: 'transparent', color: '#0C0C0E', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid rgba(0,0,0,0.18)', textDecoration: 'none', textAlign: 'center', transition: 'background 0.18s' }}
-                  >
-                    {tier.cta.label}
-                  </a>
-                ) : (
-                  <Link
-                    href={tier.cta.href!}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.9rem', background: 'transparent', color: '#0C0C0E', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid rgba(0,0,0,0.18)', textDecoration: 'none', textAlign: 'center' }}
-                  >
-                    {tier.cta.label}
-                  </Link>
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
+                        {loading ? t('pricing.redirecting') : tier.cta.label}
+                      </button>
+                      {checkoutError && (
+                        <p role="alert" style={{ marginTop: '0.6rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', lineHeight: 1.5, color: '#FFD9D6' }}>
+                          {checkoutError}
+                        </p>
+                      )}
+                    </>
+                  ) : tier.cta.href?.startsWith('mailto') ? (
+                    <a
+                      href={tier.cta.href}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0.95rem', background: 'transparent', color: COBALT, fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: `1px solid ${COBALT}`, borderRadius: 2, textDecoration: 'none', textAlign: 'center', transition: 'background 0.18s, color 0.18s' }}
+                    >
+                      {tier.cta.label}
+                    </a>
+                  ) : (
+                    <Link
+                      href={tier.cta.href!}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.95rem', background: COBALT, color: '#FFFFFF', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: `1px solid ${COBALT}`, borderRadius: 2, textDecoration: 'none', textAlign: 'center', boxShadow: '0 8px 22px -10px rgba(0,51,160,0.6)' }}
+                    >
+                      {tier.cta.label}
+                    </Link>
+                  )}
+                </motion.div>
+              )
+            })}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '3rem' }}>
+            <WaveMotif width={300} opacity={0.16} />
+          </div>
         </div>
       </section>
-
-      <ChampagneRule />
 
       {/* ── FAQ ──────────────────────────────────────────────────── */}
-      <section style={{ background: '#FAFAF8' }}>
-        <div className="max-w-5xl mx-auto px-6 md:px-10 py-20">
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-60px' }}
-            style={{ marginBottom: '3rem' }}
-          >
-            <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '0' }}>
-              <div style={{ width: 28, height: 1, background: '#C9A96E', opacity: 0.6 }} />
-              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
-                {t('pricing.commonQ')}
-              </span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
-            </motion.div>
+      <section style={{ background: CERAMIC, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', bottom: -60, left: -50, pointerEvents: 'none' }}>
+          <CompassRose size={240} opacity={0.05} />
+        </div>
+        <div className="max-w-5xl mx-auto px-6 md:px-10 py-20" style={{ position: 'relative', zIndex: 10 }}>
+          <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.6, ease: EASE }} style={{ marginBottom: '2.5rem' }}>
+            {eyebrow(t('pricing.commonQ'))}
           </motion.div>
 
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-40px' }}
-          >
-            {FAQ.map((faq) => (
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            {FAQ.map((faq, i) => (
               <motion.div
                 key={faq.q}
-                variants={fadeUp}
-                style={{ padding: '1.75rem 0', borderBottom: '1px solid rgba(0,0,0,0.07)' }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.55, delay: i * 0.06, ease: EASE }}
+                style={{ padding: '1.6rem 1.75rem', background: '#FFFFFF', border: `1px solid ${GROUT}`, borderRadius: 3, boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.03)' }}
               >
-                <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontWeight: 600, fontSize: '1.15rem', color: '#0C0C0E', marginBottom: '0.5rem', lineHeight: 1.3 }}>
-                  <span style={{ color: 'var(--sv-teal)', marginRight: '0.5rem', fontSize: '0.7rem' }}>◈</span>
+                <p style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontWeight: 700, fontSize: '1.2rem', color: COBALT_DEEP, marginBottom: '0.55rem', lineHeight: 1.3, display: 'flex', alignItems: 'baseline', gap: '0.6rem' }}>
+                  <span style={{ width: 7, height: 7, background: COBALT, transform: 'rotate(45deg)', flexShrink: 0, alignSelf: 'center' }} />
                   {faq.q}
                 </p>
-                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', lineHeight: 1.78, color: '#71717A', fontWeight: 300 }}>
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9rem', lineHeight: 1.78, color: MUTED, fontWeight: 400, paddingLeft: '1.3rem' }}>
                   {faq.a}
                 </p>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
     </main>
