@@ -409,7 +409,7 @@ const translations = {
     'scenario.simulate':    'Run simulation →',
     'scenario.result':      'Simulation complete',
 
-    // ── Nav extras ───────────────────────────────────────
+    // ── Nav extras ──────────────────��────────────────────
     'nav.research':          'Research',
 
     // ── WelcomeBanner (chat page) ─────────────────────────
@@ -560,7 +560,7 @@ const translations = {
     'landing.stat1':         '< 60s analysis',
     'landing.stat2':         'Live web data',
     'landing.stat3':         '5 free analyses',
-    'landing.badgeLocked':   'Advanced Market Intelligence 🔒',
+    'landing.badgeLocked':   'Advanced Market Intelligence',
     'landing.exploreProPlans':'Explore Pro plans →',
     'landing.proBadge':      'Most Chosen',
     'landing.proTitle':      'Professional',
@@ -1367,7 +1367,7 @@ const translations = {
     'landing.stat1':         '< 60 sn analiz',
     'landing.stat2':         'Canlı web verisi',
     'landing.stat3':         '5 ücretsiz analiz',
-    'landing.badgeLocked':   'Gelişmiş Pazar Analizi 🔒',
+    'landing.badgeLocked':   'Gelişmiş Pazar Analizi',
     'landing.exploreProPlans':'Planları İncele →',
     'landing.proBadge':      'En Çok Tercih Edilen',
     'landing.proTitle':      'Profesyonel Plan',
@@ -1689,7 +1689,7 @@ const translations = {
     'mode.downwind':   'Sotavento',
     'mode.downwindDesc': 'Coaching guiado — construye estrategia mediante el diálogo',
     'mode.sail':       'SAIL',
-    'mode.sailDesc':   'Intención automática — adapta la profundidad y el formato a tu consulta',
+    'mode.sailDesc':   'Intenci��n automática — adapta la profundidad y el formato a tu consulta',
     'mode.trim':       'TRIM',
     'mode.trimDesc':   'Cronograma estratégico — hitos por fases con objetivos medibles',
     'mode.catamaran':  'CATAMARÁN',
@@ -2957,7 +2957,7 @@ const translations = {
     'landing.case1outcome':  '+0,8pp CVR',
     'landing.case2sector':   'B2B SaaS',
     'landing.case2headline': 'Onboarding-Redesign zur Reduzierung der Churn-Rate im 1. Monat von 12% auf unter 8%',
-    'landing.case2detail':   'OpenView-Benchmark für ARR < $2M: 7–9% monatlicher Churn · 60-tägige Umsetzung',
+    'landing.case2detail':   'OpenView-Benchmark für ARR < $2M: 7���9% monatlicher Churn · 60-tägige Umsetzung',
     'landing.case2outcome':  '−4pp Churn',
     'landing.case3sector':   'Professionelle Dienstleistungen',
     'landing.case3headline': 'Empfehlungsprogramm zur Gewinnung von 20% neuer Kunden aus dem Bestandsstamm',
@@ -4288,7 +4288,7 @@ const translations = {
     'micro.fullAnalysis':   '完整分析 →',
     'micro.source':         '来源：',
     'micro.insight.ecommerce':  'Baymard Institute数据显示，电商平均购物车放弃率为70.2%。通过简化结账流程和一封精准邮件将这一差距缩小10个百分点，对大多数运营者而言是90天内可实现的现实目标。',
-    'micro.insight.saas':       'OpenView Partners的SaaS基准研究表明，将第一个月激活率提高15%通常比同等广告支出更具价值——留存的复利效应使其成为ARR低于50万美元的企业最高杠杆行动。',
+    'micro.insight.saas':       'OpenView Partners的SaaS基准研究表明，将第一个月激活率提高15%通常比同等广告支出更具价值——留存的复利效应使其成为ARR低于50万美元的企业最高杠杆���动。',
     'micro.insight.agency':     '代理行业基准显示，有结构的季度业务评审（QBR）可将非自愿流失率降低18–22%。对于6客户的业务组合，实施一套QBR模板通常每年可挽回1–2个高风险长期客户。',
     'micro.insight.coaching':   '健身平台转化数据显示，在开放性课时之外提供固定期限套餐（如8节课块），可将平均交易额提升30–40%，而成交率无显著变化。',
     'micro.insight.restaurant': '对于餐饮企业，将每服务时段的翻台率从1.8×提升到2.2×，可在不增加座位或员工的情况下为晚餐时段增加约20%的收入。',
@@ -4652,7 +4652,7 @@ const translations = {
     'conn.whichPlatforms': '— 分析哪些平台？',
     'conn.enableAll':      '全部启用',
     'conn.disableAll':     '全部禁用',
-    'conn.addData':        '+ 添加数据',
+    'conn.addData':        '+ ���加数据',
     'conn.comingSoon':     '即将推出',
     'conn.demoMode':       '演示模式',
     'conn.statusNote':     '实时同步和OAuth连接即将推出。所有连接器目前使用演示数据运行。',
