@@ -64,9 +64,43 @@ const fontVariables = [
   archivo.variable,
 ].join(' ')
 
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sailai.app'
+
 export const metadata: Metadata = {
-  title:       'SAIL AI+ | Sovereign Intelligence',
-  description: 'Benchmarked AI strategy advisory for independent operators. Data-referenced analysis in under 60 seconds.',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default:  'Sail AI+ | AI-Powered Business Advisory & Benchmarked Strategy',
+    template: '%s | Sail AI+',
+  },
+  description:
+    'AI-powered market analysis, revenue optimization, and verified business advisory strategies for independent operators and founders. Benchmarked strategy in under 60 seconds.',
+  keywords: [
+    'AI business advisory', 'automated market intelligence', 'startup revenue growth',
+    'benchmarked strategy', 'AI market analysis', 'business strategy AI', 'iş stratejisi yapay zeka',
+  ],
+  applicationName: 'Sail AI+',
+  authors: [{ name: 'Sail AI+' }],
+  alternates: {
+    canonical: '/',
+    languages: { en: '/', tr: '/' },
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'Sail AI+',
+    title: 'Sail AI+ | AI Business Advisory & Benchmarked Strategy Platform',
+    description:
+      'AI-powered market analysis, revenue optimization, and verified business advisory strategies for independent operators and founders.',
+    url: SITE_URL,
+    images: [{ url: '/logo-gold.png', width: 1200, height: 630, alt: 'Sail AI+' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sail AI+ | AI Business Advisory & Benchmarked Strategy',
+    description:
+      'AI-powered market analysis, revenue optimization, and verified business advisory strategies for independent operators and founders.',
+    images: ['/logo-gold.png'],
+  },
+  robots: { index: true, follow: true },
   icons: {
     icon:  '/logo-gold.png',
     apple: '/logo-gold.png',
@@ -75,7 +109,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Sail AI',
+    title: 'Sail AI+',
   },
 }
 
@@ -85,7 +119,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#FAFAF8',
+  themeColor: '#0C0C0E',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -96,7 +130,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Sail AI" />
+        <meta name="apple-mobile-web-app-title" content="Sail AI+" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="msapplication-TileColor" content="#0C0C0E" />
         <meta name="msapplication-tap-highlight" content="no" />

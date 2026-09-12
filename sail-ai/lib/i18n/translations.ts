@@ -557,7 +557,7 @@ const translations = {
     'landing.stat1':         '< 60s analysis',
     'landing.stat2':         'Live web data',
     'landing.stat3':         '5 free analyses',
-    'landing.badgeLocked':   'Advanced Market Intelligence',
+    'landing.badgeLocked':   'Advanced Market Intelligence 🔒',
     'landing.exploreProPlans':'Explore Pro plans →',
     'landing.proBadge':      'Most Chosen',
     'landing.proTitle':      'Professional',
@@ -1361,7 +1361,7 @@ const translations = {
     'landing.stat1':         '< 60 sn analiz',
     'landing.stat2':         'Canlı web verisi',
     'landing.stat3':         '5 ücretsiz analiz',
-    'landing.badgeLocked':   'Gelişmiş Pazar Analizi',
+    'landing.badgeLocked':   'Gelişmiş Pazar Analizi 🔒',
     'landing.exploreProPlans':'Planları İncele →',
     'landing.proBadge':      'En Çok Tercih Edilen',
     'landing.proTitle':      'Profesyonel Plan',
@@ -1450,7 +1450,7 @@ const translations = {
     'research.exampleQ2':  'TikTok Shop Türkiye fiyatlandırma',
     'research.exampleQ3':  'Shopify vs Etsy komisyon karşılaştırması',
     'research.exampleQ4':  "eBay'de en çok satan ürünler",
-    // ── Walkthrough demo content ──────────────────────────
+    // ── Walkthrough demo content ───────────���──────────────
     'walk.demoQuery':      'Shopify mağazam var. Aylık satış 85K TL, ama dönüşüm oranım %1.3. Sektörün nerede olduğunu ve ne yapabileceğimi analiz et.',
     'walk.demoTag1':       'E-Ticaret · Shopify',
     'walk.demoTag2':       '85K TL/ay',
@@ -2955,7 +2955,7 @@ const translations = {
     'landing.case2outcome':  '−4pp Churn',
     'landing.case3sector':   'Professionelle Dienstleistungen',
     'landing.case3headline': 'Empfehlungsprogramm zur Gewinnung von 20% neuer Kunden aus dem Bestandsstamm',
-    'landing.case3detail':   'Branchendurchschnittliche Empfehlungsrate: 18–22% Neugeschäft · Standardrückzahlung: <45 Tage',
+    'landing.case3detail':   'Branchendurchschnittliche Empfehlungsrate: 18–22% Neugeschäft �� Standardrückzahlung: <45 Tage',
     'landing.case3outcome':  '+20% neue Kunden',
     'landing.upwindBadge':   'Direkt',
     'landing.upwindDesc':    'Geben Sie Ihre Zahlen ein und erhalten Sie sofort einen benchmark-basierten Aktionsplan. Keine Rückfragen — fehlende Daten werden aus Sektormedianen ergänzt.',
@@ -4346,7 +4346,7 @@ const translations = {
     'home.how2.body': '系统检索相关行业基准，比较您的位置，并识别对您而言杠杆最高的行动。',
     
     'home.how3.title': '清晰、可执行的计划',
-    'home.how3.body': '三个具有明确时间框架的具体行动，一个现实的30天目标，以及最可能破坏执行的单一风险。',
+    'home.how3.body': '三个具有明确时间框架的具体行动，一个现实的30天目标，以及最可能破���执行的单一风险。',
     
     'home.preset.ecom.label': '电商转化率',
     'home.preset.ecom.problem': '结账放弃率使转化率低于行业中位数。',
