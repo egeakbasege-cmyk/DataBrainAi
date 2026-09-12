@@ -9,6 +9,20 @@
    All tokens live here; dark-context tokens in .aetheris block below.
    ═══════════════════════════════════════════════════════════════ */
 :root {
+  /* ── Azulejo ceramic surface ────────────────── */
+  --azx-ceramic: #F7F9FB;
+  --azx-ink:     #0A1F44;
+  --azx-grout:   rgba(10,31,68,0.055);
+  --azx-cobalt:  #0033A0;
+
+  /* ── Liquid silver / mercury palette ────────── */
+  --azx-silver-0: #ffffff;
+  --azx-silver-1: #eef2f6;
+  --azx-silver-2: #d7dee6;
+  --azx-silver-3: #b9c4cf;
+  --azx-silver-4: #cfd8e2;
+  --azx-silver-hi:#ffffff;
+
   /* ── Light surface palette ──────────────────── */
   --ink:        #0C0C0E;
   --charcoal:   #1C1C1E;
@@ -70,6 +84,25 @@
   /* ── Page max-widths ────────────────────────── */
   --page-max:    1152px;  /* marketing pages */
   --app-max:     1024px;  /* app/dashboard pages */
+
+  /* ── Azulejo × Liquid Silver (global Stage-1 system) ───────────
+     Prefixed --azx-* so they compose everywhere without clashing
+     with the scoped .az-dashboard tokens. */
+  --azx-cobalt:        #0033A0;
+  --azx-cobalt-deep:   #002B49;
+  --azx-cobalt-bright: #1778DC;
+  --azx-cobalt-pale:   #EAF2FF;
+  --azx-ceramic:       #FAFAFA;
+  --azx-paper:         #F4F8FF;
+  --azx-ink:           #0A1F44;
+  --azx-muted:         #4B5C78;
+  --azx-grout:         rgba(0,51,160,0.09);
+  --azx-grout-strong:  rgba(0,51,160,0.16);
+  --azx-silver-hi:     #FFFFFF;
+  --azx-silver-mid:    #E2E8F0;
+  --azx-silver-lo:     #94A3B8;
+  --azx-silver-surface: linear-gradient(145deg, #FFFFFF 0%, #F1F5F9 34%, #E2E8F0 55%, #B8C2D0 78%, #94A3B8 100%);
+  --azx-silver-shadow:  inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -2px 4px rgba(100,116,139,0.45), 0 6px 16px -6px rgba(15,23,42,0.4);
 }
 
 /* ── Aetheris Terminal — Dark Mode Tokens ───────────── */
@@ -160,7 +193,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background:              var(--canvas);
+  background:              var(--azx-silver-0);
   color:                   var(--ink);
   font-family:             var(--font-inter), system-ui, sans-serif;
   font-weight:             400;
@@ -170,7 +203,67 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Scrollbar ─────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════
+   LIQUID SILVER BACKDROP
+   Fixed, full-viewport animated mercury behind the whole app.
+   Shows through any transparent / empty area. Two layers:
+   ::before = drifting metallic blobs, ::after = rotating chrome sheen.
+   ══════════════════════════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -20vmax;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(38vmax 32vmax at 20% 25%, var(--azx-silver-hi) 0%, transparent 55%),
+    radial-gradient(34vmax 40vmax at 78% 20%, var(--azx-silver-2) 0%, transparent 58%),
+    radial-gradient(46vmax 38vmax at 70% 82%, var(--azx-silver-3) 0%, transparent 60%),
+    radial-gradient(40vmax 44vmax at 15% 78%, var(--azx-silver-4) 0%, transparent 62%),
+    linear-gradient(120deg, var(--azx-silver-1) 0%, var(--azx-silver-0) 45%, var(--azx-silver-1) 100%);
+  background-size: 200% 200%, 220% 220%, 240% 240%, 210% 210%, 160% 160%;
+  filter: blur(28px) saturate(1.04);
+  animation: azx-liquid-drift 26s ease-in-out infinite alternate;
+  will-change: background-position;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: -40vmax;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    conic-gradient(from 0deg at 50% 50%,
+      transparent 0deg,
+      rgba(255,255,255,0.55) 42deg,
+      rgba(185,196,207,0.30) 90deg,
+      transparent 150deg,
+      rgba(255,255,255,0.45) 220deg,
+      rgba(207,216,226,0.28) 285deg,
+      transparent 340deg);
+  mix-blend-mode: soft-light;
+  filter: blur(40px);
+  opacity: 0.9;
+  animation: azx-liquid-spin 40s linear infinite;
+  will-change: transform;
+}
+
+@keyframes azx-liquid-drift {
+  0% {
+    background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 50%;
+  }
+  50% {
+    background-position: 60% 40%, 30% 60%, 40% 30%, 70% 50%, 100% 50%;
+  }
+  100% {
+    background-position: 100% 100%, 0% 100%, 0% 0%, 100% 0%, 0% 50%;
+  }
+}
+@keyframes azx-liquid-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Scrollbar ─────────────────────�����───────────────── */
 ::-webkit-scrollbar       { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--silver); }
@@ -191,7 +284,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
 @layer utilities {
   .text-balance { text-wrap: balance; }
 
-  /* ── Label system ─────────────────────────��──────── */
+  /* ── Label system ─────────────────────────���──────── */
   .label-caps {
     font-family:    var(--font-inter), sans-serif;
     font-size:      0.6875rem;
@@ -407,7 +500,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   box-shadow: inset 0 1px 0 rgba(201,169,110,0.2);
 }
 
-/* ════════════════════════════════════════════════════════
+/* ════════��═��═════════════════════════════════════════════
    AETHERIS TERMINAL — Component Primitives
    Applied inside .aetheris / [data-theme="aetheris"]
    ════════════════════════════════════════════════════════ */
@@ -637,7 +730,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   font-family: var(--font-playfair), var(--font-cormorant), Georgia, serif;
 }
 
-/* ── Gold gradient text ───────────────────────────────────── */
+/* ── Gold gradient text ────────────────────��──��───────────── */
 .text-gold-grad {
   background:              var(--gold-grad);
   -webkit-background-clip: text;
@@ -661,7 +754,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   background-clip:         text;
 }
 
-/* ── Glassmorphic dark panel ──────���───────────────────────── */
+/* ── Glassmorphic dark panel ─────������───────────────────────── */
 .glass-dark {
   background:        rgba(9, 9, 11, 0.70);
   backdrop-filter:   blur(18px) saturate(160%);
@@ -819,7 +912,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   opacity:    0.55;
 }
 
-/* ── Brand gradient hairline ──────────────────────────────────── */
+/* ── Brand gradient hairline ─────���───���────────────────────────── */
 .sv-brand-rule {
   height:     1px;
   background: linear-gradient(90deg,
@@ -831,7 +924,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   opacity: 0.4;
 }
 
-/* ── Sovereign button — teal CTA ──────────────────────────────── */
+/* ── Sovereign button — teal CTA ──��───────────────────────────── */
 .btn-sv {
   display:        inline-flex;
   align-items:    center;
@@ -1091,7 +1184,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
 }
 
 .legal-prose li { margin-bottom: 0.5rem; }
-.legal-prose li::marker { color: #C9A96E; }
+.legal-prose li::marker { color: #0033A0; }
 
 .legal-prose strong {
   font-weight: 600;
@@ -1099,13 +1192,202 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
 }
 
 .legal-prose a {
-  color: #8A6D3B;
+  color: #0033A0;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
 
-.legal-prose a:hover { color: #0C0C0E; }
+.legal-prose a:hover { color: #002147; }
+
+/* ============================================================
+   AZULEJO × LIQUID SILVER — Global Stage-1 System
+   Ceramic-white + cobalt Portuguese-tile surfaces with
+   marine-grade silver hardware. Opt-in via .azx-page on a
+   route root; utilities compose anywhere.
+   ============================================================ */
+
+/* ── Page shell ─────────────────────────────────────────────── */
+.azx-page {
+  position: relative;
+  min-height: 100vh;
+  background: var(--azx-ceramic);
+  color: var(--azx-ink);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── Fixed animated tile-grout background ───────────────────── */
+.azx-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--azx-ceramic);
+  background-image:
+    linear-gradient(var(--azx-grout) 1px, transparent 1px),
+    linear-gradient(90deg, var(--azx-grout) 1px, transparent 1px),
+    radial-gradient(120% 80% at 12% -10%, rgba(23,120,220,0.10) 0%, transparent 55%),
+    radial-gradient(110% 90% at 108% 8%, rgba(0,51,160,0.08) 0%, transparent 52%);
+  background-size: 34px 34px, 34px 34px, 100% 100%, 100% 100%;
+  animation: azx-drift 34s linear infinite;
+}
+@keyframes azx-drift {
+  from { background-position: 0 0, 0 0, 0 0, 0 0; }
+  to   { background-position: 34px 34px, 34px 34px, 0 0, 0 0; }
+}
+
+/* Diagonal ceramic sheen for hero tiles */
+.azx-tilesheen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(45deg, transparent 46%, rgba(255,255,255,0.14) 47%, rgba(255,255,255,0.14) 53%, transparent 54%),
+    linear-gradient(-45deg, transparent 46%, rgba(255,255,255,0.10) 47%, rgba(255,255,255,0.10) 53%, transparent 54%);
+  background-size: 42px 42px;
+}
+
+/* ── Bento tile card (glazed ceramic) ───────────────────────── */
+.azx-bento {
+  position: relative;
+  background: #FFFFFF;
+  border: 1px solid var(--azx-grout-strong);
+  border-radius: 3px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.03), 0 12px 32px -20px rgba(0,51,160,0.35);
+}
+.azx-bento--cobalt {
+  background: linear-gradient(135deg, #062D63 0%, #0C4DA2 55%, #115FBD 100%);
+  border-color: #0A4A99;
+  color: #EAF2FF;
+  box-shadow: 0 20px 48px -20px rgba(0,51,160,0.55);
+}
+/* Blueprint corner bracket */
+.azx-corner {
+  position: absolute;
+  top: -1px; right: -1px;
+  width: 22px; height: 22px;
+  border-top: 2px solid var(--azx-cobalt-bright);
+  border-right: 2px solid var(--azx-cobalt-bright);
+  pointer-events: none;
+}
+
+/* ── Section eyebrow ────────────────────────────────────────── */
+.azx-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--azx-cobalt);
+}
+.azx-eyebrow::before {
+  content: '';
+  width: 22px; height: 1px;
+  background: var(--azx-cobalt);
+  opacity: 0.7;
+}
+
+/* ── Serif display header ───────────────────────────────────── */
+.azx-display {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+.azx-display em { font-style: italic; color: var(--azx-cobalt); }
+
+/* ── Marine-silver hardware surface ─────────────────────────── */
+.azx-silver {
+  background: var(--azx-silver-surface);
+  color: var(--azx-cobalt-deep);
+  box-shadow: var(--azx-silver-shadow);
+}
+
+/* ── Cobalt diamond bullet ──────────────────────────────────── */
+.azx-diamond {
+  display: inline-block;
+  width: 7px; height: 7px;
+  flex: none;
+  transform: rotate(45deg);
+  background: var(--azx-cobalt);
+}
+
+/* ── Wave divider motion (loaders / dividers) ───────────────── */
+@keyframes azx-wave {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.azx-wave-track { display: inline-flex; animation: azx-wave 9s linear infinite; will-change: transform; }
+
+/* ── Ceramic sheen sweep (silver reflection) ────────────────── */
+@keyframes azx-sheen {
+  0%   { transform: translateX(-140%) skewX(-18deg); }
+  100% { transform: translateX(240%)  skewX(-18deg); }
+}
+
+/* ── Hydration-independent entrance reveals ─────────────────────
+   CSS-driven so above-the-fold content ALWAYS appears on paint,
+   never gated behind JS animation state. */
+@keyframes azx-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes azx-fade-word {
+  from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+}
+@keyframes azx-mural-in {
+  from { opacity: 0; transform: scale(0.96) rotate(-1deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0); }
+}
+.azx-reveal {
+  opacity: 0;
+  animation: azx-fade-up 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-delay: var(--azx-delay, 0s);
+}
+.azx-reveal-word {
+  display: inline-block;
+  margin-right: 0.28em;
+  opacity: 0;
+  animation: azx-fade-word 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-delay: var(--azx-delay, 0s);
+}
+.azx-reveal-mural {
+  opacity: 0;
+  animation: azx-mural-in 1s cubic-bezier(0.22,1,0.36,1) 0.2s forwards;
+}
+.azx-mural-sheen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.35) 50%, transparent 58%);
+  mix-blend-mode: soft-light;
+  transform: translateX(-120%);
+  animation: azx-mural-sweep 5.5s ease-in-out 1s infinite;
+}
+@keyframes azx-mural-sweep {
+  0%        { transform: translateX(-120%); }
+  55%, 100% { transform: translateX(120%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .azx-bg { animation: none; }
+  .azx-wave-track { animation: none; }
+  .azx-reveal, .azx-reveal-word, .azx-reveal-mural {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .azx-mural-sheen::before { animation: none; opacity: 0; }
+  body::before, body::after { animation: none; }
+}
 
 /* ============================================================
    AZULEJO DASHBOARD — Portuguese blue-and-white ceramic system

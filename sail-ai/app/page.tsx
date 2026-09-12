@@ -18,8 +18,8 @@
  *   • Body — Inter 300, 0.875–0.9375rem, line-height 1.75
  *
  * Palette (Swiss restraint):
- *   • Ink: #0C0C0E · Canvas: #FAFAF8 · Champagne: #C9A96E
- *   • Teal: #14B8A6 · Slate: #71717A · Silver: #A1A1AA
+ *   • Ink: #0C0C0E · Canvas: #FAFAF8 · Champagne: #1778DC
+ *   • Teal: #94A3B8 · Slate: #71717A · Silver: #A1A1AA
  */
 
 import React, { useRef, useEffect } from 'react'
@@ -32,6 +32,7 @@ import { TopoBackground } from '@/components/TopoBackground'
 import { PortofinoWalkthrough } from '@/components/PortofinoWalkthrough'
 import { SectionDivider, ChampagneRule } from '@/components/SectionDivider'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { LiquidButton } from '@/components/LiquidButton'
 
 // ── Animated counter — counts up from 0 when entering viewport ──
 function AnimatedCounter({ value }: { value: string }) {
@@ -84,8 +85,8 @@ function Rule() {
 
 function Eyebrow({ label, light }: { label: string; light?: boolean }) {
   return (
-    <div className="sv-eyebrow" style={{ '--eyebrow-color': light ? 'rgba(201,169,110,0.8)' : undefined } as React.CSSProperties}>
-      <span className="sv-eyebrow-label" style={{ color: light ? 'rgba(201,169,110,0.8)' : undefined }}>
+    <div className="sv-eyebrow" style={{ '--eyebrow-color': light ? 'rgba(23,120,220,0.8)' : undefined } as React.CSSProperties}>
+      <span className="sv-eyebrow-label" style={{ color: light ? 'rgba(23,120,220,0.8)' : undefined }}>
         {label}
       </span>
     </div>
@@ -109,7 +110,7 @@ function MarqueeBand({ dark }: { dark?: boolean }) {
   const bg      = dark ? 'rgba(255,255,255,0.04)' : '#F4F4F2'
   const border  = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'
   const textCol = dark ? 'rgba(255,255,255,0.35)' : '#A1A1AA'
-  const dotCol  = dark ? 'rgba(201,169,110,0.5)'  : '#C9A96E'
+  const dotCol  = dark ? 'rgba(23,120,220,0.5)'  : '#1778DC'
 
   return (
     <div style={{
@@ -157,7 +158,7 @@ function ModeCard({
       className="hover-lift"
       style={{
         padding:             '2.25rem',
-        background:          'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 60%, rgba(20,184,166,0.04) 100%)',
+        background:          'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 60%, rgba(148,163,184,0.04) 100%)',
         backdropFilter:      'blur(32px)',
         WebkitBackdropFilter:'blur(32px)',
         border:              `1px solid rgba(255,255,255,0.13)`,
@@ -239,103 +240,82 @@ export default function LandingPage() {
           Dark full-bleed. Word-by-word headline stagger.
           Sailboat has parallax drift on scroll.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: 'rgba(8,9,13,0.52)', paddingBottom: 0, position: 'relative', overflow: 'hidden' }}>
-        <TopoBackground />
-
-        {/* Grid overlay */}
-        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none', zIndex: 2 }} />
-
-        {/* Parallax hero image */}
-        <motion.img
-          src="/sail-vertical.jpg"
-          alt=""
-          aria-hidden="true"
+      <section className="azx-tilesheen" style={{ paddingBottom: 0, position: 'relative', overflow: 'hidden', background: 'transparent', color: 'var(--azx-ink)' }}>
+        <div
+          aria-hidden
           style={{
-            position:       'absolute',
-            inset:          0,
-            width:          '100%',
-            height:         '100%',
-            objectFit:      'contain',
-            objectPosition: 'center center',
-            opacity:        heroImgOp,
-            pointerEvents:  'none',
-            userSelect:     'none',
-            zIndex:         3,
-            y:              sailboatY,
+            position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+            backgroundColor: 'transparent',
+            backgroundImage:
+              'linear-gradient(var(--azx-grout) 1px, transparent 1px), linear-gradient(90deg, var(--azx-grout) 1px, transparent 1px), radial-gradient(120% 80% at 12% -10%, rgba(23,120,220,0.10) 0%, transparent 55%), radial-gradient(110% 90% at 108% 8%, rgba(0,51,160,0.08) 0%, transparent 52%)',
+            backgroundSize: '34px 34px, 34px 34px, 100% 100%, 100% 100%',
           }}
         />
 
         <div className="max-w-6xl mx-auto px-6 md:px-10 pt-24 md:pt-32 pb-20 md:pb-28" style={{ position: 'relative', zIndex: 10 }}>
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div>
 
           {/* Eyebrow */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: EASE }}
+          <div
+            className="azx-reveal"
             style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.25rem' }}
           >
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1778DC' }}>
               {t('landing.eyebrow')}
             </span>
-            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.4), transparent)' }} />
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(23,120,220,0.4), transparent)' }} />
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A3B8' }}>
               {t('landing.est')}
             </span>
-          </motion.div>
+          </div>
 
-          {/* Headline — word-by-word stagger */}
-          <motion.h1
-            variants={stagger(0.08)}
-            initial="hidden"
-            animate="show"
+          {/* Headline — word-by-word stagger (CSS-driven) */}
+          <h1
             style={{
-              fontFamily:    'var(--font-cormorant), Georgia, serif',
-              fontSize:      'clamp(3.5rem, 7.5vw, 6.5rem)',
-              fontWeight:    600,
+              fontFamily:    'var(--font-playfair), Georgia, serif',
+              fontSize:      'clamp(3rem, 6vw, 5.25rem)',
+              fontWeight:    700,
               fontStyle:     'italic',
-              lineHeight:    1.03,
+              lineHeight:    1.05,
               letterSpacing: '-0.02em',
-              color:         '#FFFFFF',
+              color:         '#0A1F44',
               maxWidth:      '15ch',
               margin:        0,
             }}
           >
             {headlineWords.map((word, i) => (
-              <motion.span
+              <span
                 key={i}
-                variants={wordVar}
-                style={{ display: 'inline-block', marginRight: '0.28em' }}
+                className="azx-reveal-word"
+                style={{ ['--azx-delay' as string]: `${0.1 + i * 0.09}s` }}
               >
                 {word}
-              </motion.span>
+              </span>
             ))}
-          </motion.h1>
+          </h1>
 
           {/* Subheadline */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.52, ease: EASE }}
+          <p
+            className="azx-reveal"
             style={{
+              ['--azx-delay' as string]: '0.5s',
               fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.9375rem',
               lineHeight: 1.78,
-              color:      'rgba(255,255,255,0.90)',
+              color:      '#4B5C78',
               maxWidth:   '46ch',
-              marginTop:  '2rem',
-              fontWeight: 300,
-              textShadow: '0 1px 10px rgba(0,0,0,0.9)',
+              marginTop:  '1.75rem',
+              fontWeight: 400,
             }}
           >
             {t('landing.subheadline')}
-          </motion.p>
+          </p>
 
           {/* Stat pills */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.68, ease: EASE }}
-            style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '2rem' }}
+          <div
+            className="azx-reveal"
+            style={{ ['--azx-delay' as string]: '0.62s', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '2rem' }}
           >
             {STAT_PILLS.map(pill => (
               <span
@@ -343,95 +323,112 @@ export default function LandingPage() {
                 style={{
                   fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.67rem',
-                  fontWeight:    500,
+                  fontWeight:    600,
                   letterSpacing: '0.05em',
-                  color:         'rgba(255,255,255,0.55)',
-                  background:    'rgba(255,255,255,0.055)',
-                  border:        '1px solid rgba(255,255,255,0.09)',
-                  borderRadius:  '2px',
-                  padding:       '0.3rem 0.75rem',
+                  color:         '#0033A0',
+                  background:    '#FFFFFF',
+                  border:        '1px solid rgba(0,51,160,0.16)',
+                  borderRadius:  '999px',
+                  padding:       '0.3rem 0.8rem',
                   whiteSpace:    'nowrap',
+                  boxShadow:     '0 2px 8px -4px rgba(0,51,160,0.25)',
                 }}
               >
                 {pill}
               </span>
             ))}
-          </motion.div>
+          </div>
 
           {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.82, ease: EASE }}
-            style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
+          <div
+            className="azx-reveal"
+            style={{ ['--azx-delay' as string]: '0.74s', marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
           >
-            <Link href="/welcome" className="btn-primary">
+            <LiquidButton href="/welcome" variant="silver" size="lg">
               {t('landing.beginFree')}
-            </Link>
-            <a
-              href="#tutorial"
-              className="btn-ghost-white"
-              style={{ textDecoration: 'none' }}
-              onClick={e => {
-                e.preventDefault()
+            </LiquidButton>
+            <LiquidButton
+              variant="ghost"
+              size="lg"
+              onClick={() =>
                 document.getElementById('tutorial')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }}
+              }
             >
               {t('landing.watchHow')}
-            </a>
-          </motion.div>
+            </LiquidButton>
+          </div>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1.1 }}
-            style={{ marginTop: '0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}
+          <p
+            className="azx-reveal"
+            style={{ ['--azx-delay' as string]: '0.9s', marginTop: '0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#94A3B8', letterSpacing: '0.05em' }}
           >
             {t('landing.freeNote')}
-          </motion.p>
+          </p>
 
           {/* Trust cues */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.55, delay: 1.2 }}
-            style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
+          <div
+            className="azx-reveal"
+            style={{ ['--azx-delay' as string]: '1s', marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
           >
             {TRUST_CUES.map(cue => (
-              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.06em' }}>
+              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: '#94A3B8', letterSpacing: '0.06em' }}>
                 {cue}
               </span>
             ))}
-          </motion.div>
+          </div>
 
-          {/* Decorative sailboat — parallax Y applied to inner div */}
-          <motion.div
-            style={{ y: sailboatY }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.28 }}
-            transition={{ duration: 1.2, delay: 0.6 }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '3rem', pointerEvents: 'none', transform: 'scale(1.1)', transformOrigin: 'right bottom' }}>
-              <div style={{ position: 'relative' }}>
-                <div style={{
-                  position:     'absolute',
-                  inset:        0,
-                  borderRadius: '50%',
-                  background:   'radial-gradient(circle 200px, rgba(20,184,166,0.18) 0%, transparent 70%)',
-                  pointerEvents:'none',
-                }} />
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CompassRose size={260} color="#C9A96E" opacity={0.35} />
-                </div>
-                <EngravedSailboat size={200} color="#FFFFFF" opacity={0.7} />
-              </div>
+          </div>{/* end hero left column */}
+
+          {/* ── Framed azulejo mural — the hero centerpiece ── */}
+          <div className="azx-reveal-mural relative mx-auto w-full max-w-[420px] lg:max-w-none">
+            <div
+              style={{
+                position:     'relative',
+                padding:      '10px',
+                background:   'linear-gradient(135deg, #1778dc 0%, #0a4da2 45%, #052a5e 100%)',
+                borderRadius: '8px',
+                boxShadow:    '0 40px 90px -34px rgba(0,43,73,0.65), inset 0 0 0 1px rgba(255,255,255,0.35)',
+              }}
+            >
+              {/* screw-head hardware in each corner */}
+              {['tl','tr','bl','br'].map(pos => (
+                <span
+                  key={pos}
+                  aria-hidden
+                  style={{
+                    position: 'absolute', width: 9, height: 9, borderRadius: '50%',
+                    background: 'radial-gradient(circle at 35% 30%, #ffffff, #94a3b8 60%, #475569)',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                    top:    pos[0] === 't' ? 6 : undefined,
+                    bottom: pos[0] === 'b' ? 6 : undefined,
+                    left:   pos[1] === 'l' ? 6 : undefined,
+                    right:  pos[1] === 'r' ? 6 : undefined,
+                    zIndex: 3,
+                  }}
+                />
+              ))}
+              <img
+                src="/azulejo/hero-sailboat.png"
+                alt="Hand-painted Portuguese azulejo tile mural of the Santa Maria tall ship at sea, framed by nautical tile ornament of dolphins, anchors and rope-knots"
+                style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '3px' }}
+              />
+              {/* travelling ceramic glaze sheen (CSS) */}
+              <div
+                aria-hidden
+                className="azx-mural-sheen"
+                style={{
+                  position: 'absolute', top: 10, bottom: 10, left: 10, right: 10,
+                  borderRadius: '3px', pointerEvents: 'none', overflow: 'hidden',
+                }}
+              />
             </div>
-          </motion.div>
+          </div>
+         </div>{/* end hero grid */}
         </div>
       </section>
 
-      {/* ── Diagonal divider: dark hero → white ─────── */}
-      <SectionDivider from="rgba(8,9,13,0.52)" to="#FFFFFF" direction="down-right" height={52} />
+      {/* ── Diagonal divider: ceramic hero → white ─────── */}
+      <SectionDivider from="#FAFAFA" to="#FFFFFF" direction="down-right" height={52} />
 
       {/* ── Marquee Band 1 ───────────────────────────── */}
       <MarqueeBand />
@@ -463,8 +460,8 @@ export default function LandingPage() {
             style={{ marginBottom: '3.5rem' }}
           >
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1rem' }}>
-              <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
-              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+              <div style={{ width: 28, height: 1, background: 'rgba(23,120,220,0.6)' }} />
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1778DC' }}>
                 {t('landing.intelligenceModes')}
               </span>
             </motion.div>
@@ -559,9 +556,9 @@ export default function LandingPage() {
                 fontFamily:    'var(--font-inter), sans-serif',
                 fontSize:      '0.75rem',
                 fontWeight:    500,
-                color:         'rgba(201,169,110,0.80)',
+                color:         'rgba(23,120,220,0.80)',
                 textDecoration:'none',
-                borderBottom:  '1px solid rgba(201,169,110,0.30)',
+                borderBottom:  '1px solid rgba(23,120,220,0.30)',
                 paddingBottom: '2px',
                 letterSpacing: '0.06em',
               }}
@@ -589,8 +586,8 @@ export default function LandingPage() {
           >
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.6)' }} />
-                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#C9A96E' }}>
+                <div style={{ width: 28, height: 1, background: 'rgba(23,120,220,0.6)' }} />
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1778DC' }}>
                   {t('landing.indicativeOutputs')}
                 </span>
               </div>
@@ -628,7 +625,7 @@ export default function LandingPage() {
                   marginBottom:        '4px',
                 }}
               >
-                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '0.875rem', color: '#14B8A6', fontWeight: 600, paddingLeft: '0.25rem' }}>
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '0.875rem', color: '#94A3B8', fontWeight: 600, paddingLeft: '0.25rem' }}>
                   ◈ {c.n}
                 </span>
 
@@ -657,7 +654,7 @@ export default function LandingPage() {
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 'clamp(1.3rem, 2.2vw, 1.75rem)', fontWeight: 700, color: '#C9A96E', lineHeight: 1, display: 'block', letterSpacing: '-0.01em' }}>
+                  <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 'clamp(1.3rem, 2.2vw, 1.75rem)', fontWeight: 700, color: '#1778DC', lineHeight: 1, display: 'block', letterSpacing: '-0.01em' }}>
                     <AnimatedCounter value={c.outcome} />
                   </span>
                   <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(232,237,243,0.35)', display: 'block', marginTop: '0.25rem' }}>
@@ -696,7 +693,7 @@ export default function LandingPage() {
           transform:     'translate(-50%, -50%)',
           width:         '70vw',
           height:        '50vh',
-          background:    'radial-gradient(ellipse, rgba(201,169,110,0.07) 0%, transparent 65%)',
+          background:    'radial-gradient(ellipse, rgba(23,120,220,0.07) 0%, transparent 65%)',
           pointerEvents: 'none',
           zIndex:        3,
         }} />
@@ -713,8 +710,8 @@ export default function LandingPage() {
           >
             <div>
               <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
-                <div style={{ width: 28, height: 1, background: 'rgba(201,169,110,0.5)' }} />
-                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.7)' }}>
+                <div style={{ width: 28, height: 1, background: 'rgba(23,120,220,0.5)' }} />
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(23,120,220,0.7)' }}>
                   {t('landing.eyebrow')}
                 </span>
               </motion.div>
@@ -726,9 +723,9 @@ export default function LandingPage() {
               </motion.p>
             </div>
             <motion.div variants={fadeUp} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.875rem', alignItems: 'flex-start' }}>
-              <Link href="/welcome" className="btn-primary" style={{ background: '#C9A96E', borderColor: '#C9A96E', color: '#0C0C0E' }}>
+              <LiquidButton href="/welcome" variant="silver" size="lg">
                 {t('landing.beginBtn')}
-              </Link>
+              </LiquidButton>
               <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em' }}>
                 {t('landing.freeNote')}
               </p>
@@ -811,7 +808,7 @@ export default function LandingPage() {
 
             {/* Copyright + Est. */}
             <div style={{ textAlign: 'right' }}>
-              <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: '0.85rem', color: '#C9A96E', marginBottom: '0.25rem' }}>
+              <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontStyle: 'italic', fontSize: '0.85rem', color: '#1778DC', marginBottom: '0.25rem' }}>
                 {t('landing.est')}
               </p>
               <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.68rem', color: '#A1A1AA', letterSpacing: '0.04em' }}>
