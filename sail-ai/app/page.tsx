@@ -238,7 +238,7 @@ export default function LandingPage() {
   ]
 
   return (
-    <main style={{ background: '#E3E6EB', paddingBottom: '0', position: 'relative' }}>
+    <main style={{ background: '#E3E6EB', paddingBottom: '0', position: 'relative', overflowX: 'clip' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -488,15 +488,15 @@ export default function LandingPage() {
                 ◆ {t('landing.proBadge')}
               </span>
 
-              <h3 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.75rem', fontWeight: 700, letterSpacing: '0.03em', textTransform: 'uppercase', color: '#F4E9C8', margin: '1.15rem 0 0' }}>
+              <h3 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 'clamp(1.35rem, 5vw, 1.6rem)', fontWeight: 700, letterSpacing: '0.03em', textTransform: 'uppercase', color: '#F4E9C8', margin: '1.15rem 0 0' }}>
                 {t('landing.proTitle')}
               </h3>
 
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.6rem' }}>
-                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.75rem', fontWeight: 700, lineHeight: 1, color: '#D4AF37' }}>
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 'clamp(2.1rem, 8vw, 2.6rem)', fontWeight: 700, lineHeight: 1, color: '#D4AF37' }}>
                   $9.99
                 </span>
-                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '1.0625rem', color: '#CBD5E1' }}>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '1rem', color: '#CBD5E1' }}>
                   {t('landing.proPer')}
                 </span>
               </div>
@@ -505,7 +505,7 @@ export default function LandingPage() {
 
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {[t('landing.proFeat1'), t('landing.proFeat2'), t('landing.proFeat3'), t('landing.proFeat4')].map(feat => (
-                  <li key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '1.0625rem', lineHeight: 1.5, color: '#E8ECF3' }}>
+                  <li key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(0.9rem, 3.6vw, 0.975rem)', lineHeight: 1.5, color: '#E8ECF3' }}>
                     <span aria-hidden style={{ color: '#D4AF37', fontSize: '0.8rem', lineHeight: 1.7, flexShrink: 0 }}>◆</span>
                     {feat}
                   </li>
@@ -519,7 +519,7 @@ export default function LandingPage() {
                   marginTop: '1.75rem', minHeight: '56px', width: '100%',
                   background: 'linear-gradient(105deg, #B8860B 0%, #D4AF37 30%, #F9E29D 50%, #D4AF37 70%, #B8860B 100%)',
                   color: '#1A102F',
-                  fontFamily: 'var(--font-inter), sans-serif', fontSize: '1.0625rem', fontWeight: 700,
+                  fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(0.9rem, 3.6vw, 1rem)', fontWeight: 700,
                   letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none',
                   borderRadius: '12px', boxShadow: '0 14px 30px -12px rgba(212,175,55,0.55)',
                 }}
@@ -843,7 +843,7 @@ export default function LandingPage() {
           SECTION 7 — FOOTER
           Clean. Swiss. Brand mark + nav links.
       ══════════════════════════════════════════════ */}
-      <footer style={{ background: '#08090D', borderTop: '1px solid rgba(201,169,110,0.16)' }}>
+      <footer style={{ background: '#08090D', borderTop: '1px solid rgba(201,169,110,0.16)', position: 'relative', zIndex: 1 }}>
         <div className="champagne-rule" />
 
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-10">

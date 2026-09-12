@@ -75,8 +75,8 @@ export function Nav() {
       }}
     >
       <div
-        className="max-w-6xl mx-auto px-6 md:px-10"
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '3.75rem' }}
+        className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '3.75rem', gap: '0.5rem' }}
       >
         {/* Brand */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
@@ -111,7 +111,7 @@ export function Nav() {
         </Link>
 
         {/* Nav */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <nav className="gap-2.5 sm:gap-5" style={{ display: 'flex', alignItems: 'center' }}>
           <LanguageSelector />
 
           {/* Desktop-only nav links — hidden on mobile to prevent overflow */}
@@ -295,9 +295,10 @@ export function Nav() {
             </div>
           ) : (
             /* Logged-out: two clear paths — sign in, or create an account */
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
               <Link
                 href="/login"
+                className="hidden sm:inline"
                 style={{
                   fontFamily:     'var(--font-inter), sans-serif',
                   fontSize:       '0.8125rem',
