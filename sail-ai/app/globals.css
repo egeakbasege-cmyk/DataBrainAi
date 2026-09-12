@@ -189,7 +189,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Scrollbar ─────────────────────────────────────── */
+/* ── Scrollbar ─────────────────────���───────────────── */
 ::-webkit-scrollbar       { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--silver); }
@@ -426,7 +426,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   box-shadow: inset 0 1px 0 rgba(201,169,110,0.2);
 }
 
-/* ════════════════════════════════════════════════════════
+/* ══════════��═════════════════════════════════════════════
    AETHERIS TERMINAL — Component Primitives
    Applied inside .aetheris / [data-theme="aetheris"]
    ════════════════════════════════════════════════════════ */
@@ -656,7 +656,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   font-family: var(--font-playfair), var(--font-cormorant), Georgia, serif;
 }
 
-/* ── Gold gradient text ───────────────────────────────────── */
+/* ── Gold gradient text ───────────────────────��───────────── */
 .text-gold-grad {
   background:              var(--gold-grad);
   -webkit-background-clip: text;
@@ -838,7 +838,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   opacity:    0.55;
 }
 
-/* ── Brand gradient hairline ──────────────────────────────────── */
+/* ── Brand gradient hairline ─────────���────────────────────────── */
 .sv-brand-rule {
   height:     1px;
   background: linear-gradient(90deg,
@@ -850,7 +850,7 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   opacity: 0.4;
 }
 
-/* ── Sovereign button — teal CTA ──────────────────────────────── */
+/* ── Sovereign button — teal CTA ──��───────────────────────────── */
 .btn-sv {
   display:        inline-flex;
   align-items:    center;
@@ -1257,9 +1257,61 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   100% { transform: translateX(240%)  skewX(-18deg); }
 }
 
+/* ── Hydration-independent entrance reveals ─────────────────────
+   CSS-driven so above-the-fold content ALWAYS appears on paint,
+   never gated behind JS animation state. */
+@keyframes azx-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes azx-fade-word {
+  from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+}
+@keyframes azx-mural-in {
+  from { opacity: 0; transform: scale(0.96) rotate(-1deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0); }
+}
+.azx-reveal {
+  opacity: 0;
+  animation: azx-fade-up 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-delay: var(--azx-delay, 0s);
+}
+.azx-reveal-word {
+  display: inline-block;
+  margin-right: 0.28em;
+  opacity: 0;
+  animation: azx-fade-word 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-delay: var(--azx-delay, 0s);
+}
+.azx-reveal-mural {
+  opacity: 0;
+  animation: azx-mural-in 1s cubic-bezier(0.22,1,0.36,1) 0.2s forwards;
+}
+.azx-mural-sheen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.35) 50%, transparent 58%);
+  mix-blend-mode: soft-light;
+  transform: translateX(-120%);
+  animation: azx-mural-sweep 5.5s ease-in-out 1s infinite;
+}
+@keyframes azx-mural-sweep {
+  0%        { transform: translateX(-120%); }
+  55%, 100% { transform: translateX(120%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .azx-bg { animation: none; }
   .azx-wave-track { animation: none; }
+  .azx-reveal, .azx-reveal-word, .azx-reveal-mural {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .azx-mural-sheen::before { animation: none; opacity: 0; }
 }
 
 /* ============================================================

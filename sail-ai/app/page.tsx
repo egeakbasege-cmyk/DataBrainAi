@@ -257,10 +257,8 @@ export default function LandingPage() {
           <div>
 
           {/* Eyebrow */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: EASE }}
+          <div
+            className="azx-reveal"
             style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.25rem' }}
           >
             <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1778DC' }}>
@@ -270,13 +268,10 @@ export default function LandingPage() {
             <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A3B8' }}>
               {t('landing.est')}
             </span>
-          </motion.div>
+          </div>
 
-          {/* Headline — word-by-word stagger */}
-          <motion.h1
-            variants={stagger(0.08)}
-            initial="hidden"
-            animate="show"
+          {/* Headline — word-by-word stagger (CSS-driven) */}
+          <h1
             style={{
               fontFamily:    'var(--font-playfair), Georgia, serif',
               fontSize:      'clamp(3rem, 6vw, 5.25rem)',
@@ -290,22 +285,21 @@ export default function LandingPage() {
             }}
           >
             {headlineWords.map((word, i) => (
-              <motion.span
+              <span
                 key={i}
-                variants={wordVar}
-                style={{ display: 'inline-block', marginRight: '0.28em' }}
+                className="azx-reveal-word"
+                style={{ ['--azx-delay' as string]: `${0.1 + i * 0.09}s` }}
               >
                 {word}
-              </motion.span>
+              </span>
             ))}
-          </motion.h1>
+          </h1>
 
           {/* Subheadline */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.52, ease: EASE }}
+          <p
+            className="azx-reveal"
             style={{
+              ['--azx-delay' as string]: '0.5s',
               fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.9375rem',
               lineHeight: 1.78,
@@ -316,14 +310,12 @@ export default function LandingPage() {
             }}
           >
             {t('landing.subheadline')}
-          </motion.p>
+          </p>
 
           {/* Stat pills */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.68, ease: EASE }}
-            style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '2rem' }}
+          <div
+            className="azx-reveal"
+            style={{ ['--azx-delay' as string]: '0.62s', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '2rem' }}
           >
             {STAT_PILLS.map(pill => (
               <span
@@ -345,14 +337,12 @@ export default function LandingPage() {
                 {pill}
               </span>
             ))}
-          </motion.div>
+          </div>
 
           {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.82, ease: EASE }}
-            style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
+          <div
+            className="azx-reveal"
+            style={{ ['--azx-delay' as string]: '0.74s', marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
           >
             <LiquidButton href="/welcome" variant="silver" size="lg">
               {t('landing.beginFree')}
@@ -366,41 +356,31 @@ export default function LandingPage() {
             >
               {t('landing.watchHow')}
             </LiquidButton>
-          </motion.div>
+          </div>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1.1 }}
-            style={{ marginTop: '0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#94A3B8', letterSpacing: '0.05em' }}
+          <p
+            className="azx-reveal"
+            style={{ ['--azx-delay' as string]: '0.9s', marginTop: '0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#94A3B8', letterSpacing: '0.05em' }}
           >
             {t('landing.freeNote')}
-          </motion.p>
+          </p>
 
           {/* Trust cues */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.55, delay: 1.2 }}
-            style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
+          <div
+            className="azx-reveal"
+            style={{ ['--azx-delay' as string]: '1s', marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
           >
             {TRUST_CUES.map(cue => (
               <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: '#94A3B8', letterSpacing: '0.06em' }}>
                 {cue}
               </span>
             ))}
-          </motion.div>
+          </div>
 
           </div>{/* end hero left column */}
 
           {/* ── Framed azulejo mural — the hero centerpiece ── */}
-          <motion.div
-            style={{ y: sailboatY }}
-            initial={{ opacity: 0, scale: 0.95, rotate: -1 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 1, delay: 0.35, ease: EASE }}
-            className="relative mx-auto w-full max-w-[420px] lg:max-w-none"
-          >
+          <div className="azx-reveal-mural relative mx-auto w-full max-w-[420px] lg:max-w-none">
             <div
               style={{
                 position:     'relative',
@@ -432,21 +412,17 @@ export default function LandingPage() {
                 alt="Hand-painted Portuguese azulejo tile mural of the Santa Maria tall ship at sea, framed by nautical tile ornament of dolphins, anchors and rope-knots"
                 style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '3px' }}
               />
-              {/* travelling ceramic glaze sheen */}
-              <motion.div
+              {/* travelling ceramic glaze sheen (CSS) */}
+              <div
                 aria-hidden
-                initial={{ x: '-120%' }}
-                animate={{ x: ['-120%', '120%'] }}
-                transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
+                className="azx-mural-sheen"
                 style={{
                   position: 'absolute', top: 10, bottom: 10, left: 10, right: 10,
-                  borderRadius: '3px', pointerEvents: 'none',
-                  background: 'linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.35) 50%, transparent 58%)',
-                  mixBlendMode: 'soft-light',
+                  borderRadius: '3px', pointerEvents: 'none', overflow: 'hidden',
                 }}
               />
             </div>
-          </motion.div>
+          </div>
          </div>{/* end hero grid */}
         </div>
       </section>
