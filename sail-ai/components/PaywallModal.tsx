@@ -10,6 +10,8 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { Infinity as InfinityIcon, History, Briefcase, Zap, FileDown, Compass } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Logo } from './Logo'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
@@ -18,13 +20,13 @@ interface Props {
   onClose: () => void
 }
 
-const FEATURES = [
-  { icon: '∞',  text: 'Unlimited analyses per day' },
-  { icon: '💾', text: 'Session memory across conversations' },
-  { icon: '💼', text: 'Business profile persistence' },
-  { icon: '⚡', text: 'Priority response time' },
-  { icon: '📤', text: 'Exportable strategy summaries' },
-  { icon: '🧠', text: 'Access to all 8 specialist modes' },
+const FEATURES: { icon: LucideIcon; text: string }[] = [
+  { icon: InfinityIcon, text: 'Unlimited analyses per day' },
+  { icon: History,      text: 'Session memory across conversations' },
+  { icon: Briefcase,    text: 'Business profile persistence' },
+  { icon: Zap,          text: 'Priority response time' },
+  { icon: FileDown,     text: 'Exportable strategy summaries' },
+  { icon: Compass,      text: 'Access to all 8 specialist modes' },
 ]
 
 export function PaywallModal({ open, onClose }: Props) {
@@ -63,28 +65,34 @@ export function PaywallModal({ open, onClose }: Props) {
   return (
     <AnimatePresence>
       {open && (
-        <>
-          {/* ── Backdrop ──────────────────────────────────── */}
-          <motion.div
-            key="paywall-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            onClick={onClose}
-            style={{
-              position:        'fixed',
-              inset:           0,
-              zIndex:          9998,
-              background:      'rgba(6,14,28,0.72)',
-              backdropFilter:  'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-            }}
-          />
-
+        // Backdrop doubles as a flex container that centers the panel.
+        // Centering lives here (flexbox), NOT on the panel — Framer Motion
+        // owns the panel's `transform` for the scale/y animation, and a CSS
+        // `translate(-50%,-50%)` on the panel would be overwritten by Motion,
+        // leaving the panel pinned to the screen centre and spilling off the
+        // right/bottom edge (the reported bug).
+        <motion.div
+          key="paywall"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.22 }}
+          onClick={onClose}
+          style={{
+            position:             'fixed',
+            inset:                0,
+            zIndex:               9998,
+            background:           'rgba(6,14,28,0.72)',
+            backdropFilter:       'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display:              'flex',
+            alignItems:           'center',
+            justifyContent:       'center',
+            padding:              '1rem',
+          }}
+        >
           {/* ── Panel ─────────────────────────────────────── */}
           <motion.div
-            key="paywall-panel"
             role="dialog"
             aria-modal="true"
             aria-label="Upgrade to Sail AI Pro"
@@ -92,14 +100,8 @@ export function PaywallModal({ open, onClose }: Props) {
             animate={{ opacity: 1, scale: 1,    y: 0  }}
             exit={{   opacity: 0, scale: 0.96,  y: 12 }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            onClick={e => e.stopPropagation()}
             style={{
-              /* ── Centering — pure CSS, no Tailwind transforms ── */
-              position:      'fixed',
-              top:           '50%',
-              left:          '50%',
-              transform:     'translate(-50%, -50%)',
-              zIndex:        9999,
-
               /* ── Sizing ── */
               width:         'min(92vw, 440px)',
               maxHeight:     '90dvh',
@@ -132,7 +134,21 @@ export function PaywallModal({ open, onClose }: Props) {
                   color:         '#C9A96E',
                   textTransform: 'uppercase',
                 }}>
-                  Sail AI Pro
+                  Sail AI
+                </span>
+                <span style={{
+                  fontFamily:    'var(--font-inter), sans-serif',
+                  fontWeight:    600,
+                  fontSize:      '0.6rem',
+                  letterSpacing: '0.16em',
+                  color:         '#0C0C0E',
+                  textTransform: 'uppercase',
+                  background:    'linear-gradient(135deg, #C9A96E 0%, #E8C98A 100%)',
+                  padding:       '0.18rem 0.45rem',
+                  borderRadius:  '4px',
+                  lineHeight:    1,
+                }}>
+                  Pro
                 </span>
               </div>
 
@@ -184,32 +200,39 @@ export function PaywallModal({ open, onClose }: Props) {
                 </div>
 
                 {/* Features list */}
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                  {FEATURES.map(f => (
-                    <li
-                      key={f.text}
-                      style={{
-                        display:    'flex',
-                        alignItems: 'center',
-                        gap:        '0.625rem',
-                        fontFamily: 'var(--font-inter), sans-serif',
-                        fontSize:   '0.83rem',
-                        color:      'rgba(255,255,255,0.72)',
-                        fontWeight: 300,
-                      }}
-                    >
-                      <span style={{
-                        fontSize:   '0.7rem',
-                        color:      '#C9A96E',
-                        flexShrink: 0,
-                        width:      18,
-                        textAlign:  'center',
-                      }}>
-                        {f.icon}
-                      </span>
-                      {f.text}
-                    </li>
-                  ))}
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {FEATURES.map(f => {
+                    const Icon = f.icon
+                    return (
+                      <li
+                        key={f.text}
+                        style={{
+                          display:    'flex',
+                          alignItems: 'center',
+                          gap:        '0.75rem',
+                          fontFamily: 'var(--font-inter), sans-serif',
+                          fontSize:   '0.85rem',
+                          color:      'rgba(255,255,255,0.82)',
+                          fontWeight: 400,
+                        }}
+                      >
+                        <span style={{
+                          flexShrink:     0,
+                          width:          30,
+                          height:         30,
+                          display:        'flex',
+                          alignItems:     'center',
+                          justifyContent: 'center',
+                          borderRadius:   '8px',
+                          background:     'rgba(201,169,110,0.10)',
+                          border:         '1px solid rgba(201,169,110,0.18)',
+                        }}>
+                          <Icon size={15} strokeWidth={1.75} color="#D4B877" aria-hidden />
+                        </span>
+                        {f.text}
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
 
@@ -295,7 +318,7 @@ export function PaywallModal({ open, onClose }: Props) {
               </p>
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   )

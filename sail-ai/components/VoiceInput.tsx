@@ -274,15 +274,24 @@ export function VoiceInput({ onTranscript, disabled }: Props) {
       <button
         type="button"
         onClick={() => setLang(l => l === 'en-US' ? 'tr-TR' : 'en-US')}
-        title={`Switch to ${lang === 'en-US' ? 'Turkish' : 'English'}`}
+        title={`Speech language: ${lang === 'en-US' ? 'English — switch to Turkish' : 'Turkish — switch to English'}`}
         style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          fontSize: '0.78rem', lineHeight: 1, padding: '2px 1px',
-          opacity: isListening ? 0.5 : 0.7,
-          transition: 'opacity 0.15s',
+          background:    'rgba(255,255,255,0.05)',
+          border:        '1px solid rgba(201,169,110,0.16)',
+          borderRadius:   6,
+          cursor:        'pointer',
+          fontFamily:    'var(--font-inter), sans-serif',
+          fontSize:       9,
+          fontWeight:     700,
+          letterSpacing: '0.10em',
+          color:          'rgba(232,237,243,0.55)',
+          lineHeight:     1,
+          padding:       '5px 6px',
+          opacity:        isListening ? 0.5 : 1,
+          transition:    'opacity 0.15s',
         }}
       >
-        {lang === 'en-US' ? '🇺🇸' : '🇹🇷'}
+        {lang === 'en-US' ? 'EN' : 'TR'}
       </button>
 
       {/* ── Mic button ───────────────────────────────────── */}
