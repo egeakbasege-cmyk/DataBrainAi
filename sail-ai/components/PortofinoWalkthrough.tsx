@@ -276,7 +276,7 @@ export function PortofinoWalkthrough() {
           >
             <div style={{ width: 28, height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.55))' }} />
             <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#C9A96E', textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>
-              Live Demo
+              See SAIL Think
             </span>
             <div style={{ width: 28, height: 1, background: 'linear-gradient(90deg, rgba(201,169,110,0.55), transparent)' }} />
           </motion.div>
@@ -380,7 +380,7 @@ export function PortofinoWalkthrough() {
               onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(201,169,110,0.22)'; el.style.borderColor = 'rgba(201,169,110,0.60)' }}
               onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(201,169,110,0.12)'; el.style.borderColor = 'rgba(201,169,110,0.38)' }}
             >
-              Begin your analysis
+              Begin Free Diagnosis
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>

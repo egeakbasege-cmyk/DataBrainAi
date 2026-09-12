@@ -171,7 +171,7 @@ function ScreenIntro({ onStart }: { onStart: () => void }) {
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }}
         style={{ display: 'flex', gap: 6, marginBottom: 28, flexWrap: 'wrap', justifyContent: 'center' }}
       >
-        {['7,400+ diagnosed', 'Avg +34% revenue', 'Used in 38 countries'].map(s => (
+        {['Benchmark-grounded', 'Sector-calibrated', 'No account needed'].map(s => (
           <span key={s} style={{
             padding: '3px 9px', borderRadius: 100,
             background: `rgba(20,184,166,0.10)`, border: `1px solid ${C.tiffany}30`,
@@ -437,9 +437,9 @@ function ScreenAnalysis({ sector, onDone }: { sector: string; onDone: () => void
       {phase === 'scanning' && (
         <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
-            'Benchmarking across 7,400 profiles…',
-            'Cross-referencing sector data…',
-            'Calculating ROI projections…',
+            'Benchmarking against sector data…',
+            'Cross-referencing industry sources…',
+            'Structuring strategic priorities…',
           ].map((label, i) => (
             <motion.div key={label} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               transition={{ delay: i * 0.35 }}>

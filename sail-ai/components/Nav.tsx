@@ -313,7 +313,7 @@ export function Nav() {
                 {t('login.signIn')}
               </Link>
               <LiquidButton href="/login?mode=register" variant={isLanding ? 'gold' : 'cobalt'} size="sm">
-                {t('landing.beginFree')}
+                {t('nav.beginFree')}
               </LiquidButton>
             </div>
           )}
