@@ -157,9 +157,17 @@ export default auth(async (req: NextRequest & { auth?: { user?: { email?: string
   // ── Security headers ──────────────────────────────────────────────────────
   const res = NextResponse.next()
 
+  const isProd = process.env.NODE_ENV === 'production'
+
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    // Next.js dev/preview compiles modules with the eval-source-map devtool, so
+    // the client runtime needs 'unsafe-eval' to boot — without it webpack.js
+    // throws on eval() and the app never hydrates. Production builds don't use
+    // eval, so it is omitted there to keep the policy strict.
+    isProd
+      ? "script-src 'self' 'unsafe-inline'"
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' blob: data: https://*.googleusercontent.com https://images.unsplash.com",
@@ -186,17 +194,26 @@ export default auth(async (req: NextRequest & { auth?: { user?: { email?: string
     "form-action 'self' https://live.dodopayments.com https://test.dodopayments.com",
     "object-src 'none'",
     "base-uri 'self'",
-    "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
+    // Framing + forced-HTTPS are enforced in production only. In the dev/preview
+    // environment `upgrade-insecure-requests` upgrades the http chunk requests to
+    // https://localhost (which has no TLS), so the Next.js client runtime never
+    // executes and the whole app fails to hydrate — dead buttons, no sign-in.
+    // `frame-ancestors 'none'` would also block the v0 preview iframe.
+    ...(isProd
+      ? ["frame-ancestors 'none'", 'upgrade-insecure-requests']
+      : ["frame-ancestors 'self'"]),
   ].join('; ')
 
   res.headers.set('Content-Security-Policy',           csp)
   res.headers.set('X-Content-Type-Options',            'nosniff')
-  res.headers.set('X-Frame-Options',                   'DENY')
   res.headers.set('X-XSS-Protection',                  '1; mode=block')
   res.headers.set('Referrer-Policy',                   'strict-origin-when-cross-origin')
   res.headers.set('Permissions-Policy',                'camera=(), microphone=(self), geolocation=()')
-  res.headers.set('Strict-Transport-Security',         'max-age=63072000; includeSubDomains; preload')
+  // Frame denial + HSTS only in production; both break the dev/preview experience.
+  if (isProd) {
+    res.headers.set('X-Frame-Options',            'DENY')
+    res.headers.set('Strict-Transport-Security',  'max-age=63072000; includeSubDomains; preload')
+  }
 
   // ── CORS — server-side origin, not client-supplied header ─────────────────
   if (path.startsWith('/api/')) {

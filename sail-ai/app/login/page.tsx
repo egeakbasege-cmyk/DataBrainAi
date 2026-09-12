@@ -35,6 +35,8 @@ function LoginForm() {
       setError(t('login.errGoogle'))
     if (errorCode === 'Configuration' || errorCode === 'DATABASE_NOT_CONFIGURED')
       setError('Veritabanı bağlantısı yapılandırılmamış. Lütfen DATABASE_URL ortam değişkenini ayarlayın.')
+    if (errorCode === 'DATABASE_CONNECTION_ERROR')
+      setError(t('login.errConnection'))
   }, [errorCode, t])
 
   function switchMode(m: Mode) {
@@ -86,6 +88,8 @@ function LoginForm() {
     if (result?.error) {
       if (result.error === 'DATABASE_NOT_CONFIGURED') {
         setError('Veritabanı bağlantısı yapılandırılmamış. Lütfen .env.local dosyasına geçerli bir PostgreSQL DATABASE_URL ekleyin.')
+      } else if (result.error === 'DATABASE_CONNECTION_ERROR') {
+        setError(t('login.errConnection'))
       } else {
         setError(t('login.errCredentials'))
       }
@@ -247,7 +251,19 @@ function LoginForm() {
           </button>
         </form>
 
-        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#A1A1AA', textAlign: 'center', marginTop: '1.5rem', lineHeight: 1.6 }}>
+        {/* Switch between sign-in and register with a plain-language prompt */}
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.82rem', color: '#5B6B8C', textAlign: 'center', marginTop: '1.5rem', marginBottom: 0 }}>
+          {mode === 'signin' ? t('login.noAccount') : t('login.haveAccount')}{' '}
+          <button
+            type="button"
+            onClick={() => switchMode(mode === 'signin' ? 'register' : 'signin')}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#0A7E79', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: '2px' }}
+          >
+            {mode === 'signin' ? t('login.createAccountLink') : t('login.signInLink')}
+          </button>
+        </p>
+
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#A1A1AA', textAlign: 'center', marginTop: '1rem', lineHeight: 1.6 }}>
           {t('login.terms')}{' '}
           <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>{t('login.termsLink')}</span>
           {' & '}

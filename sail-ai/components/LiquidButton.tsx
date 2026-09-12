@@ -168,11 +168,15 @@ export function LiquidButton({
   }
 
   if (href && !disabled) {
+    // The visible label lives in `inner`, so give the overlay link its own
+    // accessible name — otherwise the CTA is an unnamed link to crawlers and
+    // assistive tech, which is why navigation felt unreliable/undirected.
+    const linkLabel = aria['aria-label'] ?? (typeof children === 'string' ? children : undefined)
     return (
       <motion.div {...motionProps} className={className}>
         <Link
           href={href}
-          aria-label={aria['aria-label']}
+          aria-label={linkLabel}
           style={{ position: 'absolute', inset: 0, zIndex: 4 }}
         />
         {inner}

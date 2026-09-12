@@ -235,6 +235,11 @@ const translations = {
     'login.errPwLength':      'Password must be at least 8 characters.',
     'login.errRegister':      'Registration failed. Please try again.',
     'login.registered':       'Registered — please sign in.',
+    'login.noAccount':        "Don't have an account?",
+    'login.createAccountLink':'Create account',
+    'login.haveAccount':      'Already have an account?',
+    'login.signInLink':       'Sign in',
+    'login.errConnection':    'We couldn’t reach the server. Please check your connection and try again.',
 
     // ── Pricing ──────────────────────────────────────────
     'pricing.membership':     'Membership',
@@ -502,7 +507,7 @@ const translations = {
     'welcome.faq.q1':           'What\'s included in the free plan?',
     'welcome.faq.a1':           '5 full analyses per day, all modes, Deep Research with live web data. No credit card, no time limit.',
     'welcome.faq.q2':           'Does the AI use real-time web data?',
-    'welcome.faq.a2':           'Yes. Every query runs live searches via Tavily + Serper APIs. Groq 70B synthesises today\'s data — not training data.',
+    'welcome.faq.a2':           'Yes. Every query runs live searches via Tavily + Serper APIs. Groq 70B synthesises today\'s data �� not training data.',
     'welcome.faq.q3':           'What is session memory?',
     'welcome.faq.a3':           'Pro subscribers\' business profile (sector, metrics, past strategies) is preserved across sessions — no need to re-explain each time.',
     'welcome.faq.q4':           'Can I cancel?',
@@ -1033,6 +1038,11 @@ const translations = {
     'login.errPwLength':      'Şifre en az 8 karakter olmalıdır.',
     'login.errRegister':      'Kayıt başarısız. Lütfen tekrar deneyin.',
     'login.registered':       'Kayıt olundu — lütfen giriş yapın.',
+    'login.noAccount':        'Hesabınız yok mu?',
+    'login.createAccountLink':'Hesap oluşturun',
+    'login.haveAccount':      'Zaten hesabınız var mı?',
+    'login.signInLink':       'Giriş yapın',
+    'login.errConnection':    'Sunucuya ulaşılamadı. Lütfen bağlantınızı kontrol edip tekrar deneyin.',
 
     'pricing.membership':     'Üyelik',
     'pricing.headline':       'Şeffaf fiyatlandırma. Kilitlilik yok.',
@@ -1970,7 +1980,7 @@ const translations = {
     'brand.aiName.label':   'Nombre de la IA (opcional)',
     'brand.modes.hint':     'Selecciona las funciones que deseas activar',
     'brand.modes.min':      'Selecciona al menos 2 modos para continuar',
-    'brand.continue':       'Continuar →',
+    'brand.continue':       'Continuar ��',
     'brand.launch':         'Lanzar mi IA →',
 
     // ── Modo escenario ───────────────────────────────────
@@ -2645,7 +2655,7 @@ const translations = {
     'diag.strong':            'Stark',
     'diag.reserveFloor':      '— Globale Beratungsunternehmen empfehlen einen Mindest-Reservepuffer von 6 Monaten.',
 
-    // ── Aetheris UI ────────────────────────────────────────────────────────────
+    // ── Aetheris UI ───────────────────────────────────────────────────���────────
     'agent.mode.Auto':            'Auto',
     'agent.mode.Strategy':        'Strategie',
     'agent.mode.Analysis':        'Analyse',
@@ -4293,7 +4303,7 @@ const translations = {
     'databrain.drift.microPivot': '自主微调',
     'databrain.drift.markResolved': '标记为已解决',
 
-    // ── Home Page Content ─────────────────────────────────────────────────────
+    // ── Home Page Content ────────────────────────────────────────────────────��
     'home.case1.sector': '电商',
     'home.case1.headline': '优化结账流程，缩小0.8个百分点的转化差距',
     'home.case1.detail': '行业中位数转化率：2.3% · 客户起点：1.5% · 90天目标',
@@ -4350,7 +4360,7 @@ const translations = {
     // ── 导航额外 ─────────────────────────────────────────
     'nav.research':          '研究',
 
-    // ── 欢迎横幅 ───────────────────────────────────��─────
+    // ── 欢迎横幅 ──────────────���────────────────────��─────
     'chat.welcomeTitle':     '欢迎使用 SAIL AI — 快速入门指南',
     'chat.welcomeStep1':     '用简单的语言描述您的业务状况',
     'chat.welcomeStep2':     '选择分析模式（迎风 = 快速计划，SAIL = 自适应）',
@@ -4526,7 +4536,7 @@ const translations = {
     'landing.sailDetail':    '最适合：在同一会话中在战略性和操作性思维之间切换的用户。',
     'landing.operatorBadge': '通用',
     'landing.operatorDesc':  '领域无关智能——房地产、法律、医学、金融、物流。相同的基准纪律应用于任何问题，实时流式传输。',
-    'landing.operatorDetail': '最适合：快速切换上下文的跨领域运营者和顾问。',
+    'landing.operatorDetail': '最适合：���速切换上下文的跨领域运营者和顾问。',
     'landing.footerChat':    '聊天',
     'landing.footerResearch': '研究',
     'landing.footerDashboard': '仪表板',

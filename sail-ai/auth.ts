@@ -12,6 +12,14 @@ function hasValidDb(): boolean {
   return url.startsWith('postgres') || url.startsWith('prisma')
 }
 
+/** Race a promise against a fallback so a slow call can't block sign-in. */
+function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>(resolve => setTimeout(() => resolve(fallback), ms)),
+  ])
+}
+
 function buildProviders() {
   const list: any[] = []
 
@@ -60,9 +68,12 @@ function buildProviders() {
 
           return user
         } catch (err: any) {
-          // Surface DB-connection errors as a recognizable code
-          if (err?.message?.includes('DATABASE_NOT_CONFIGURED')) throw err
-          throw new Error('DATABASE_NOT_CONFIGURED')
+          if (err?.message === 'DATABASE_NOT_CONFIGURED') throw err
+          // DB IS configured but the query failed (cold start, timeout, transient).
+          // Surface a distinct, retryable code instead of the misleading
+          // "not configured" message the user was seeing on a slow connection.
+          console.error('[auth] credentials query failed:', err?.message ?? err)
+          throw new Error('DATABASE_CONNECTION_ERROR')
         }
       },
     }),
@@ -94,10 +105,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id    = user.id
-        token.isPro = await checkPro(user.email ?? '').catch(() => false)
+        // Cap the Pro lookup so a slow DB/Stripe call can't stall sign-in;
+        // it refreshes on the next `update` trigger anyway.
+        token.isPro = await withTimeout(checkPro(user.email ?? '').catch(() => false), 2500, false)
       }
       if (trigger === 'update') {
-        token.isPro = await checkPro(token.email ?? '').catch(() => false)
+        token.isPro = await withTimeout(checkPro(token.email ?? '').catch(() => false), 2500, false)
       }
       return token
     },
