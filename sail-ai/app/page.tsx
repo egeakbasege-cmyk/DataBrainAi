@@ -266,11 +266,11 @@ export default function LandingPage() {
             className="azx-reveal"
             style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.25rem' }}
           >
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#0A7E79' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#0A7E79' }}>
               {t('landing.eyebrow')}
             </span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(10,186,181,0.4), transparent)' }} />
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#64748B' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#64748B' }}>
               {t('landing.est')}
             </span>
           </div>
@@ -330,25 +330,20 @@ export default function LandingPage() {
                   alignItems:    'center',
                   gap:           '0.4rem',
                   fontFamily:    'var(--font-inter), sans-serif',
-                  fontSize:      '0.8125rem',
+                  fontSize:      '0.9375rem',
                   fontWeight:    600,
                   letterSpacing: '0.01em',
                   color:         badge.locked ? '#8A6D3B' : '#0A6E6A',
                   background:    badge.locked ? '#FBF6EC' : '#FFFFFF',
                   border:        `1px solid ${badge.locked ? 'rgba(201,169,110,0.45)' : 'rgba(10,126,121,0.22)'}`,
                   borderRadius:  '999px',
-                  padding:       '0.42rem 0.95rem',
+                  padding:       '0.5rem 1.05rem',
                   whiteSpace:    'nowrap',
                   boxShadow:     '0 2px 10px -5px rgba(10,126,121,0.3)',
                 }}
               >
-                {badge.locked ? (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <rect x="3" y="11" width="18" height="11" rx="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                ) : (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0A9E98" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                {!badge.locked && (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A9E98" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 )}
@@ -365,20 +360,27 @@ export default function LandingPage() {
             <LiquidButton href="/login?mode=register" variant="silver" size="lg">
               {t('landing.beginFree')}
             </LiquidButton>
-            <LiquidButton
-              variant="ghost"
-              size="lg"
+            <button
+              type="button"
               onClick={() =>
                 document.getElementById('hero-plan')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
               }
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                minHeight: '52px', padding: '0 1.5rem',
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                fontFamily: 'var(--font-inter), sans-serif',
+                fontSize: '1.0625rem', fontWeight: 700, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: '#B08D4F',
+              }}
             >
               {t('landing.exploreProPlans')}
-            </LiquidButton>
+            </button>
           </div>
 
           <p
             className="azx-reveal"
-            style={{ ['--azx-delay' as string]: '0.9s', marginTop: '0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', color: '#64748B', letterSpacing: '0.02em' }}
+            style={{ ['--azx-delay' as string]: '0.9s', marginTop: '1rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#475569', letterSpacing: '0.01em', lineHeight: 1.6 }}
           >
             {t('landing.freeNote')}
           </p>
@@ -389,7 +391,7 @@ export default function LandingPage() {
             style={{ ['--azx-delay' as string]: '1s', marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
           >
             {TRUST_CUES.map(cue => (
-              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.03em' }}>
+              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.9375rem', color: '#475569', letterSpacing: '0.01em' }}>
                 {cue}
               </span>
             ))}
@@ -447,11 +449,11 @@ export default function LandingPage() {
               style={{
                 position:     'relative',
                 marginTop:    '1.5rem',
-                background:   'linear-gradient(160deg, #08807B 0%, #0A9E98 55%, #0ABAB5 100%)',
+                background:   'linear-gradient(165deg, #0D4E48 0%, #0A3F3A 100%)',
                 borderRadius: '18px',
-                padding:      '1.6rem 1.65rem',
+                padding:      '1.9rem 1.8rem',
                 color:        '#FFFFFF',
-                boxShadow:    '0 28px 60px -30px rgba(8,128,123,0.7), inset 0 0 0 1px rgba(255,255,255,0.14)',
+                boxShadow:    '0 28px 60px -30px rgba(8,60,55,0.8), inset 0 0 0 1px rgba(201,169,110,0.22)',
                 overflow:     'hidden',
               }}
             >
@@ -464,31 +466,31 @@ export default function LandingPage() {
                 }}
               />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.35rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '0.02em', textTransform: 'uppercase', color: '#D9BA84' }}>
                   {t('landing.proTitle')}
                 </span>
                 <span style={{
-                  fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.625rem', fontWeight: 700,
-                  letterSpacing: '0.12em', textTransform: 'uppercase',
-                  color: '#08403D', background: '#FFFFFF', borderRadius: '999px', padding: '0.28rem 0.6rem',
+                  fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', fontWeight: 700,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: '#0A3F3A', background: '#C9A96E', borderRadius: '999px', padding: '0.32rem 0.7rem',
                 }}>
-                  {t('landing.proBadge')}
+                  ◆ {t('landing.proBadge')}
                 </span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginTop: '0.85rem' }}>
-                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.85rem', fontWeight: 700, lineHeight: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '1rem' }}>
+                <span style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.75rem', fontWeight: 700, lineHeight: 1, color: '#FFFFFF' }}>
                   $9.99
                 </span>
-                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', opacity: 0.85 }}>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '1rem', opacity: 0.85 }}>
                   {t('landing.proPer')}
                 </span>
               </div>
 
-              <ul style={{ listStyle: 'none', padding: 0, margin: '1.15rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '1.4rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {[t('landing.proFeat1'), t('landing.proFeat2'), t('landing.proFeat3'), t('landing.proFeat4')].map(feat => (
-                  <li key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.875rem', lineHeight: 1.45, color: 'rgba(255,255,255,0.94)' }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }} aria-hidden>
+                  <li key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '1rem', lineHeight: 1.5, color: 'rgba(255,255,255,0.95)' }}>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 3 }} aria-hidden>
                       <polyline points="20 6 9 17 4 12"/>
                     </svg>
                     {feat}
@@ -500,11 +502,11 @@ export default function LandingPage() {
                 href="/login?mode=register"
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginTop: '1.4rem', padding: '0.85rem', width: '100%',
-                  background: '#FFFFFF', color: '#08403D',
-                  fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.8125rem', fontWeight: 700,
+                  marginTop: '1.6rem', minHeight: '56px', width: '100%',
+                  background: '#FFFFFF', color: '#0D4E48',
+                  fontFamily: 'var(--font-inter), sans-serif', fontSize: '1.0625rem', fontWeight: 700,
                   letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none',
-                  borderRadius: '10px', boxShadow: '0 10px 24px -12px rgba(0,0,0,0.4)',
+                  borderRadius: '12px', boxShadow: '0 12px 28px -12px rgba(0,0,0,0.45)',
                 }}
               >
                 {t('landing.proCta')}

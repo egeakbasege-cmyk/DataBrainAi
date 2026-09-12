@@ -37,7 +37,7 @@ interface RippleT { id: number; x: number; y: number }
 const SIZES: Record<Size, { padding: string; font: string; height: string }> = {
   sm: { padding: '0 1.15rem', font: '0.66rem', height: '2.25rem' },
   md: { padding: '0 1.6rem',  font: '0.72rem', height: '2.75rem' },
-  lg: { padding: '0 2.25rem', font: '0.82rem', height: '3.5rem'  },
+  lg: { padding: '0 2.25rem', font: '1rem', height: '3.5rem'  },
 }
 
 /* Living chrome surfaces — animated by sliding background-position. */
