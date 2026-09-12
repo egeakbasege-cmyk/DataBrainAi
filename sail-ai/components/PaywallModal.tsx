@@ -63,28 +63,34 @@ export function PaywallModal({ open, onClose }: Props) {
   return (
     <AnimatePresence>
       {open && (
-        <>
-          {/* ── Backdrop ──────────────────────────────────── */}
-          <motion.div
-            key="paywall-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            onClick={onClose}
-            style={{
-              position:        'fixed',
-              inset:           0,
-              zIndex:          9998,
-              background:      'rgba(6,14,28,0.72)',
-              backdropFilter:  'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-            }}
-          />
-
+        // Backdrop doubles as a flex container that centers the panel.
+        // Centering lives here (flexbox), NOT on the panel — Framer Motion
+        // owns the panel's `transform` for the scale/y animation, and a CSS
+        // `translate(-50%,-50%)` on the panel would be overwritten by Motion,
+        // leaving the panel pinned to the screen centre and spilling off the
+        // right/bottom edge (the reported bug).
+        <motion.div
+          key="paywall"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.22 }}
+          onClick={onClose}
+          style={{
+            position:             'fixed',
+            inset:                0,
+            zIndex:               9998,
+            background:           'rgba(6,14,28,0.72)',
+            backdropFilter:       'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display:              'flex',
+            alignItems:           'center',
+            justifyContent:       'center',
+            padding:              '1rem',
+          }}
+        >
           {/* ── Panel ─────────────────────────────────────── */}
           <motion.div
-            key="paywall-panel"
             role="dialog"
             aria-modal="true"
             aria-label="Upgrade to Sail AI Pro"
@@ -92,14 +98,8 @@ export function PaywallModal({ open, onClose }: Props) {
             animate={{ opacity: 1, scale: 1,    y: 0  }}
             exit={{   opacity: 0, scale: 0.96,  y: 12 }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            onClick={e => e.stopPropagation()}
             style={{
-              /* ── Centering — pure CSS, no Tailwind transforms ── */
-              position:      'fixed',
-              top:           '50%',
-              left:          '50%',
-              transform:     'translate(-50%, -50%)',
-              zIndex:        9999,
-
               /* ── Sizing ── */
               width:         'min(92vw, 440px)',
               maxHeight:     '90dvh',
@@ -295,7 +295,7 @@ export function PaywallModal({ open, onClose }: Props) {
               </p>
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   )
