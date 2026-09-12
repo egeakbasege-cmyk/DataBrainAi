@@ -240,33 +240,21 @@ export default function LandingPage() {
           Dark full-bleed. Word-by-word headline stagger.
           Sailboat has parallax drift on scroll.
       ══════════════════════════════════════════════ */}
-      <section style={{ background: 'rgba(8,9,13,0.52)', paddingBottom: 0, position: 'relative', overflow: 'hidden' }}>
-        <TopoBackground />
-
-        {/* Grid overlay */}
-        <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none', zIndex: 2 }} />
-
-        {/* Parallax hero image */}
-        <motion.img
-          src="/sail-vertical.jpg"
-          alt=""
-          aria-hidden="true"
+      <section className="azx-tilesheen" style={{ paddingBottom: 0, position: 'relative', overflow: 'hidden', background: 'var(--azx-ceramic)', color: 'var(--azx-ink)' }}>
+        <div
+          aria-hidden
           style={{
-            position:       'absolute',
-            inset:          0,
-            width:          '100%',
-            height:         '100%',
-            objectFit:      'contain',
-            objectPosition: 'center center',
-            opacity:        heroImgOp,
-            pointerEvents:  'none',
-            userSelect:     'none',
-            zIndex:         3,
-            y:              sailboatY,
+            position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+            backgroundColor: 'var(--azx-ceramic)',
+            backgroundImage:
+              'linear-gradient(var(--azx-grout) 1px, transparent 1px), linear-gradient(90deg, var(--azx-grout) 1px, transparent 1px), radial-gradient(120% 80% at 12% -10%, rgba(23,120,220,0.10) 0%, transparent 55%), radial-gradient(110% 90% at 108% 8%, rgba(0,51,160,0.08) 0%, transparent 52%)',
+            backgroundSize: '34px 34px, 34px 34px, 100% 100%, 100% 100%',
           }}
         />
 
         <div className="max-w-6xl mx-auto px-6 md:px-10 pt-24 md:pt-32 pb-20 md:pb-28" style={{ position: 'relative', zIndex: 10 }}>
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div>
 
           {/* Eyebrow */}
           <motion.div
@@ -279,7 +267,7 @@ export default function LandingPage() {
               {t('landing.eyebrow')}
             </span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(23,120,220,0.4), transparent)' }} />
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A3B8' }}>
               {t('landing.est')}
             </span>
           </motion.div>
@@ -290,13 +278,13 @@ export default function LandingPage() {
             initial="hidden"
             animate="show"
             style={{
-              fontFamily:    'var(--font-cormorant), Georgia, serif',
-              fontSize:      'clamp(3.5rem, 7.5vw, 6.5rem)',
-              fontWeight:    600,
+              fontFamily:    'var(--font-playfair), Georgia, serif',
+              fontSize:      'clamp(3rem, 6vw, 5.25rem)',
+              fontWeight:    700,
               fontStyle:     'italic',
-              lineHeight:    1.03,
+              lineHeight:    1.05,
               letterSpacing: '-0.02em',
-              color:         '#FFFFFF',
+              color:         '#0A1F44',
               maxWidth:      '15ch',
               margin:        0,
             }}
@@ -321,11 +309,10 @@ export default function LandingPage() {
               fontFamily: 'var(--font-inter), sans-serif',
               fontSize:   '0.9375rem',
               lineHeight: 1.78,
-              color:      'rgba(255,255,255,0.90)',
+              color:      '#4B5C78',
               maxWidth:   '46ch',
-              marginTop:  '2rem',
-              fontWeight: 300,
-              textShadow: '0 1px 10px rgba(0,0,0,0.9)',
+              marginTop:  '1.75rem',
+              fontWeight: 400,
             }}
           >
             {t('landing.subheadline')}
@@ -344,14 +331,15 @@ export default function LandingPage() {
                 style={{
                   fontFamily:    'var(--font-inter), sans-serif',
                   fontSize:      '0.67rem',
-                  fontWeight:    500,
+                  fontWeight:    600,
                   letterSpacing: '0.05em',
-                  color:         'rgba(255,255,255,0.55)',
-                  background:    'rgba(255,255,255,0.055)',
-                  border:        '1px solid rgba(255,255,255,0.09)',
-                  borderRadius:  '2px',
-                  padding:       '0.3rem 0.75rem',
+                  color:         '#0033A0',
+                  background:    '#FFFFFF',
+                  border:        '1px solid rgba(0,51,160,0.16)',
+                  borderRadius:  '999px',
+                  padding:       '0.3rem 0.8rem',
                   whiteSpace:    'nowrap',
+                  boxShadow:     '0 2px 8px -4px rgba(0,51,160,0.25)',
                 }}
               >
                 {pill}
@@ -384,7 +372,7 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 1.1 }}
-            style={{ marginTop: '0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}
+            style={{ marginTop: '0.875rem', fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.72rem', color: '#94A3B8', letterSpacing: '0.05em' }}
           >
             {t('landing.freeNote')}
           </motion.p>
@@ -397,40 +385,74 @@ export default function LandingPage() {
             style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}
           >
             {TRUST_CUES.map(cue => (
-              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.06em' }}>
+              <span key={cue} style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.62rem', color: '#94A3B8', letterSpacing: '0.06em' }}>
                 {cue}
               </span>
             ))}
           </motion.div>
 
-          {/* Decorative sailboat — parallax Y applied to inner div */}
+          </div>{/* end hero left column */}
+
+          {/* ── Framed azulejo mural — the hero centerpiece ── */}
           <motion.div
             style={{ y: sailboatY }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.28 }}
-            transition={{ duration: 1.2, delay: 0.6 }}
+            initial={{ opacity: 0, scale: 0.95, rotate: -1 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ duration: 1, delay: 0.35, ease: EASE }}
+            className="relative mx-auto w-full max-w-[420px] lg:max-w-none"
           >
-            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '3rem', pointerEvents: 'none', transform: 'scale(1.1)', transformOrigin: 'right bottom' }}>
-              <div style={{ position: 'relative' }}>
-                <div style={{
-                  position:     'absolute',
-                  inset:        0,
-                  borderRadius: '50%',
-                  background:   'radial-gradient(circle 200px, rgba(148,163,184,0.18) 0%, transparent 70%)',
-                  pointerEvents:'none',
-                }} />
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CompassRose size={260} color="#1778DC" opacity={0.35} />
-                </div>
-                <EngravedSailboat size={200} color="#FFFFFF" opacity={0.7} />
-              </div>
+            <div
+              style={{
+                position:     'relative',
+                padding:      '10px',
+                background:   'linear-gradient(135deg, #1778dc 0%, #0a4da2 45%, #052a5e 100%)',
+                borderRadius: '8px',
+                boxShadow:    '0 40px 90px -34px rgba(0,43,73,0.65), inset 0 0 0 1px rgba(255,255,255,0.35)',
+              }}
+            >
+              {/* screw-head hardware in each corner */}
+              {['tl','tr','bl','br'].map(pos => (
+                <span
+                  key={pos}
+                  aria-hidden
+                  style={{
+                    position: 'absolute', width: 9, height: 9, borderRadius: '50%',
+                    background: 'radial-gradient(circle at 35% 30%, #ffffff, #94a3b8 60%, #475569)',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                    top:    pos[0] === 't' ? 6 : undefined,
+                    bottom: pos[0] === 'b' ? 6 : undefined,
+                    left:   pos[1] === 'l' ? 6 : undefined,
+                    right:  pos[1] === 'r' ? 6 : undefined,
+                    zIndex: 3,
+                  }}
+                />
+              ))}
+              <img
+                src="/azulejo/hero-sailboat.png"
+                alt="Hand-painted Portuguese azulejo tile mural of the Santa Maria tall ship at sea, framed by nautical tile ornament of dolphins, anchors and rope-knots"
+                style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '3px' }}
+              />
+              {/* travelling ceramic glaze sheen */}
+              <motion.div
+                aria-hidden
+                initial={{ x: '-120%' }}
+                animate={{ x: ['-120%', '120%'] }}
+                transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
+                style={{
+                  position: 'absolute', top: 10, bottom: 10, left: 10, right: 10,
+                  borderRadius: '3px', pointerEvents: 'none',
+                  background: 'linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.35) 50%, transparent 58%)',
+                  mixBlendMode: 'soft-light',
+                }}
+              />
             </div>
           </motion.div>
+         </div>{/* end hero grid */}
         </div>
       </section>
 
-      {/* ── Diagonal divider: dark hero → white ─────── */}
-      <SectionDivider from="rgba(8,9,13,0.52)" to="#FFFFFF" direction="down-right" height={52} />
+      {/* ── Diagonal divider: ceramic hero → white ─────── */}
+      <SectionDivider from="#FAFAFA" to="#FFFFFF" direction="down-right" height={52} />
 
       {/* ── Marquee Band 1 ───────────────────────────── */}
       <MarqueeBand />
