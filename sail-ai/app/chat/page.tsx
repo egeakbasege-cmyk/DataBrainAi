@@ -14,7 +14,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSession }                   from 'next-auth/react'
 import { useRouter }                    from 'next/navigation'
 import { motion, AnimatePresence }      from 'framer-motion'
-import { Nav }                          from '@/components/Nav'
 import { BrandSetupModal }              from '@/components/BrandSetupModal'
 import { useBrandConfig }               from '@/components/BrandSetupModal'
 import type { BrandConfig }             from '@/components/BrandSetupModal'
@@ -30,7 +29,6 @@ import type { AnalysisMode }            from '@/components/ModeSelector'
 import { SovereignDashboard }           from '@/components/SovereignDashboard'
 import type { SovereignMode }           from '@/components/SovereignDashboard'
 import { ExportModal }                  from '@/components/ExportModal'
-import { AgentStatusBar }               from '@/components/AgentStatusBar'
 import type { TrimResponse }            from '@/components/TrimTimelineCard'
 import type { CatamaranResponse }       from '@/types/chat'
 import { useAetherisSubmit }            from '@/hooks/useAetherisSubmit'
@@ -51,7 +49,6 @@ import { useUserType }                  from '@/components/Dock'
 import { GuideRail }                    from '@/components/chat/GuideRail'
 import { ChatStage }                    from '@/components/chat/ChatStage'
 import { ChatComposer }                 from '@/components/chat/ChatComposer'
-import { PortofinoScene }               from '@/components/landing/PortofinoScene'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -705,14 +702,29 @@ export default function ChatPage() {
         )}
       </AnimatePresence>
 
-      {/* Agent status bar */}
-      <div style={{ position: 'fixed', top: 1, right: 0, zIndex: 50, padding: '6px 16px' }}>
-        <AgentStatusBar />
-      </div>
-
-      {/* ── Portofino harbour background (fixed, behind everything) ── */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
-        <PortofinoScene />
+      {/* ── Azulejo mural background (static, tiffany-tinted, behind everything) ── */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden' }}>
+        <div style={{
+          position:           'absolute',
+          inset:              0,
+          backgroundImage:    'url(/azulejo/hero-sailboat.png)',
+          backgroundSize:     'cover',
+          backgroundPosition: 'center',
+          transform:          'scale(1.04)',
+        }} />
+        {/* Deep teal-navy readability wash */}
+        <div style={{
+          position:   'absolute',
+          inset:       0,
+          background: 'linear-gradient(180deg, rgba(4,28,44,0.90) 0%, rgba(5,34,50,0.85) 48%, rgba(3,22,38,0.93) 100%)',
+        }} />
+        {/* Tiffany glow from the top */}
+        <div style={{
+          position:   'absolute',
+          inset:       0,
+          background: 'radial-gradient(130% 90% at 50% -10%, rgba(10,186,181,0.20) 0%, transparent 55%)',
+          pointerEvents: 'none',
+        }} />
       </div>
 
       {/* ── Main layout: fixed, full-screen, column flex ── */}
@@ -721,12 +733,10 @@ export default function ChatPage() {
         inset:            0,
         display:         'flex',
         flexDirection:   'column',
-        background:      'rgba(8,9,13,0.55)',
+        background:      'transparent',
         overflow:        'hidden',
         zIndex:           1,
       }}>
-        {/* Nav bar */}
-        <Nav />
 
         {/* Content below nav */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>

@@ -20,6 +20,7 @@ export function DailyCounter({ used, isPro }: Props) {
           border:      '1px solid rgba(201,169,110,0.35)',
           color:       '#C9A96E',
           background:  'rgba(201,169,110,0.07)',
+          borderRadius: 9999,
         }}
       >
         {t('counter.proUnlimited')}
@@ -27,7 +28,7 @@ export function DailyCounter({ used, isPro }: Props) {
     )
   }
 
-  const remaining = FREE_LIMIT - used
+  const remaining = Math.max(0, FREE_LIMIT - used)
   const urgent    = remaining <= 2
 
   return (
@@ -35,9 +36,10 @@ export function DailyCounter({ used, isPro }: Props) {
       className="label-caps"
       style={{
         padding:    '3px 10px',
-        border:     `1px solid ${urgent ? 'rgba(220,38,38,0.22)' : 'rgba(129,199,185,0.22)'}`,
-        color:      urgent ? '#DC2626' : 'rgba(26,43,60,0.45)',
-        background: urgent ? 'rgba(220,38,38,0.05)' : 'transparent',
+        border:     `1px solid ${urgent ? 'rgba(232,168,124,0.40)' : 'rgba(129,216,208,0.28)'}`,
+        color:      urgent ? '#E8A87C' : 'rgba(129,216,208,0.90)',
+        background: urgent ? 'rgba(232,168,124,0.08)' : 'rgba(129,216,208,0.06)',
+        borderRadius: 9999,
       }}
     >
       {remaining}/{FREE_LIMIT} {t('counter.freeToday')}

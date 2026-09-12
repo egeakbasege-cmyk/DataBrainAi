@@ -532,8 +532,20 @@ export function ChatComposer({
               transition:    'all 0.2s',
             }}
           >
-            <span style={{ fontSize: '0.7rem' }}>{businessMode ? '💼' : '✨'}</span>
-            <span>{businessMode ? 'BIZ' : 'Personal'}</span>
+            {businessMode ? (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                stroke="#34D399" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2"/>
+                <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            ) : (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                stroke="rgba(255,255,255,0.45)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21a8 8 0 0 0-16 0"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            )}
+            <span>{businessMode ? 'Business' : 'Personal'}</span>
           </button>
         )}
       </div>

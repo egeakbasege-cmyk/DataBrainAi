@@ -106,7 +106,7 @@ export function GuideRail({
 
       {/* ── LEFT: Wordmark + active mode indicator ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 9 : 16, flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <a href="/" style={{ display: 'flex', flexDirection: 'column', gap: 2, textDecoration: 'none' }} title="Home">
           <span style={{
             fontFamily:    'var(--font-cormorant), Georgia, serif',
             fontSize:       isMobile ? 17 : 20,
@@ -114,6 +114,7 @@ export function GuideRail({
             letterSpacing: '-0.02em',
             color:          T.textPrimary,
             lineHeight:     1,
+            whiteSpace:    'nowrap',
           }}>
             Sail{' '}
             <span style={{
@@ -135,12 +136,12 @@ export function GuideRail({
               Sovereign Intelligence
             </span>
           )}
-        </div>
+        </a>
 
-        <div style={{ width: 1, height: 28, background: T.border }} />
+        {!isMobile && <div style={{ width: 1, height: 28, background: T.border }} />}
 
-        {/* Active mode indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {/* Active mode indicator — hidden on mobile (composer shows it) */}
+        <div style={{ display: isMobile ? 'none' : 'flex', alignItems: 'center', gap: 6 }}>
           <motion.span
             animate={isActive
               ? { opacity: [1, 0.15, 1], scale: [1, 0.6, 1] }
@@ -214,38 +215,49 @@ export function GuideRail({
         flexShrink:      0,
       }}>
 
-        <ControlPill active={useProfileCtx} activeColor={T.teal} onClick={onToggleCtx}
-          title={useProfileCtx ? 'Profile context on' : 'Profile context off'}>
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
-            stroke={useProfileCtx ? T.teal : T.textMuted}
-            strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <polyline points="9 12 11 14 15 10"/>
-          </svg>
-          {!isMobile && (
+        {!isMobile && (
+          <ControlPill active={useProfileCtx} activeColor={T.teal} onClick={onToggleCtx}
+            title={useProfileCtx ? 'Profile context on' : 'Profile context off'}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
+              stroke={useProfileCtx ? T.teal : T.textMuted}
+              strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
             <span style={{
               fontSize: 9, fontWeight: 700, letterSpacing: '0.10em',
               color: useProfileCtx ? T.teal : T.textMuted,
             }}>CTX</span>
-          )}
-        </ControlPill>
+          </ControlPill>
+        )}
 
-        <ControlPill active={businessMode} activeColor={T.teal} onClick={onToggleBusiness}
-          title={businessMode ? 'Business mode' : 'Chat mode'}>
-          <span style={{ fontSize: 9, lineHeight: 1 }}>{businessMode ? '💼' : '💬'}</span>
-          {!isMobile && (
+        {!isMobile && (
+          <ControlPill active={businessMode} activeColor={T.teal} onClick={onToggleBusiness}
+            title={businessMode ? 'Business mode' : 'Chat mode'}>
+            {businessMode ? (
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
+                stroke={T.teal} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2"/>
+                <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            ) : (
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
+                stroke={T.textMuted} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            )}
             <span style={{
               fontSize: 9, fontWeight: 700, letterSpacing: '0.10em',
               color: businessMode ? T.teal : T.textMuted,
             }}>
               {businessMode ? 'BIZ' : 'CHAT'}
             </span>
-          )}
-        </ControlPill>
+          </ControlPill>
+        )}
 
-        <div style={{ width: 1, height: 22, background: T.border }} />
+        {!isMobile && <div style={{ width: 1, height: 22, background: T.border }} />}
 
-        {hasHistory && (
+        {!isMobile && hasHistory && (
           <IconButton onClick={onHistory} title="Session history">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
               stroke={T.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -255,7 +267,7 @@ export function GuideRail({
           </IconButton>
         )}
 
-        {hasMessages && (
+        {!isMobile && hasMessages && (
           <IconButton onClick={onReset} title="New topic">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
               stroke={T.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -297,7 +309,11 @@ export function GuideRail({
                 color:         T.gold,
               }}
             >
-              <span style={{ fontSize: 10 }}>🔑</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                stroke={T.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="7.5" cy="15.5" r="4.5"/>
+                <path d="M10.7 12.3 21 2m-4 3 3 3m-6 0 3 3"/>
+              </svg>
               Add Key
             </motion.button>
           )}
@@ -316,7 +332,7 @@ export function GuideRail({
             borderRadius:   5,
             padding:       '3px 8px',
           }}>
-            PRO ✦
+            PRO
           </div>
         ) : (
           <motion.button
@@ -338,7 +354,7 @@ export function GuideRail({
               outline:       'none',
             }}
           >
-            PRO ↑
+            Upgrade
           </motion.button>
         )}
       </div>
