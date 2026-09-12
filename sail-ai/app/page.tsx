@@ -301,9 +301,9 @@ export default function LandingPage() {
             style={{
               ['--azx-delay' as string]: '0.5s',
               fontFamily: 'var(--font-inter), sans-serif',
-              fontSize:   '0.9375rem',
-              lineHeight: 1.78,
-              color:      '#4B5C78',
+              fontSize:   'clamp(1rem, 1.1vw, 1.125rem)',
+              lineHeight: 1.7,
+              color:      '#334155',
               maxWidth:   '46ch',
               marginTop:  '1.75rem',
               fontWeight: 400,
