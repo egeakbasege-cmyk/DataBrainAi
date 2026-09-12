@@ -19,10 +19,14 @@
 
 export const runtime = 'edge'
 
-import { auth }             from '@/auth'
+import NextAuth from 'next-auth'
+import { authConfig }       from '@/auth.config'
 import { groqFetch,
          extractGroqContent,
          GROQ_MODELS }      from '@/lib/clients/groq'
+
+// Edge-safe auth (JWT sessions, no DB adapter) — avoids pulling Prisma into edge.
+const { auth } = NextAuth(authConfig)
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

@@ -22,8 +22,12 @@
 
 export const runtime = 'edge'
 
-import { auth }   from '@/auth'
+import NextAuth from 'next-auth'
+import { authConfig } from '@/auth.config'
 import { SCENES } from '@/components/landing/narrativeStore'
+
+// Edge-safe auth (JWT sessions, no DB adapter) — avoids pulling Prisma into edge.
+const { auth } = NextAuth(authConfig)
 import type { NarrativeNode } from '@/components/landing/narrativeStore'
 
 // ── Luma Dream Machine ────────────────────────────────────────────────────────

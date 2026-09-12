@@ -12,10 +12,16 @@
  *    product down, but we log loudly so the outage is visible.
  */
 
-import { auth }          from '@/auth'
+import NextAuth          from 'next-auth'
+import { authConfig }    from '@/auth.config'
 import { checkPro }      from '@/lib/proStore'
 import { FREE_LIMIT }    from '@/lib/stripe'
 import type { NextRequest } from 'next/server'
+
+// Derive `auth` from the edge-safe config (JWT sessions, no DB adapter) so this
+// module never statically pulls Prisma into the Edge Runtime bundle. The full
+// DB-bound `@/auth` would drag PrismaClient into edge routes like /api/chat.
+const { auth } = NextAuth(authConfig)
 
 export interface QuotaResult {
   allowed:   boolean
