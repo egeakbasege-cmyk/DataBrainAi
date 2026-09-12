@@ -107,6 +107,7 @@ function ModeDropdown({
   onAutoToggle: () => void
 }) {
   const [open, setOpen]   = useState(false)
+  const [maxH, setMaxH]   = useState(440)
   const wrapRef           = useRef<HTMLDivElement>(null)
   const activeMeta        = ALL_MODES.find(m => m.id === mode) ?? ALL_MODES[0]
 
@@ -120,6 +121,21 @@ function ModeDropdown({
     }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+
+  // The panel opens upward from the composer. On short / mobile viewports the
+  // full list is taller than the space above the trigger, so cap its height to
+  // that space (leaving room for the top nav) and let it scroll — otherwise the
+  // top modes render off-screen and can't be reached.
+  useEffect(() => {
+    if (!open) return
+    const measure = () => {
+      const top = wrapRef.current?.getBoundingClientRect().top ?? 0
+      setMaxH(Math.max(200, Math.round(top - 84)))
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
   }, [open])
 
   return (
@@ -214,7 +230,10 @@ function ModeDropdown({
               borderRadius:    16,
               boxShadow:      '0 8px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(201,169,110,0.06), inset 0 1px 0 rgba(255,255,255,0.07)',
               padding:        '8px',
-              width:           320,
+              width:          'min(320px, calc(100vw - 24px))',
+              maxHeight:       maxH,
+              overflowY:      'auto',
+              overscrollBehavior: 'contain',
             }}
           >
             {/* Gold hairline top */}
@@ -374,7 +393,7 @@ function ModeDropdown({
   )
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Component ──────────────────────────────────────────────────────��──────────
 
 export function ChatComposer({
   input, mode, sailState, isActive, isMac, phIdx, attachment, fileError,
@@ -570,10 +589,14 @@ export function ChatComposer({
           value={input}
           onChange={onChange}
           onKeyDown={e => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault()
-              onSubmit()
-            }
+            if (e.key !== 'Enter') return
+            // Shift+Enter always inserts a newline.
+            if (e.shiftKey) return
+            // Don't submit mid-IME-composition (CJK); Safari reports keyCode 229.
+            if (e.nativeEvent.isComposing || e.keyCode === 229) return
+            // Plain Enter or Cmd/Ctrl+Enter both send.
+            e.preventDefault()
+            onSubmit()
           }}
           placeholder={PHLDR[phIdx]}
           disabled={isActive}
@@ -654,14 +677,18 @@ export function ChatComposer({
 
             <VoiceInput disabled={isActive} onTranscript={onVoiceTranscript} />
 
-            <span style={{
-              fontFamily:    'var(--font-inter), sans-serif',
-              fontSize:       10,
-              fontWeight:     500,
-              letterSpacing: '0.06em',
-              color:          T.textFaint,
-            }}>
-              {isMac ? '⌘' : 'Ctrl'}↩
+            <span
+              title={isMac ? 'Press Enter to send · Shift+Enter for a new line' : 'Press Enter to send · Shift+Enter for a new line'}
+              style={{
+                fontFamily:    'var(--font-inter), sans-serif',
+                fontSize:       10,
+                fontWeight:     500,
+                letterSpacing: '0.06em',
+                color:          T.textFaint,
+                whiteSpace:    'nowrap',
+              }}
+            >
+              ↩ Send
             </span>
 
             <AnimatePresence>
