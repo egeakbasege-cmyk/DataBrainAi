@@ -28,6 +28,7 @@ import {
 import type { MissionResult } from '@/lib/orchestration/missionOrchestrator'
 import { checkRateLimit }   from '@/lib/cache/rateLimiter'
 import { buildKeyPool }     from '@/lib/clients/groq'
+import { cohereStreamDelta } from '@/lib/clients/cohere'
 import { scrubPII }         from '@/lib/skills/piiScrubber'
 
 const { auth }    = NextAuth(authConfig)
@@ -169,23 +170,18 @@ export async function POST(req: NextRequest) {
             const payload = line.slice(6).trim()
             if (payload === '[DONE]') continue
 
-            try {
-              const chunk = JSON.parse(payload) as {
-                choices?: Array<{ delta?: { content?: string } }>
-              }
-              const text = chunk.choices?.[0]?.delta?.content
-              if (text) emit('chunk', { text })
-            } catch { /* skip malformed */ }
+            const text = cohereStreamDelta(payload)
+            if (text) emit('chunk', { text })
           }
         }
 
         // ── Done ─────────────────────────────────────────────────────────────
         const modelsUsed = [
-          'llama-3.1-8b-instant',   // planner + specialists
+          'command-r7b-12-2024',   // planner + specialists
           results.some(r => r.type === 'SEARCH')  ? 'tavily'             : '',
           results.some(r => r.type === 'RECALL')  ? 'pinecone+cohere'    : '',
           results.some(r => r.type === 'ANALYZE') ? 'gemini-2.0-flash'   : '',
-          'llama-3.3-70b-versatile', // reason + synthesis
+          'command-a-03-2025', // reason + synthesis
         ].filter(Boolean)
 
         emit('done', {

@@ -49,11 +49,9 @@ export interface GroqRequest {
 }
 
 export interface GroqApiResponse {
-  choices?: Array<{
-    message?: { content?: string }
-    delta?:   { content?: string }
-  }>
-  error?: { message?: string }
+  // Cohere v2 non-streaming shape
+  message?: { content?: Array<{ type?: string; text?: string }> }
+  error?:   { message?: string }
 }
 
 // ── Circuit breaker (module-level, shared within one Edge instance) ───────────
@@ -211,7 +209,9 @@ export async function groqFetch(
 
 export async function extractGroqContent(res: Response): Promise<string> {
   const data = await res.json().catch(() => ({}) as GroqApiResponse) as GroqApiResponse
-  return data.choices?.[0]?.message?.content ?? ''
+  const blocks = data.message?.content
+  if (!Array.isArray(blocks)) return ''
+  return blocks.map(b => (b?.text ?? '')).join('').trim()
 }
 
 // ── Structured Output JSON Schemas ────────────────────────────────────────────

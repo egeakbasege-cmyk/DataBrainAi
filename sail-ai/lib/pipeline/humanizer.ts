@@ -15,9 +15,10 @@
  */
 
 import type { ValidatedOutput, HumanizedResponse, ScopeMetadata, PipelineState } from './types'
+import { COHERE_CHAT_URL, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
-const GROQ_URL        = 'https://api.groq.com/openai/v1/chat/completions'
-const HUMANIZER_MODEL = 'llama-3.1-8b-instant'  // fast model for prose task
+const GROQ_URL        = COHERE_CHAT_URL
+const HUMANIZER_MODEL = COHERE_MODELS.FAST  // fast model for prose task
 const MAX_TOKENS      = 1800
 const TEMPERATURE     = 0.45
 
@@ -196,10 +197,8 @@ async function humanizerGroqFetch(
       throw new Error(`Humanizer Groq error ${res.status}: ${text.slice(0, 200)}`)
     }
 
-    const json = await res.json() as {
-      choices?: Array<{ message?: { content?: string } }>
-    }
-    const prose = json.choices?.[0]?.message?.content?.trim() ?? ''
+    const json = await res.json()
+    const prose = extractCohereText(json)
     if (!prose) throw new Error('Humanizer returned empty content')
     return prose
   }

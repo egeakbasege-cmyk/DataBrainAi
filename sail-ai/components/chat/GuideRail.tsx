@@ -269,7 +269,7 @@ export function GuideRail({
               onClick={onAddKey}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              title="Add your Groq API key to start chatting"
+              title="Add your Cohere API key to start chatting"
               style={{
                 display:       'flex',
                 alignItems:    'center',

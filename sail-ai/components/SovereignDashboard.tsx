@@ -63,7 +63,7 @@ const MODES: ModeDef[] = [
     stat:      '3×',
     statLabel: 'AGENTS',
     badge:     'WAR ROOM',
-    caps:      ['3 specialist agents in parallel', 'Financial · Strategic · Operational', '70B synthesis — one verdict'],
+    caps:      ['3 specialist agents in parallel', 'Financial · Strategic · Operational', 'Rocket-speed synthesis — one verdict'],
   },
   {
     id:        'sail',
@@ -73,7 +73,7 @@ const MODES: ModeDef[] = [
     stat:      '2×',
     statLabel: 'SPEED',
     badge:     'AI+',
-    caps:      ['Intent-aware model routing', '8B + 70B speculative race', 'Adaptive depth calibration'],
+    caps:      ['Intent-aware model routing', 'Dual-model speculative race', 'Adaptive depth calibration'],
   },
   {
     id:        'trim',

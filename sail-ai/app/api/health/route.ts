@@ -9,10 +9,11 @@
 import { NextRequest }   from 'next/server'
 import { auth }          from '@/lib/auth'
 import { buildKeyPool }  from '@/lib/clients/groq'
+import { COHERE_CHAT_URL, COHERE_MODELS } from '@/lib/clients/cohere'
 
 export const runtime = 'edge'
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_URL = COHERE_CHAT_URL
 
 export async function GET(_req: NextRequest) {
   const checks: Record<string, unknown> = {}
@@ -44,7 +45,7 @@ export async function GET(_req: NextRequest) {
           'Authorization': `Bearer ${keys[0]}`,
         },
         body: JSON.stringify({
-          model:       'llama-3.1-8b-instant',
+          model:       COHERE_MODELS.FAST,
           messages:    [{ role: 'user', content: 'Say "ok" in one word.' }],
           max_tokens:  4,
           temperature: 0,
@@ -56,7 +57,7 @@ export async function GET(_req: NextRequest) {
         ok:       res.ok,
         status:   res.status,
         ms:       Date.now() - t0,
-        reply:    (data as Record<string, unknown>)?.choices?.toString?.() ?? null,
+        reply:    (data as { message?: { content?: Array<{ text?: string }> } })?.message?.content?.[0]?.text ?? null,
         error:    res.ok ? null : ((data as Record<string, unknown>)?.error as Record<string, unknown>)?.message ?? res.statusText,
       }
 
@@ -70,7 +71,7 @@ export async function GET(_req: NextRequest) {
             'Authorization': `Bearer ${keys[0]}`,
           },
           body: JSON.stringify({
-            model:       'llama-3.3-70b-versatile',
+            model:       COHERE_MODELS.PRIMARY,
             messages:    [{ role: 'user', content: 'Say "ok" in one word.' }],
             max_tokens:  4,
             temperature: 0,

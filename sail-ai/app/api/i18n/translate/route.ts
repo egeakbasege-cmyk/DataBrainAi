@@ -16,6 +16,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
 
 export const runtime = 'edge'
 
@@ -28,17 +29,13 @@ const LOCALE_NAMES: Record<string, string> = {
   zh: 'Simplified Chinese',
 }
 
-const GROQ_KEYS = [
-  process.env.GROQ_API_KEY,
-  process.env.GROQ_API_KEY_2,
-  process.env.GROQ_API_KEY_3,
-].filter(Boolean) as string[]
+const GROQ_KEYS = cohereKeys()
 
 async function callGroq(prompt: string, systemPrompt: string): Promise<string> {
-  if (GROQ_KEYS.length === 0) throw new Error('No Groq API keys configured.')
+  if (GROQ_KEYS.length === 0) throw new Error('No Cohere API keys configured.')
   const key  = GROQ_KEYS[Math.floor(Math.random() * GROQ_KEYS.length)]!
   const body = {
-    model:       'llama-3.1-8b-instant',   // 8B for speed — translation doesn't need 70B
+    model:       COHERE_MODELS.FAST,   // fast model — translation doesn't need the flagship
     temperature: 0.1,
     max_tokens:  2048,
     messages: [
@@ -46,14 +43,14 @@ async function callGroq(prompt: string, systemPrompt: string): Promise<string> {
       { role: 'user',   content: prompt },
     ],
   }
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const res = await fetch(COHERE_CHAT_URL, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
     body:    JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`Groq error ${res.status}`)
-  const data = await res.json() as { choices: { message: { content: string } }[] }
-  return data.choices[0]?.message.content ?? ''
+  if (!res.ok) throw new Error(`Cohere error ${res.status}`)
+  const data = await res.json()
+  return extractCohereText(data)
 }
 
 export async function POST(req: NextRequest) {

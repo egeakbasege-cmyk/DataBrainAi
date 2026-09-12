@@ -32,25 +32,19 @@ import type { PersonalisedRequestBody }                  from '@/lib/personalise
 import { resolveModsFromIds, ANALYSIS_MODE_TO_MOD_ID }  from '@/lib/personalised/mod-registry'
 import { generatePersonalisedPrompt }                    from '@/lib/personalised/prompt-synthesiser'
 import { runGuardrails, validateMarketData }             from '@/lib/personalised/guardrails'
+import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText, cohereStreamDelta } from '@/lib/clients/cohere'
 
 export const runtime = 'edge'
 
 const { auth } = NextAuth(authConfig)
 
-const GROQ_URL   = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
+const GROQ_URL   = COHERE_CHAT_URL
+const GROQ_MODEL = COHERE_MODELS.PRIMARY
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
 function getGroqKey(req: NextRequest, body: PersonalisedRequestBody): string | null {
-  return (
-    process.env.GROQ_API_KEY ??
-    process.env.GROQ_API_KEY_1 ??
-    process.env.GROQ_API_KEY_2 ??
-    process.env.GROQ_API_KEY_3 ??
-    body.apiKey ??
-    null
-  )
+  return cohereKeys(body.apiKey)[0] ?? null
 }
 
 /**
@@ -122,14 +116,13 @@ async function executeMarketDataGeneration(
 
   if (!res?.ok) {
     return Response.json(
-      { error: `Groq market-data request failed: ${res?.status ?? 'network error'}` },
+      { error: `Cohere market-data request failed: ${res?.status ?? 'network error'}` },
       { status: res?.status === 429 ? 429 : 502 },
     )
   }
 
-  const data: { choices?: Array<{ message?: { content?: string } }> } =
-    await res.json().catch(() => ({}))
-  const raw = data?.choices?.[0]?.message?.content ?? '{}'
+  const data = await res.json().catch(() => ({}))
+  const raw = extractCohereText(data) || '{}'
 
   let parsed: unknown
   try {
@@ -229,13 +222,10 @@ async function executePersonalisedStream(
         if (!line.startsWith('data: ')) continue
         const raw = line.slice(6).trim()
         if (raw === '[DONE]') continue
-        try {
-          const chunk = JSON.parse(raw)
-          const delta = (chunk.choices?.[0]?.delta?.content ?? '') as string
-          if (!delta) continue
-          fullText += delta
-          await writer.write(encoder.encode(delta))
-        } catch { /* ignore SSE framing errors */ }
+        const delta = cohereStreamDelta(raw)
+        if (!delta) continue
+        fullText += delta
+        await writer.write(encoder.encode(delta))
       }
     }
 
@@ -326,7 +316,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   const groqKey = getGroqKey(req, body)
   if (!groqKey) {
     return Response.json(
-      { error: 'AI provider not configured. Add GROQ_API_KEY or pass apiKey in request.' },
+      { error: 'AI provider not configured. Add COHERE_API_KEY or pass apiKey in request.' },
       { status: 503 },
     )
   }

@@ -16,17 +16,13 @@ import { auth }                      from '@/auth'
 
 // ── Groq config ───────────────────────────────────────────────────────────────
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL = 'llama-3.1-70b-versatile'
+import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
+
+const GROQ_URL = COHERE_CHAT_URL
+const GROQ_MODEL = COHERE_MODELS.PRIMARY
 
 function getGroqKey(): string {
-  return (
-    process.env.GROQ_API_KEY   ??
-    process.env.GROQ_API_KEY_1 ??
-    process.env.GROQ_API_KEY_2 ??
-    process.env.GROQ_API_KEY_3 ??
-    ''
-  )
+  return cohereKeys()[0] ?? ''
 }
 
 // ── System prompt ─────────────────────────────────────────────────────────────
@@ -121,11 +117,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'AI service error.' }, { status: 502 })
     }
 
-    const groqData = await res.json() as {
-      choices?: { message?: { content?: string } }[]
-    }
+    const groqData = await res.json()
 
-    const raw = groqData.choices?.[0]?.message?.content ?? ''
+    const raw = extractCohereText(groqData)
 
     // Extract JSON — strip any surrounding markdown fences
     const jsonMatch = raw.match(/\{[\s\S]*\}/)

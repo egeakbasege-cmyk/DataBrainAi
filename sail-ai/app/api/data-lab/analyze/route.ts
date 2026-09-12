@@ -23,15 +23,13 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // ── Groq config ───────────────────────────────────────────────────────────────
 
-const GROQ_URL   = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
+import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
+
+const GROQ_URL   = COHERE_CHAT_URL
+const GROQ_MODEL = COHERE_MODELS.PRIMARY
 
 function getGroqKey(): string | undefined {
-  return (
-    process.env.GROQ_API_KEY   ??
-    process.env.GROQ_API_KEY_2 ??
-    process.env.GROQ_API_KEY_3
-  )
+  return cohereKeys()[0]
 }
 
 // ── AnalysisResult interface (mirror of frontend — NEVER rename these fields) ─
@@ -268,7 +266,7 @@ ${SCHEMA_INSTRUCTION}`
     }
 
     const groqData = await groqRes.json()
-    rawText = groqData.choices?.[0]?.message?.content ?? ''
+    rawText = extractCohereText(groqData)
 
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)

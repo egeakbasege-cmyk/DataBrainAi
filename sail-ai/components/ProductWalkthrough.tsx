@@ -250,7 +250,7 @@ function Slide3_Analyzing() {
         {[
           { label: t('walk.sourcesScanned'), value: `${Math.min(step * 4, 20)}` },
           { label: t('walk.queryVectors'),   value: '3' },
-          { label: 'Model',                  value: 'Groq 70B' },
+          { label: 'Model',                  value: 'Rocket-Speed AI' },
         ].map(s => (
           <div key={s.label} style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', padding: '0.5rem', textAlign: 'center' }}>
             <p style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '1rem', fontWeight: 700, color: '#C9A96E', margin: 0 }}>{s.value}</p>
@@ -272,7 +272,7 @@ function Slide4_Response() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.625rem', background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)', borderRadius: '6px' }}>
         <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#C9A96E' }} />
         <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A96E' }}>SAIL AI — Upwind</span>
-        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)', marginLeft: 'auto' }}>Groq 70B · statista, baymard, klaviyo</span>
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)', marginLeft: 'auto' }}>Rocket-Speed AI · statista, baymard, klaviyo</span>
       </div>
 
       {/* Insight */}

@@ -94,7 +94,7 @@ function Eyebrow({ label, light }: { label: string; light?: boolean }) {
 
 // ── Infinite marquee band ──────────────────────────────────────
 const MARQUEE_ITEMS = [
-  'Groq 70B · Live Intelligence',
+  'Rocket-Speed AI · Live Intelligence',
   '60-Second Deep Analysis',
   '5 Sovereign Modes',
   'Swiss Precision AI',

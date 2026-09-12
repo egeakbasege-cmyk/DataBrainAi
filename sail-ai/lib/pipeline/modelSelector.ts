@@ -30,8 +30,8 @@
 
 // ── Model identifiers ─────────────────────────────────────────────────────────
 
-export const MODEL_PRIMARY  = 'llama-3.3-70b-versatile'  // 12K TPM on_demand, 70B params
-export const MODEL_FAST     = 'llama-3.1-8b-instant'     // 500K TPD, 8B params — 5× daily cap
+export const MODEL_PRIMARY  = 'command-a-03-2025'    // Cohere flagship reasoning model
+export const MODEL_FAST     = 'command-r7b-12-2024'  // Cohere fast, low-cost model
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
