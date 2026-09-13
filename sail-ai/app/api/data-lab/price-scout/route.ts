@@ -12,13 +12,16 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
+import { resolveChatTransport, cohereChatFetch, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
-const GROQ_URL   = COHERE_CHAT_URL
-const GROQ_MODEL = COHERE_MODELS.PRIMARY
+// Gateway-aware transport: falls back to Vercel AI Gateway when no direct
+// COHERE_API_KEY is provisioned, so this route works in every environment.
+const _transport = resolveChatTransport()
+const GROQ_URL   = _transport.url
+const GROQ_MODEL = _transport.model(COHERE_MODELS.PRIMARY)
 const TAVILY_URL = 'https://api.tavily.com/search'
 
-function getGroqKey()   { return cohereKeys()[0] }
+function getGroqKey()   { return _transport.keys[0] }
 function getTavilyKey() { return process.env.TAVILY_API_KEY ?? process.env.TAVILY_API_KEY_2 }
 
 export interface PriceResult {
@@ -108,15 +111,10 @@ Rules:
 - Return an empty array [] if no useful price data found`
 
   try {
-    const r = await fetch(GROQ_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
-      body: JSON.stringify({
-        model: GROQ_MODEL, temperature: 0.05, max_tokens: 1600,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: AbortSignal.timeout(20_000),
-    })
+    const r = await cohereChatFetch({
+      model: GROQ_MODEL, temperature: 0.05, max_tokens: 1600,
+      messages: [{ role: 'user', content: prompt }],
+    }, { timeoutMs: 20_000 })
     if (!r.ok) return []
     const data    = await r.json()
     const rawText = extractCohereText(data) || '[]'
@@ -156,15 +154,10 @@ Write a 2-sentence buying intelligence summary that:
 Be specific, concise, and actionable. No fluff.`
 
   try {
-    const r = await fetch(GROQ_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
-      body: JSON.stringify({
-        model: GROQ_MODEL, temperature: 0.2, max_tokens: 150,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: AbortSignal.timeout(10_000),
-    })
+    const r = await cohereChatFetch({
+      model: GROQ_MODEL, temperature: 0.2, max_tokens: 150,
+      messages: [{ role: 'user', content: prompt }],
+    }, { timeoutMs: 10_000 })
     if (!r.ok) return ''
     const data = await r.json()
     return extractCohereText(data)

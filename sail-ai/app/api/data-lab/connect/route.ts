@@ -17,7 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
+import { resolveChatTransport, cohereChatFetch, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
 // ── Shared SourceSummary type (mirrors frontend) ──────────────────────────────
 
@@ -290,11 +290,12 @@ async function connectCsv(url: string): Promise<
 // Groq helper — used by connectApi for AI extraction from HTML/text
 // ─────────────────────────────────────────────────────────────────────────────
 
-const GROQ_URL_CONNECT   = COHERE_CHAT_URL
-const GROQ_MODEL_CONNECT = COHERE_MODELS.PRIMARY
+const _transportConnect  = resolveChatTransport()
+const GROQ_URL_CONNECT    = _transportConnect.url
+const GROQ_MODEL_CONNECT  = _transportConnect.model(COHERE_MODELS.PRIMARY)
 
 function getGroqKeyConnect(): string | undefined {
-  return cohereKeys()[0]
+  return _transportConnect.keys[0]
 }
 
 // Known marketplace domains — revenue figures are meaningless for these
@@ -357,15 +358,10 @@ Return ONLY valid JSON (no markdown, no explanation):
 }`
 
   try {
-    const r = await fetch(GROQ_URL_CONNECT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
-      body: JSON.stringify({
-        model: GROQ_MODEL_CONNECT, temperature: 0.05, max_tokens: 500,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: AbortSignal.timeout(15_000),
-    })
+    const r = await cohereChatFetch({
+      model: GROQ_MODEL_CONNECT, temperature: 0.05, max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    }, { timeoutMs: 15_000 })
     if (!r.ok) throw new Error(`Cohere ${r.status}`)
     const groqData  = await r.json()
     const rawText   = extractCohereText(groqData)
@@ -460,15 +456,10 @@ Return ONLY valid JSON (no markdown):
 }`
 
   try {
-    const r = await fetch(GROQ_URL_CONNECT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
-      body: JSON.stringify({
-        model: GROQ_MODEL_CONNECT, temperature: 0.05, max_tokens: 600,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: AbortSignal.timeout(15_000),
-    })
+    const r = await cohereChatFetch({
+      model: GROQ_MODEL_CONNECT, temperature: 0.05, max_tokens: 600,
+      messages: [{ role: 'user', content: prompt }],
+    }, { timeoutMs: 15_000 })
     if (!r.ok) throw new Error(`Cohere ${r.status}`)
     const groqData  = await r.json()
     const rawText   = extractCohereText(groqData)
@@ -737,7 +728,7 @@ async function connectKlaviyo(apiKey: string): Promise<
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ��────────────────────────────────────────────────────────────────────────────
 // Stripe connector  (restricted key → balance + recent charges)
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -65,6 +65,157 @@ export function resolveChatTransport(byok?: string | null): ChatTransport {
   return { url: COHERE_CHAT_URL, keys: [], gateway: false, model: m => m }
 }
 
+// ── Groq fallback provider ────────────────────────────────────────────────────
+// Real Groq (groq.com), OpenAI-compatible. Used as the LAST tier once every
+// Cohere key and the AI Gateway are exhausted. Model ids are Groq-native and
+// verified current; the response/stream shape is OpenAI-compatible and already
+// handled by extractCohereText / cohereStreamDelta.
+
+export const GROQ_FALLBACK_URL = 'https://api.groq.com/openai/v1/chat/completions'
+
+export const GROQ_FALLBACK_MODELS = {
+  PRIMARY: 'openai/gpt-oss-120b',
+  FAST:    'openai/gpt-oss-20b',
+} as const
+
+/**
+ * groqKeys — real Groq API keys in priority order: GROQ_API_KEY → GROQ_API_KEY_1…5
+ */
+export function groqKeys(): string[] {
+  const keys: string[] = []
+  const push = (k?: string | null) => { if (k && !keys.includes(k)) keys.push(k) }
+  push(process.env.GROQ_API_KEY)
+  for (let i = 1; i <= 5; i++) push(process.env[`GROQ_API_KEY_${i}`])
+  return keys
+}
+
+/** Classify any model id into a capability tier so each provider gets a valid id. */
+function modelTier(model: string): 'fast' | 'primary' {
+  const m = (model || '').toLowerCase()
+  if (m.includes('r7b') || m.includes('command-r') || m.includes('-20b') || m.includes('mini') || m.includes('fast')) {
+    return 'fast'
+  }
+  return 'primary'
+}
+
+export type ChatProvider = 'cohere' | 'ai-gateway' | 'groq'
+
+export interface ProviderAttempt {
+  provider: ChatProvider
+  url:      string
+  key:      string
+  /** Maps a requested model id to a valid id for THIS provider (tier-aware). */
+  model:    (requested: string) => string
+}
+
+/**
+ * buildProviderChain
+ * The ordered failover chain used by every AI route. Each entry is one concrete
+ * (provider, key) attempt. Rotation walks the list in order:
+ *
+ *   1. Cohere direct — COHERE_API_KEY (key 0) → …_1 → …_2 → …_3 (+ BYOK)
+ *   2. AI Gateway    — AI_GATEWAY_API_KEY (serves cohere/command-a)
+ *   3. Groq          — GROQ_API_KEY → …_1 … (openai/gpt-oss-*)
+ *
+ * So when the trial Cohere keys hit their rate limit, calls automatically spill
+ * over to the AI Gateway and then to Groq — the other providers already wired
+ * into this app — instead of failing.
+ */
+export function buildProviderChain(byok?: string | null): ProviderAttempt[] {
+  const chain: ProviderAttempt[] = []
+
+  for (const key of cohereKeys(byok)) {
+    chain.push({
+      provider: 'cohere',
+      url:      COHERE_CHAT_URL,
+      key,
+      model:    m => (modelTier(m) === 'fast' ? COHERE_MODELS.FAST : COHERE_MODELS.PRIMARY),
+    })
+  }
+
+  const gw = process.env.AI_GATEWAY_API_KEY
+  if (gw) {
+    chain.push({
+      provider: 'ai-gateway',
+      url:      AI_GATEWAY_CHAT_URL,
+      key:      gw,
+      model:    () => AI_GATEWAY_MODEL,
+    })
+  }
+
+  for (const key of groqKeys()) {
+    chain.push({
+      provider: 'groq',
+      url:      GROQ_FALLBACK_URL,
+      key,
+      model:    m => (modelTier(m) === 'fast' ? GROQ_FALLBACK_MODELS.FAST : GROQ_FALLBACK_MODELS.PRIMARY),
+    })
+  }
+
+  return chain
+}
+
+/** True when another provider/key could plausibly succeed after this status. */
+export function isRetryableStatus(status: number): boolean {
+  return status === 429 || status === 401 || status === 403 || status >= 500
+}
+
+export interface CohereChatFetchOpts {
+  /** Bring-your-own-key appended to the pool as a last resort. */
+  byok?:      string | null
+  /** Per-attempt request timeout in ms (applied to each key try). */
+  timeoutMs?: number
+}
+
+/**
+ * cohereChatFetch
+ * POSTs a chat-completion body through the full provider cascade
+ * (Cohere keys 0→1→2→3 → AI Gateway → Groq). A rate-limited (429),
+ * unauthorised (401/403), server (5xx) response, or network error falls through
+ * to the next attempt; the model id is remapped per provider so each gets a
+ * valid id regardless of what the caller passed. Returns the first usable
+ * Response. A non-retryable status (e.g. 400) returns immediately. When every
+ * provider is exhausted it returns the last failing Response, or a synthetic
+ * 503/429.
+ *
+ * The caller is responsible for reading the returned body; this helper only
+ * inspects `res.status` and never consumes it.
+ */
+export async function cohereChatFetch(
+  body: Record<string, unknown>,
+  opts: CohereChatFetchOpts = {},
+): Promise<Response> {
+  const chain = buildProviderChain(opts.byok)
+  if (chain.length === 0) {
+    return new Response(JSON.stringify({ error: 'AI provider not configured.' }), {
+      status: 503, headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const requested = typeof body.model === 'string' ? body.model : COHERE_MODELS.PRIMARY
+  let last: Response | null = null
+
+  for (const attempt of chain) {
+    const res = await fetch(attempt.url, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${attempt.key}` },
+      body:    JSON.stringify({ ...body, model: attempt.model(requested) }),
+      ...(opts.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
+    }).catch(() => null)
+
+    if (!res) continue                          // network error / timeout → next provider
+    if (res.ok) return res                      // success
+    last = res
+    if (isRetryableStatus(res.status)) continue // rotate to next key/provider
+    return res                                  // 400 etc. — rotation won't help
+  }
+
+  return last ?? new Response(
+    JSON.stringify({ error: 'Rate limit reached. Please try again shortly.' }),
+    { status: 429, headers: { 'Content-Type': 'application/json' } },
+  )
+}
+
 /**
  * cohereKeys
  * Returns all non-empty Cohere API keys in priority order:

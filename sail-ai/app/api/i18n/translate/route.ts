@@ -16,7 +16,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { COHERE_CHAT_URL, COHERE_MODELS, cohereKeys, extractCohereText } from '@/lib/clients/cohere'
+import { resolveChatTransport, cohereChatFetch, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
 export const runtime = 'edge'
 
@@ -29,24 +29,20 @@ const LOCALE_NAMES: Record<string, string> = {
   zh: 'Simplified Chinese',
 }
 
-const GROQ_KEYS = cohereKeys()
+// Gateway-aware transport: falls back to Vercel AI Gateway when no direct
+// COHERE_API_KEY is provisioned, so this route works in every environment.
+const _transport = resolveChatTransport()
+const GROQ_KEYS  = _transport.keys
 
 async function callGroq(prompt: string, systemPrompt: string): Promise<string> {
-  if (GROQ_KEYS.length === 0) throw new Error('No Cohere API keys configured.')
-  const key  = GROQ_KEYS[Math.floor(Math.random() * GROQ_KEYS.length)]!
-  const body = {
-    model:       COHERE_MODELS.FAST,   // fast model — translation doesn't need the flagship
+  const res = await cohereChatFetch({
+    model:       _transport.model(COHERE_MODELS.FAST),   // fast model — translation doesn't need the flagship
     temperature: 0.1,
     max_tokens:  2048,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user',   content: prompt },
     ],
-  }
-  const res = await fetch(COHERE_CHAT_URL, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body:    JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`Cohere error ${res.status}`)
   const data = await res.json()
