@@ -786,6 +786,53 @@ input { outline: none; font-family: var(--font-inter), sans-serif; }
   mix-blend-mode: multiply;
 }
 
+/* ── FineLineBackground — living silver tri-star field ─────── */
+/* Each star carries a base opacity in --star-o; twinkle stars shimmer while
+   the ~50% flagged as "blink" fade fully out and back on staggered cadences.
+   A separate drift transform gives the whole field gentle light motion. */
+.sail-star-twinkle {
+  opacity:         var(--star-o, 0.6);
+  animation:       sailStarTwinkle var(--star-dur, 6s) ease-in-out var(--star-delay, 0s) infinite;
+  will-change:     opacity;
+}
+.sail-star-blink {
+  opacity:         var(--star-o, 0.6);
+  animation:       sailStarBlink var(--star-dur, 9s) ease-in-out var(--star-delay, 0s) infinite;
+  will-change:     opacity;
+}
+.sail-star-drift {
+  transform-box:    fill-box;
+  transform-origin: center;
+  animation:        sailStarDrift var(--drift-dur, 10s) ease-in-out var(--drift-delay, 0s) infinite;
+  will-change:      transform;
+}
+
+@keyframes sailStarTwinkle {
+  0%,  100% { opacity: calc(var(--star-o, 0.6) * 0.5); }
+  50%       { opacity: var(--star-o, 0.6); }
+}
+
+@keyframes sailStarBlink {
+  0%   { opacity: calc(var(--star-o, 0.6) * 0.85); }
+  22%  { opacity: var(--star-o, 0.6); }
+  46%  { opacity: 0; }
+  54%  { opacity: 0; }
+  78%  { opacity: calc(var(--star-o, 0.6) * 0.7); }
+  100% { opacity: calc(var(--star-o, 0.6) * 0.85); }
+}
+
+@keyframes sailStarDrift {
+  0%,  100% { transform: translate(0, 0) rotate(0deg); }
+  33%       { transform: translate(2.2px, -1.6px) rotate(2deg); }
+  66%       { transform: translate(-1.8px, 1.8px) rotate(-2deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sail-star-twinkle,
+  .sail-star-blink { opacity: var(--star-o, 0.6); animation: none; }
+  .sail-star-drift { animation: none; }
+}
+
 /* ── Gold shimmer animation ───────────────────────────────── */
 @keyframes gold-shimmer {
   0%   { background-position: -200% center; }

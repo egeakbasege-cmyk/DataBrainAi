@@ -9,12 +9,89 @@
  * — a marine sailboat, a money coin, and a business growth chart — etched in
  * faint gold within the mobile-visible band so they read on phones and desktop.
  *
+ * The stars are now individually rendered (not a static pattern) so each one can
+ * gently drift, twinkle, and — for roughly half the field, chosen at random —
+ * fade fully out and back in on its own cadence. Every star carries a purple
+ * glow plus a dark-purple drop shadow. The scatter is generated from a fixed
+ * seed so the server and client render identically (no hydration mismatch), and
+ * all motion is disabled under `prefers-reduced-motion`.
+ *
  * Pure inline SVG + CSS: crisp at any DPR, tiny payload, zero layout shift.
  * Fixed and aria-hidden so it never intercepts pointer or a11y focus.
  */
 
 // Mercedes-style tri-star centred at (0,0): mid size, tip radius ~11.
 const TRISTAR = 'M0,-11 L1.9,-1.1 L9.5,5.5 L0,2.2 L-9.5,5.5 L-1.9,-1.1 Z'
+
+const VW = 1440
+const VH = 900
+
+/** Deterministic PRNG (mulberry32) so SSR and client generate the same field. */
+function mulberry32(seed: number) {
+  let a = seed
+  return () => {
+    a |= 0
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+interface Star {
+  x:        number
+  y:        number
+  rot:      number
+  scale:    number
+  opacity:  number
+  bright:   boolean
+  disappears: boolean
+  animDur:  number
+  animDelay: number
+  driftDur: number
+  driftDelay: number
+}
+
+/**
+ * Build the scatter once at module load. Density and base opacity are weighted
+ * toward the top-right and fade toward the lower-left, matching the original
+ * dispersion. About half the stars are flagged to fully disappear/reappear.
+ */
+const STARS: Star[] = (() => {
+  const rand = mulberry32(0x5a11a1)
+  const out: Star[] = []
+  const TARGET = 150
+
+  let guard = 0
+  while (out.length < TARGET && guard < TARGET * 8) {
+    guard++
+    const x = rand() * VW
+    const y = rand() * VH
+
+    // Brightness increases toward the right and toward the top.
+    const xn = x / VW
+    const yn = y / VH
+    const bias = Math.min(1, Math.max(0, xn * 0.62 + (1 - yn) * 0.38))
+
+    // Rejection sampling: keep denser where the field is bright.
+    if (rand() > bias * 0.9 + 0.12) continue
+
+    out.push({
+      x,
+      y,
+      rot:        rand() * 360,
+      scale:      0.42 + rand() * 0.62,
+      opacity:    0.28 + bias * 0.55,
+      bright:     rand() < 0.32,
+      disappears: rand() < 0.5,
+      animDur:    (rand() < 0.5 ? 5 : 8) + rand() * 5,
+      animDelay:  -rand() * 12,
+      driftDur:   7 + rand() * 9,
+      driftDelay: -rand() * 10,
+    })
+  }
+  return out
+})()
 
 export function FineLineBackground() {
   return (
@@ -32,7 +109,7 @@ export function FineLineBackground() {
       }}
     >
       <svg
-        viewBox="0 0 1440 900"
+        viewBox={`0 0 ${VW} ${VH}`}
         preserveAspectRatio="xMidYMid slice"
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
       >
@@ -40,47 +117,41 @@ export function FineLineBackground() {
           <g id="tri-unit">
             <path d={TRISTAR} />
           </g>
-
-          {/* Scattered tri-star tile — mid size, denser spread */}
-          <pattern id="tri-scatter" width="108" height="108" patternUnits="userSpaceOnUse">
-            <use href="#tri-unit" transform="translate(24,26) rotate(12)" />
-            <use href="#tri-unit" transform="translate(76,20) rotate(-24) scale(0.74)" />
-            <use href="#tri-unit" transform="translate(90,76) rotate(40) scale(0.9)" />
-            <use href="#tri-unit" transform="translate(44,86) rotate(-8) scale(0.64)" />
-            <use href="#tri-unit" transform="translate(8,66) rotate(52) scale(0.52)" />
-          </pattern>
-
-          {/* Dispersion: opaque toward top-right, fading toward lower-left */}
-          <linearGradient id="tri-fade" x1="1" y1="0" x2="0.05" y2="1">
-            <stop offset="0"    stopColor="#fff" stopOpacity="1" />
-            <stop offset="0.42" stopColor="#fff" stopOpacity="0.42" />
-            <stop offset="0.72" stopColor="#fff" stopOpacity="0.1" />
-            <stop offset="1"    stopColor="#fff" stopOpacity="0" />
-          </linearGradient>
-          <mask id="tri-mask">
-            <rect width="1440" height="900" fill="url(#tri-fade)" />
-          </mask>
         </defs>
 
-        {/* Graphite tri-star dispersion field */}
-        <rect
-          width="1440"
-          height="900"
-          fill="url(#tri-scatter)"
-          mask="url(#tri-mask)"
-          style={{ color: '#868C98' }}
-          opacity="0.5"
-        />
-        {/* Brighter accents catching the "light" in the dense zone */}
-        <rect
-          width="1440"
-          height="900"
-          fill="url(#tri-scatter)"
-          mask="url(#tri-mask)"
-          style={{ color: '#FFFFFF' }}
-          opacity="0.32"
-          transform="translate(4,5)"
-        />
+        {/* Grey tri-star field — purple glow + dark-purple drop shadow on all stars */}
+        <g
+          className="sail-star-field"
+          style={{
+            filter:
+              'drop-shadow(0 0 3px rgba(124,92,196,0.55)) drop-shadow(0 1.5px 1.2px rgba(42,22,78,0.6))',
+          }}
+        >
+          {STARS.map((s, i) => (
+            <g key={i} transform={`translate(${s.x.toFixed(1)},${s.y.toFixed(1)})`}>
+              <g
+                className="sail-star-drift"
+                style={{
+                  ['--drift-dur' as string]:   `${s.driftDur.toFixed(2)}s`,
+                  ['--drift-delay' as string]: `${s.driftDelay.toFixed(2)}s`,
+                }}
+              >
+                <use
+                  href="#tri-unit"
+                  transform={`rotate(${s.rot.toFixed(1)}) scale(${s.scale.toFixed(2)})`}
+                  className={s.disappears ? 'sail-star-blink' : 'sail-star-twinkle'}
+                  style={{
+                    color:                    s.bright ? '#F3F4F7' : '#868C98',
+                    ['--star-o' as string]:   s.opacity.toFixed(2),
+                    ['--star-dur' as string]: `${s.animDur.toFixed(2)}s`,
+                    ['--star-delay' as string]: `${s.animDelay.toFixed(2)}s`,
+                  }}
+                  fill="currentColor"
+                />
+              </g>
+            </g>
+          ))}
+        </g>
 
         {/* ── Minimal gold line tattoos — placed in the mobile-visible band ── */}
         <g fill="none" stroke="#A9852F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.22">

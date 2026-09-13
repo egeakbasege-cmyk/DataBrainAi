@@ -706,7 +706,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════
+      {/* ═══════��══════════════════════════════════════
           SECTION 5 — SAMPLE OUTCOMES
           Dark — stagger rows with light text.
       ══════════════════════════════════════════════ */}
