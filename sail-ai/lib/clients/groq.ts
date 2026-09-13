@@ -148,8 +148,8 @@ export async function groqFetch(
     'Content-Type':  'application/json',
     'Authorization': `Bearer ${key}`,
   })
-  const mkBody = (a: { model: (m: string) => string }, model: string) =>
-    JSON.stringify({ ...request, model: a.model(model) })
+  const mkBody = (a: { model: (m: string) => string; extraBody?: Record<string, unknown> }, model: string) =>
+    JSON.stringify({ ...request, ...a.extraBody, model: a.model(model) })
 
   // Walk the cascade: Cohere keys 0→1→2→3 → AI Gateway → Groq. A rate limit,
   // auth failure, or server error rotates to the next attempt; a transient 5xx

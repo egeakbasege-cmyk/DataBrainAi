@@ -106,6 +106,13 @@ export interface ProviderAttempt {
   key:      string
   /** Maps a requested model id to a valid id for THIS provider (tier-aware). */
   model:    (requested: string) => string
+  /**
+   * Provider-specific body fields merged into every request for this attempt.
+   * Groq's gpt-oss models are reasoning models that otherwise spend the whole
+   * token budget on hidden reasoning (empty content + failed JSON validation),
+   * so we pin `reasoning_effort: 'low'` to guarantee usable output.
+   */
+  extraBody?: Record<string, unknown>
 }
 
 /**
@@ -145,10 +152,11 @@ export function buildProviderChain(byok?: string | null): ProviderAttempt[] {
 
   for (const key of groqKeys()) {
     chain.push({
-      provider: 'groq',
-      url:      GROQ_FALLBACK_URL,
+      provider:  'groq',
+      url:       GROQ_FALLBACK_URL,
       key,
-      model:    m => (modelTier(m) === 'fast' ? GROQ_FALLBACK_MODELS.FAST : GROQ_FALLBACK_MODELS.PRIMARY),
+      model:     m => (modelTier(m) === 'fast' ? GROQ_FALLBACK_MODELS.FAST : GROQ_FALLBACK_MODELS.PRIMARY),
+      extraBody: { reasoning_effort: 'low' },
     })
   }
 
@@ -199,7 +207,7 @@ export async function cohereChatFetch(
     const res = await fetch(attempt.url, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${attempt.key}` },
-      body:    JSON.stringify({ ...body, model: attempt.model(requested) }),
+      body:    JSON.stringify({ ...body, ...attempt.extraBody, model: attempt.model(requested) }),
       ...(opts.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
     }).catch(() => null)
 
