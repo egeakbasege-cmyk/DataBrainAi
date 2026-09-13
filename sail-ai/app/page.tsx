@@ -30,7 +30,6 @@ import { Nav } from '@/components/Nav'
 import { Logo } from '@/components/Logo'
 import { CompassRose, EngravedSailboat } from '@/components/Ornaments'
 import { TopoBackground } from '@/components/TopoBackground'
-import { StarfieldBackground } from '@/components/StarfieldBackground'
 import { FineLineBackground } from '@/components/FineLineBackground'
 import { PortofinoWalkthrough } from '@/components/PortofinoWalkthrough'
 import { SectionDivider, ChampagneRule } from '@/components/SectionDivider'
@@ -584,7 +583,6 @@ export default function LandingPage() {
           Dark — glassmorphism cards over topo texture.
       ═══════════════��══════════════════════════════ */}
       <section style={{ background: 'rgba(8,9,13,0.94)', position: 'relative', overflow: 'hidden' }}>
-        <StarfieldBackground />
         <TopoBackground />
         <div className="sv-grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none', zIndex: 1 }} />
 
