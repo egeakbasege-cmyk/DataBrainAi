@@ -1,50 +1,36 @@
 import { z } from 'zod'
 import type { ShopifyRawData, AmazonRawData, KairosAIAnalysis, KairosPlatform, SupplierEstimate } from '../types'
 import { estimateSupplierCosts } from '../workers/shopifyWorker'
-import { resolveChatTransport, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
-
-// Gateway-aware transport: falls back to Vercel AI Gateway when no direct
-// COHERE_API_KEY is provisioned, so this engine works in every environment.
-const _transport = resolveChatTransport()
-const GROQ_URL   = _transport.url
-const GROQ_MODEL = _transport.model(COHERE_MODELS.PRIMARY)
-
-// ── Cohere fetch with key rotation (mirrors Sail AI pattern) ─────────────────
-
-function getGroqKeys(): string[] {
-  return _transport.keys
-}
+import { buildProviderChain, isRetryableStatus, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
 async function groqComplete(systemPrompt: string, userPrompt: string): Promise<string> {
-  const keys = getGroqKeys()
-  if (keys.length === 0) throw new Error('No COHERE_API_KEY configured')
-
-  const body = JSON.stringify({
-    model:       GROQ_MODEL,
-    temperature: 0.3,
-    max_tokens:  4096,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user',   content: userPrompt },
-    ],
-  })
+  // Full provider cascade: Cohere keys 0→1→2→3 → AI Gateway → Groq.
+  const chain = buildProviderChain()
+  if (chain.length === 0) throw new Error('No AI provider configured')
 
   let lastError = ''
-  for (const key of keys) {
-    const res = await fetch(GROQ_URL, {
+  for (const a of chain) {
+    const res = await fetch(a.url, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body,
-    })
-    if (res.status === 429) { lastError = '429'; continue }
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`Cohere error ${res.status}: ${err.slice(0, 200)}`)
-    }
-    const data = await res.json()
-    return extractCohereText(data)
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${a.key}` },
+      body: JSON.stringify({
+        model:       a.model(COHERE_MODELS.PRIMARY),
+        temperature: 0.3,
+        max_tokens:  4096,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: userPrompt },
+        ],
+      }),
+    }).catch(() => null)
+
+    if (!res) { lastError = 'network'; continue }
+    if (res.ok) return extractCohereText(await res.json())
+    if (isRetryableStatus(res.status)) { lastError = String(res.status); continue }
+    const err = await res.text()
+    throw new Error(`AI error ${res.status}: ${err.slice(0, 200)}`)
   }
-  throw new Error(`All Cohere keys rate-limited: ${lastError}`)
+  throw new Error(`All AI providers exhausted: ${lastError}`)
 }
 
 // ── Zod validation schema ─────────────────────────────────────────────────────

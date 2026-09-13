@@ -16,7 +16,7 @@
  *   HALF-OPEN — probe window after 30 s; one test request allowed
  */
 
-import { resolveChatTransport, extractCohereText } from './cohere'
+import { resolveChatTransport, buildProviderChain, isRetryableStatus, extractCohereText } from './cohere'
 
 // ── Groq endpoint + model identifiers ────────────────────────────────────────
 
@@ -136,72 +136,57 @@ export async function groqFetch(
   request:  GroqRequest,
   byokKey?: string,
 ): Promise<Response> {
-  const { url, keys, model: mapModel } = resolveChatTransport(byokKey)
-  const body     = JSON.stringify({ ...request, model: mapModel(request.model) })
-  const fastBody = JSON.stringify({ ...request, model: mapModel(GROQ_MODELS.FAST) })
+  const chain = buildProviderChain(byokKey)
+  if (chain.length === 0) {
+    return new Response(
+      JSON.stringify({ error: { message: 'AI provider not configured.' } }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
 
   const authHeaders = (key: string): Record<string, string> => ({
     'Content-Type':  'application/json',
     'Authorization': `Bearer ${key}`,
   })
+  const mkBody = (a: { model: (m: string) => string }, model: string) =>
+    JSON.stringify({ ...request, model: a.model(model) })
 
-  // Phase 1 — primary model, all keys
-  let atLeastOneNon429 = false
-  for (const key of keys) {
-    if (_isOpen(key)) continue
+  // Walk the cascade: Cohere keys 0→1→2→3 → AI Gateway → Groq. A rate limit,
+  // auth failure, or server error rotates to the next attempt; a transient 5xx
+  // additionally gets one same-provider retry on the FAST model first.
+  let last: Response | null = null
+  for (const a of chain) {
+    if (_isOpen(a.key)) continue
 
-    const res = await fetch(url, {
+    const res = await fetch(a.url, {
       method:  'POST',
-      headers: authHeaders(key),
-      body,
+      headers: authHeaders(a.key),
+      body:    mkBody(a, request.model),
     }).catch(() => null)
 
-    if (!res) { _failure(key); continue }
+    if (!res) { _failure(a.key); continue }
 
-    if (res.status === 429) { _failure(key); continue }
+    if (res.ok) { _success(a.key); return res }
 
-    atLeastOneNon429 = true
-
-    if (
-      res.status === 503 ||
-      res.status === 500 ||
-      res.status === 400 ||
-      res.status === 413
-    ) {
-      _failure(key)
-      const fallback = await fetch(url, {
-        method:  'POST',
-        headers: authHeaders(key),
-        body:    fastBody,
-      }).catch(() => null)
-      if (fallback?.ok) { _success(key); return fallback }
+    if (isRetryableStatus(res.status)) {
+      _failure(a.key)
+      // Transient server error → quick FAST-model retry on the same provider.
+      if (res.status >= 500) {
+        const fallback = await fetch(a.url, {
+          method:  'POST',
+          headers: authHeaders(a.key),
+          body:    mkBody(a, GROQ_MODELS.FAST),
+        }).catch(() => null)
+        if (fallback?.ok) { _success(a.key); return fallback }
+      }
+      last = res
       continue
     }
 
-    if (res.ok) _success(key)
-    return res
+    return res // non-retryable (e.g. 400) — another provider won't help
   }
 
-  if (atLeastOneNon429) {
-    return new Response(
-      JSON.stringify({ error: { message: 'AI provider unreachable.' } }),
-      { status: 502, headers: { 'Content-Type': 'application/json' } },
-    )
-  }
-
-  // Phase 2 — all keys 429'd on primary → retry all with FAST model
-  for (const key of keys) {
-    if (_isOpen(key)) continue
-    const res = await fetch(url, {
-      method:  'POST',
-      headers: authHeaders(key),
-      body:    fastBody,
-    }).catch(() => null)
-    if (res && res.status !== 429) { _success(key); return res }
-    if (res?.status === 429) _failure(key)
-  }
-
-  return new Response(
+  return last ?? new Response(
     JSON.stringify({ error: { message: 'Rate limit reached. Please wait a moment and try again.' } }),
     { status: 429, headers: { 'Content-Type': 'application/json' } },
   )

@@ -1,19 +1,9 @@
 import { NextRequest } from 'next/server'
 import { prisma }       from '@/lib/prisma'
-import { resolveChatTransport, COHERE_MODELS, cohereStreamDelta } from '@/lib/clients/cohere'
+import { buildProviderChain, isRetryableStatus, COHERE_MODELS, cohereStreamDelta } from '@/lib/clients/cohere'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 60
-
-// Gateway-aware transport: falls back to Vercel AI Gateway when no direct
-// COHERE_API_KEY is provisioned, so this route works in every environment.
-const _transport = resolveChatTransport()
-const GROQ_URL   = _transport.url
-const GROQ_MODEL = _transport.model(COHERE_MODELS.PRIMARY)
-
-function getGroqKeys(): string[] {
-  return _transport.keys
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,8 +17,8 @@ export async function POST(req: NextRequest) {
       return new Response('analysisId and message are required', { status: 400 })
     }
 
-    const keys = getGroqKeys()
-    if (keys.length === 0) return new Response('No COHERE_API_KEY configured', { status: 500 })
+    const chain = buildProviderChain()
+    if (chain.length === 0) return new Response('No AI provider configured', { status: 500 })
 
     const record = await prisma.kairosAnalysis.findUnique({ where: { id: analysisId } })
     if (!record) return new Response('Analysis not found', { status: 404 })
@@ -62,25 +52,26 @@ Answer directly, concisely, and tactically. Use bullet points for lists. Be spec
     }
     messages.push({ role: 'user', content: message })
 
-    // Try each key until one works (streaming)
+    // Walk the provider cascade until one streams (Cohere 0→1→2→3 → Gateway → Groq)
     let lastStatus = 0
-    for (const key of keys) {
-      const res = await fetch(GROQ_URL, {
+    for (const a of chain) {
+      const res = await fetch(a.url, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${a.key}` },
         body: JSON.stringify({
-          model:       GROQ_MODEL,
+          model:       a.model(COHERE_MODELS.PRIMARY),
           temperature: 0.5,
           max_tokens:  1024,
           stream:      true,
           messages,
         }),
-      })
+      }).catch(() => null)
 
-      if (res.status === 429) { lastStatus = 429; continue }
+      if (!res) { lastStatus = 502; continue }
+      if (isRetryableStatus(res.status)) { lastStatus = res.status; continue }
       if (!res.ok) {
         const err = await res.text()
-        return new Response(JSON.stringify({ error: `Cohere error ${res.status}: ${err.slice(0, 200)}` }), { status: 500 })
+        return new Response(JSON.stringify({ error: `AI error ${res.status}: ${err.slice(0, 200)}` }), { status: 500 })
       }
 
       // Stream SSE → plain text chunks to client
