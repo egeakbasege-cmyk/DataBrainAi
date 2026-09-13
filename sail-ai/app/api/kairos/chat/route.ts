@@ -59,6 +59,7 @@ Answer directly, concisely, and tactically. Use bullet points for lists. Be spec
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${a.key}` },
         body: JSON.stringify({
+          ...a.extraBody,
           model:       a.model(COHERE_MODELS.PRIMARY),
           temperature: 0.5,
           max_tokens:  1024,

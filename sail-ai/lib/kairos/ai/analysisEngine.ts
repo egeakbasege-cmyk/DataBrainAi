@@ -14,6 +14,7 @@ async function groqComplete(systemPrompt: string, userPrompt: string): Promise<s
       method:  'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${a.key}` },
       body: JSON.stringify({
+        ...a.extraBody,
         model:       a.model(COHERE_MODELS.PRIMARY),
         temperature: 0.3,
         max_tokens:  4096,
