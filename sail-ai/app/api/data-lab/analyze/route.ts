@@ -23,7 +23,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // ── Groq config ───────────────────────────────────────────────────────────────
 
-import { resolveChatTransport, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
+import { resolveChatTransport, cohereChatFetch, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
 // Gateway-aware transport: falls back to Vercel AI Gateway when no direct
 // COHERE_API_KEY is provisioned, so this route works in every environment.
@@ -241,23 +241,15 @@ ${SCHEMA_INSTRUCTION}`
   // 5. Call Groq — 25 s hard timeout so Vercel serverless doesn't hard-cut first
   let rawText: string
   try {
-    const groqRes = await fetch(GROQ_URL, {
-      method:  'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${groqKey}`,
-      },
-      body: JSON.stringify({
-        model:       GROQ_MODEL,
-        temperature: 0.10,
-        max_tokens:  2400,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user',   content: userMessage   },
-        ],
-      }),
-      signal: AbortSignal.timeout(25_000),
-    })
+    const groqRes = await cohereChatFetch({
+      model:       GROQ_MODEL,
+      temperature: 0.10,
+      max_tokens:  2400,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user',   content: userMessage   },
+      ],
+    }, { timeoutMs: 25_000 })
 
     if (!groqRes.ok) {
       const errText = await groqRes.text().catch(() => '—')

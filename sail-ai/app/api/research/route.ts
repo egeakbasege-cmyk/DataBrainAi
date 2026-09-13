@@ -27,7 +27,7 @@ const { auth } = NextAuth(authConfig)
 
 export const runtime = 'edge'
 
-import { resolveChatTransport, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
+import { resolveChatTransport, cohereChatFetch, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
 // Gateway-aware transport: falls back to Vercel AI Gateway when no direct
 // COHERE_API_KEY is provisioned, so this route works in every environment.
@@ -166,22 +166,15 @@ export async function POST(req: NextRequest) {
   // Synthesise with Groq
   let groqRes: Response | null = null
   try {
-    groqRes = await fetch(GROQ_URL, {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${groqKey}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({
-        model:           GROQ_MODEL,
-        messages: [
-          { role: 'system', content: RESEARCH_SYNTHESIS_PROMPT },
-          { role: 'user',   content: userPrompt },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens:      2800,
-        temperature:     0.15,
-      }),
+    groqRes = await cohereChatFetch({
+      model:           GROQ_MODEL,
+      messages: [
+        { role: 'system', content: RESEARCH_SYNTHESIS_PROMPT },
+        { role: 'user',   content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      max_tokens:      2800,
+      temperature:     0.15,
     })
   } catch {
     groqRes = null

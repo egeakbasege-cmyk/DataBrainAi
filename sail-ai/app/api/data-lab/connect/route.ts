@@ -17,7 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { resolveChatTransport, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
+import { resolveChatTransport, cohereChatFetch, COHERE_MODELS, extractCohereText } from '@/lib/clients/cohere'
 
 // ── Shared SourceSummary type (mirrors frontend) ──────────────────────────────
 
@@ -358,15 +358,10 @@ Return ONLY valid JSON (no markdown, no explanation):
 }`
 
   try {
-    const r = await fetch(GROQ_URL_CONNECT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
-      body: JSON.stringify({
-        model: GROQ_MODEL_CONNECT, temperature: 0.05, max_tokens: 500,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: AbortSignal.timeout(15_000),
-    })
+    const r = await cohereChatFetch({
+      model: GROQ_MODEL_CONNECT, temperature: 0.05, max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    }, { timeoutMs: 15_000 })
     if (!r.ok) throw new Error(`Cohere ${r.status}`)
     const groqData  = await r.json()
     const rawText   = extractCohereText(groqData)
@@ -461,15 +456,10 @@ Return ONLY valid JSON (no markdown):
 }`
 
   try {
-    const r = await fetch(GROQ_URL_CONNECT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
-      body: JSON.stringify({
-        model: GROQ_MODEL_CONNECT, temperature: 0.05, max_tokens: 600,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: AbortSignal.timeout(15_000),
-    })
+    const r = await cohereChatFetch({
+      model: GROQ_MODEL_CONNECT, temperature: 0.05, max_tokens: 600,
+      messages: [{ role: 'user', content: prompt }],
+    }, { timeoutMs: 15_000 })
     if (!r.ok) throw new Error(`Cohere ${r.status}`)
     const groqData  = await r.json()
     const rawText   = extractCohereText(groqData)

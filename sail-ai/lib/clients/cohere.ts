@@ -65,6 +65,63 @@ export function resolveChatTransport(byok?: string | null): ChatTransport {
   return { url: COHERE_CHAT_URL, keys: [], gateway: false, model: m => m }
 }
 
+export interface CohereChatFetchOpts {
+  /** Bring-your-own-key appended to the pool as a last resort. */
+  byok?:      string | null
+  /** Per-attempt request timeout in ms (applied to each key try). */
+  timeoutMs?: number
+}
+
+/**
+ * cohereChatFetch
+ * POSTs a chat-completion body through the resolved transport, rotating across
+ * the ENTIRE key pool so a rate-limited (429), unauthorised (401/403), or
+ * server (5xx) response falls through to the next key — trial keys chain as
+ * COHERE_API_KEY → …_1 → …_2 → …_3, then finally the AI Gateway if no direct
+ * key remains. Returns the first usable Response. A non-retryable status (e.g.
+ * 400) returns immediately since another key cannot fix it. When every key is
+ * exhausted it returns the last failing Response, or a synthetic 503/429.
+ *
+ * The caller is responsible for reading the returned body; this helper only
+ * inspects `res.status` and never consumes it. The passed body must already
+ * carry the correct provider `model` id (use `resolveChatTransport().model`).
+ */
+export async function cohereChatFetch(
+  body: Record<string, unknown>,
+  opts: CohereChatFetchOpts = {},
+): Promise<Response> {
+  const { url, keys } = resolveChatTransport(opts.byok)
+  if (keys.length === 0) {
+    return new Response(JSON.stringify({ error: 'AI provider not configured.' }), {
+      status: 503, headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const payload = JSON.stringify(body)
+  let last: Response | null = null
+
+  for (const key of keys) {
+    const res = await fetch(url, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      body:    payload,
+      ...(opts.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
+    }).catch(() => null)
+
+    if (!res) continue                 // network error / timeout → next key
+    if (res.ok) return res             // success
+    last = res
+    // Rotate only when another key could plausibly succeed.
+    if (res.status === 429 || res.status === 401 || res.status === 403 || res.status >= 500) continue
+    return res                         // 400 etc. — rotation won't help
+  }
+
+  return last ?? new Response(
+    JSON.stringify({ error: 'Rate limit reached. Please try again shortly.' }),
+    { status: 429, headers: { 'Content-Type': 'application/json' } },
+  )
+}
+
 /**
  * cohereKeys
  * Returns all non-empty Cohere API keys in priority order:
