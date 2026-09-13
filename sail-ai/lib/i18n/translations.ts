@@ -735,7 +735,7 @@ Projected annual impact: **+£85,000** from pricing + referral combined.`,
     'pricing.faq.a4':   'Professional subscriptions are managed through Stripe and can be cancelled with a single click from your billing dashboard. No notice period required.',
     'pricing.faq.q5':   'Is my business data stored?',
     'pricing.faq.a5':   'Starter tier: no data is persisted. Professional tier: your business profile is stored locally in your browser and optionally synced to our servers. Advisory tier: governed by a data processing agreement.',
-    // ── Dashboard extras ─────────────────────────────────
+    // ── Dashboard extras ─────────────────────��───────────
     'dash.noAnalysesMsg':  'No analyses yet.',
     'dash.headToChatLink': 'Chat →',
     'dash.toGetStarted':   'to get started.',
@@ -1369,7 +1369,7 @@ Sektör ortancası: **%70,2** terk (Baymard 2024). Sizin ölçeğinizde 8 puanl�
     'export.blockInsight':  'YÖNETİCİ İÇGÖRÜSÜ',
     'export.noteBlock':     'NOT',
 
-    // ── Data Brain Evolution Layer ───────────────────────
+    // ── Data Brain Evolution Layer ─────────���─────────────
     'databrain.focusDashboard.title': 'Odak Stratejisi',
     'databrain.cognitiveLoad.label': 'Bilişsel Yük',
     'databrain.cognitiveLoad.optimal': 'Optimal',
@@ -1845,6 +1845,118 @@ Sektör ortancası: **%70,2** terk (Baymard 2024). Sizin ölçeğinizde 8 puanl�
   },
 
   es: {
+    'nav.beginFree':           'Empieza gratis →',
+    'landing.heroSupport':     'SAIL analiza tu negocio, las señales del mercado, los benchmarks y las cifras clave para identificar las acciones de mayor impacto que puedes tomar a continuación.',
+    'landing.seeHowItWorks':   'Descubre cómo funciona',
+    'demo.eyebrow':            'Observa a SAIL pensar',
+    'demo.tapHint':            'No necesitas cuenta — toca la pantalla para empezar',
+    'demo.headingPre':         'Tres pasos. ',
+    'demo.headingEmph':        'Una capa de inteligencia',
+    'demo.headingPost':        ' soberana.',
+    'demo.headingBody':        'Cada análisis se apoya en benchmarks del sector verificados, calibrados según tus cifras concretas.',
+    'demo.ctaBegin':           'Comienza tu diagnóstico gratuito',
+    'demo.brandTag':           'SAIL AI · Inteligencia de Negocio',
+    'demo.introTitle':         'Tu estrategia, destilada en 60 segundos.',
+    'demo.introSub':           'Sin cuenta. Sin formularios. Solo insight preciso, al instante.',
+    'demo.chip1':              'Basado en benchmarks',
+    'demo.chip2':              'Calibrado por sector',
+    'demo.chip3':              'Sin cuenta necesaria',
+    'demo.introCta':           'Comienza tu diagnóstico gratuito →',
+    'demo.introFoot':          'Tarda 60 segundos · Sin tarjeta · Tus datos son privados',
+    'demo.step1of3':           'Paso 1 de 3',
+    'demo.step2of3':           'Paso 2 de 3',
+    'demo.sectorQ':            '¿Qué tipo de negocio?',
+    'demo.sec.ecommerce':      'E-Commerce',
+    'demo.sec.saas':           'SaaS B2B',
+    'demo.sec.retail':         'Retail',
+    'demo.sec.services':       'Servicios profesionales',
+    'demo.sec.hospitality':    'Hostelería',
+    'demo.sec.realestate':     'Inmobiliario',
+    'demo.sec.wellness':       'Bienestar',
+    'demo.sec.agency':         'Agencia',
+    'demo.metricsTitle':       'Tres cifras lo revelan todo.',
+    'demo.field.revenue':      'Ingresos mensuales',
+    'demo.field.churn':        'Tasa de churn',
+    'demo.field.growth':       'Crecimiento intermensual',
+    'demo.hint.revenue':       'MRR o media mensual',
+    'demo.hint.churn':         '% de pérdida mensual de clientes',
+    'demo.hint.growth':        'Media de 3 meses',
+    'demo.ph.revenue':         'p. ej. £42,000',
+    'demo.ph.churn':           'p. ej. 8.2%',
+    'demo.ph.growth':          'p. ej. +12%',
+    'demo.preparing':          'Preparando el análisis de KAIROS…',
+    'demo.statusScanning':     'KAIROS ANALIZANDO…',
+    'demo.statusStreaming':    'GENERANDO ESTRATEGIA…',
+    'demo.statusComplete':     'COMPLETADO',
+    'demo.scan1':              'Comparando con datos del sector…',
+    'demo.scan2':              'Cruzando fuentes del sector…',
+    'demo.scan3':              'Estructurando prioridades estratégicas…',
+    'demo.harbourReached':     'Puerto alcanzado',
+    'demo.strategyReady':      'Tu estrategia de precisión está lista para guardar.',
+    'demo.prio1':              'Prioridad 1: Auditoría de retención',
+    'demo.prio1sub':           '↑ +18% MRR en 30 días',
+    'demo.prio2':              'Prioridad 2: Ingresos por expansión',
+    'demo.prio2sub':           '↑ NRR 98% → 118%',
+    'demo.prio3':              'Prioridad 3: Muro anti-churn',
+    'demo.unlock':             'Crea una cuenta gratuita para desbloquear',
+    'demo.projImpact':         'Impacto proyectado: +£124,000 / año',
+    'demo.projSub':            'Contrastado con benchmarks del sector verificados',
+    'demo.saveCta':            'Guardar mi estrategia →',
+    'demo.saveFoot':           'Cuenta gratuita · Sin tarjeta · Tarda 30 segundos',
+    'demo.analysis.ecommerce': `Tu tasa de abandono del checkout es tu palanca principal.
+
+Mediana del sector: **70.2%** de abandono (Baymard 2024). A tu escala, recuperar 8 puntos genera £1 de cada £7 de ingresos perdidos, sin gastar nada en tráfico nuevo.
+
+**Tres movimientos de precisión:**
+
+1. **Auditoría de checkout en una sola página** — reduce los campos del formulario de la media del sector de 11 a 6 o menos. Solo esto recupera un 12–18% de los abandonos.
+
+2. **Secuencia de recuperación de 72 horas** — un email a la 1h, un SMS a las 24h y una impresión de retargeting a las 72h. Tasa media de recuperación: 10–14% de los carritos abandonados.
+
+3. **Colocación de señales de confianza** — sello SSL + política de devoluciones visibles sin hacer scroll en el checkout. Probado para aumentar la finalización un 8–11% en cestas de £30–£150.
+
+Impacto anual proyectado: **+£68,000** asumiendo un valor actual de abandono de £240k.`,
+    'demo.analysis.saas': `Tu tasa de churn se acumula en tu contra en silencio.
+
+Con un churn del mes 1 del 8.2%, renuevas el 100% de tu base de clientes cada 13 meses, pagando el coste de adquisición dos veces por cada cliente. La solución no es una funcionalidad; es una intervención de timing.
+
+**Tres movimientos de precisión:**
+
+1. **Identificación del momento de valor** — encuentra la única acción del producto que se correlaciona con la retención a 90 días. Lleva a cada nuevo usuario hasta ahí en las primeras 72 horas tras el registro. Mejora media de retención: +22 puntos.
+
+2. **Disparador de llamada de onboarding** — marca automáticamente a cualquier usuario que no haya alcanzado el momento de valor antes del día 5. Una llamada proactiva convierte al 35–40% de estos usuarios en activos.
+
+3. **Motor de ingresos por expansión** — con tu NRR de partida, añadir un disparador de upgrade (por uso o por funcionalidad) dentro del producto suma £18–28k de ARR sin un solo cliente nuevo.
+
+Impacto neto proyectado: **+£124,000** de ARR solo por la mejora de la retención.`,
+    'demo.analysis.default': `Tu restricción de mayor impacto se esconde en tu economía unitaria.
+
+La mayoría de los negocios optimizan los ingresos. Los negocios que componen crecimiento optimizan **margen × retención**, una ecuación fundamentalmente distinta.
+
+**Tres movimientos de precisión:**
+
+1. **Arqueología del margen** — identifica el 20% de tus clientes con mayor contribución al margen bruto (no a los ingresos). Esta cohorte casi siempre merece una estrategia de retención y de precios distinta.
+
+2. **Arquitectura de precios** — añadir un nivel premium con un precio un 25–30% por encima de tu techo actual capta un 10–15% de los clientes existentes dispuestos a pagar más. Sin nueva adquisición.
+
+3. **Velocidad de referidos** — los programas de referidos estructurados en tu sector generan un 18–22% de nuevo negocio a partir de clientes existentes, con un periodo de recuperación inferior a 45 días.
+
+Impacto anual proyectado: **+£85,000** combinando precios + referidos.`,
+    'login.noAccount':        '¿No tienes una cuenta?',
+    'login.createAccountLink':'Crear cuenta',
+    'login.haveAccount':      '¿Ya tienes una cuenta?',
+    'login.signInLink':       'Iniciar sesión',
+    'login.errConnection':    'No pudimos conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.',
+    'landing.badgeLocked':   'Inteligencia de mercado avanzada',
+    'landing.exploreProPlans':'Explora los planes Pro →',
+    'landing.proBadge':      'El más elegido',
+    'landing.proTitle':      'Profesional',
+    'landing.proPer':        '/ mes',
+    'landing.proFeat1':      'Análisis diarios ilimitados',
+    'landing.proFeat2':      'Perfil de negocio y métricas del sector guardados',
+    'landing.proFeat3':      'Tiempo de respuesta prioritario',
+    'landing.proFeat4':      'Resúmenes de estrategia exportables (PDF)',
+    'landing.proCta':        'Actualizar ahora',
     'nav.pricing':             'Precios',
     'nav.launch':              'Iniciar →',
     'nav.chartCourse':         'Trazar Rumbo',
@@ -2622,6 +2734,118 @@ Sektör ortancası: **%70,2** terk (Baymard 2024). Sizin ölçeğinizde 8 puanl�
   },
 
   de: {
+    'nav.beginFree':           'Kostenlos starten →',
+    'landing.heroSupport':     'SAIL analysiert dein Unternehmen, Marktsignale, Benchmarks und Kennzahlen, um die wirkungsvollsten nächsten Schritte zu identifizieren.',
+    'landing.seeHowItWorks':   'So funktioniert es',
+    'demo.eyebrow':            'SAIL beim Denken zusehen',
+    'demo.tapHint':            'Kein Konto nötig — tippe auf den Bildschirm, um zu starten',
+    'demo.headingPre':         'Drei Schritte. ',
+    'demo.headingEmph':        'Eine souveräne',
+    'demo.headingPost':        ' Intelligenzschicht.',
+    'demo.headingBody':        'Jede Analyse basiert auf geprüften Branchen-Benchmarks — kalibriert auf deine konkreten Zahlen.',
+    'demo.ctaBegin':           'Kostenlose Diagnose starten',
+    'demo.brandTag':           'SAIL AI · Business Intelligence',
+    'demo.introTitle':         'Deine Strategie, in 60 Sekunden destilliert.',
+    'demo.introSub':           'Kein Konto. Kein Formular. Nur präziser Insight, sofort.',
+    'demo.chip1':              'Benchmark-fundiert',
+    'demo.chip2':              'Branchenkalibriert',
+    'demo.chip3':              'Kein Konto nötig',
+    'demo.introCta':           'Kostenlose Diagnose starten →',
+    'demo.introFoot':          'Dauert 60 Sekunden · Keine Karte · Deine Daten bleiben privat',
+    'demo.step1of3':           'Schritt 1 von 3',
+    'demo.step2of3':           'Schritt 2 von 3',
+    'demo.sectorQ':            'Welche Art von Unternehmen?',
+    'demo.sec.ecommerce':      'E-Commerce',
+    'demo.sec.saas':           'B2B-SaaS',
+    'demo.sec.retail':         'Einzelhandel',
+    'demo.sec.services':       'Dienstleistungen',
+    'demo.sec.hospitality':    'Gastgewerbe',
+    'demo.sec.realestate':     'Immobilien',
+    'demo.sec.wellness':       'Wellness',
+    'demo.sec.agency':         'Agentur',
+    'demo.metricsTitle':       'Drei Zahlen verraten alles.',
+    'demo.field.revenue':      'Monatsumsatz',
+    'demo.field.churn':        'Churn-Rate',
+    'demo.field.growth':       'Wachstum (MoM)',
+    'demo.hint.revenue':       'MRR oder Monatsdurchschnitt',
+    'demo.hint.churn':         'Monatlicher Kundenverlust in %',
+    'demo.hint.growth':        '3-Monats-Durchschnitt',
+    'demo.ph.revenue':         'z. B. £42,000',
+    'demo.ph.churn':           'z. B. 8.2%',
+    'demo.ph.growth':          'z. B. +12%',
+    'demo.preparing':          'KAIROS-Analyse wird vorbereitet…',
+    'demo.statusScanning':     'KAIROS ANALYSIERT…',
+    'demo.statusStreaming':    'STRATEGIE WIRD GENERIERT…',
+    'demo.statusComplete':     'ABGESCHLOSSEN',
+    'demo.scan1':              'Abgleich mit Branchendaten…',
+    'demo.scan2':              'Querverweis mit Branchenquellen…',
+    'demo.scan3':              'Strategische Prioritäten werden strukturiert…',
+    'demo.harbourReached':     'Hafen erreicht',
+    'demo.strategyReady':      'Deine Präzisionsstrategie ist bereit zum Speichern.',
+    'demo.prio1':              'Priorität 1: Retention-Audit',
+    'demo.prio1sub':           '↑ +18% MRR in 30 Tagen',
+    'demo.prio2':              'Priorität 2: Expansionsumsatz',
+    'demo.prio2sub':           '↑ NRR 98% → 118%',
+    'demo.prio3':              'Priorität 3: Churn-Firewall',
+    'demo.unlock':             'Kostenloses Konto erstellen zum Freischalten',
+    'demo.projImpact':         'Prognostizierte Wirkung: +£124,000 / Jahr',
+    'demo.projSub':            'Abgeglichen mit geprüften Branchen-Benchmarks',
+    'demo.saveCta':            'Meine Strategie speichern →',
+    'demo.saveFoot':           'Kostenloses Konto · Keine Karte · Dauert 30 Sekunden',
+    'demo.analysis.ecommerce': `Deine Checkout-Abbruchrate ist dein wichtigster Hebel.
+
+Branchenmedian: **70.2%** Abbruch (Baymard 2024). In deiner Größenordnung bringt die Rückgewinnung von 8 Prozentpunkten £1 von £7 verlorenem Umsatz zurück — ohne einen Cent zusätzliche Traffic-Ausgaben.
+
+**Drei Präzisionszüge:**
+
+1. **Single-Page-Checkout-Audit** — reduziere die Formularfelder vom Branchendurchschnitt von 11 auf 6 oder weniger. Das allein gewinnt 12–18% der Abbrüche zurück.
+
+2. **72-Stunden-Recovery-Sequenz** — eine E-Mail nach 1 Std., eine SMS nach 24 Std., ein Retargeting-Kontakt nach 72 Std. Durchschnittliche Rückgewinnung: 10–14% der abgebrochenen Warenkörbe.
+
+3. **Platzierung von Vertrauenssignalen** — SSL-Siegel + Rückgaberichtlinie ohne Scrollen im Checkout. Getestet auf eine um 8–11% höhere Abschlussrate bei Warenkörben zwischen £30–£150.
+
+Prognostizierte Jahreswirkung: **+£68,000** bei einem aktuellen Abbruchwert von £240k.`,
+    'demo.analysis.saas': `Deine Churn-Rate summiert sich still gegen dich auf.
+
+Bei einem Monats-1-Churn von 8.2% erneuerst du deinen gesamten Kundenstamm alle 13 Monate — und zahlst die Akquisekosten zweimal pro Kundenlebensdauer. Die Lösung ist kein Feature, sondern ein Timing-Eingriff.
+
+**Drei Präzisionszüge:**
+
+1. **Identifikation des Wertmoments** — finde die eine Produktaktion, die mit der 90-Tage-Retention korreliert. Führe jeden neuen Nutzer innerhalb von 72 Stunden nach der Anmeldung dorthin. Durchschnittliche Retention-Verbesserung: +22 Prozentpunkte.
+
+2. **Onboarding-Anruf-Trigger** — markiere automatisch jeden Nutzer, der den Wertmoment bis Tag 5 nicht erreicht hat. Ein proaktiver Anruf macht 35–40% dieser Nutzer aktiv.
+
+3. **Expansionsumsatz-Engine** — bei deinem NRR-Ausgangswert bringt ein Upgrade-Trigger (nutzungs- oder funktionsbasiert) im Produkt £18–28k ARR zusätzlich, ohne einen einzigen neuen Kunden.
+
+Prognostizierte Nettowirkung: **+£124,000** ARR allein durch die Retention-Verbesserung.`,
+    'demo.analysis.default': `Deine wirkungsvollste Einschränkung verbirgt sich in deiner Unit Economics.
+
+Die meisten Unternehmen optimieren auf Umsatz. Unternehmen mit Zinseszinseffekt optimieren auf **Marge × Retention** — eine grundlegend andere Gleichung.
+
+**Drei Präzisionszüge:**
+
+1. **Margen-Archäologie** — identifiziere die besten 20% deiner Kunden nach Deckungsbeitrag (nicht nach Umsatz). Diese Kohorte verdient fast immer eine andere Retention- und Preisstrategie.
+
+2. **Preisarchitektur** — ein Premium-Tier mit 25–30% über deiner aktuellen Obergrenze gewinnt 10–15% der bestehenden Kunden, die bereit sind, mehr zu zahlen. Keine neue Akquise nötig.
+
+3. **Empfehlungsgeschwindigkeit** — strukturierte Empfehlungsprogramme in deiner Branche generieren 18–22% des Neugeschäfts aus bestehenden Kunden, mit einer Amortisationszeit unter 45 Tagen.
+
+Prognostizierte Jahreswirkung: **+£85,000** aus Preisgestaltung + Empfehlungen kombiniert.`,
+    'login.noAccount':        'Noch kein Konto?',
+    'login.createAccountLink':'Konto erstellen',
+    'login.haveAccount':      'Bereits ein Konto?',
+    'login.signInLink':       'Anmelden',
+    'login.errConnection':    'Wir konnten den Server nicht erreichen. Bitte prüfe deine Verbindung und versuche es erneut.',
+    'landing.badgeLocked':   'Erweiterte Marktintelligenz',
+    'landing.exploreProPlans':'Pro-Tarife entdecken →',
+    'landing.proBadge':      'Am häufigsten gewählt',
+    'landing.proTitle':      'Professional',
+    'landing.proPer':        '/ Monat',
+    'landing.proFeat1':      'Unbegrenzte tägliche Analysen',
+    'landing.proFeat2':      'Gespeichertes Unternehmensprofil & Branchenkennzahlen',
+    'landing.proFeat3':      'Bevorzugte Antwortzeit',
+    'landing.proFeat4':      'Exportierbare Strategie-Zusammenfassungen (PDF)',
+    'landing.proCta':        'Jetzt upgraden',
     'nav.pricing':             'Preise',
     'nav.launch':              'Starten →',
     'nav.chartCourse':         'Kurs setzen',
@@ -3399,6 +3623,118 @@ Sektör ortancası: **%70,2** terk (Baymard 2024). Sizin ölçeğinizde 8 puanl�
   },
 
   fr: {
+    'nav.beginFree':           'Commencer gratuitement →',
+    'landing.heroSupport':     'SAIL analyse votre entreprise, les signaux du marché, les benchmarks et les chiffres clés pour identifier les actions à plus fort levier à mener ensuite.',
+    'landing.seeHowItWorks':   'Voir comment ça marche',
+    'demo.eyebrow':            'Regardez SAIL réfléchir',
+    'demo.tapHint':            'Aucun compte requis — touchez l’écran pour commencer',
+    'demo.headingPre':         'Trois étapes. ',
+    'demo.headingEmph':        'Une couche d’intelligence',
+    'demo.headingPost':        ' souveraine.',
+    'demo.headingBody':        'Chaque analyse s’appuie sur des benchmarks sectoriels vérifiés — calibrés sur vos chiffres précis.',
+    'demo.ctaBegin':           'Lancer le diagnostic gratuit',
+    'demo.brandTag':           'SAIL AI · Business Intelligence',
+    'demo.introTitle':         'Votre stratégie, distillée en 60 secondes.',
+    'demo.introSub':           'Aucun compte. Aucun formulaire. Juste un insight précis, immédiatement.',
+    'demo.chip1':              'Fondé sur des benchmarks',
+    'demo.chip2':              'Calibré par secteur',
+    'demo.chip3':              'Aucun compte requis',
+    'demo.introCta':           'Lancer le diagnostic gratuit →',
+    'demo.introFoot':          'Prend 60 secondes · Sans carte · Vos données restent privées',
+    'demo.step1of3':           'Étape 1 sur 3',
+    'demo.step2of3':           'Étape 2 sur 3',
+    'demo.sectorQ':            'Quel type d’entreprise ?',
+    'demo.sec.ecommerce':      'E-Commerce',
+    'demo.sec.saas':           'SaaS B2B',
+    'demo.sec.retail':         'Retail',
+    'demo.sec.services':       'Services pro',
+    'demo.sec.hospitality':    'Hôtellerie-restauration',
+    'demo.sec.realestate':     'Immobilier',
+    'demo.sec.wellness':       'Bien-être',
+    'demo.sec.agency':         'Agence',
+    'demo.metricsTitle':       'Trois chiffres révèlent tout.',
+    'demo.field.revenue':      'Revenu mensuel',
+    'demo.field.churn':        'Taux de churn',
+    'demo.field.growth':       'Croissance MoM',
+    'demo.hint.revenue':       'MRR ou moyenne mensuelle',
+    'demo.hint.churn':         '% de perte mensuelle de clients',
+    'demo.hint.growth':        'Moyenne sur 3 mois',
+    'demo.ph.revenue':         'p. ex. £42,000',
+    'demo.ph.churn':           'p. ex. 8.2%',
+    'demo.ph.growth':          'p. ex. +12%',
+    'demo.preparing':          'Préparation de l’analyse KAIROS…',
+    'demo.statusScanning':     'KAIROS ANALYSE…',
+    'demo.statusStreaming':    'GÉNÉRATION DE LA STRATÉGIE…',
+    'demo.statusComplete':     'TERMINÉ',
+    'demo.scan1':              'Comparaison avec les données du secteur…',
+    'demo.scan2':              'Recoupement des sources du secteur…',
+    'demo.scan3':              'Structuration des priorités stratégiques…',
+    'demo.harbourReached':     'Port atteint',
+    'demo.strategyReady':      'Votre stratégie de précision est prête à être enregistrée.',
+    'demo.prio1':              'Priorité 1 : audit de rétention',
+    'demo.prio1sub':           '↑ +18% MRR en 30 jours',
+    'demo.prio2':              'Priorité 2 : revenu d’expansion',
+    'demo.prio2sub':           '↑ NRR 98% → 118%',
+    'demo.prio3':              'Priorité 3 : pare-feu anti-churn',
+    'demo.unlock':             'Créez un compte gratuit pour débloquer',
+    'demo.projImpact':         'Impact projeté : +£124,000 / an',
+    'demo.projSub':            'Recoupé avec des benchmarks sectoriels vérifiés',
+    'demo.saveCta':            'Enregistrer ma stratégie →',
+    'demo.saveFoot':           'Compte gratuit · Sans carte · Prend 30 secondes',
+    'demo.analysis.ecommerce': `Votre taux d’abandon au checkout est votre principal levier.
+
+Médiane du secteur : **70.2%** d’abandon (Baymard 2024). À votre échelle, récupérer 8 points rapporte £1 sur £7 de revenu perdu — sans aucune dépense de trafic supplémentaire.
+
+**Trois mouvements de précision :**
+
+1. **Audit du checkout en une page** — réduisez les champs du formulaire de la moyenne du secteur de 11 à 6 ou moins. À lui seul, cela récupère 12–18% des abandons.
+
+2. **Séquence de récupération sur 72 heures** — un e-mail à 1 h, un SMS à 24 h, une impression de retargeting à 72 h. Taux de récupération moyen : 10–14% des paniers abandonnés.
+
+3. **Placement des signaux de confiance** — badge SSL + politique de retour visibles sans défilement au checkout. Testé pour augmenter la finalisation de 8–11% sur les paniers de £30–£150.
+
+Impact annuel projeté : **+£68,000** en supposant une valeur d’abandon actuelle de £240k.`,
+    'demo.analysis.saas': `Votre taux de churn s’accumule silencieusement contre vous.
+
+Avec un churn au mois 1 de 8.2%, vous renouvelez 100% de votre base clients tous les 13 mois — payant le coût d’acquisition deux fois par durée de vie client. La solution n’est pas une fonctionnalité ; c’est une intervention sur le timing.
+
+**Trois mouvements de précision :**
+
+1. **Identification du moment de valeur** — trouvez l’unique action produit corrélée à la rétention à 90 jours. Amenez-y chaque nouvel utilisateur dans les 72 heures suivant l’inscription. Amélioration moyenne de la rétention : +22 points.
+
+2. **Déclencheur d’appel d’onboarding** — signalez automatiquement tout utilisateur n’ayant pas atteint le moment de valeur au jour 5. Un appel proactif convertit 35–40% de ces utilisateurs en actifs.
+
+3. **Moteur de revenu d’expansion** — à votre niveau de NRR, ajouter un déclencheur d’upgrade (basé sur l’usage ou les fonctionnalités) dans le produit ajoute £18–28k d’ARR sans un seul nouveau client.
+
+Impact net projeté : **+£124,000** d’ARR grâce à la seule amélioration de la rétention.`,
+    'demo.analysis.default': `Votre contrainte à plus fort levier se cache dans votre unit economics.
+
+La plupart des entreprises optimisent le revenu. Celles qui composent leur croissance optimisent **marge × rétention** — une équation fondamentalement différente.
+
+**Trois mouvements de précision :**
+
+1. **Archéologie de la marge** — identifiez les 20% de clients qui contribuent le plus à votre marge brute (et non au revenu). Cette cohorte mérite presque toujours une stratégie de rétention et de prix différente.
+
+2. **Architecture tarifaire** — ajouter un palier premium à 25–30% au-dessus de votre plafond actuel capte 10–15% des clients existants prêts à payer plus. Aucune nouvelle acquisition requise.
+
+3. **Vélocité du parrainage** — les programmes de parrainage structurés dans votre secteur génèrent 18–22% de nouvelles affaires auprès des clients existants, avec un délai de rentabilisation inférieur à 45 jours.
+
+Impact annuel projeté : **+£85,000** en combinant prix + parrainage.`,
+    'login.noAccount':        'Pas encore de compte ?',
+    'login.createAccountLink':'Créer un compte',
+    'login.haveAccount':      'Vous avez déjà un compte ?',
+    'login.signInLink':       'Se connecter',
+    'login.errConnection':    'Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.',
+    'landing.badgeLocked':   'Intelligence de marché avancée',
+    'landing.exploreProPlans':'Découvrir les offres Pro →',
+    'landing.proBadge':      'Le plus choisi',
+    'landing.proTitle':      'Professional',
+    'landing.proPer':        '/ mois',
+    'landing.proFeat1':      'Analyses quotidiennes illimitées',
+    'landing.proFeat2':      'Profil d’entreprise et métriques sectorielles enregistrés',
+    'landing.proFeat3':      'Temps de réponse prioritaire',
+    'landing.proFeat4':      'Résumés de stratégie exportables (PDF)',
+    'landing.proCta':        'Mettre à niveau',
     'nav.pricing':             'Tarifs',
     'nav.launch':              'Lancer →',
     'nav.chartCourse':         'Tracer la route',
@@ -4176,6 +4512,118 @@ Sektör ortancası: **%70,2** terk (Baymard 2024). Sizin ölçeğinizde 8 puanl�
   },
 
   zh: {
+    'nav.beginFree':           '免费开始 →',
+    'landing.heroSupport':     'SAIL 分析您的业务、市场信号、基准数据和关键数字，帮您找出接下来最具杠杆效应的行动。',
+    'landing.seeHowItWorks':   '了解运作方式',
+    'demo.eyebrow':            '看 SAIL 如何思考',
+    'demo.tapHint':            '无需账户 — 点击屏幕即可开始',
+    'demo.headingPre':         '三个步骤。',
+    'demo.headingEmph':        '一个自主的',
+    'demo.headingPost':        '智能层。',
+    'demo.headingBody':        '每一次分析都基于经过验证的行业基准，并根据您的具体数字进行校准。',
+    'demo.ctaBegin':           '开始免费诊断',
+    'demo.brandTag':           'SAIL AI · 商业智能',
+    'demo.introTitle':         '您的战略，60 秒内凝练而成。',
+    'demo.introSub':           '无需账户。无需表单。即刻获得精准洞察。',
+    'demo.chip1':              '基准支撑',
+    'demo.chip2':              '按行业校准',
+    'demo.chip3':              '无需账户',
+    'demo.introCta':           '开始免费诊断 →',
+    'demo.introFoot':          '仅需 60 秒 · 无需银行卡 · 您的数据保持私密',
+    'demo.step1of3':           '第 1 步，共 3 步',
+    'demo.step2of3':           '第 2 步，共 3 步',
+    'demo.sectorQ':            '哪种类型的业务？',
+    'demo.sec.ecommerce':      '电子商务',
+    'demo.sec.saas':           'B2B SaaS',
+    'demo.sec.retail':         '零售',
+    'demo.sec.services':       '专业服务',
+    'demo.sec.hospitality':    '酒店餐饮',
+    'demo.sec.realestate':     '房地产',
+    'demo.sec.wellness':       '健康养生',
+    'demo.sec.agency':         '代理机构',
+    'demo.metricsTitle':       '三个数字揭示一切。',
+    'demo.field.revenue':      '月收入',
+    'demo.field.churn':        '流失率',
+    'demo.field.growth':       '环比增长率',
+    'demo.hint.revenue':       'MRR 或月平均值',
+    'demo.hint.churn':         '每月客户流失百分比',
+    'demo.hint.growth':        '三个月平均值',
+    'demo.ph.revenue':         '例如 £42,000',
+    'demo.ph.churn':           '例如 8.2%',
+    'demo.ph.growth':          '例如 +12%',
+    'demo.preparing':          '正在准备 KAIROS 分析…',
+    'demo.statusScanning':     'KAIROS 分析中…',
+    'demo.statusStreaming':    '正在生成战略…',
+    'demo.statusComplete':     '已完成',
+    'demo.scan1':              '正在与行业数据进行基准对比…',
+    'demo.scan2':              '正在交叉核对行业来源…',
+    'demo.scan3':              '正在梳理战略优先级…',
+    'demo.harbourReached':     '已抵达港湾',
+    'demo.strategyReady':      '您的精准战略已准备好保存。',
+    'demo.prio1':              '优先级 1：留存审计',
+    'demo.prio1sub':           '↑ 30 天内 MRR +18%',
+    'demo.prio2':              '优先级 2：扩展收入',
+    'demo.prio2sub':           '↑ NRR 98% → 118%',
+    'demo.prio3':              '优先级 3：流失防火墙',
+    'demo.unlock':             '创建免费账户以解锁',
+    'demo.projImpact':         '预计影响：每年 +£124,000',
+    'demo.projSub':            '已与经过验证的行业基准交叉核对',
+    'demo.saveCta':            '保存我的战略 →',
+    'demo.saveFoot':           '免费账户 · 无需银行卡 · 仅需 30 秒',
+    'demo.analysis.ecommerce': `您的结账放弃率是您的首要杠杆。
+
+行业中位数：**70.2%** 的放弃率（Baymard 2024）。在您的规模下，挽回 8 个百分点即可在每 £7 流失收入中收回 £1 —— 且无需任何新增流量支出。
+
+**三个精准动作：**
+
+1. **单页结账审计** —— 将表单字段从行业平均的 11 个减少到 6 个或更少。仅此一项即可挽回 12–18% 的放弃。
+
+2. **72 小时挽回序列** —— 1 小时时发一封邮件，24 小时时发一条短信，72 小时时投放一次再营销曝光。平均挽回率：放弃购物车的 10–14%。
+
+3. **信任信号布局** —— 在结账页首屏放置 SSL 徽章 + 退货政策。经测试，在 £30–£150 的客单价区间可将完成率提升 8–11%。
+
+预计年度影响：**+£68,000**（假设当前放弃价值为 £240k）。`,
+    'demo.analysis.saas': `您的流失率正在悄然对您复利累积。
+
+在第 1 个月 8.2% 的流失率下，您每 13 个月就要重新填满 100% 的客户群 —— 相当于在每个客户生命周期内两次支付获客成本。解决之道不是某项功能，而是一次时机干预。
+
+**三个精准动作：**
+
+1. **价值时刻识别** —— 找出与 90 天留存相关的那一个产品动作。让每位新用户在注册后 72 小时内到达该动作。平均留存提升：+22 个百分点。
+
+2. **入门电话触发** —— 自动标记任何在第 5 天仍未到达价值时刻的用户。一次主动外呼可将其中 35–40% 转化为活跃用户。
+
+3. **扩展收入引擎** —— 在您当前的 NRR 基线上，在产品内加入一个升级触发点（基于用量或功能）即可新增 £18–28k ARR，而无需一个新客户。
+
+预计净影响：仅凭留存提升即带来 **+£124,000** ARR。`,
+    'demo.analysis.default': `您最具杠杆效应的约束，就藏在您的单位经济模型里。
+
+大多数企业围绕收入进行优化。能实现复利增长的企业则围绕 **利润率 × 留存** 进行优化 —— 这是一个根本不同的方程式。
+
+**三个精准动作：**
+
+1. **利润率考古** —— 按毛利贡献（而非收入）找出您前 20% 的客户。这一群体几乎总是值得采用不同的留存与定价策略。
+
+2. **定价架构** —— 增设一个比您当前价格上限高 25–30% 的高级档位，可赢得 10–15% 愿意多付费的现有客户。无需任何新增获客。
+
+3. **推荐速度** —— 您所在行业中结构化的推荐计划可从现有客户中带来 18–22% 的新业务，回本周期不到 45 天。
+
+预计年度影响：定价 + 推荐合计 **+£85,000**。`,
+    'login.noAccount':        '还没有账户？',
+    'login.createAccountLink':'创建账户',
+    'login.haveAccount':      '已经有账户了？',
+    'login.signInLink':       '登录',
+    'login.errConnection':    '无法连接到服务器。请检查您的网络连接后重试。',
+    'landing.badgeLocked':   '高级市场情报',
+    'landing.exploreProPlans':'探索 Pro 方案 →',
+    'landing.proBadge':      '最多人选择',
+    'landing.proTitle':      '专业版',
+    'landing.proPer':        '/ 月',
+    'landing.proFeat1':      '每日无限次分析',
+    'landing.proFeat2':      '已保存的业务档案与行业指标',
+    'landing.proFeat3':      '优先响应时间',
+    'landing.proFeat4':      '可导出的战略摘要（PDF）',
+    'landing.proCta':        '立即升级',
     'nav.pricing':             '定价',
     'nav.launch':              '立即开始 →',
     'nav.chartCourse':         '制定航线',
@@ -4548,7 +4996,7 @@ Sektör ortancası: **%70,2** terk (Baymard 2024). Sizin ölçeğinizde 8 puanl�
     
     'home.preset.ecom.label': '电商转化率',
     'home.preset.ecom.problem': '结账放弃率使转化率低于行业中位数。',
-    'home.preset.ecom.insight': '将结账简化为3步并添加一封恢复邮件序列，可在90天内缩小7.8个百分点的放弃差距。',
+    'home.preset.ecom.insight': '将结账简化为3步并添加一封恢复邮件序列，可在90��内缩小7.8个百分点的放弃差距。',
     
     'home.preset.saas.label': 'B2B SaaS流失率',
     'home.preset.saas.problem': '首月流失率正在加剧ARR侵蚀，超出OpenView基准。',
